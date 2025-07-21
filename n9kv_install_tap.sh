@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Install multiple N9KV instances using your TAP topology
-N9KV_IMAGE="/path/to/nexus9300v64.10.3.6.F.qcow2"
+N9KV_IMAGE="/iso/nxos/nexus9300v64.10.3.8.M.qcow2"
 
-# Switch 1 (L1) - Leaf Switch
+# Switch 1 (ER) - Edge Router
 virt-install \
     --name="n9kv-ER" \
     --ram=8192 --vcpus=4 \
@@ -14,7 +14,7 @@ virt-install \
     --graphics vnc,port=5901 \
     --os-variant=linux2022 --import --noautoconsole
 
-# Switch 2 (S1) - Spine Switch
+# Switch 2 (S1) - Border Spine Switch
 virt-install \
     --name="n9kv-S1" \
     --ram=8192 --vcpus=4 \
@@ -25,7 +25,7 @@ virt-install \
     --graphics vnc,port=5902 \
     --os-variant=linux2022 --import --noautoconsole
 
-# Switch 3 (S2) - Spine Switch
+# Switch 3 (S2) - Border Spine Switch
 virt-install \
     --name="n9kv-S2" \
     --ram=8192 --vcpus=4 \

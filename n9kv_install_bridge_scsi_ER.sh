@@ -11,5 +11,7 @@ virt-install \
     --network bridge=ndfc-mgmt,model=e1000 \
     --network bridge=BR_ER_S1,model=e1000 \
     --network bridge=BR_ER_S2,model=e1000 \
-    --graphics vnc,port=5901 \
+    --graphics none \
+    --console pty,target_type=serial \
+    --serial pty \
     --os-variant=linux2022 --import --noautoconsole

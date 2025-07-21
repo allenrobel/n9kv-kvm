@@ -18,7 +18,7 @@ virt-install \
     --network type=direct,source=tap_L1_E1_2,model=e1000,mac=00:b0:21:02:03:02 \
     --graphics none \
     --console pty,target_type=serial \
-    --serial telnet,host=localhost,port=9023,mode=bind,protocol=raw \
+    --serial tcp,host=localhost:9023,mode=bind,protocol=telnet \
     --os-variant=linux2022 \
     --boot hd \
     --import \

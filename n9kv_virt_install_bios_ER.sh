@@ -28,9 +28,9 @@ virt-install \
     --boot loader="$BIOS_FILE" \
     --ram=8192 --vcpus=4 \
     --disk path=$ER_IMAGE,format=qcow2,bus=sata \
-    --network type=direct,source=tap_ER_MGMT,model=e1000,mac=00:b0:21:02:00:00 \
-    --network type=direct,source=tap_ER_E1_1,model=e1000,mac=00:b0:21:02:00:01 \
-    --network type=direct,source=tap_ER_E1_2,model=e1000,mac=00:b0:21:02:00:02 \
+    --network bridge=ndfc-mgmt,model=e1000 \
+    --network bridge=BR_ER_S1,model=e1000 \
+    --network bridge=BR_ER_S2,model=e1000 \
     --graphics none \
     --console pty,target_type=serial \
     --serial pty \

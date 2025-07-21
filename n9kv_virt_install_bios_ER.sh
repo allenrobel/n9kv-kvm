@@ -42,7 +42,7 @@ virt-install \
     --boot loader="$BIOS_FILE" \
     --ram=$RAM \
     --vcpus=$VCPUS \
-    --disk path=$ER_IMAGE,format=qcow2,bus=ide,cache=writethrough \
+    --disk path=$ER_IMAGE,format=qcow2,bus=sata \
     --network bridge=$MGMT_BRIDGE,model=e1000 \
     --network bridge=BR_ER_S1,model=e1000 \
     --network bridge=BR_ER_S2,model=e1000 \
@@ -53,8 +53,6 @@ virt-install \
     --boot hd \
     --import \
     --noautoconsole
-
-# --disk path=$ER_IMAGE,format=qcow2,bus=sata
 
 echo "$VM_NAME instance created."
 echo "ER -> S1: BR_ER_S1"

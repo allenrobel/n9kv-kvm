@@ -6,6 +6,10 @@ IMAGE_PATH="/iso/nxos"
 N9KV_SHARED_IMAGE="$IMAGE_PATH/nexus9300v64.10.3.8.M.qcow2"
 BIOS_FILE="$IMAGE_PATH/bios.bin"
 DISK_SIZE="16G"  # Customize size as needed
+RAM=8192      # 8GB RAM (minimum recommended)
+VCPUS=4          # 4 vCPUs (minimum recommended)
+
+MGMT_BRIDGE="ndfc-mgmt"  # Management bridge
 
 # Check if BIOS file exists
 if [ ! -f "$BIOS_FILE" ]; then
@@ -18,9 +22,11 @@ fi
 ER_IMAGE="$IMAGE_PATH/ER.qcow2"
 # Create writable disk copies for each VM
 echo "Creating disk images..."
+# Create full copies instead of backing files
+cp "$N9KV_SHARED_IMAGE" "$ER_IMAGE"
 
-echo "Creating larger disk images (${DISK_SIZE})..."
-qemu-img create -f qcow2 -F qcow2 -b "$N9KV_SHARED_IMAGE" "$ER_IMAGE" "$DISK_SIZE"
+# Resize the copies
+qemu-img resize $ER_IMAGE "$DISK_SIZE"
 
 # Verify sizes
 echo "Disk image sizes:"
@@ -28,15 +34,18 @@ qemu-img info "$ER_IMAGE" | grep "virtual size"
 
 # Switch 1 (ER) - Edge Router
 echo "Creating Switch 1 (ER) - Edge Router..."
+VM_NAME="n9kv-ER"
 virt-install \
-    --name="n9kv-ER" \
+    --name="$VM_NAME" \
     --machine q35 \
     --boot loader="$BIOS_FILE" \
-    --ram=8192 --vcpus=4 \
-    --disk path=$ER_IMAGE,format=qcow2,bus=sata \
-    --network bridge=ndfc-mgmt,model=virtio \
-    --network bridge=BR_ER_S1,model=virtio \
-    --network bridge=BR_ER_S2,model=virtio \
+    --ram=$RAM \
+    --vcpus=$VCPUS \
+    # --disk path=$ER_IMAGE,format=qcow2,bus=sata \
+    --disk path=$ER_IMAGE,format=qcow2,bus=ide,cache=writethrough \
+    --network bridge=$MGMT_BRIDGE,model=e1000 \
+    --network bridge=BR_ER_S1,model=e1000 \
+    --network bridge=BR_ER_S2,model=e1000 \
     --graphics none \
     --console pty,target_type=serial \
     --serial pty \
@@ -45,13 +54,13 @@ virt-install \
     --import \
     --noautoconsole
 
-echo "ER N9KV instance created."
+echo "$VM_NAME instance created."
 echo "ER -> S1: BR_ER_S1"
 echo "ER -> S2: BR_ER_S2"
-echo "All mgmt interfaces connected to respective TAP interfaces"
+echo "All mgmt interfaces connected to $MGMT_BRIDGE bridge."
 echo ""
 echo "Console access:"
-echo "virsh console n9kv-ER"
+echo "virsh console $VM_NAME"
 echo ""
 echo "Alternative: Check Virtual Machine Manager for PTY devices"
 echo ""

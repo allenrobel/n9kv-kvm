@@ -7,7 +7,7 @@ N9KV_IMAGE="/iso/nxos/nexus9300v64.10.3.8.M.qcow2"
 virt-install \
     --name="n9kv-ER" \
     --ram=8192 --vcpus=4 \
-    --disk path="$N9KV_IMAGE",format=qcow2,bus=ide,cache=writethrough \
+    --disk path="$N9KV_IMAGE",format=qcow2,bus=virtio,cache=writethrough \
     --network type=direct,source=tap_ER_MGMT,model=e1000 \
     --network type=direct,source=tap_ER_E1_1,model=e1000 \
     --network type=direct,source=tap_ER_E1_2,model=e1000 \
@@ -18,7 +18,7 @@ virt-install \
 virt-install \
     --name="n9kv-S1" \
     --ram=8192 --vcpus=4 \
-    --disk path="$N9KV_IMAGE",format=qcow2,bus=ide,cache=writethrough \
+    --disk path="$N9KV_IMAGE",format=qcow2,bus=virtio,cache=writethrough \
     --network type=direct,source=tap_S1_MGMT,model=e1000 \
     --network type=direct,source=tap_S1_E1_1,model=e1000 \
     --network type=direct,source=tap_S1_E1_2,model=e1000 \
@@ -29,7 +29,7 @@ virt-install \
 virt-install \
     --name="n9kv-S2" \
     --ram=8192 --vcpus=4 \
-    --disk path="$N9KV_IMAGE",format=qcow2,bus=ide,cache=writethrough \
+    --disk path="$N9KV_IMAGE",format=qcow2,bus=virtio,cache=writethrough \
     --network type=direct,source=tap_S2_MGMT,model=e1000 \
     --network type=direct,source=tap_S2_E1_1,model=e1000 \
     --network type=direct,source=tap_S2_E1_2,model=e1000 \
@@ -40,7 +40,7 @@ virt-install \
 virt-install \
     --name="n9kv-L1" \
     --ram=8192 --vcpus=4 \
-    --disk path="$N9KV_IMAGE",format=qcow2,bus=ide,cache=writethrough \
+    --disk path="$N9KV_IMAGE",format=qcow2,bus=virtio,cache=writethrough \
     --network type=direct,source=tap_L1_MGMT,model=e1000 \
     --network type=direct,source=tap_L1_E1_1,model=e1000 \
     --network type=direct,source=tap_L1_E1_2,model=e1000 \

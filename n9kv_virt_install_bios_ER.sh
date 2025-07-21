@@ -5,6 +5,7 @@
 IMAGE_PATH="/iso/nxos"
 N9KV_SHARED_IMAGE="$IMAGE_PATH/nexus9300v64.10.3.8.M.qcow2"
 BIOS_FILE="$IMAGE_PATH/bios.bin"
+DISK_SIZE="16G"  # Customize size as needed
 
 # Check if BIOS file exists
 if [ ! -f "$BIOS_FILE" ]; then
@@ -17,6 +18,10 @@ fi
 ER_IMAGE="$IMAGE_PATH/ER.qcow2"
 # Create writable disk copies for each VM
 echo "Creating disk images..."
+
+echo "Creating larger disk images (${DISK_SIZE})..."
+qemu-img create -f qcow2 -F qcow2 -b "$N9KV_SHARED_IMAGE" "$ER_IMAGE" "$DISK_SIZE"
+
 cp "$N9KV_SHARED_IMAGE" "$ER_IMAGE"
 
 
@@ -28,9 +33,9 @@ virt-install \
     --boot loader="$BIOS_FILE" \
     --ram=8192 --vcpus=4 \
     --disk path=$ER_IMAGE,format=qcow2,bus=sata \
-    --network bridge=ndfc-mgmt,model=e1000 \
-    --network bridge=BR_ER_S1,model=e1000 \
-    --network bridge=BR_ER_S2,model=e1000 \
+    --network bridge=ndfc-mgmt,model=virtio \
+    --network bridge=BR_ER_S1,model=virtio \
+    --network bridge=BR_ER_S2,model=virtio \
     --graphics none \
     --console pty,target_type=serial \
     --serial pty \

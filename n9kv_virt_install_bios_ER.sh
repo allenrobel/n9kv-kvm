@@ -22,8 +22,9 @@ echo "Creating disk images..."
 echo "Creating larger disk images (${DISK_SIZE})..."
 qemu-img create -f qcow2 -F qcow2 -b "$N9KV_SHARED_IMAGE" "$ER_IMAGE" "$DISK_SIZE"
 
-cp "$N9KV_SHARED_IMAGE" "$ER_IMAGE"
-
+# Verify sizes
+echo "Disk image sizes:"
+qemu-img info "$ER_IMAGE" | grep "virtual size"
 
 # Switch 1 (ER) - Edge Router
 echo "Creating Switch 1 (ER) - Edge Router..."

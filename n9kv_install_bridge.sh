@@ -1,13 +1,16 @@
 #!/bin/bash
 
 # Install multiple N9KV instances using your TAP topology
-N9KV_IMAGE="/iso/nxos/nexus9300v64.10.3.8.M.qcow2"
+N9KV_IMAGE_ER="/iso/nxos/ER.qcow2"
+N9KV_IMAGE_S1="/iso/nxos/S1.qcow2"
+N9KV_IMAGE_S2="/iso/nxos/S2.qcow2"
+N9KV_IMAGE_L1="/iso/nxos/L1.qcow2"
 
 # Switch 1 (ER) - Edge Router
 virt-install \
     --name="n9kv-ER" \
     --ram=8192 --vcpus=4 \
-    --disk path="$N9KV_IMAGE",format=qcow2,bus=virtio,cache=writethrough \
+    --disk path="$N9KV_IMAGE_ER",format=qcow2,bus=virtio,cache=writethrough \
     --network bridge=ndfc-mgmt,model=e1000 \
     --network bridge=BR_ER_S1,model=e1000 \
     --network bridge=BR_ER_S2,model=e1000 \
@@ -18,7 +21,7 @@ virt-install \
 virt-install \
     --name="n9kv-S1" \
     --ram=8192 --vcpus=4 \
-    --disk path="$N9KV_IMAGE",format=qcow2,bus=virtio,cache=writethrough \
+    --disk path="$N9KV_IMAGE_S1",format=qcow2,bus=virtio,cache=writethrough \
     --network bridge=ndfc-mgmt,model=e1000 \
     --network bridge=BR_ER_S1,model=e1000 \
     --network bridge=BR_S1_L1,model=e1000 \
@@ -29,7 +32,7 @@ virt-install \
 virt-install \
     --name="n9kv-S2" \
     --ram=8192 --vcpus=4 \
-    --disk path="$N9KV_IMAGE",format=qcow2,bus=virtio,cache=writethrough \
+    --disk path="$N9KV_IMAGE_S2",format=qcow2,bus=virtio,cache=writethrough \
     --network bridge=ndfc-mgmt,model=e1000 \
     --network bridge=BR_ER_S2,model=e1000 \
     --network bridge=BR_S2_L1,model=e1000 \
@@ -40,7 +43,7 @@ virt-install \
 virt-install \
     --name="n9kv-L1" \
     --ram=8192 --vcpus=4 \
-    --disk path="$N9KV_IMAGE",format=qcow2,bus=virtio,cache=writethrough \
+    --disk path="$N9KV_IMAGE_L1",format=qcow2,bus=virtio,cache=writethrough \
     --network bridge=ndfc-mgmt,model=e1000 \
     --network bridge=BR_S1_L1,model=e1000 \
     --network bridge=BR_S2_L1,model=e1000 \

@@ -18,6 +18,7 @@ ER_IMAGE="$IMAGE_PATH/ER.qcow2"
 S1_IMAGE="$IMAGE_PATH/S1.qcow2"
 S2_IMAGE="$IMAGE_PATH/S2.qcow2"
 L1_IMAGE="$IMAGE_PATH/L1.qcow2"
+
 # Create writable disk copies for each VM
 echo "Creating disk images..."
 cp "$N9KV_SHARED_IMAGE" "$ER_IMAGE"
@@ -27,6 +28,7 @@ cp "$N9KV_SHARED_IMAGE" "$L1_IMAGE"
 
 
 # Switch 1 (ER) - Edge Router
+echo "Creating Switch 1 (ER) - Edge Router..."
 virt-install \
     --name="n9kv-ER" \
     --machine q35 \
@@ -45,9 +47,11 @@ virt-install \
     --noautoconsole
 
 # Switch 2 (S1) - Border Spine Switch
+echo "Creating Switch 2 (S1) - Border Spine Switch..."
 virt-install \
     --name="n9kv-S1" \
     --machine q35 \
+    --boot loader="$BIOS_FILE" \
     --ram=8192 --vcpus=4 \
     --disk path=$S1_IMAGE,format=qcow2,bus=sata \
     --network type=direct,source=tap_S1_MGMT,model=e1000,mac=00:b0:21:02:01:00 \
@@ -62,9 +66,11 @@ virt-install \
     --noautoconsole
 
 # Switch 3 (S2) - Border Spine Switch
+echo "Creating Switch 3 (S2) - Border Spine Switch..."
 virt-install \
     --name="n9kv-S2" \
     --machine q35 \
+    --boot loader="$BIOS_FILE" \
     --ram=8192 --vcpus=4 \
     --disk path=$S2_IMAGE,format=qcow2,bus=sata \
     --network type=direct,source=tap_S2_MGMT,model=e1000,mac=00:b0:21:02:02:00 \
@@ -79,9 +85,11 @@ virt-install \
     --noautoconsole
 
 # Switch 4 (L1) - Leaf Switch
+echo "Creating Switch 4 (L1) - Leaf Switch..."
 virt-install \
     --name="n9kv-L1" \
     --machine q35 \
+    --boot loader="$BIOS_FILE" \
     --ram=8192 --vcpus=4 \
     --disk path=$L1_IMAGE,format=qcow2,bus=sata \
     --network type=direct,source=tap_L1_MGMT,model=e1000,mac=00:b0:21:02:03:00 \

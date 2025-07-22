@@ -5,14 +5,14 @@
 IMAGE_PATH="/iso/nxos"
 N9KV_SHARED_IMAGE="$IMAGE_PATH/nexus9300v.9.3.4.qcow2"
 BIOS_FILE="$IMAGE_PATH/bios.bin"
-DISK_SIZE="16G"  # Customize size as needed
-RAM=8192      # 8GB RAM (minimum recommended)
+DISK_SIZE=16G.   # Customize size as needed
+RAM=8192         # 8GB RAM (minimum recommended)
 VCPUS=4          # 4 vCPUs (minimum recommended)
 # MODEL=rtl8139  # Network model for older systems
 # MODEL=ne2k_pci # Network model for older systems
-# MODEL=pcnet   # Network model for older systems
-MODEL=e1000  # Network model
-# MODEL=e1000e  # Network model for newer systems
+# MODEL=pcnet    # Network model for older systems
+# MODEL=e1000    # Network model
+MODEL=e1000e     # Network model for newer systems
 
 MGMT_BRIDGE="ndfc-mgmt"  # Management bridge
 
@@ -31,7 +31,7 @@ echo "Creating disk images..."
 cp "$N9KV_SHARED_IMAGE" "$ER_IMAGE"
 
 # Resize the copies
-qemu-img resize $ER_IMAGE "$DISK_SIZE"
+qemu-img resize $ER_IMAGE $DISK_SIZE
 
 # Verify sizes
 echo "Disk image sizes:"

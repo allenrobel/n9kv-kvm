@@ -80,7 +80,6 @@ qemu-system-x86_64 \
     -bios $BIOS_FILE \
     -serial telnet:localhost:$TELNET_PORT,server=on,wait=off \
     -drive file=$ER_IMAGE,if=ide,format=qcow2,cache=writethrough \
-    -drive if=ide,media=cdrom \
     -monitor telnet:localhost:$MONITOR_PORT,server,nowait \
     -netdev bridge,id=ndfc-mgmt,br=$MGMT_BRIDGE \
     -device $MODEL,netdev=ndfc-mgmt,mac=00:00:11:00:00:01 \

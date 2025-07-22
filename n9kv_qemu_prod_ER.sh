@@ -74,9 +74,9 @@ qemu-system-x86_64 \
     -drive file=$ER_IMAGE,if=none,id=drive-sata-disk0,format=qcow2,cache=writeback \
     -device ide-hd,bus=ahci0.0,drive=drive-sata-disk0,bootindex=1 \
     -monitor telnet:localhost:$MONITOR_PORT,server,nowait \
-    -net bridge=$MGMT_BRIDGE,model=$MODEL,mac=52:54:00:11:11:01 \
-    -net bridge=BR_ER_S1,model=$MODEL,mac=52:54:00:11:11:02 \
-    -net bridge=BR_ER_S2,model=$MODEL,mac=52:54:00:11:11:03 \
+    -net bridge=$MGMT_BRIDGE,type=$MODEL,mac=52:54:00:11:11:01 \
+    -net bridge=BR_ER_S1,type=$MODEL,mac=52:54:00:11:11:02 \
+    -net bridge=BR_ER_S2,type=$MODEL,mac=52:54:00:11:11:03 \
     -name $VM_NAME &
 
 echo "$VM_NAME instance created."

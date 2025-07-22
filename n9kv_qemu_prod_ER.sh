@@ -67,8 +67,8 @@ qemu-system-x86_64 \
     -rtc clock=host,base=localtime \
     -nographic \
     -bios $BIOS_FILE \
-    -object memory-backend-file,id=mem0,size=16G,mem-path=/dev/hugepages,share=on \
-    -numa node,memdev=mem0 \
+    # -object memory-backend-file,id=mem0,size=16G,mem-path=/dev/hugepages,share=on 
+    # -numa node,memdev=mem0 
     -serial telnet:localhost:$TELNET_PORT,server=on,wait=off \
     -device ahci,id=ahci0,bus=pci.0 \
     -drive file=$ER_IMAGE,if=none,id=drive-sata-disk0,format=qcow2,cache=writeback \

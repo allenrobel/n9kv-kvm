@@ -69,24 +69,22 @@ VM_NAME=ER
 
 qemu-system-x86_64 \
     -enable-kvm \
-    -machine type=q35,accel=kvm,kernel-irqchip=on \
-    -cpu qemu64,+ssse3,+sse4.1,+sse4.2,-smep,-smap,-spec-ctrl \
-    -smp $VCPUS,sockets=1,cores=$VCPUS,threads=1 \
-    -m $RAM \
-    -object memory-backend-ram,id=ram-node0,size=${RAM}M \
-    -numa node,nodeid=0,cpus=0-$((VCPUS-1)),memdev=ram-node0 \
+    -machine type=pc-i440fx-2.11,accel=kvm \
+    -cpu qemu64,-smep,-smap,-spec-ctrl \
+    -smp 2,sockets=1,cores=2,threads=1 \
+    -m 6144 \
     -rtc clock=host,base=localtime \
     -nographic \
     -bios $BIOS_FILE \
     -serial telnet:localhost:$TELNET_PORT,server=on,wait=off \
-    -drive file=$ER_IMAGE,if=ide,format=qcow2,cache=writethrough \
+    -drive file=$ER_IMAGE,if=ide,format=qcow2,cache=none \
     -monitor telnet:localhost:$MONITOR_PORT,server,nowait \
     -netdev bridge,id=ndfc-mgmt,br=$MGMT_BRIDGE \
-    -device $MODEL,netdev=ndfc-mgmt,mac=00:00:11:00:00:01 \
+    -device rtl8139,netdev=ndfc-mgmt,mac=00:00:11:00:00:01 \
     -netdev bridge,id=ER_S1,br=BR_ER_S1 \
-    -device $MODEL,netdev=ER_S1,mac=00:00:11:00:00:02 \
+    -device rtl8139,netdev=ER_S1,mac=00:00:11:00:00:02 \
     -netdev bridge,id=ER_S2,br=BR_ER_S2 \
-    -device $MODEL,netdev=ER_S2,mac=00:00:11:00:00:03 \
+    -device rtl8139,netdev=ER_S2,mac=00:00:11:00:00:03 \
     -name $VM_NAME &
 
 # Use QEMU

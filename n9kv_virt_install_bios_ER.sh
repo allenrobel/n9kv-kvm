@@ -41,9 +41,10 @@ qemu-img info "$ER_IMAGE" | grep "virtual size"
 # Switch 1 (ER) - Edge Router
 echo "Creating Switch 1 (ER) - Edge Router..."
 VM_NAME="n9kv-ER"
+    # --machine q35
 virt-install \
     --name="$VM_NAME" \
-    --machine q35 \
+    --machine pc-i440fx-2.8 \
     --boot loader="$BIOS_FILE" \
     --ram=$RAM \
     --vcpus=$VCPUS \

@@ -60,6 +60,13 @@ VM_NAME=ER
 # ip link set tap_ER_MGMT nomaster 2>/dev/null || true
 # ip link set tap_ER_MGMT up 2>/dev/null || true
 
+    # Original drives, caused issued with hanging when trying to mount cdrom
+    # -device ahci,id=ahci0,bus=pcie.0 
+    # -drive file=$ER_IMAGE,if=none,id=drive-sata-disk0,format=qcow2,cache=writethrough 
+    # -device ide-hd,bus=ahci0.0,drive=drive-sata-disk0,bootindex=1 
+    # -drive if=none,id=cdrom,media=cdrom 
+    # -device ide-cd,bus=ahci0.1,drive=cdrom 
+
 qemu-system-x86_64 \
     -enable-kvm \
     -machine type=q35,accel=kvm,kernel-irqchip=on \
@@ -72,11 +79,8 @@ qemu-system-x86_64 \
     -nographic \
     -bios $BIOS_FILE \
     -serial telnet:localhost:$TELNET_PORT,server=on,wait=off \
-    -device ahci,id=ahci0,bus=pcie.0 \
-    -drive file=$ER_IMAGE,if=none,id=drive-sata-disk0,format=qcow2,cache=writethrough \
-    -device ide-hd,bus=ahci0.0,drive=drive-sata-disk0,bootindex=1 \
-    -drive if=none,id=cdrom,media=cdrom \
-    -device ide-cd,bus=ahci0.1,drive=cdrom \
+    -drive file=$ER_IMAGE,if=ide,format=qcow2,cache=writethrough \
+    -drive if=ide,media=cdrom \
     -monitor telnet:localhost:$MONITOR_PORT,server,nowait \
     -netdev bridge,id=ndfc-mgmt,br=$MGMT_BRIDGE \
     -device $MODEL,netdev=ndfc-mgmt,mac=00:00:11:00:00:01 \

@@ -6,14 +6,17 @@ IMAGE_PATH=/iso/nxos
 # N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v.9.3.4.qcow2
 N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v.10.1.2.qcow2
 BIOS_FILE=$IMAGE_PATH/bios.bin
+
+# VM configuration parameters
 DISK_SIZE=32G    # Customize size as needed
-RAM=16384         # 16GB RAM (minimum recommended)
+RAM=8192         # 8GB RAM (minimum recommended)
 VCPUS=4          # 4 vCPUs (minimum recommended)
-MODEL=rtl8139  # Network model for older systems
+MODEL=e1000      # Network model
+
+# MODEL=e1000e   # Network model for newer systems
 # MODEL=ne2k_pci # Network model for older systems
 # MODEL=pcnet    # Network model for older systems
-# MODEL=e1000      # Network model
-# MODEL=e1000e   # Network model for newer systems
+# MODEL=rtl8139  # Network model for older systems
 
 MGMT_BRIDGE=ndfc-mgmt  # Management bridge
 
@@ -57,30 +60,54 @@ VM_NAME=ER
 # ip link set tap_ER_MGMT nomaster 2>/dev/null || true
 # ip link set tap_ER_MGMT up 2>/dev/null || true
 
-# Use QEMU
-# -object memory-backend-file,id=mem0,size=16G,mem-path=/dev/hugepages,share=on 
-# -numa node,memdev=mem0 
 qemu-system-x86_64 \
-    -smp 4,sockets=1,cores=4,threads=1 \
     -enable-kvm \
-    -machine type=pc-i440fx-4.1,accel=kvm \
-    -cpu host,check=off,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time \
+    -machine type=q35,accel=kvm,kernel-irqchip=on \
+    -cpu qemu64,+ssse3,+sse4.1,+sse4.2,-smep,-smap,-spec-ctrl \
+    -smp $VCPUS,sockets=1,cores=$VCPUS,threads=1 \
     -m $RAM \
+    -object memory-backend-ram,id=ram-node0,size=${RAM}M \
+    -numa node,nodeid=0,cpus=0-$((VCPUS-1)),memdev=ram-node0 \
     -rtc clock=host,base=localtime \
     -nographic \
     -bios $BIOS_FILE \
     -serial telnet:localhost:$TELNET_PORT,server=on,wait=off \
-    -device ahci,id=ahci0,bus=pci.0 \
-    -drive file=$ER_IMAGE,if=none,id=drive-sata-disk0,format=qcow2,cache=writeback \
+    -device ahci,id=ahci0,bus=pcie.0 \
+    -drive file=$ER_IMAGE,if=none,id=drive-sata-disk0,format=qcow2,cache=writethrough \
     -device ide-hd,bus=ahci0.0,drive=drive-sata-disk0,bootindex=1 \
     -monitor telnet:localhost:$MONITOR_PORT,server,nowait \
     -netdev bridge,id=ndfc-mgmt,br=$MGMT_BRIDGE \
     -device $MODEL,netdev=ndfc-mgmt,mac=00:00:11:00:00:01 \
-    -netdev bridge,id=BR_ER_S1,br=BR_ER_S1 \
-    -device $MODEL,netdev=BR_ER_S1,mac=00:00:11:00:00:02 \
-    -netdev bridge,id=BR_ER_S2,br=BR_ER_S2 \
-    -device $MODEL,netdev=BR_ER_S2,mac=00:00:11:00:00:03 \
+    -netdev bridge,id=ER_S1,br=BR_ER_S1 \
+    -device $MODEL,netdev=ER_S1,mac=00:00:11:00:00:02 \
+    -netdev bridge,id=ER_S2,br=BR_ER_S2 \
+    -device $MODEL,netdev=ER_S2,mac=00:00:11:00:00:03 \
     -name $VM_NAME &
+
+# Use QEMU
+# -object memory-backend-file,id=mem0,size=16G,mem-path=/dev/hugepages,share=on 
+# -numa node,memdev=mem0 
+# qemu-system-x86_64 \
+#     -smp 4,sockets=1,cores=4,threads=1 \
+#     -enable-kvm \
+#     -machine type=pc-i440fx-4.1,accel=kvm \
+#     -cpu host,check=off,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time \
+#     -m $RAM \
+#     -rtc clock=host,base=localtime \
+#     -nographic \
+#     -bios $BIOS_FILE \
+#     -serial telnet:localhost:$TELNET_PORT,server=on,wait=off \
+#     -device ahci,id=ahci0,bus=pci.0 \
+#     -drive file=$ER_IMAGE,if=none,id=drive-sata-disk0,format=qcow2,cache=writeback \
+#     -device ide-hd,bus=ahci0.0,drive=drive-sata-disk0,bootindex=1 \
+#     -monitor telnet:localhost:$MONITOR_PORT,server,nowait \
+#     -netdev bridge,id=ndfc-mgmt,br=$MGMT_BRIDGE \
+#     -device $MODEL,netdev=ndfc-mgmt,mac=00:00:11:00:00:01 \
+#     -netdev bridge,id=ER_S1,br=BR_ER_S1 \
+#     -device $MODEL,netdev=ER_S1,mac=00:00:11:00:00:02 \
+#     -netdev bridge,id=ER_S2,br=BR_ER_S2 \
+#     -device $MODEL,netdev=ER_S2,mac=00:00:11:00:00:03 \
+#     -name $VM_NAME &
 
 echo "$VM_NAME instance created."
 echo "ER -> S1: BR_ER_S1"

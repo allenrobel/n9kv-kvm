@@ -12,8 +12,8 @@ VCPUS=4          # 4 vCPUs (minimum recommended)
 # MODEL=rtl8139  # Network model for older systems
 # MODEL=ne2k_pci # Network model for older systems
 # MODEL=pcnet    # Network model for older systems
-MODEL=e1000      # Network model
-# MODEL=e1000e   # Network model for newer systems
+# MODEL=e1000      # Network model
+MODEL=e1000e   # Network model for newer systems
 
 MGMT_BRIDGE=ndfc-mgmt  # Management bridge
 
@@ -55,9 +55,9 @@ virt-install \
     --ram=$RAM \
     --vcpus=$VCPUS \
     --disk path=$ER_IMAGE,format=qcow2,bus=sata \
-    --network bridge=$MGMT_BRIDGE,model=$MODEL \
-    --network bridge=BR_ER_S1,model=$MODEL \
-    --network bridge=BR_ER_S2,model=$MODEL \
+    --network bridge=$MGMT_BRIDGE,model=$MODEL,mac=52:54:00:00:00:01 \
+    --network bridge=BR_ER_S1,model=$MODEL,mac=52:54:00:00:00:02 \
+    --network bridge=BR_ER_S2,model=$MODEL,mac=52:54:00:00:00:03 \
     --graphics none \
     --console pty,target_type=serial \
     --serial pty \

@@ -3,8 +3,8 @@
 # Install multiple N9KV instances using your TAP topology
 # Based on working QEMU configuration
 IMAGE_PATH=/iso/nxos
-#N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v.9.3.4.qcow2
-N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v.10.1.2.qcow2
+N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v.9.3.4.qcow2
+#N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v.10.1.2.qcow2
 BIOS_FILE=$IMAGE_PATH/bios.bin
 DISK_SIZE=16G    # Customize size as needed
 RAM=8192         # 8GB RAM (minimum recommended)
@@ -12,10 +12,10 @@ VCPUS=4          # 4 vCPUs (minimum recommended)
 # MODEL=rtl8139  # Network model for older systems
 # MODEL=ne2k_pci # Network model for older systems
 # MODEL=pcnet    # Network model for older systems
-# MODEL=e1000      # Network model
-MODEL=e1000e   # Network model for newer systems
+MODEL=e1000      # Network model
+# MODEL=e1000e   # Network model for newer systems
 
-MGMT_BRIDGE=ndfc-mgmt  # Management bridge
+MGMT_BRIDGE=ndfc-data  # Management bridge
 
 # Check if BIOS file exists
 if [ ! -f $BIOS_FILE ]; then
@@ -55,9 +55,10 @@ virt-install \
     --ram=$RAM \
     --vcpus=$VCPUS \
     --disk path=$ER_IMAGE,format=qcow2,bus=sata \
-    --network bridge=$MGMT_BRIDGE,model=$MODEL,mac=52:54:00:00:00:01 \
-    --network bridge=BR_ER_S1,model=$MODEL,mac=52:54:00:00:00:02 \
-    --network bridge=BR_ER_S2,model=$MODEL,mac=52:54:00:00:00:03 \
+    --network bridge=$MGMT_BRIDGE,model=$MODEL,mac=52:11:00:00:00:01 \
+    --network bridge=$MGMT_BRIDGE,model=$MODEL,mac=52:11:00:00:00:02 \
+    --network bridge=BR_ER_S1,model=$MODEL,mac=52:11:00:00:00:03 \
+    --network bridge=BR_ER_S2,model=$MODEL,mac=52:11:00:00:00:04 \
     --graphics none \
     --console pty,target_type=serial \
     --serial pty \

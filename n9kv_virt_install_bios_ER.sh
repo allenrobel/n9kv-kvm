@@ -3,7 +3,7 @@
 # Install multiple N9KV instances using your TAP topology
 # Based on working QEMU configuration
 IMAGE_PATH="/iso/nxos"
-N9KV_SHARED_IMAGE="$IMAGE_PATH/nexus9300v64.10.3.8.M.qcow2"
+N9KV_SHARED_IMAGE="$IMAGE_PATH/nexus9300v.9.3.4.qcow2"
 BIOS_FILE="$IMAGE_PATH/bios.bin"
 DISK_SIZE="16G"  # Customize size as needed
 RAM=8192      # 8GB RAM (minimum recommended)
@@ -57,7 +57,6 @@ virt-install \
     --os-variant=linux2022 \
     --boot hd \
     --import \
-    --virt-type qemu \
     --noautoconsole
 
 echo "$VM_NAME instance created."

@@ -58,6 +58,8 @@ VM_NAME=ER
 # ip link set tap_ER_MGMT up 2>/dev/null || true
 
 # Use QEMU
+# -object memory-backend-file,id=mem0,size=16G,mem-path=/dev/hugepages,share=on 
+# -numa node,memdev=mem0 
 qemu-system-x86_64 \
     -smp 4,sockets=1,cores=4,threads=1 \
     -enable-kvm \
@@ -67,8 +69,6 @@ qemu-system-x86_64 \
     -rtc clock=host,base=localtime \
     -nographic \
     -bios $BIOS_FILE \
-    # -object memory-backend-file,id=mem0,size=16G,mem-path=/dev/hugepages,share=on 
-    # -numa node,memdev=mem0 
     -serial telnet:localhost:$TELNET_PORT,server=on,wait=off \
     -device ahci,id=ahci0,bus=pci.0 \
     -drive file=$ER_IMAGE,if=none,id=drive-sata-disk0,format=qcow2,cache=writeback \

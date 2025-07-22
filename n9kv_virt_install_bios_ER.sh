@@ -3,10 +3,10 @@
 # Install multiple N9KV instances using your TAP topology
 # Based on working QEMU configuration
 IMAGE_PATH=/iso/nxos
-N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v.9.3.4.qcow2
-#N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v.10.1.2.qcow2
+# N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v.9.3.4.qcow2
+N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v.10.1.2.qcow2
 BIOS_FILE=$IMAGE_PATH/bios.bin
-DISK_SIZE=16G    # Customize size as needed
+DISK_SIZE=32G    # Customize size as needed
 RAM=8192         # 8GB RAM (minimum recommended)
 VCPUS=4          # 4 vCPUs (minimum recommended)
 # MODEL=rtl8139  # Network model for older systems

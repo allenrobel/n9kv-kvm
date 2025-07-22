@@ -75,6 +75,8 @@ qemu-system-x86_64 \
     -device ahci,id=ahci0,bus=pcie.0 \
     -drive file=$ER_IMAGE,if=none,id=drive-sata-disk0,format=qcow2,cache=writethrough \
     -device ide-hd,bus=ahci0.0,drive=drive-sata-disk0,bootindex=1 \
+    -drive if=none,id=cdrom,media=cdrom \
+    -device ide-cd,bus=ahci0.1,drive=cdrom \
     -monitor telnet:localhost:$MONITOR_PORT,server,nowait \
     -netdev bridge,id=ndfc-mgmt,br=$MGMT_BRIDGE \
     -device $MODEL,netdev=ndfc-mgmt,mac=00:00:11:00:00:01 \

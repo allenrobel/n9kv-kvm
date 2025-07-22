@@ -57,7 +57,7 @@ virt-install \
     --os-variant=linux2022 \
     --boot hd \
     --import \
-    --accelerate=no \
+    --virt-type qemu \
     --noautoconsole
 
 echo "$VM_NAME instance created."

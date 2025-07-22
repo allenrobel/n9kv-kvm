@@ -2,10 +2,10 @@
 
 # Install multiple N9KV instances using your TAP topology
 # Based on working QEMU configuration
-IMAGE_PATH="/iso/nxos"
-N9KV_SHARED_IMAGE="$IMAGE_PATH/nexus9300v.9.3.4.qcow2"
-BIOS_FILE="$IMAGE_PATH/bios.bin"
-DISK_SIZE=16G.   # Customize size as needed
+IMAGE_PATH=/iso/nxos
+N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v.10.1.2.qcow2
+BIOS_FILE=$IMAGE_PATH/bios-32bit.bin
+DISK_SIZE=16G    # Customize size as needed
 RAM=8192         # 8GB RAM (minimum recommended)
 VCPUS=4          # 4 vCPUs (minimum recommended)
 # MODEL=rtl8139  # Network model for older systems
@@ -14,38 +14,43 @@ VCPUS=4          # 4 vCPUs (minimum recommended)
 MODEL=e1000      # Network model
 # MODEL=e1000e   # Network model for newer systems
 
-MGMT_BRIDGE="ndfc-mgmt"  # Management bridge
+MGMT_BRIDGE=ndfc-mgmt  # Management bridge
 
 # Check if BIOS file exists
-if [ ! -f "$BIOS_FILE" ]; then
+if [ ! -f $BIOS_FILE ]; then
     echo "ERROR: BIOS file $BIOS_FILE not found!"
-    echo "Install OVMF: sudo apt install ovmf"
-    echo "Then copy: cp /usr/share/ovmf/OVMF.fd $BIOS_FILE"
+    echo "Install OVMF for 64-bit images: sudo apt install ovmf"
+    echo "OR:"
+    sudo "Install OVMF for 32-bit images: apt install ovmf-ia32"
+    echo "Then copy (for 64-bit):"
+    echo "cp /usr/share/ovmf/OVMF.fd $BIOS_FILE"
+    echo "Or copy (for 32-bit):"
+    echo "cp /usr/share/OVMF/OVMF32_CODE_4M.fd $BIOS_FILE"
+    echo "Exiting..."
     exit 1
 fi
 
-ER_IMAGE="$IMAGE_PATH/ER.qcow2"
+ER_IMAGE=$IMAGE_PATH/ER.qcow2
 # Create writable disk copies for each VM
 echo "Creating disk images..."
 # Create full copies instead of backing files
-cp "$N9KV_SHARED_IMAGE" "$ER_IMAGE"
+cp $N9KV_SHARED_IMAGE $ER_IMAGE
 
 # Resize the copies
 qemu-img resize $ER_IMAGE $DISK_SIZE
 
 # Verify sizes
 echo "Disk image sizes:"
-qemu-img info "$ER_IMAGE" | grep "virtual size"
+qemu-img info $ER_IMAGE | grep "virtual size"
 
 
 # Switch 1 (ER) - Edge Router
 echo "Creating Switch 1 (ER) - Edge Router..."
-VM_NAME="n9kv-ER"
-    # --machine q35
+VM_NAME=ER
 virt-install \
-    --name="$VM_NAME" \
-    --machine pc-i440fx-2.8 \
-    --boot loader="$BIOS_FILE" \
+    --name=$VM_NAME \
+    --machine q35 \
+    --boot loader=$BIOS_FILE \
     --ram=$RAM \
     --vcpus=$VCPUS \
     --disk path=$ER_IMAGE,format=qcow2,bus=sata \

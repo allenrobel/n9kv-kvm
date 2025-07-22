@@ -11,8 +11,8 @@ VCPUS=4          # 4 vCPUs (minimum recommended)
 # MODEL=rtl8139  # Network model for older systems
 # MODEL=ne2k_pci # Network model for older systems
 # MODEL=pcnet    # Network model for older systems
-# MODEL=e1000    # Network model
-MODEL=e1000e     # Network model for newer systems
+MODEL=e1000      # Network model
+# MODEL=e1000e   # Network model for newer systems
 
 MGMT_BRIDGE="ndfc-mgmt"  # Management bridge
 

@@ -8,6 +8,11 @@ BIOS_FILE="$IMAGE_PATH/bios.bin"
 DISK_SIZE="16G"  # Customize size as needed
 RAM=8192      # 8GB RAM (minimum recommended)
 VCPUS=4          # 4 vCPUs (minimum recommended)
+# MODEL=e1000  # Network model
+# MODEL=rtl8139  # Network model for older systems
+# MODEL=ne2k_pci # Network model for older systems
+# MODEL=pcnet   # Network model for older systems
+MODEL=e1000e  # Network model for newer systems
 
 MGMT_BRIDGE="ndfc-mgmt"  # Management bridge
 
@@ -43,13 +48,13 @@ virt-install \
     --ram=$RAM \
     --vcpus=$VCPUS \
     --disk path=$ER_IMAGE,format=qcow2,bus=sata \
-    --network bridge=$MGMT_BRIDGE,model=e1000 \
-    --network bridge=BR_ER_S1,model=e1000 \
-    --network bridge=BR_ER_S2,model=e1000 \
+    --network bridge=$MGMT_BRIDGE,model=$MODEL \
+    --network bridge=BR_ER_S1,model=$MODEL \
+    --network bridge=BR_ER_S2,model=$MODEL \
     --graphics none \
     --console pty,target_type=serial \
     --serial pty \
-    --os-variant=linux2024 \
+    --os-variant=linux2022 \
     --boot hd \
     --import \
     --noautoconsole

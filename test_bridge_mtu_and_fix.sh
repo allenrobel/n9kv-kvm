@@ -1,12 +1,36 @@
 #!/bin/bash
 
-# MTU Fix and Connectivity Test
+# Fix Topology Connectivity Issues
 
-echo "=== MTU FIX AND CONNECTIVITY TEST ==="
+echo "=== TOPOLOGY CONNECTIVITY FIX ==="
+echo ""
+echo "Expected topology:"
+echo "ER.Eth1/1.10.33.0.6 --- BR_ER_S1 --- 10.33.0.5.Eth1/1.S1"
+echo "ER.Eth1/2.10.33.0.10 --- BR_ER_S2 --- 10.33.0.9.Eth1/1.S2"
 echo ""
 
-echo "1. Current MTU settings:"
-echo "------------------------"
+echo "1. Fix MTU mismatch:"
+echo "-------------------"
+
+# Set all bridges to MTU 9216 to match N9Kv interface configuration
+for bridge in BR_ER_S1 BR_ER_S2 BR_S1_L1 BR_S2_L1; do
+    if ip link show $bridge >/dev/null 2>&1; then
+        echo "Setting $bridge MTU to 9216..."
+        ip link set $bridge mtu 9216
+    fi
+done
+
+# Set TAP interfaces to MTU 9216 to match
+for tap in $(bridge link show | grep -E "(BR_ER_S1|BR_ER_S2)" | grep tap | cut -d: -f2 | cut -d' ' -f1); do
+    if ip link show $tap >/dev/null 2>&1; then
+        echo "Setting $tap MTU to 9216..."
+        ip link set $tap mtu 9216
+    fi
+done
+
+echo ""
+echo "2. Verify MTU settings:"
+echo "----------------------"
 echo "Bridges:"
 for bridge in BR_ER_S1 BR_ER_S2; do
     if ip link show $bridge >/dev/null 2>&1; then
@@ -16,8 +40,8 @@ for bridge in BR_ER_S1 BR_ER_S2; do
 done
 
 echo ""
-echo "TAP interfaces:"
-for tap in tap1 tap2 tap4 tap7; do
+echo "TAP interfaces on data bridges:"
+for tap in $(bridge link show | grep -E "(BR_ER_S1|BR_ER_S2)" | grep tap | cut -d: -f2 | cut -d' ' -f1); do
     if ip link show $tap >/dev/null 2>&1; then
         mtu=$(ip link show $tap | grep -o 'mtu [0-9]*' | cut -d' ' -f2)
         bridge=$(bridge link show dev $tap | grep -o 'master [^ ]*' | cut -d' ' -f2)
@@ -26,142 +50,114 @@ for tap in tap1 tap2 tap4 tap7; do
 done
 
 echo ""
-echo "2. Fix MTU mismatch:"
-echo "-------------------"
+echo "3. Create test neighbors to simulate S1 and S2:"
+echo "-----------------------------------------------"
 
-# Set bridge MTUs to 1500 to match TAP interfaces
-for bridge in BR_ER_S1 BR_ER_S2 BR_S1_L1 BR_S2_L1; do
-    if ip link show $bridge >/dev/null 2>&1; then
-        echo "Setting $bridge MTU to 1500..."
-        ip link set $bridge mtu 1500
-    fi
-done
-
-echo ""
-echo "3. Test bridge connectivity:"
-echo "-----------------------------"
-
-# Function to test ping from N9Kv to test interfaces
-test_n9kv_connectivity() {
-    echo "Testing N9Kv connectivity to test interfaces..."
-    echo ""
-    echo "Connect to N9Kv console: telnet localhost 9020"
-    echo ""
-    echo "Then try these ping tests:"
-    echo "  ping 10.1.1.100   # Should reach BR_ER_S1 test interface"
-    echo "  ping 10.2.2.100   # Should reach BR_ER_S2 test interface"
-    echo ""
+# Function to create simulated neighbor
+create_neighbor() {
+    local bridge=$1
+    local neighbor_ip=$2
+    local neighbor_name=$3
+    local ns_name="sim_${neighbor_name}"
     
-    # Start packet capture in background
-    echo "Starting packet capture (will run for 60 seconds)..."
-    timeout 60 tcpdump -i BR_ER_S1 -n icmp > /tmp/br_er_s1_capture.log 2>&1 &
-    TCPDUMP_PID1=$!
-    timeout 60 tcpdump -i BR_ER_S2 -n icmp > /tmp/br_er_s2_capture.log 2>&1 &
-    TCPDUMP_PID2=$!
+    echo "Creating simulated $neighbor_name at $neighbor_ip on $bridge..."
     
-    echo "Packet capture started (PIDs: $TCPDUMP_PID1, $TCPDUMP_PID2)"
-    echo ""
-    echo "Now test ping from N9Kv, then check results below..."
-    echo ""
+    # Cleanup any existing
+    ip netns del $ns_name 2>/dev/null
+    ip link del veth_${neighbor_name}_0 2>/dev/null
+    
+    # Create veth pair
+    ip link add veth_${neighbor_name}_0 type veth peer name veth_${neighbor_name}_1
+    
+    # Create namespace and move one end
+    ip netns add $ns_name
+    ip link set veth_${neighbor_name}_1 netns $ns_name
+    
+    # Add to bridge with correct MTU
+    ip link set veth_${neighbor_name}_0 master $bridge
+    ip link set veth_${neighbor_name}_0 mtu 9216 up
+    
+    # Configure in namespace
+    ip netns exec $ns_name ip link set veth_${neighbor_name}_1 mtu 9216 up
+    ip netns exec $ns_name ip addr add ${neighbor_ip}/30 dev veth_${neighbor_name}_1
+    ip netns exec $ns_name ip link set lo up
+    
+    echo "  ✓ $neighbor_name created: $neighbor_ip/30"
+    
+    # Enable ICMP responses
+    ip netns exec $ns_name sysctl -w net.ipv4.icmp_echo_ignore_all=0 >/dev/null 2>&1
+    
+    echo "  Cleanup command: ip netns del $ns_name; ip link del veth_${neighbor_name}_0"
 }
 
-test_n9kv_connectivity
+# Create simulated S1 and S2
+create_neighbor "BR_ER_S1" "10.33.0.5" "S1"
+create_neighbor "BR_ER_S2" "10.33.0.9" "S2"
 
-echo "4. Check N9Kv interface status:"
-echo "-------------------------------"
+echo ""
+echo "4. Test connectivity from ER:"
+echo "-----------------------------"
 if pgrep -f "qemu.*ER" >/dev/null; then
-    echo "N9Kv is running. Connect and check:"
+    echo "ER (N9Kv) is running. Test connectivity:"
     echo ""
-    echo "telnet localhost 9020"
+    echo "Connect to ER console: telnet localhost 9020"
     echo ""
-    echo "On N9Kv, run:"
+    echo "Test commands:"
+    echo "  ping 10.33.0.5    # Should reach simulated S1"
+    echo "  ping 10.33.0.9    # Should reach simulated S2"
+    echo ""
+    echo "Check interface status:"
     echo "  show ip interface brief"
     echo "  show interface ethernet1/1"
     echo "  show interface ethernet1/2"
     echo ""
-    echo "Look for:"
-    echo "  - Interfaces in 'up' state"
-    echo "  - IP addresses assigned"
-    echo "  - 'routed' mode (not switchport)"
+    echo "Check routing:"
+    echo "  show ip route"
+    echo "  show arp"
 else
-    echo "N9Kv VM is not running"
+    echo "ER VM is not running"
 fi
 
 echo ""
-echo "5. Manual connectivity test:"
+echo "5. Packet capture for troubleshooting:"
+echo "--------------------------------------"
+echo "Monitor traffic (run in separate terminals):"
+echo "  tcpdump -i BR_ER_S1 -n host 10.33.0.5 or host 10.33.0.6"
+echo "  tcpdump -i BR_ER_S2 -n host 10.33.0.9 or host 10.33.0.10"
+echo ""
+echo "Monitor from neighbor perspective:"
+echo "  ip netns exec sim_S1 tcpdump -i veth_S1_1 -n"
+echo "  ip netns exec sim_S2 tcpdump -i veth_S2_1 -n"
+
+echo ""
+echo "6. Start real S1 and S2 VMs:"
 echo "----------------------------"
-
-# Wait a bit for user to test
-echo "Waiting 30 seconds for manual ping tests..."
-sleep 30
-
+echo "Once connectivity works with simulated neighbors, start your real S1 and S2 VMs:"
 echo ""
-echo "6. Check packet capture results:"
-echo "--------------------------------"
-
-if [ -f /tmp/br_er_s1_capture.log ]; then
-    echo "BR_ER_S1 capture results:"
-    if [ -s /tmp/br_er_s1_capture.log ]; then
-        tail -10 /tmp/br_er_s1_capture.log
-    else
-        echo "  No packets captured on BR_ER_S1"
-    fi
-    echo ""
-fi
-
-if [ -f /tmp/br_er_s2_capture.log ]; then
-    echo "BR_ER_S2 capture results:"
-    if [ -s /tmp/br_er_s2_capture.log ]; then
-        tail -10 /tmp/br_er_s2_capture.log
-    else
-        echo "  No packets captured on BR_ER_S2"
-    fi
-fi
+echo "Make sure S1 and S2 are configured with:"
+echo "  S1 Eth1/1: ip address 10.33.0.5/30"
+echo "  S2 Eth1/1: ip address 10.33.0.9/30"  
+echo "  MTU 9216 on both interfaces"
+echo ""
+echo "Then remove the simulated neighbors:"
+echo "  ip netns del sim_S1"
+echo "  ip netns del sim_S2"
+echo "  ip link del veth_S1_0"
+echo "  ip link del veth_S2_0"
 
 echo ""
-echo "7. Advanced troubleshooting:"
-echo "----------------------------"
-
-# Check if packets are being sent from N9Kv interfaces
-echo "Check N9Kv interface statistics:"
-echo "On N9Kv console:"
-echo "  show interface ethernet1/1 counters"
-echo "  show interface ethernet1/2 counters"
-echo ""
-echo "Look for increasing TX packets when you ping"
-
-echo ""
-echo "8. Alternative QEMU network configuration:"
-echo "-----------------------------------------"
-echo "If connectivity still fails, try modifying your QEMU command:"
-echo ""
-echo "Replace:"
-echo "  -netdev bridge,id=ER_S1,br=BR_ER_S1"
-echo "  -device e1000,netdev=ER_S1,mac=00:00:11:00:00:02"
-echo ""
-echo "With:"
-echo "  -netdev bridge,id=ER_S1,br=BR_ER_S1,helper=/usr/lib/qemu/qemu-bridge-helper"
-echo "  -device virtio-net-pci,netdev=ER_S1,mac=00:00:11:00:00:02"
-echo ""
-echo "Or use TAP explicitly:"
-echo "  -netdev tap,id=ER_S1,ifname=tap_er_s1,script=no,downscript=no"
-echo "  -device virtio-net-pci,netdev=ER_S1,mac=00:00:11:00:00:02"
-echo "Then manually: ip link set tap_er_s1 master BR_ER_S1"
+echo "7. Check bridge learning:"
+echo "------------------------"
+echo "After ping tests, check bridge MAC learning:"
+for bridge in BR_ER_S1 BR_ER_S2; do
+    echo "$bridge learned MACs:"
+    bridge fdb show br $bridge | grep -v permanent
+done
 
 echo ""
 echo "=== SUMMARY ==="
-echo "MTU has been fixed to 1500 on all bridges"
-echo "Test interfaces created: 10.1.1.100 (BR_ER_S1), 10.2.2.100 (BR_ER_S2)"
-echo "Run ping tests from N9Kv console and check the packet capture results"
-
-# Cleanup function
-cleanup_test() {
-    echo ""
-    echo "To clean up test interfaces:"
-    echo "  ip netns del test_BR_ER_S1"
-    echo "  ip netns del test_BR_ER_S2"
-    echo "  ip link del veth_BR_ER_S1_0"
-    echo "  ip link del veth_BR_ER_S2_0"
-}
-
-cleanup_test
+echo "✓ MTU set to 9216 on all bridges and TAP interfaces"
+echo "✓ Simulated S1 (10.33.0.5) and S2 (10.33.0.9) created"
+echo "✓ Ready to test ping from ER console"
+echo ""
+echo "Next: Connect to ER and test ping 10.33.0.5 and ping 10.33.0.9"

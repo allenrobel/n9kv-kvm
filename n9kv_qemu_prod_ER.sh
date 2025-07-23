@@ -4,7 +4,8 @@
 # Based on working QEMU configuration
 IMAGE_PATH=/iso/nxos
 # N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v.9.3.4.qcow2
-N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v.10.1.2.qcow2
+# N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v.10.1.2.qcow2
+N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v64.10.3.8.M.qcow2
 BIOS_FILE=$IMAGE_PATH/bios.bin
 
 # VM configuration parameters
@@ -55,6 +56,7 @@ qemu-img info $ER_IMAGE | grep "virtual size"
 echo "Creating Switch 1 (ER) - Edge Router..."
 VM_NAME=ER
 
+<<'ORIGINAL_CONFIG'
 qemu-system-x86_64 \
     -enable-kvm \
     -machine type=q35,accel=kvm,kernel-irqchip=on \
@@ -79,6 +81,32 @@ qemu-system-x86_64 \
     -netdev bridge,id=ER_S2,br=BR_ER_S2 \
     -device $MODEL,netdev=ER_S2,mac=00:00:11:00:00:03 \
     -name $VM_NAME &
+ORIGINAL_CONFIG
+
+qemu-system-x86_64 \
+    -enable-kvm \
+    -machine type=q35,accel=kvm,kernel-irqchip=on \
+    -cpu qemu64,+ssse3,+sse4.1,+sse4.2,-smep,-smap,-spec-ctrl \
+    -smp $VCPUS,sockets=1,cores=$VCPUS,threads=1 \
+    -m $RAM \
+    -object memory-backend-ram,id=ram-node0,size=${RAM}M \
+    -numa node,nodeid=0,cpus=0-$((VCPUS-1)),memdev=ram-node0 \
+    -rtc clock=host,base=localtime \
+    -nographic \
+    -bios $BIOS_FILE \
+    -serial telnet:localhost:$TELNET_PORT,server=on,wait=off \
+    -device ahci,id=ahci0,bus=pcie.0 \
+    -drive file=$ER_IMAGE,if=none,id=drive-sata-disk0,format=qcow2,cache=writethrough \
+    -device ide-hd,bus=ahci0.0,drive=drive-sata-disk0,bootindex=1 \
+    -monitor telnet:localhost:$MONITOR_PORT,server,nowait \
+    -netdev bridge,id=ndfc-mgmt,br=$MGMT_BRIDGE \
+    -device $MODEL,netdev=ndfc-mgmt,mac=00:00:11:00:00:01 \
+    -netdev bridge,id=ER_S1,br=BR_ER_S1 \
+    -device $MODEL,netdev=ER_S1,mac=00:00:11:00:00:02 \
+    -netdev bridge,id=ER_S2,br=BR_ER_S2 \
+    -device $MODEL,netdev=ER_S2,mac=00:00:11:00:00:03 \
+    -name $VM_NAME &
+
 
 echo "$VM_NAME instance created."
 echo "ER -> S1: BR_ER_S1"

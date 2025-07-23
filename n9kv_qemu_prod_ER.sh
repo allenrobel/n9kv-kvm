@@ -10,7 +10,7 @@ BIOS_FILE=$IMAGE_PATH/bios.bin
 
 # VM configuration parameters
 DISK_SIZE=32G    # Customize size as needed
-RAM=8192         # 8GB RAM (minimum recommended)
+RAM=16384        # 16GB RAM
 VCPUS=4          # 4 vCPUs (minimum recommended)
 MODEL=e1000      # Network model
 

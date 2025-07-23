@@ -3,11 +3,14 @@
 # Switch configuration parameters
 SWITCH_NAME=S2
 SWITCH_ROLE="Border Spine Switch"
+# SWITCH_SERIAL must be unique per switch and is required for n9kv bootup with unique MAC addresses
+SWITCH_SERIAL="9ABCDEF022"
 NEIGHBOR_1="ER"
 NEIGHBOR_2="L1"
 MGMT_BRIDGE=ndfc-mgmt
 ISL_BRIDGE_1="BR_ER_S2"
 ISL_BRIDGE_2="BR_S2_L1"
+# These are ignored by n9kv bootup but required by qemu
 MAC_1="00:00:22:00:00:01"
 MAC_2="00:00:22:00:00:02"
 MAC_3="00:00:22:00:00:03"
@@ -54,6 +57,7 @@ echo "Creating $SWITCH_NAME - $SWITCH_ROLE..."
 VM_NAME=$SWITCH_NAME
 
 qemu-system-x86_64 \
+    -smbios type=1,manufacturer="Cisco",product="Nexus9000",serial="$SWITCH_SERIAL" \
     -enable-kvm \
     -machine type=q35,accel=kvm,kernel-irqchip=on \
     -cpu qemu64,+ssse3,+sse4.1,+sse4.2,-smep,-smap,-spec-ctrl \

@@ -50,7 +50,7 @@ echo "Creating Switch 1 (ER) - Edge Router..."
 VM_NAME=ER
 virt-install \
     --name=$VM_NAME \
-    --machine q35 \
+    --machine type=pc-i440fx-3.1,accel=kvm \
     --boot loader=$BIOS_FILE \
     --ram=$RAM \
     --vcpus=$VCPUS \

@@ -1,19 +1,19 @@
 #!/bin/bash
 
 # Switch configuration parameters
-SWITCH_NAME=ER
-SWITCH_ROLE="Edge Router"
+SWITCH_NAME=L1
+SWITCH_ROLE="Leaf Switch"
 NEIGHBOR_1="S1"
 NEIGHBOR_2="S2"
 MGMT_BRIDGE=ndfc-mgmt
-ISL_BRIDGE_1="BR_ER_S1"
-ISL_BRIDGE_2="BR_ER_S2"
-MAC_1="00:00:11:00:00:01"
-MAC_2="00:00:11:00:00:02"
-MAC_3="00:00:11:00:00:03"
+ISL_BRIDGE_1="BR_S1_L1"
+ISL_BRIDGE_2="BR_S2_L1"
+MAC_1="00:00:31:00:00:01"
+MAC_2="00:00:31:00:00:02"
+MAC_3="00:00:31:00:00:03"
 
-TELNET_PORT=9011  # Telnet port for console access
-MONITOR_PORT=4411  # Monitor port for QEMU
+TELNET_PORT=9031   # Telnet port for console access
+MONITOR_PORT=4431  # Monitor port for QEMU
 
 IMAGE_PATH=/iso/nxos
 N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v64.10.3.8.M.qcow2
@@ -79,10 +79,12 @@ qemu-system-x86_64 \
 
 
 echo "$VM_NAME instance created."
+echo ""
 echo "$SWITCH_NAME -> $NEIGHBOR_1: $ISL_BRIDGE_1"
 echo "$SWITCH_NAME -> $NEIGHBOR_2: $ISL_BRIDGE_2"
 echo ""
 echo "$VM_NAME starting..."
+echo ""
 echo "All mgmt interfaces connected to $MGMT_BRIDGE bridge."
 echo ""
 echo "Console access:"

@@ -163,7 +163,7 @@ output = {
         },
     },
     "nd": {
-        "hosts": [nd_ip4],
+        "hosts": [ND_IP4],
         "vars": {
             "ansible_connection": "ansible.netcommon.httpapi",
             "ansible_network_os": "cisco.dcnm.dcnm",

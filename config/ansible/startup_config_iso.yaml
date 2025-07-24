@@ -4,14 +4,16 @@
 # KVM environment and can be used with the QEMU/KVM scripts in this
 # repository.
 #
-# Depending on the ownership and write permissions for the location you choose for
-# the output directory, you may need to run this script with root privileges.
+# Depending on the ownership and write permissions for the location you
+# choose for the output directory, you may need to run this script with
+# root privileges.
 #
 # The script assumes a Jinja2 template for the NX-OS startup configuration
 # named `nxos_startup_config.j2`.
 #
-# The template should define the necessary variables for hostname, management IP,
-# and boot image.
+# The template should define the necessary variables for hostname,
+# management IP, and boot image.
+#
 # The output directory for the generated configuration files and ISO images
 # is specified in the `output_dir` variable.
 #
@@ -23,38 +25,35 @@
 ---
 - name: Create NX-OS Startup Configuration Files and ISO Images
   hosts: localhost
-  gather_facts: false
+  gather_facts: true
   vars:
     # Default NX-OS image name
     nxos_image: "nexus-cs-10.3.8M.bin"
-    
+
     # Output directory for configs and ISOs
-    # This is used in qemu/n9kv_qemu_ER.sh
-    # and must match the absolute path used in
-    # that script.
-    output_dir: "/iso/nd/startup_configs"
-    
+    output_dir: "./nxos_configs"
+
     # List of switches to create configs for
     switches:
       - hostname: "ER"
         mgmt_ip: "192.168.11.111/24"
         config_file: "ER.cfg"
-        iso_file: "ER_cfg.iso"
-      
+        iso_file: "ER.iso"
+
       - hostname: "S1"
         mgmt_ip: "192.168.11.121/24"
         config_file: "S1.cfg"
-        iso_file: "S1_cfg.iso"
-      
+        iso_file: "S1.iso"
+
       - hostname: "S2"
         mgmt_ip: "192.168.11.122/24"
         config_file: "S2.cfg"
-        iso_file: "S2_cfg.iso"
-      
+        iso_file: "S2.iso"
+
       - hostname: "L1"
         mgmt_ip: "192.168.11.131/24"
         config_file: "L1.cfg"
-        iso_file: "L1_cfg.iso"
+        iso_file: "L1.iso"
 
   tasks:
     - name: Create output directory
@@ -80,27 +79,47 @@
       failed_when: false
       changed_when: false
 
-    - name: Install genisoimage package if mkisofs not found (Debian/Ubuntu)
+    - name: Check if genisoimage is available (if mkisofs not found)
+      command: which genisoimage
+      register: genisoimage_check
+      failed_when: false
+      changed_when: false
+      when: mkisofs_check.rc != 0
+
+    - name: Install genisoimage package if neither tool found (Debian/Ubuntu)
       package:
         name: genisoimage
         state: present
       become: true
       when: 
         - mkisofs_check.rc != 0
+        - genisoimage_check.rc != 0 or genisoimage_check is skipped
         - ansible_os_family == "Debian"
 
-    - name: Install genisoimage package if mkisofs not found (RedHat/CentOS)
+    - name: Install genisoimage package if neither tool found (RedHat/CentOS)
       package:
         name: genisoimage
         state: present
       become: true
       when: 
         - mkisofs_check.rc != 0
+        - genisoimage_check.rc != 0 or genisoimage_check is skipped
         - ansible_os_family == "RedHat"
+
+    - name: Determine which ISO tool to use
+      set_fact:
+        iso_command: >-
+          {%- if mkisofs_check.rc == 0 -%}
+          mkisofs
+          {%- elif genisoimage_check is defined and genisoimage_check.rc == 0 -%}
+          genisoimage
+          {%- else -%}
+          mkisofs
+          {%- endif -%}
 
     - name: Create ISO files with startup configurations
       command: >
-        mkisofs -o {{ output_dir }}/{{ item.iso_file }} 
+        {{ iso_command }} -o {{ output_dir }}/{{ item.iso_file }} 
         -l --iso-level 2 
         {{ output_dir }}/{{ item.config_file }}
       loop: "{{ switches }}"

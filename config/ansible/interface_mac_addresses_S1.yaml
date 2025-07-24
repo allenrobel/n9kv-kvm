@@ -3,19 +3,15 @@
     check_mode: false
     gather_facts: false
     vars:
-        FABRIC_NAME: f1
-        S1_IP: 192.168.11.121
-        S1_MAC_1: 0000.0021.0001
-        S1_MAC_2: 0000.0021.0002
     tasks:
     - name: Create f1.S1 switch policies
       cisco.dcnm.dcnm_policy:
         state: merged
-        fabric: "{{ FABRIC_NAME }}"
+        fabric: "{{ FABRIC_VXLAN }}"
         use_desc_as_key: true
         config:
           - switch:
-            - ip: "{{ S1_IP }}"
+            - ip: "{{ S1_IP4 }}"
               policies:
                 - name: switch_freeform
                   create_additional_policy: false
@@ -24,7 +20,7 @@
                   policy_vars:
                     CONF: |
                       configure terminal
-                        interface Ethernet1/1
+                        interface {{ S1_INTERFACE_1 }}
                           mac-address {{ S1_MAC_1 }}
-                        interface Ethernet1/2
+                        interface {{ S1_INTERFACE_2 }}
                           mac-address {{ S1_MAC_2 }}

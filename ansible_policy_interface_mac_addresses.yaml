@@ -46,7 +46,7 @@
         config:
           - switch:
             - ip: "{{ S1_IP }}"
-                policies:
+              policies:
                 - name: S1_interface_mac_addresses
                     create_additional_policy: false
                     priority: 101
@@ -59,7 +59,7 @@
                               mac-address {{ S1_MAC_2 }}
           - switch:
             - ip: "{{ S2_IP }}"
-                policies:
+              policies:
                 - name: S2_interface_mac_addresses
                     create_additional_policy: false
                     priority: 101
@@ -72,7 +72,7 @@
                               mac-address {{ S2_MAC_2 }}
           - switch:
             - ip: "{{ L1_IP }}"
-                policies:
+              policies:
                 - name: L1_interface_mac_addresses
                     create_additional_policy: false
                     priority: 101

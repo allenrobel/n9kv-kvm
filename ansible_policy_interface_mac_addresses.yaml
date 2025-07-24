@@ -27,7 +27,7 @@
         config:
           - switch:
             - ip: "{{ ER_IP }}"
-                policies:
+              policies:
                 - name: ER_interface_mac_addresses
                     create_additional_policy: false
                     priority: 101

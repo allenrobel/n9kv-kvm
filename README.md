@@ -73,7 +73,7 @@ git clone https://github.com/allenrobel/n9kv-kvm.git
 cd n9kv-kvm
 ```
 
-## Create Python virtual environment in the reposotory and source it.
+## Create Python virtual environment in the repository and source it
 
 ```bash
 cd $HOME/repos/n9kv-kvm
@@ -88,13 +88,13 @@ pip install --upgrade pip
 pip install uv
 ```
 
-## uv sync to download dependencies used in this repository, including ansible.
+## uv sync to download dependencies used in this repository, including ansible
 
 ```bash
 uv sync
 ```
 
-## Test ansible-playbook to see if it's properly installed.
+## Test ansible-playbook to see if it's properly installed
 
 ```bash
 ansible-playbook --version

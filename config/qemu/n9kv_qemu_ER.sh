@@ -10,7 +10,9 @@ NEIGHBOR_2="S2"
 MGMT_BRIDGE=ndfc-mgmt
 ISL_BRIDGE_1="BR_ER_S1"
 ISL_BRIDGE_2="BR_ER_S2"
-# These are ignored by n9kv bootup but required by qemu
+# MAC_1 sets mgmt0 mac address
+# The other two are for ISL links but, alas, are ignored by n9kv bootup.
+# We use the ./config/ansible/interface_mac_addresses_*.yaml scripts to set these.
 MAC_1="00:00:11:00:00:01"
 MAC_2="00:00:11:00:00:02"
 MAC_3="00:00:11:00:00:03"

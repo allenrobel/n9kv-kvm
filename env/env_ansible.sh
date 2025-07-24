@@ -1,4 +1,5 @@
-export PYTHONPATH=$HOME/repos/ansible/collections:$HOME/repos/ansible/collections/ansible_collections:$HOME/repos/ansible/collections/ansible_collections/ansible:$HOME/repos/ansible/collections/ansible_collections/cisco/dcnm
+# This file is meant to be sourced.
+# e.g. source ./evn_ansible.sh
 export ANSIBLE_HOME=$HOME/repos/ansible
 export ANSIBLE_COLLECTIONS_PATH=$HOME/repos/ansible/collections
 export ANSIBLE_DEV_HOME=$HOME/repos/ansible/collections/ansible_collections/ansible

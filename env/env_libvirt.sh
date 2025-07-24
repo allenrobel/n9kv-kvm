@@ -1,3 +1,5 @@
+# This file is meant to be sourced.
+# e.g. source ./evn_libvirt.sh
 # If Virtual Machine Manager (virt-manager) was started as root, set the environment variable
 # to allow commands such as "virsh list" to query the correct virt-manager instance.
 export LIBVIRT_DEFAULT_URI="qemu:///system"

@@ -22,7 +22,7 @@ sudo apt update
 # Install Python 3.13
 sudo apt install python3.13
 
-# Install additional packages (recommended, especially python3.13-venv which we use further below)
+# Install additional packages, especially python3.13-venv which we use further below
 sudo apt install python3.13-venv python3.13-dev
 ```
 

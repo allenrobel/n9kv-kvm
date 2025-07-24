@@ -1,0 +1,71 @@
+# This provides the bridge configurations used in this repository.
+# If you don't want to use netplan for persistent network configuration,
+# you can ignore this file and use the bridges_config.sh script in this
+# directory instead for a non-persistent configuration.
+# Copy it to /etc/netplan/99-bridges.yaml on the target system.
+# sudo cp 99-bridges.yaml /etc/netplan/99-bridges.yaml
+# sudo chmod 600 /etc/netplan/99-bridges.yaml
+# sudo netplan try
+# sudo netplan apply
+network:
+  version: 2
+  renderer: networkd
+  vlans:
+    Vlan11:
+      id: 11
+      link: enp34s0f0
+      optional: true
+    Vlan12:
+      id: 12
+      link: enp34s0f0
+      optional: true
+  bridges:
+    BR_ER_S1:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      parameters:
+        stp: false
+      interfaces: []
+    
+    BR_ER_S2:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      parameters:
+        stp: false
+      interfaces: []
+    
+    BR_S1_L1:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      parameters:
+        stp: false
+      interfaces: []
+    
+    BR_S2_L1:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_ND_MGMT:
+      interfaces:
+      - Vlan11
+      addresses:
+      - 192.168.11.1/24
+      - 2000:192:168:11::1/24
+      parameters:
+        stp: false
+
+    BR_ND_DATA:
+      interfaces:
+      - Vlan12
+      addresses:
+      - 192.168.12.1/24
+      - 2000:192:168:12::1/24
+      parameters:
+        stp: false

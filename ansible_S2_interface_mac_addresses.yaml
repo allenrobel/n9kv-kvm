@@ -3,7 +3,7 @@
     check_mode: false
     gather_facts: false
     vars:
-        fabric_name: ISN
+        fabric_name: f1
         switch_ip: 192.168.11.122
         mac_address_1: 0000.0022.0001
         mac_address_2: 0000.0022.0002

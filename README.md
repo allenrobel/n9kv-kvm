@@ -2,13 +2,103 @@
 
 Bringup a small VXLAN lab with Cisco Nexus Dashboard and Cisco Nexus9000v (n9kv) using QEMU.
 
-## Cloning this Repository
+## Environment
+
+- Ubuntu 24.04.2 LTS
+- Python 3.12 or higher
+
+## Dependencies
+
+I use Python 3.13, but the stock Python 3.12 on Ubuntu 24.04.2 LTS should be fine.
+
+To install Python 3.13, do the following.  Add the deadsnakes PPA.
+This PPA contains more recent Python versions packaged for Ubuntu.
 
 ```bash
-git clone https://github.com/allenrobel/n9kv-kvm.git
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
+
+# Install Python 3.13
+sudo apt install python3.13
+
+# Install additional packages (recommended, especially python3.13-venv which we use further below)
+sudo apt install python3.13-venv python3.13-dev
 ```
 
-## Topology
+You'll need the virtualization stack consisting of qemu and libvirt.
+Install them as follows.
+
+```bash
+sudo apt update
+sudo apt install qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virt-manager
+```
+
+If you don't want to run virsh and other virtualization commands as root, and you want
+to run Virtual Machine Manager as a normal user (not root) add yourself to the libvirt
+group.
+
+```bash
+# Run the following as a non-root user with sudo access.
+sudo usermod -aG libvirt $USER
+sudo usermod -aG kvm $USER
+newgrp libvirt
+sudo systemctl enable --now libvirtd
+# Check if KVM is supported. If this returns error(s) things are not going to work for you.
+kvm-ok
+
+# Check libvirt status
+sudo systemctl status libvirtd
+
+# Assuming you've executed the above, you can run the virt-manager GUI (Virtual Machine Manager) as a normal user.
+virt-manager
+```
+
+## Clone this Repository
+
+The scripts and Environment vars in this Repository assume it is cloned into
+the following location.  You can, of course, put it wherever you want, but
+will need to update everything to match your preferred location.
+
+```bash
+$HOME/repos/n9kv-kvm
+```
+
+```bash
+mkdir $HOME/repos
+cd $HOME/repos
+git clone https://github.com/allenrobel/n9kv-kvm.git
+cd n9kv-kvm
+```
+
+## Create Python virtual environment in the reposotory and source it.
+
+```bash
+cd $HOME/repos/n9kv-kvm
+python3.13 -m venv .venv
+source .venv/bin/activate
+```
+
+## Upgrade pip and install uv
+
+```bash
+pip install --upgrade pip
+pip install uv
+```
+
+## uv sync to download dependencies used in this repository, including ansible.
+
+```bash
+uv sync
+```
+
+## Test ansible-playbook to see if it's properly installed.
+
+```bash
+ansible-playbook --version
+whereis ansible-playbook # should be in $HOME/repos/n9kv-kvm/.venv/bin/ansible-playbook
+```
+
+## Topology built by this repository
 
 - Two fabrics
   - ISN (inter-site network)

@@ -1,0 +1,7 @@
+configure terminal
+hostname {{ hostname }}
+boot nxos bootflash:/{{ boot_image }}
+
+interface mgmt0
+  ip address {{ mgmt_ip }}
+  no shutdown

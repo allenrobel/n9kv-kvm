@@ -1,0 +1,129 @@
+# This ansible script generates NX-OS startup configuration files
+# and creates ISO images containing these configurations.
+# The generated files are used to boot Nexus 9000v switches in a
+# KVM environment and can be used with the QEMU/KVM scripts in this
+# repository.
+#
+# Depending on the ownership and write permissions for the location you choose for
+# the output directory, you may need to run this script with root privileges.
+#
+# The script assumes a Jinja2 template for the NX-OS startup configuration
+# named `nxos_startup_config.j2`.
+#
+# The template should define the necessary variables for hostname, management IP,
+# and boot image.
+# The output directory for the generated configuration files and ISO images
+# is specified in the `output_dir` variable.
+#
+# Modify vars below to suit your environment
+#
+# output_dir: should match the absolute path used in qemu/n9kv_qemu_*.sh
+# nxos_image: should match the NX-OS image used in the QEMU scripts
+# switches: list of switches with their hostnames, management IPs, config file names, and ISO file names.
+---
+- name: Create NX-OS Startup Configuration Files and ISO Images
+  hosts: localhost
+  gather_facts: false
+  vars:
+    # Default NX-OS image name
+    nxos_image: "nexus-cs-10.3.8M.bin"
+    
+    # Output directory for configs and ISOs
+    # This is used in qemu/n9kv_qemu_ER.sh
+    # and must match the absolute path used in
+    # that script.
+    output_dir: "/iso/nd/startup_configs"
+    
+    # List of switches to create configs for
+    switches:
+      - hostname: "ER"
+        mgmt_ip: "192.168.11.111/24"
+        config_file: "ER.cfg"
+        iso_file: "ER_cfg.iso"
+      
+      - hostname: "S1"
+        mgmt_ip: "192.168.11.121/24"
+        config_file: "S1.cfg"
+        iso_file: "S1_cfg.iso"
+      
+      - hostname: "S2"
+        mgmt_ip: "192.168.11.122/24"
+        config_file: "S2.cfg"
+        iso_file: "S2_cfg.iso"
+      
+      - hostname: "L1"
+        mgmt_ip: "192.168.11.131/24"
+        config_file: "L1.cfg"
+        iso_file: "L1_cfg.iso"
+
+  tasks:
+    - name: Create output directory
+      file:
+        path: "{{ output_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Generate NX-OS startup configuration files
+      template:
+        src: nxos_startup_config.j2
+        dest: "{{ output_dir }}/{{ item.config_file }}"
+        mode: '0644'
+      loop: "{{ switches }}"
+      vars:
+        hostname: "{{ item.hostname }}"
+        mgmt_ip: "{{ item.mgmt_ip }}"
+        boot_image: "{{ nxos_image }}"
+
+    - name: Check if mkisofs is available
+      command: which mkisofs
+      register: mkisofs_check
+      failed_when: false
+      changed_when: false
+
+    - name: Install genisoimage package if mkisofs not found (Debian/Ubuntu)
+      package:
+        name: genisoimage
+        state: present
+      become: true
+      when: 
+        - mkisofs_check.rc != 0
+        - ansible_os_family == "Debian"
+
+    - name: Install genisoimage package if mkisofs not found (RedHat/CentOS)
+      package:
+        name: genisoimage
+        state: present
+      become: true
+      when: 
+        - mkisofs_check.rc != 0
+        - ansible_os_family == "RedHat"
+
+    - name: Create ISO files with startup configurations
+      command: >
+        mkisofs -o {{ output_dir }}/{{ item.iso_file }} 
+        -l --iso-level 2 
+        {{ output_dir }}/{{ item.config_file }}
+      loop: "{{ switches }}"
+      register: iso_creation
+      changed_when: true
+
+    - name: Display created files
+      debug:
+        msg: |
+          Created configuration and ISO files:
+          {% for switch in switches %}
+          - Config: {{ output_dir }}/{{ switch.config_file }}
+          - ISO: {{ output_dir }}/{{ switch.iso_file }}
+          {% endfor %}
+
+    - name: Verify ISO files were created
+      stat:
+        path: "{{ output_dir }}/{{ item.iso_file }}"
+      loop: "{{ switches }}"
+      register: iso_files
+
+    - name: Report ISO file creation status
+      debug:
+        msg: "ISO file {{ item.item.iso_file }} - Size: {{ item.stat.size }} bytes"
+      loop: "{{ iso_files.results }}"
+      when: item.stat.exists

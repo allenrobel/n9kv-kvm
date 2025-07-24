@@ -1,6 +1,7 @@
 # Summary
 
-Bringup a small VXLAN lab with Cisco Nexus Dashboard and Cisco Nexus9000v (n9kv) using QEMU.
+Bringup a small VXLAN lab with Cisco Nexus Dashboard and Cisco Nexus9000v (n9kv)
+using Ubuntu 24.04.2 LTS virtualization stack.
 
 ## Environment
 

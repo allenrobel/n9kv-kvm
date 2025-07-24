@@ -26,7 +26,7 @@ BIOS_FILE=$IMAGE_PATH/bios.bin
 
 # To create the CD-ROM image with startup configuration
 # mkisofs -o ER.iso -l --iso-level 2 nxos_config.txt
-CDROM_PATH=$HOME/repos/n9kv-kvm/config/ansible/nxos_configs
+CDROM_PATH=$HOME/repos/n9kv-kvm/config/nxos
 CDROM_IMAGE=$CDROM_PATH/$SWITCH_NAME.iso
 
 # You shouldn't have to change anything below this line...

@@ -20,6 +20,8 @@ This has been tested with the following.
   - 2.18.7
 - QEMU
   - qemu-system-x86_64 version 8.2.2
+- OVMF (used for nk9v BIOS)
+  - apt install ovmf
 
 NOTE: You'll need a Cisco account to download Nexus Dashboard and Nexus9000v images.
 
@@ -67,6 +69,13 @@ sudo systemctl status libvirtd
 
 # Assuming you've executed the above, you can run the virt-manager GUI (Virtual Machine Manager) as a normal user.
 virt-manager
+```
+
+You'll need OVMF for the nexus9000v BIOS
+
+```bash
+sudo apt install ovmf
+sudo cp /usr/share/OVMF/OVMF_CODE_4M.fd /iso/nxos/bios.bin
 ```
 
 ## Clone this Repository

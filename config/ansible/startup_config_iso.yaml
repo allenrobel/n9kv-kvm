@@ -19,7 +19,7 @@
 #
 # Modify vars below to suit your environment
 #
-# output_dir: should match the absolute path used in qemu/n9kv_qemu_*.sh
+# output_dir: should match CDROM_PATH in qemu/n9kv_qemu_*.sh
 # nxos_image: should match the NX-OS image used in the QEMU scripts
 # switches: list of switches with their hostnames, management IPs, config file names, and ISO file names.
 ---
@@ -31,7 +31,7 @@
     nxos_image: "nexus-cs-10.3.8M.bin"
 
     # Output directory for configs and ISOs
-    output_dir: "./nxos_configs"
+    output_dir: "{{ ansible_env.HOME }}/repos/n9kv-kvm/config/nxos"
 
     # List of switches to create configs for
     switches:

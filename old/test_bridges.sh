@@ -54,34 +54,34 @@ test_bridge_modern() {
     local bridge_name=$1
     local test_ip=$2
     local ns_name="test_${bridge_name}"
-    
+
     echo "Testing bridge: $bridge_name with IP $test_ip"
-    
+
     # Cleanup any existing test setup
     ip netns del $ns_name 2>/dev/null
     ip link del veth_${bridge_name}_0 2>/dev/null
-    
+
     if ip link show $bridge_name >/dev/null 2>&1; then
         # Create veth pair
         ip link add veth_${bridge_name}_0 type veth peer name veth_${bridge_name}_1
-        
+    
         # Create namespace and move one end
         ip netns add $ns_name
         ip link set veth_${bridge_name}_1 netns $ns_name
-        
+    
         # Add veth to bridge using ip command
         ip link set veth_${bridge_name}_0 master $bridge_name
         ip link set veth_${bridge_name}_0 up
-        
+    
         # Configure namespace interface
         ip netns exec $ns_name ip link set veth_${bridge_name}_1 up
         ip netns exec $ns_name ip addr add ${test_ip}/24 dev veth_${bridge_name}_1
         ip netns exec $ns_name ip link set lo up
-        
+    
         echo "  ✓ Test interface created: ${test_ip}/24"
         echo "  Bridge $bridge_name now has ports:"
         bridge link show br $bridge_name | sed 's/^/    /'
-        
+    
         echo "  To test from N9Kv console (telnet localhost 9020):"
         echo "    ping ${test_ip}"
         echo ""

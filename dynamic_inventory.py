@@ -104,13 +104,13 @@ __author__ = "Allen Robel"
 import json
 from os import environ
 
-fabric_vxlan = environ.get("ND_FABRIC_VXLAN")
-fabric_isn = environ.get("ND_FABRIC_ISN")
-nd_ip4 = environ.get("ND_IP4")
-nd_password = environ.get("ND_PASSWORD")
-nd_username = environ.get("ND_USERNAME", "admin")
-nxos_password = environ.get("NXOS_PASSWORD")
-nxos_username = environ.get("NXOS_USERNAME", "admin")
+FABRIC_VXLAN = environ.get("ND_FABRIC_VXLAN")
+FABRIC_ISN = environ.get("ND_FABRIC_ISN")
+ND_IP4 = environ.get("ND_IP4")
+ND_PASSWORD = environ.get("ND_PASSWORD")
+ND_USERNAME = environ.get("ND_USERNAME", "admin")
+NXOS_PASSWORD = environ.get("NXOS_PASSWORD")
+NXOS_USERNAME = environ.get("NXOS_USERNAME", "admin")
 
 # Base set of switches
 ER = environ.get("ER_IP4", "192.168.11.111")
@@ -119,14 +119,14 @@ S2 = environ.get("S2_IP4", "192.168.11.122")
 L1 = environ.get("L1_IP4", "192.168.11.131")
 
 # Base set of interfaces
-ER_interface_1 = environ.get("ND_INTERFACE_1a", "Ethernet1/1")
-ER_interface_2 = environ.get("ND_INTERFACE_1b", "Ethernet1/2")
-S1_interface_1 = environ.get("ND_INTERFACE_2a", "Ethernet1/1")
-S1_interface_2 = environ.get("ND_INTERFACE_2b", "Ethernet1/2")
-S2_interface_1 = environ.get("ND_INTERFACE_3a", "Ethernet1/1")
-S2_interface_2 = environ.get("ND_INTERFACE_3b", "Ethernet1/2")
-L1_interface_1 = environ.get("ND_INTERFACE_4a", "Ethernet1/1")
-L1_interface_2 = environ.get("ND_INTERFACE_4b", "Ethernet1/2")
+ER_INTERFACE_1 = environ.get("ND_INTERFACE_1a", "Ethernet1/1")
+ER_INTERFACE_2 = environ.get("ND_INTERFACE_1b", "Ethernet1/2")
+S1_INTERFACE_1 = environ.get("ND_INTERFACE_2a", "Ethernet1/1")
+S1_INTERFACE_2 = environ.get("ND_INTERFACE_2b", "Ethernet1/2")
+S2_INTERFACE_1 = environ.get("ND_INTERFACE_3a", "Ethernet1/1")
+S2_INTERFACE_2 = environ.get("ND_INTERFACE_3b", "Ethernet1/2")
+L1_INTERFACE_1 = environ.get("ND_INTERFACE_4a", "Ethernet1/1")
+L1_INTERFACE_2 = environ.get("ND_INTERFACE_4b", "Ethernet1/2")
 
 # output is printed to STDOUT, where ansible-playbook -i reads it.
 # If you change any vars above, be sure to add them below.
@@ -139,27 +139,27 @@ output = {
         "vars": {
             "ansible_httpapi_use_ssl": "true",
             "ansible_httpapi_validate_certs": "false",
-            "ansible_password": nd_password,
+            "ansible_password": ND_PASSWORD,
             "ansible_python_interpreter": "python",
-            "ansible_user": nd_username,
-            "fabric_vxlan": fabric_vxlan,
-            "fabric_isn": fabric_isn,
+            "ansible_user": ND_USERNAME,
+            "fabric_vxlan": FABRIC_VXLAN,
+            "fabric_isn": FABRIC_ISN,
             "ER": ER,
             "S1": S1,
             "S2": S2,
             "L1": L1,
-            "ER_interface_1": ER_interface_1,
-            "ER_interface_2": ER_interface_2,
-            "S1_interface_1": S1_interface_1,
-            "S1_interface_2": S1_interface_2,
-            "S2_interface_1": S2_interface_1,
-            "S2_interface_2": S2_interface_2,
-            "L1_interface_1": L1_interface_1,
-            "L1_interface_2": L1_interface_2,
-            "nxos_username": nxos_username,
-            "nxos_password": nxos_password,
-            "switch_password": nxos_password,
-            "switch_username": nxos_username,
+            "ER_interface_1": ER_INTERFACE_1,
+            "ER_interface_2": ER_INTERFACE_2,
+            "S1_interface_1": S1_INTERFACE_1,
+            "S1_interface_2": S1_INTERFACE_2,
+            "S2_interface_1": S2_INTERFACE_1,
+            "S2_interface_2": S2_INTERFACE_2,
+            "L1_interface_1": L1_INTERFACE_1,
+            "L1_interface_2": L1_INTERFACE_2,
+            "nxos_username": NXOS_USERNAME,
+            "nxos_password": NXOS_PASSWORD,
+            "switch_password": NXOS_PASSWORD,
+            "switch_username": NXOS_USERNAME,
         },
     },
     "nd": {

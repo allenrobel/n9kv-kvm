@@ -7,6 +7,8 @@ using Ubuntu 24.04.2 LTS virtualization stack.
 
 - Ubuntu 24.04.2 LTS
 - Python 3.12 or higher
+- Ansible
+- QEMU
 
 ## Dependencies
 

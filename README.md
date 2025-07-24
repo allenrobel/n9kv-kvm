@@ -157,7 +157,7 @@ graph TB
 ## Project Structure
 
 ```bash
-(n9kv-kvm) arobel@Allen-M4 n9kv-kvm % tree .
+(n9kv-kvm) arobel@Allen-M4 n9kv-kvm % tree
 .
 ├── config
 │   ├── ansible
@@ -167,6 +167,7 @@ graph TB
 │   │   ├── interface_mac_addresses_S1.yaml
 │   │   └── interface_mac_addresses_S2.yaml
 │   ├── bridges
+│   │   ├── 99-bridges.yaml
 │   │   ├── bridges_config.sh
 │   │   ├── bridges_down.sh
 │   │   └── bridges_monitor.sh
@@ -187,6 +188,6 @@ graph TB
 ├── README.md
 └── uv.lock
 
-7 directories, 21 files
+7 directories, 22 files
 (n9kv-kvm) arobel@Allen-M4 n9kv-kvm %
 ```

@@ -1,5 +1,5 @@
 ---
--   hosts: ndfc
+-   hosts: nd
     check_mode: false
     gather_facts: false
     vars:

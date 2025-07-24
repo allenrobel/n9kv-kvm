@@ -5,10 +5,14 @@ using Ubuntu 24.04.2 LTS virtualization stack.
 
 ## Environment
 
+- Cisco Nexus Dashboard (3.2.1e)
+- Cisco Nexus9000v
 - Ubuntu 24.04.2 LTS
 - Python 3.12 or higher
 - Ansible
 - QEMU
+
+NOTE: You'll need a Cisco account to download Nexus Dashboard and Nexus9000v images.
 
 ## Dependencies
 

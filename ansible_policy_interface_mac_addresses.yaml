@@ -17,7 +17,6 @@
         L1_IP: 192.168.11.131
         L1_MAC_1: 0000.0031.0001
         L1_MAC_2: 0000.0031.0002
-        admin_state: true
     tasks:
     # - name: Create ISN switch policies
     #   cisco.dcnm.dcnm_policy:
@@ -59,31 +58,31 @@
                           mac-address {{ S1_MAC_1 }}
                         interface Ethernet1/2
                           mac-address {{ S1_MAC_2 }}
-          - switch:
-            - ip: "{{ S2_IP }}"
-              policies:
-                - name: switch_freeform
-                  create_additional_policy: false
-                  priority: 101
-                  description: S2_interface_mac_addresses
-                  policy_vars:
-                    CONF: |
-                      configure terminal
-                        interface Ethernet1/1
-                          mac-address {{ S2_MAC_1 }}
-                        interface Ethernet1/2
-                          mac-address {{ S2_MAC_2 }}
-          - switch:
-            - ip: "{{ L1_IP }}"
-              policies:
-                - name: switch_freeform
-                  create_additional_policy: false
-                  priority: 101
-                  description: L1_interface_mac_addresses
-                  policy_vars:
-                    CONF: |
-                      configure terminal
-                        interface Ethernet1/1
-                          mac-address {{ L1_MAC_1 }}
-                        interface Ethernet1/2
-                          mac-address {{ L1_MAC_2 }}
+        #   - switch:
+        #     - ip: "{{ S2_IP }}"
+        #       policies:
+        #         - name: switch_freeform
+        #           create_additional_policy: false
+        #           priority: 101
+        #           description: S2_interface_mac_addresses
+        #           policy_vars:
+        #             CONF: |
+        #               configure terminal
+        #                 interface Ethernet1/1
+        #                   mac-address {{ S2_MAC_1 }}
+        #                 interface Ethernet1/2
+        #                   mac-address {{ S2_MAC_2 }}
+        #   - switch:
+        #     - ip: "{{ L1_IP }}"
+        #       policies:
+        #         - name: switch_freeform
+        #           create_additional_policy: false
+        #           priority: 101
+        #           description: L1_interface_mac_addresses
+        #           policy_vars:
+        #             CONF: |
+        #               configure terminal
+        #                 interface Ethernet1/1
+        #                   mac-address {{ L1_MAC_1 }}
+        #                 interface Ethernet1/2
+        #                   mac-address {{ L1_MAC_2 }}

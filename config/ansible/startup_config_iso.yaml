@@ -31,6 +31,14 @@
     nxos_image: "nexus-cs-10.3.8M.bin"
 
     # Output directory for configs and ISOs
+    # If you want to change this to your local user directory, either use
+    # the absolute path or use -E with sudu when running the playbook
+    # to preserve the $HOME environment variable.
+    # Examples:
+    # Absolute path (use sudo ansible-playbook ...):
+    # output_dir: "/home/user/nxos/configs"
+    # Using ansible_env variable (use sudo -E ansible-playbook ...):
+    # output_dir: "{{ ansible_env.HOME }}/nxos/configs"
     output_dir: "/iso/nxos/config"
 
     # List of switches to create configs for

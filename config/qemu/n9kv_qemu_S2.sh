@@ -4,12 +4,12 @@
 SWITCH_NAME=S2
 SWITCH_ROLE="Border Spine Switch"
 # SWITCH_SERIAL must be unique per switch and is required for n9kv bootup with unique MAC addresses
-SWITCH_SERIAL="9ABCDEF022"
-NEIGHBOR_1="ER"
-NEIGHBOR_2="L1"
-MGMT_BRIDGE=ndfc-mgmt
-ISL_BRIDGE_1="BR_ER_S2"
-ISL_BRIDGE_2="BR_S2_L1"
+SWITCH_SERIAL=9ABCDEF022
+NEIGHBOR_1=ER
+NEIGHBOR_2=L1
+MGMT_BRIDGE=BR_ND_MGMT
+ISL_BRIDGE_1=BR_ER_S2
+ISL_BRIDGE_2=BR_S2_L1
 # MAC_1 sets mgmt0 mac address
 # The other two are for ISL links but, alas, are ignored by n9kv bootup.
 # We use the ./config/ansible/interface_mac_addresses_*.yaml scripts to set these.

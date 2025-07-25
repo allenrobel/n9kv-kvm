@@ -22,10 +22,16 @@ MONITOR_PORT=4411  # Monitor port for QEMU
 
 IMAGE_PATH=/iso/nxos
 N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v64.10.3.8.M.qcow2
-BIOS_FILE=$IMAGE_PATH/bios.bin
 
-# To create the CD-ROM image with startup configuration
+# sudo apt install ovmf
+BIOS_FILE=/usr/share/ovmf/OVMF.fd
+
+# To create dummy CD-ROM image with startup configuration
 # mkisofs -o ER.iso -l --iso-level 2 nxos_config.txt
+# Or see the playbook in ./config/ansible/playbooks/startup_config_iso.yaml
+# NOTE: nexus9000v doesn't actually use this for its startup config,
+#       but it does avoid the 10 minute hang on bootup when nexus9000v
+#       tries to mount a non-existent CD-ROM.
 CDROM_PATH=/iso/nxos/config
 CDROM_IMAGE=$CDROM_PATH/$SWITCH_NAME.iso
 

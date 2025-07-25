@@ -22,7 +22,18 @@ MONITOR_PORT=4422  # Monitor port for QEMU
 
 IMAGE_PATH=/iso/nxos
 N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v64.10.3.8.M.qcow2
-BIOS_FILE=$IMAGE_PATH/bios.bin
+
+# sudo apt install ovmf
+BIOS_FILE=/usr/share/ovmf/OVMF.fd
+
+# To create dummy CD-ROM image with startup configuration
+# mkisofs -o ER.iso -l --iso-level 2 nxos_config.txt
+# Or see the playbook in ./config/ansible/playbooks/startup_config_iso.yaml
+# NOTE: nexus9000v doesn't actually use this for its startup config,
+#       but it does avoid the 10 minute hang on bootup when nexus9000v
+#       tries to mount a non-existent CD-ROM.
+CDROM_PATH=/iso/nxos/config
+CDROM_IMAGE=$CDROM_PATH/$SWITCH_NAME.iso
 
 # You shouldn't have to change anything below this line...
 
@@ -72,11 +83,12 @@ qemu-system-x86_64 \
     -bios $BIOS_FILE \
     -serial telnet:localhost:$TELNET_PORT,server=on,wait=off \
     -device ahci,id=ahci0,bus=pcie.0 \
+    -drive file=$CDROM_IMAGE,media=cdrom \
     -drive file=$VM_IMAGE,if=none,id=drive-sata-disk0,format=qcow2,cache=writethrough \
     -device ide-hd,bus=ahci0.0,drive=drive-sata-disk0,bootindex=1 \
     -monitor telnet:localhost:$MONITOR_PORT,server,nowait \
-    -netdev bridge,id=ndfc-mgmt,br=$MGMT_BRIDGE \
-    -device $MODEL,netdev=ndfc-mgmt,mac=$MAC_1 \
+    -netdev bridge,id=ND_MGMT,br=$MGMT_BRIDGE \
+    -device $MODEL,netdev=ND_MGMT,mac=$MAC_1 \
     -netdev bridge,id=ISL_BRIDGE_1,br=$ISL_BRIDGE_1 \
     -device $MODEL,netdev=ISL_BRIDGE_1,mac=$MAC_2 \
     -netdev bridge,id=ISL_BRIDGE_2,br=$ISL_BRIDGE_2 \

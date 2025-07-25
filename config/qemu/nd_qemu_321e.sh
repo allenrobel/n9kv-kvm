@@ -24,4 +24,4 @@ echo "Management network: $ND_MGMT_NET"
 echo "Data network: $ND_DATA_NET"
 echo "Image path: $ND_INSTALL_DIR/nd-node1-disk1.qcow2"
 echo "Data disk path: $ND_INSTALL_DIR/nd-node1-disk2.qcow2"
-echo "Installation may take some time. Monitor progress with 'virsh console $ND_NAME'.
+echo "Installation may take some time. Monitor progress with 'virsh console $ND_NAME'."

@@ -125,27 +125,22 @@
           mkisofs
           {%- endif -%}
 
-    - name: Copy config files to standardized name for ISO creation
-      copy:
-        src: "{{ output_dir }}/{{ item.config_file }}"
-        dest: "{{ output_dir }}/nxos_config.txt"
-        mode: '0644'
-      loop: "{{ switches }}"
-
-    - name: Create ISO files with startup configurations
-      command: >
-        {{ iso_command }} -o {{ output_dir }}/{{ item.iso_file }} 
-        -l --iso-level 2 
-        -V "{{ item.hostname }}_CONFIG"
-        {{ output_dir }}/nxos_config.txt
+    - name: Create ISO files with startup configurations (copy to nxos_config.txt first)
+      shell: |
+        # Copy the specific config file to nxos_config.txt
+        cp {{ output_dir }}/{{ item.config_file }} {{ output_dir }}/nxos_config.txt
+        
+        # Create ISO with nxos_config.txt
+        {{ iso_command }} -o {{ output_dir }}/{{ item.iso_file }} \
+          -l --iso-level 2 \
+          -V "{{ item.hostname }}_CONFIG" \
+          {{ output_dir }}/nxos_config.txt
+        
+        # Clean up the temporary file
+        rm {{ output_dir }}/nxos_config.txt
       loop: "{{ switches }}"
       register: iso_creation
       changed_when: true
-
-    - name: Clean up temporary nxos_config.txt file
-      file:
-        path: "{{ output_dir }}/nxos_config.txt"
-        state: absent
 
     - name: Display created files
       debug:

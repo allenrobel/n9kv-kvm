@@ -80,7 +80,7 @@ sudo cp /usr/share/OVMF/OVMF_CODE_4M.fd /iso/nxos/bios.bin
 
 ## Clone this Repository
 
-The scripts and Environment vars in this Repository assume it is cloned into
+The scripts and environment vars in this Repository assume it is cloned into
 the following location.  You can, of course, put it wherever you want, but
 will need to update everything to match your preferred location.
 
@@ -121,6 +121,18 @@ uv sync
 ```bash
 ansible-playbook --version
 whereis ansible-playbook # should be in $HOME/repos/n9kv-kvm/.venv/bin/ansible-playbook
+```
+
+## Copy ./config/bridges/bridge.conf to /etc/qemu/bridge.conf
+
+This is required for the qemu scripts to run.
+
+If you already have this file, then append the contents to your existing file.
+You may have to create the /etc/qemu directory first.
+
+```bash
+sudo mkdir /etc/qemu
+sudo cp $HOME/repos/n9kv-kvm/config/bridges/bridge.conf /etc/qemu/bridge.conf
 ```
 
 ## Topology built by this repository

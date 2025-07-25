@@ -31,7 +31,7 @@
     nxos_image: "nexus-cs-10.3.8M.bin"
 
     # Output directory for configs and ISOs
-    output_dir: "{{ ansible_env.HOME }}/repos/n9kv-kvm/config/nxos"
+    output_dir: "/iso/nxos/config"
 
     # List of switches to create configs for
     switches:

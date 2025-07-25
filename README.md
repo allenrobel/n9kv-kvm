@@ -75,7 +75,6 @@ You'll need OVMF for the nexus9000v BIOS
 
 ```bash
 sudo apt install ovmf
-sudo cp /usr/share/OVMF/OVMF_CODE_4M.fd /iso/nxos/bios.bin
 ```
 
 ## Clone this Repository
@@ -120,7 +119,8 @@ uv sync
 
 ```bash
 ansible-playbook --version
-whereis ansible-playbook # should be in $HOME/repos/n9kv-kvm/.venv/bin/ansible-playbook
+# whereis should show $HOME/repos/n9kv-kvm/.venv/bin/ansible-playbook
+whereis ansible-playbook
 ```
 
 ## Copy ./config/bridges/bridge.conf to /etc/qemu/bridge.conf
@@ -133,6 +133,59 @@ You may have to create the /etc/qemu directory first.
 ```bash
 sudo mkdir /etc/qemu
 sudo cp $HOME/repos/n9kv-kvm/config/bridges/bridge.conf /etc/qemu/bridge.conf
+```
+
+## Install Nexus Dashboard
+
+Edit one of the nd_qemu_*.sh files (e.g. nd_qemu_321e.sh) to suit your environment.
+Note the ND_NAME setting in this file.  This is what you will console to below.
+
+```bash
+cd $HOME/repos/n9kv-kvm/config/qemu
+sudo ./nd_qemu_321e.sh
+virsh console nd_321e
+```
+
+Give the above some time and you'll eventually see the following.
+Press return and answer the questions for password, ip address/Mask
+and cluster leader.  You'll use an address within Vlan11 connected
+to BR_ND_MGMT for the ip address/mask.  See the following netplan
+configuration file to configure Vlan11 and the bridges:
+
+- $HOME/repos/n9kv-kvm/config/bridges/99-bridges.yaml
+
+```bash
+Press any key to run first-boot setup on this console...
+
+Fri Jul 25 02:22:46 UTC 2025: Starting Nexus Dashboard setup utility
+Welcome to Nexus Dashboard 4.1.0.156b 
+Press Enter to manually bootstrap your node...
+Admin Password: 
+Reenter Admin Password: 
+Management Network: 
+  IP Address/Mask: 192.168.11.2/24
+Is Cluster Leader? Note: only one node in the cluster must be leader. (Y/n): Y
+Please review the config
+Cluster Leader: true
+Management Network:
+  Gateway: 192.168.11.1
+  IP Address/Mask: 192.168.11.2/24
+
+Re-enter config?(y/N): N
+
+System configured successfully
+Initializing System on first boot. Please wait..
+Fri Jul 25 02:24:29 UTC 2025: Nexus Dashboard setup complete.
+
+<skip stuff...>
+
+Nexus Dashboard localhost ttyS0
+
+Nexus Dashboard (4.1.0.156b): system initialized successfully
+Please wait for system to boot : [########################################] 100%
+System up, please wait for UI to be online.
+
+System UI online, please login to https://192.168.11.2 to continue.
 ```
 
 ## Topology built by this repository

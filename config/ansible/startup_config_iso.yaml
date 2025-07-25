@@ -125,14 +125,27 @@
           mkisofs
           {%- endif -%}
 
+    - name: Copy config files to standardized name for ISO creation
+      copy:
+        src: "{{ output_dir }}/{{ item.config_file }}"
+        dest: "{{ output_dir }}/nxos_config.txt"
+        mode: '0644'
+      loop: "{{ switches }}"
+
     - name: Create ISO files with startup configurations
       command: >
         {{ iso_command }} -o {{ output_dir }}/{{ item.iso_file }} 
         -l --iso-level 2 
-        {{ output_dir }}/{{ item.config_file }}
+        -V "{{ item.hostname }}_CONFIG"
+        {{ output_dir }}/nxos_config.txt
       loop: "{{ switches }}"
       register: iso_creation
       changed_when: true
+
+    - name: Clean up temporary nxos_config.txt file
+      file:
+        path: "{{ output_dir }}/nxos_config.txt"
+        state: absent
 
     - name: Display created files
       debug:
@@ -140,8 +153,10 @@
           Created configuration and ISO files:
           {% for switch in switches %}
           - Config: {{ output_dir }}/{{ switch.config_file }}
-          - ISO: {{ output_dir }}/{{ switch.iso_file }}
+          - ISO: {{ output_dir }}/{{ switch.iso_file }} (contains nxos_config.txt)
           {% endfor %}
+          
+          Note: Each ISO file contains the config as 'nxos_config.txt' which NX-OS will automatically load.
 
     - name: Verify ISO files were created
       stat:

@@ -1,0 +1,17 @@
+# nexus9000v-monitor.service
+# Save as: /etc/systemd/system/nexus9000v-monitor.service
+
+[Unit]
+Description=Nexus 9000v VM Monitor
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/bin/nexus9000v_monitor.py --json
+User=root
+StandardOutput=append:/var/log/nexus9000v-monitor.log
+StandardError=append:/var/log/nexus9000v-monitor.log
+
+[Install]
+WantedBy=multi-user.target
+

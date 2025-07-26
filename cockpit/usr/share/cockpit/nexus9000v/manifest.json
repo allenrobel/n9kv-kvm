@@ -1,0 +1,15 @@
+{
+    "version": 0,
+    "name": "nexus9000v",
+    "description": "Nexus 9000v VM Monitor",
+    "requires": {
+        "cockpit": "120"
+    },
+    "tools": {
+        "nexus9000v": {
+            "label": "Nexus 9000v VMs",
+            "path": "index.html",
+            "order": 30
+        }
+    }
+}

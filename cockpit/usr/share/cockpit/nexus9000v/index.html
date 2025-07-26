@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nexus 9000v VMs</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="/cockpit/@localhost/base1/cockpit.css" rel="stylesheet">
+    <link href="nexus-monitor.css" rel="stylesheet">
+    <script src="/cockpit/@localhost/base1/cockpit.js"></script>
+    <script src="nexus-monitor.js"></script>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <h1>Nexus 9000v Virtual Machines</h1>
+                
+                <div class="controls">
+                    <button id="refresh-btn" class="btn btn-primary refresh-btn">
+                        <span class="fa fa-refresh"></span> Refresh
+                    </button>
+                    <button id="auto-refresh-btn" class="btn btn-secondary">
+                        <span id="auto-refresh-icon" class="fa fa-play"></span>
+                        <span id="auto-refresh-text">Start Auto-refresh</span>
+                    </button>
+                </div>
+                
+                <div id="last-updated" class="last-updated"></div>
+                <div id="error-container"></div>
+                <div id="loading" class="loading" style="display: none;">
+                    <span class="fa fa-spinner fa-spin"></span> Loading...
+                </div>
+                <div id="vm-container">
+                    <!-- VM cards will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

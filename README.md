@@ -284,7 +284,7 @@ sudo chown root /etc/netplan/*
 sudo chmod 600 /etc/netplan/*
 ```
 
-If the above commands reult in messages like the following, you can ignore them.
+If the above commands result in messages like the following, you can ignore them.
 
 ```bash
 (.venv) arobel@cvd-3:~/repos/n9kv-kvm/config/bridges$ sudo netplan try

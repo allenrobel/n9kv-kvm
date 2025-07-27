@@ -3,5 +3,7 @@ hostname {{ hostname }}
 boot nxos bootflash:/{{ boot_image }}
 
 interface mgmt0
+  no cdp enable
+  vrf member management
   ip address {{ mgmt_ip }}
   no shutdown

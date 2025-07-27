@@ -44,22 +44,22 @@
     # List of switches to create configs for
     switches:
       - hostname: "ER"
-        mgmt_ip: "192.168.11.111/24"
+        mgmt_ip: "{{ ER_IP4 }}"
         config_file: "ER.cfg"
         iso_file: "ER.iso"
 
       - hostname: "S1"
-        mgmt_ip: "192.168.11.121/24"
+        mgmt_ip: "{{ S1_IP4 }}"
         config_file: "S1.cfg"
         iso_file: "S1.iso"
 
       - hostname: "S2"
-        mgmt_ip: "192.168.11.122/24"
+        mgmt_ip: "{{ S2_IP4 }}"
         config_file: "S2.cfg"
         iso_file: "S2.iso"
 
       - hostname: "L1"
-        mgmt_ip: "192.168.11.131/24"
+        mgmt_ip: "{{ L1_IP4 }}"
         config_file: "L1.cfg"
         iso_file: "L1.iso"
 

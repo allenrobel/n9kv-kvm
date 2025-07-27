@@ -1,6 +1,6 @@
 # Nexus9000v VM Monitoring Backend
 
-## 1. Copy into /usr/local/bin
+## 1. Copy into /usr/local/bin and make executable
 
 ```bash
 cd $HOME/repos/n9kv-kvm/cockpit/usr/local/bin
@@ -8,7 +8,7 @@ sudo cp ./nexus9000v_monitor.py /usr/local/bin
 sudo +x /usr/local/bin/nexus9000v_monitor.py
 ```
 
-## 2. (optional) test it to see that it's working
+## 2. Test to see that it's working
 
 - sudo python3 /usr/local/bin/nexus9000v_monitor.py --table
 

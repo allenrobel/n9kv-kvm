@@ -475,7 +475,6 @@ graph TB
 │   │   ├── bridges_config.sh
 │   │   ├── bridges_down.sh
 │   │   └── bridges_monitor.sh
-│   ├── nxos
 │   └── qemu
 │       ├── n9kv_qemu_ER_cdrom.sh
 │       ├── n9kv_qemu_ER.sh
@@ -494,6 +493,6 @@ graph TB
 ├── README.md
 └── uv.lock
 
-15 directories, 39 files
+14 directories, 39 files
 (n9kv-kvm) arobel@Allen-M4 n9kv-kvm %
 ```

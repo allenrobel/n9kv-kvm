@@ -116,12 +116,13 @@ it's recommended to create and activate a Python venv.
 ```bash
 cd $HOME/repos/n9kv-kvm
 python3.13 -m venv .venv
-source .venv/bin/activate
+source $HOME/repos/n9kv-kvm/.venv/bin/activate
 ```
 
 ### Upgrade pip and install uv
 
 ```bash
+source $HOME/repos/n9kv-kvm/.venv/bin/activate
 pip install --upgrade pip
 pip install uv
 ```
@@ -132,6 +133,8 @@ To install dependencies used in this repository, including ansible,
 run the following.
 
 ```bash
+source $HOME/repos/n9kv-kvm/.venv/bin/activate
+cd $HOME/repos/n9kv-kvm
 uv sync
 ```
 
@@ -140,6 +143,7 @@ uv sync
 Test ansible-playbook to see if it's properly installed
 
 ```bash
+source $HOME/repos/n9kv-kvm/.venv/bin/activate
 ansible-playbook --version
 # whereis should show $HOME/repos/n9kv-kvm/.venv/bin/ansible-playbook
 whereis ansible-playbook
@@ -232,8 +236,8 @@ If the above commands result in a warning like below:
 ** (process:37526): WARNING **: 18:03:28.923: Permissions for /etc/netplan/00-installer-config.yaml are too open. Netplan configuration should NOT be accessible by others.
 ```
 
-Then modify the permissions of the files in `/etc/netplan` as follows and try to apply
-the bridges configuration again:
+Then modify the permissions of the files in `/etc/netplan` as follows
+and try to apply the bridges configuration again.
 
 ```bash
 sudo chown root /etc/netplan/*
@@ -289,9 +293,12 @@ After connecting to the virsh console, give the setup some time
 (5 to 10 minutes) and you'll eventually see something similar to
 the output below.
 
-Press return and answer the questions for password, ip address/Mask
-and cluster leader.  You'll use an address within `Vlan11` connected
-to `BR_ND_MGMT` for the ip address/mask.  See the preceeding section
+Press return and answer the questions for Admin Password,
+Management Network IP Address/Mask, and Cluster Leader (answer
+Y to cluster leader since we are using a single node setup).
+
+You'll use an address within `Vlan11` connected to `BR_ND_MGMT`
+for Management Network IP Address/Mask.  See the preceeding section
 `Configure netplan` to configure `Vlan11` and the bridges.
 
 ```bash
@@ -328,7 +335,7 @@ System up, please wait for UI to be online.
 System UI online, please login to https://192.168.11.2 to continue.
 ```
 
-Use your web browser to finish the ND configuration. ND provides screens
+Use a web browser to finish the ND configuration. ND provides screens
 to configure at least three "persistent IPs" which are used for services
 provided by ND, including DHCP and POAP.  I prefer using the lower range
 of IPs in each of Vlan11 and Vlan12 for these e.g.:
@@ -342,10 +349,12 @@ of IPs in each of Vlan11 and Vlan12 for these e.g.:
   - 192.168.12.11
   - 192.168.12.12
 
-Then the upper range of addresses can be used for n9kv mgmt0 addresses,
+This leaves the upper range of addresses for n9kv mgmt0 addresses,
 client/server VMs, etc.
 
 ### TODO: Add guide for n9kv installation/bringup and TAP interfaces configuration
+
+n9kv installation/setup coming soon...
 
 ## Topology built by this repository
 

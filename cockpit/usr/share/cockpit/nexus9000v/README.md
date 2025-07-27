@@ -1,6 +1,7 @@
 # Cockpit Nexus9000v Monitoring UI files.
 
-First, setup the backend python script (see $HOME/repos/n9kv-kvm/cockpit/usr/local/bin/README.md).
+First, [install Cockpit](https://cockpit-project.org/running.html#ubuntu) and
+[setup the backend python script](https://github.com/allenrobel/n9kv-kvm/blob/main/cockpit/usr/local/bin/README.md)
 
 Then follow the steps below.
 
@@ -22,6 +23,7 @@ cp nexus-monitor-light-theme.css nexus-monitor.css
 
 ```bash
 sudo mkdir /usr/share/cockpit/nexus9000v
-sudo cp $HOME/repos/n9kv-kvm/cockpit/usr/share/cockpit/nexus9000v/* /usr/share/cockpit/nexus9000v
+cd $HOME/repos/n9kv-kvm/cockpit/usr/share/cockpit/nexus9000v/
+sudo cp * /usr/share/cockpit/nexus9000v
 ```
 

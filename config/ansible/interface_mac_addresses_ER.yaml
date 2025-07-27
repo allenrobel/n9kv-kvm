@@ -1,10 +1,11 @@
+# See dynamic_inventory.py for the variables used in this file.
 ---
 -   hosts: nd
     check_mode: false
     gather_facts: false
     vars:
     tasks:
-    - name: Create ISN.ER switch policies
+    - name: "{{ FABRIC_ISN }}.ER switch_freeform policy"
       cisco.dcnm.dcnm_policy:
         state: merged
         fabric: "{{ FABRIC_ISN }}"

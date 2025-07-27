@@ -1,10 +1,11 @@
+# See dynamic_inventory.py for the variables used in this file.
 ---
 -   hosts: nd
     check_mode: false
     gather_facts: false
     vars:
     tasks:
-    - name: Create f1.S1 switch policies
+    - name: "{{ FABRIC_VXLAN }}.S1 switch_freeform policy"
       cisco.dcnm.dcnm_policy:
         state: merged
         fabric: "{{ FABRIC_VXLAN }}"

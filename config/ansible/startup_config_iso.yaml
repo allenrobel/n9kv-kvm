@@ -20,7 +20,7 @@
 #
 # Locally defined variables (see vars below):
 # output_dir: should match CDROM_PATH in qemu/n9kv_qemu_*.sh
-# nxos_image: should match the NX-OS image used in the QEMU scripts
+# boot_image: should match the NX-OS image used in the QEMU scripts
 # switches: list of switches with their hostnames, management IPs, config file names, and ISO file names.
 ---
 - name: Create NX-OS Startup Configuration Files and ISO Images
@@ -28,7 +28,7 @@
   gather_facts: true
   vars:
     # Default NX-OS image name
-    nxos_image: "nexus-cs-10.3.8M.bin"
+    boot_image: "nexus-cs-10.3.8M.bin"
 
     # Output directory for configs and ISOs
     # If you want to change this to your local user directory, either use
@@ -43,25 +43,25 @@
 
     # List of switches to create configs for
     switches:
-      - hostname: "ER"
+      - hostname: "{{ ER_HOSTNAME }}"
         mgmt_ip: "{{ ER_IP4 }}"
-        config_file: "ER.cfg"
-        iso_file: "ER.iso"
+        config_file: "{{ ER_HOSTNAME }}.cfg"
+        iso_file: "{{ ER_HOSTNAME }}.iso"
 
-      - hostname: "S1"
+      - hostname: "{{ S1_HOSTNAME }}"
         mgmt_ip: "{{ S1_IP4 }}"
-        config_file: "S1.cfg"
-        iso_file: "S1.iso"
+        config_file: "{{ S1_HOSTNAME }}.cfg"
+        iso_file: "{{ S1_HOSTNAME }}.iso"
 
-      - hostname: "S2"
+      - hostname: "{{ S2_HOSTNAME }}"
         mgmt_ip: "{{ S2_IP4 }}"
-        config_file: "S2.cfg"
-        iso_file: "S2.iso"
+        config_file: "{{ S2_HOSTNAME }}.cfg"
+        iso_file: "{{ S2_HOSTNAME }}.iso"
 
-      - hostname: "L1"
+      - hostname: "{{ L1_HOSTNAME }}"
         mgmt_ip: "{{ L1_IP4 }}"
-        config_file: "L1.cfg"
-        iso_file: "L1.iso"
+        config_file: "{{ L1_HOSTNAME }}.cfg"
+        iso_file: "{{ L1_HOSTNAME }}.iso"
 
   tasks:
     - name: Create output directory
@@ -79,7 +79,7 @@
       vars:
         hostname: "{{ item.hostname }}"
         mgmt_ip: "{{ item.mgmt_ip }}"
-        boot_image: "{{ nxos_image }}"
+        boot_image: "{{ boot_image }}"
 
     - name: Check if mkisofs is available
       command: which mkisofs

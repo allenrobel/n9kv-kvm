@@ -41,6 +41,12 @@ ND_USERNAME = environ.get("ND_USERNAME", "admin")
 NXOS_PASSWORD = environ.get("NXOS_PASSWORD", "SuperSecretPassword")
 NXOS_USERNAME = environ.get("NXOS_USERNAME", "admin")
 
+# Switch hostnames
+
+ER_HOSTNAME = environ.get("ER_HOSTNAME", "ER")
+S1_HOSTNAME = environ.get("S1_HOSTNAME", "S1")
+S2_HOSTNAME = environ.get("S2_HOSTNAME", "S2")
+L1_HOSTNAME = environ.get("L1_HOSTNAME", "L1")
 
 # Base set of interfaces
 ER_INTERFACE_1 = environ.get("ER_INTERFACE_1", "Ethernet1/1")

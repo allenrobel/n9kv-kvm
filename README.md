@@ -283,7 +283,7 @@ sudo chown root /etc/netplan/*
 sudo chmod 600 /etc/netplan/*
 ```
 
-### Install Nexus Dashboard (ND)
+## Install Nexus Dashboard (ND)
 
 Edit one of the `nd_qemu_*.sh` files (e.g. `nd_qemu_321e.sh`) to suit your
 environment e.g. the ND image path and name.  Note the `ND_NAME` setting
@@ -391,9 +391,79 @@ of IPs in each of Vlan11 and Vlan12 for these e.g.:
 This leaves the upper range of addresses for n9kv mgmt0 addresses,
 client/server VMs, etc.
 
-### TODO: Add guide for n9kv installation/bringup and TAP interfaces configuration
+## Nexus 9000v (n9kv) configuration and startup
 
-n9kv installation/setup coming soon...
+We will be using an Ansible playbook to generate the n9kv startup-config
+ISO files.
+
+- $HOME/repos/n9kv-kvm/config/ansible/startup_config_iso.yaml
+
+This script uses a Jinja2 template to create the configs.
+
+- $HOME/repos/n9kv-kvm/config/ansible/nxos_startup_config.j2
+
+It then creates the ISO file, containing the startup-config
+(renamed to nxos_config.txt), that n9kv will read as its
+startup configuration.
+
+### Edit the Jinja2 template
+
+Have a look at the template and make any desired edits.
+
+- $HOME/repos/n9kv-kvm/config/ansible/nxos_startup_config.j2
+
+The template currently contains a very minimal startup config
+containing (e.g. for the edge router, ER):
+
+```bash
+configure terminal
+hostname ER
+boot nxos bootflash:/nexus-cs-10.3.8M.bin
+
+interface mgmt0
+  no cdp enable
+  vrf member management
+  ip address 192.168.11.111/24
+  no shutdown
+```
+
+Several items above are derived from variables located in
+two places, as shown below:
+
+- hostname : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (ER_HOSTNAME)
+- boot nxos : $HOME/repos/n9kv-kvm/config/ansible/startup_config_iso.yaml (boot_image var)
+- ip address : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (ER_IP4)
+
+### Edit the startup_config_iso.yaml playbook
+
+The `vars` section of this playbook contains the following items
+that need to be modified for your environment.  The other items
+in the `vars` section are populated based on the contents of
+`$HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py`
+
+```yaml
+  vars:
+    boot_image: "nexus-cs-10.3.8M.bin"
+    output_dir: "/iso/nxos/config"
+```
+
+- boot_image - Set this to the image name (.bin) that is extracted from the n9kv `.qcow2` during bootup.
+- output_dir - Set this to the location the n9kv startup config ISOs will be written to.
+
+### Run the Ansible script
+
+```bash
+cd $HOME/repos/n9kv-kvm/config/ansible
+source $HOME/repos/n9kv-kvm/.venv/bin/activate
+ansible-playbook startup_config_iso.yaml -i dynamic_inventory.py
+```
+
+### Verify the ISO images are created
+
+Substitute the path below with the `output_dir` from above.
+
+```bash
+ls -l 
 
 ## Topology built by this repository
 

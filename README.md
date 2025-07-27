@@ -22,6 +22,8 @@ This has been tested with the following.
   - qemu-system-x86_64 version 8.2.2
 - OVMF (used for nk9v BIOS)
   - apt install ovmf
+- [Cockpit](https://cockpit-project.org) (optional)
+  - Version 343
 
 NOTE: You'll need a Cisco account to download Nexus Dashboard and Nexus9000v images.
 

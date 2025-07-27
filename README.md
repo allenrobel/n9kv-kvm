@@ -284,6 +284,38 @@ sudo chown root /etc/netplan/*
 sudo chmod 600 /etc/netplan/*
 ```
 
+If the above commands reult in messages like the following, you can ignore them.
+
+```bash
+(.venv) arobel@cvd-3:~/repos/n9kv-kvm/config/bridges$ sudo netplan try
+BR_ER_S2: reverting custom parameters for bridges and bonds is not supported
+BR_ER_S1: reverting custom parameters for bridges and bonds is not supported
+BR_ND_DATA: reverting custom parameters for bridges and bonds is not supported
+BR_ND_MGMT: reverting custom parameters for bridges and bonds is not supported
+BR_S2_L1: reverting custom parameters for bridges and bonds is not supported
+br0: reverting custom parameters for bridges and bonds is not supported
+BR_S1_L1: reverting custom parameters for bridges and bonds is not supported
+
+Please carefully review the configuration and use 'netplan apply' directly.
+```
+
+Verify netplan was applied correctly.
+
+- ip link show type bridge | grep BR_
+
+Some bridges will be DOWN. This is expected and we'll fix it later.
+
+```bash
+(.venv) arobel@cvd-3:~/repos/n9kv-kvm/config/bridges$ ip link show type bridge | grep BR_
+10: BR_ER_S1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
+11: BR_ER_S2: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
+12: BR_ND_DATA: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default qlen 1000
+13: BR_ND_MGMT: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default qlen 1000
+14: BR_S1_L1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
+15: BR_S2_L1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
+(.venv) arobel@cvd-3:~/repos/n9kv-kvm/config/bridges$
+```
+
 ## Install Nexus Dashboard (ND)
 
 Edit one of the `nd_qemu_*.sh` files (e.g. `nd_qemu_321e.sh`) to suit your

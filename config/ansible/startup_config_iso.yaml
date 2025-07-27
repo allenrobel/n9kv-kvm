@@ -1,3 +1,5 @@
+# See dynamic_inventory.py for the variables used in this file.
+#
 # This ansible script generates NX-OS startup configuration files
 # and creates ISO images containing these configurations.
 # The generated files are used to boot Nexus 9000v switches in a
@@ -8,17 +10,15 @@
 # choose for the output directory, you may need to run this script with
 # root privileges.
 #
-# The script assumes a Jinja2 template for the NX-OS startup configuration
-# named `nxos_startup_config.j2`.
-#
-# The template should define the necessary variables for hostname,
-# management IP, and boot image.
+# The script assumes the Jinja2 template in this directory, which defines
+# the NX-OS startup configuration. See `nxos_startup_config.j2`.
 #
 # The output directory for the generated configuration files and ISO images
-# is specified in the `output_dir` variable.
+# is specified in the `output_dir` variable below.
 #
 # Modify vars below to suit your environment
 #
+# Locally defined variables (see vars below):
 # output_dir: should match CDROM_PATH in qemu/n9kv_qemu_*.sh
 # nxos_image: should match the NX-OS image used in the QEMU scripts
 # switches: list of switches with their hostnames, management IPs, config file names, and ISO file names.

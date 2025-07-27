@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 #
 ND_SOURCE_DIR=/iso/nd
+ND_IMAGE=nd-dk9.3.2.1e.qcow2
 ND_INSTALL_DIR=/iso/nd/321e
 ND_MGMT_NET=BR_ND_MGMT
 ND_DATA_NET=BR_ND_DATA
-ND_IMAGE=nd-dk9.3.2.1e.qcow2
 ND_NAME=nd_321e
 mkdir $ND_INSTALL_DIR
 qemu-img create -f qcow2 -F qcow2 -b $ND_SOURCE_DIR/$ND_IMAGE $ND_INSTALL_DIR/nd-node1-disk1.qcow2

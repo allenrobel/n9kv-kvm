@@ -147,18 +147,34 @@ whereis ansible-playbook
 
 ### Setup bridges
 
-#### Allow the bridges used in this project
+#### Configure qemu to allow the bridges used in this project
 
-Copy ./config/bridges/bridge.conf to /etc/qemu/bridge.conf
-
-This is required for the qemu scripts to run.
-
-If you already have this file, then append the contents to your existing file.
-You may have to create the /etc/qemu directory first.
+You may have to create the `/etc/qemu` directory first.
 
 ```bash
+# Check if the directory exists
+ls -ld /etc/qemu
+# If it doesn't exist, create it.
 sudo mkdir /etc/qemu
+```
+
+If `/etc/qemu/bridge.conf` already exists on your host, then append
+the contents of `./config/bridges/bridge.conf` to your existing file.
+
+```bash
+# Check if /etc/qemu/bridge.conf exists
+sudo cat /etc/qemu/bridge.conf
+# If it does exist, append to it, rather than overwrite it.
+sudo cat $HOME/repos/n9kv-kvm/config/bridges/bridge.conf >> /etc/qemu/bridge.conf
+# Verify things look OK
+sudo cat /etc/qemu/bridge.conf
+```
+
+It `/etc/qemu/bridge.conf` doesn't exist, create it.
+
+```bash
 sudo cp $HOME/repos/n9kv-kvm/config/bridges/bridge.conf /etc/qemu/bridge.conf
+sudo chmod 600 /etc/qemu/bridge.conf
 ```
 
 #### Configure netplan
@@ -210,10 +226,58 @@ netplan try
 netplan apply
 ```
 
+If the above commands result in a warning like below:
+
+```bash
+** (process:37526): WARNING **: 18:03:28.923: Permissions for /etc/netplan/00-installer-config.yaml are too open. Netplan configuration should NOT be accessible by others.
+```
+
+Then modify the permissions of the files in `/etc/netplan` as follows and try to apply
+the bridges configuration again:
+
+```bash
+sudo chown root /etc/netplan/*
+sudo chmod 600 /etc/netplan/*
+```
+
 ### Install Nexus Dashboard (ND)
 
-Edit one of the nd_qemu_*.sh files (e.g. nd_qemu_321e.sh) to suit your environment.
-Note the `ND_NAME` setting in this file.  This is what you will console to below.
+Edit one of the `nd_qemu_*.sh` files (e.g. `nd_qemu_321e.sh`) to suit your
+environment e.g. the ND image path and name.  Note the `ND_NAME` setting
+in this file.  This is what you will console to below.
+
+Also, take note of disk space requirements.  The ND qcow2 images
+range from 15.9GB (321e) to 16.4GB (4.1 EFT), so ensure your
+`ND_SOURCE_DIR` (see below) has at least this much space.
+
+Also note that `ND_INSTALL_DIR` (see below) needs to have enough
+space to hold both of the created disk1 and disk2 files.  With
+ND 4.1, and a very minimal configuration, this is 50GB, but these
+disks are configured to grow to 500GB (e.g. ND hosts n9kv images
+which will grow the size of disk2 as you upload these images to ND),
+so plan accordingly based on your estimated usage.
+
+```bash
+ND_SOURCE_DIR=/iso/nd         # The directory containing ND_IMAGE
+ND_IMAGE=nd-dk9.3.2.1e.qcow2  # The ND image name
+ND_INSTALL_DIR=/iso/nd/321e   # Where to create ND disk1 and disk2
+ND_MGMT_NET=BR_ND_MGMT        # Bridge for ND's management network
+ND_DATA_NET=BR_ND_DATA        # Bridge for ND's data network
+ND_NAME=nd_321e               # Name of ND instance (use for console below)
+```
+
+Below are current sizes in a newly-installed ND 4.1 EFT setup.
+
+```bash
+arobel@cvd-2:~$ ls -l /iso/nd/4.1.0.156b/running
+total 47226124
+-rw-r--r-- 1 libvirt-qemu kvm  1349058560 Jul 27 18:47 nd-node1-disk1.qcow2
+-rw-r--r-- 1 libvirt-qemu kvm 47009562624 Jul 27 18:47 nd-node1-disk2.qcow2
+arobel@cvd-2:~$
+```
+
+Once you've reviewed and modified the ND setup script, run it and connect
+to the virsh console to finish the ND setup.
 
 ```bash
 cd $HOME/repos/n9kv-kvm/config/qemu
@@ -221,13 +285,14 @@ sudo ./nd_qemu_321e.sh
 virsh console nd_321e
 ```
 
-Give the above some time (5 to 10 minutes) and you'll eventually see
-something similar to the output below.
+After connecting to the virsh console, give the setup some time
+(5 to 10 minutes) and you'll eventually see something similar to
+the output below.
 
 Press return and answer the questions for password, ip address/Mask
-and cluster leader.  You'll use an address within Vlan11 connected
-to BR_ND_MGMT for the ip address/mask.  See the preceeding section
-`Configure netplan` to configure Vlan11 and the bridges.
+and cluster leader.  You'll use an address within `Vlan11` connected
+to `BR_ND_MGMT` for the ip address/mask.  See the preceeding section
+`Configure netplan` to configure `Vlan11` and the bridges.
 
 ```bash
 Press any key to run first-boot setup on this console...
@@ -279,6 +344,8 @@ of IPs in each of Vlan11 and Vlan12 for these e.g.:
 
 Then the upper range of addresses can be used for n9kv mgmt0 addresses,
 client/server VMs, etc.
+
+### TODO: Add guide for n9kv installation/bringup and TAP interfaces configuration
 
 ## Topology built by this repository
 

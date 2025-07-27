@@ -29,6 +29,16 @@ NOTE: You'll need a Cisco account to download Nexus Dashboard and Nexus9000v ima
 
 ## Dependencies
 
+### KVM Support
+
+Check if KVM is supported. If this returns error(s) things are not going to work for you.
+
+```bash
+kvm-ok
+```
+
+### Python
+
 I use Python 3.13, but the stock Python 3.12 on Ubuntu 24.04.2 LTS should be fine.
 
 To install Python 3.13, do the following.  Add the deadsnakes PPA.
@@ -44,6 +54,8 @@ sudo apt install python3.13
 # Install additional packages, especially python3.13-venv which we use further below
 sudo apt install python3.13-venv python3.13-dev
 ```
+
+### Virtualization stack
 
 You'll need the virtualization stack consisting of qemu and libvirt.
 Install them as follows.
@@ -63,8 +75,6 @@ sudo usermod -aG libvirt $USER
 sudo usermod -aG kvm $USER
 newgrp libvirt
 sudo systemctl enable --now libvirtd
-# Check if KVM is supported. If this returns error(s) things are not going to work for you.
-kvm-ok
 
 # Check libvirt status
 sudo systemctl status libvirtd
@@ -73,15 +83,17 @@ sudo systemctl status libvirtd
 virt-manager
 ```
 
+### OVMF
+
 You'll need OVMF for the nexus9000v BIOS
 
 ```bash
 sudo apt install ovmf
 ```
 
-## Clone this Repository
+### Clone the n9kv-kvm repository
 
-The scripts and environment vars in this Repository assume it is cloned into
+The scripts and environment vars in this repository assume it is cloned into
 the following location.  You can, of course, put it wherever you want, but
 will need to update everything to match your preferred location.
 
@@ -96,7 +108,10 @@ git clone https://github.com/allenrobel/n9kv-kvm.git
 cd n9kv-kvm
 ```
 
-## Create Python virtual environment in the repository and source it
+### Python virtual environment
+
+So that this project's dependencies don't interfere with other projects,
+it's recommended to create and activate a Python venv.
 
 ```bash
 cd $HOME/repos/n9kv-kvm
@@ -104,20 +119,25 @@ python3.13 -m venv .venv
 source .venv/bin/activate
 ```
 
-## Upgrade pip and install uv
+### Upgrade pip and install uv
 
 ```bash
 pip install --upgrade pip
 pip install uv
 ```
 
-## uv sync to download dependencies used in this repository, including ansible
+### uv sync
+
+To install dependencies used in this repository, including ansible,
+run the following.
 
 ```bash
 uv sync
 ```
 
-## Test ansible-playbook to see if it's properly installed
+### Test the environment
+
+Test ansible-playbook to see if it's properly installed
 
 ```bash
 ansible-playbook --version
@@ -125,7 +145,11 @@ ansible-playbook --version
 whereis ansible-playbook
 ```
 
-## Copy ./config/bridges/bridge.conf to /etc/qemu/bridge.conf
+### Setup bridges
+
+#### Allow the bridges used in this project
+
+Copy ./config/bridges/bridge.conf to /etc/qemu/bridge.conf
 
 This is required for the qemu scripts to run.
 
@@ -137,10 +161,59 @@ sudo mkdir /etc/qemu
 sudo cp $HOME/repos/n9kv-kvm/config/bridges/bridge.conf /etc/qemu/bridge.conf
 ```
 
-## Install Nexus Dashboard
+#### Configure netplan
+
+Inspect and edit the following file to ensure it will work
+for you.
+
+```bash
+$HOME/repos/n9kv-kvm/config/bridges/99-bridges.yaml
+```
+
+In particular, verify that:
+
+- The physical interface exists. You'll likely need to change
+  the interface name (`enp34s0f0` below) to match your host
+  (see the `link` parameter for `Vlan11` and `Vlan12` below).
+- Vlans 11 and 12 are not already associated with your
+  interface (the `id` parameter for `Vlan` and `Vlan12` below).
+- The bridge names (e.g. `BR_ND_MGMT`, `BR_ER_S1`, etc) don't conflict
+  with existing bridges on your host.
+- The ip addresses (`192.168.11.1/24` and `192.168.12.1/24`) don't
+  conflict with other addresses on your host, or with addresses in
+  your network that your host needs to reach.
+
+```yaml
+  vlans:
+    Vlan11:
+      id: 11
+      link: enp34s0f0
+      optional: true
+    Vlan12:
+      id: 12
+      link: enp34s0f0
+      optional: true
+```
+
+Copy the bridges configuration into /etc/netplan.
+
+```bash
+cd $HOME/repos/n9kv-kvm/config/bridges
+sudo cp ./99-bridges.yaml /etc/netplan
+sudo chmod 600 /etc/netplan/99-bridges.yaml
+```
+
+Apply the bridges configuration
+
+```bash
+netplan try
+netplan apply
+```
+
+### Install Nexus Dashboard (ND)
 
 Edit one of the nd_qemu_*.sh files (e.g. nd_qemu_321e.sh) to suit your environment.
-Note the ND_NAME setting in this file.  This is what you will console to below.
+Note the `ND_NAME` setting in this file.  This is what you will console to below.
 
 ```bash
 cd $HOME/repos/n9kv-kvm/config/qemu
@@ -148,13 +221,13 @@ sudo ./nd_qemu_321e.sh
 virsh console nd_321e
 ```
 
-Give the above some time and you'll eventually see the following.
+Give the above some time (5 to 10 minutes) and you'll eventually see
+something similar to the output below.
+
 Press return and answer the questions for password, ip address/Mask
 and cluster leader.  You'll use an address within Vlan11 connected
-to BR_ND_MGMT for the ip address/mask.  See the following netplan
-configuration file to configure Vlan11 and the bridges:
-
-- $HOME/repos/n9kv-kvm/config/bridges/99-bridges.yaml
+to BR_ND_MGMT for the ip address/mask.  See the preceeding section
+`Configure netplan` to configure Vlan11 and the bridges.
 
 ```bash
 Press any key to run first-boot setup on this console...
@@ -189,6 +262,23 @@ System up, please wait for UI to be online.
 
 System UI online, please login to https://192.168.11.2 to continue.
 ```
+
+Use your web browser to finish the ND configuration. ND provides screens
+to configure at least three "persistent IPs" which are used for services
+provided by ND, including DHCP and POAP.  I prefer using the lower range
+of IPs in each of Vlan11 and Vlan12 for these e.g.:
+
+- Vlan11
+  - 192.168.11.10
+  - 192.168.11.11
+  - 192.168.11.12
+- Vlan12
+  - 192.168.12.10
+  - 192.168.12.11
+  - 192.168.12.12
+
+Then the upper range of addresses can be used for n9kv mgmt0 addresses,
+client/server VMs, etc.
 
 ## Topology built by this repository
 

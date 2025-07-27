@@ -127,6 +127,35 @@ pip install --upgrade pip
 pip install uv
 ```
 
+If you see a message similar to the below, check your PYTHONPATH and
+ensure that `$HOME/repos/n9kv-kvm/.venv` is the first entry.
+
+```bash
+  Attempting uninstall: pip
+    Found existing installation: pip 24.0
+    Not uninstalling pip at /home/arobel/py311/lib/python3.11/site-packages, outside environment /home/arobel/repos/n9kv-kvm/.venv
+    Can't uninstall 'pip'. No files were found to uninstall.
+
+```
+
+For example, PYTHONPATH should look like below (at least the first entry).
+
+```bash
+(.venv) arobel@cvd-3:~/repos/n9kv-kvm$ echo $PYTHONPATH
+/home/arobel/repos/n9kv-kvm/.venv
+(.venv) arobel@cvd-3:~/repos/n9kv-kvm$
+```
+
+If it doesn't, then do the following:
+
+```bash
+export PYTHONPATH=$HOME/repos/n9kv-kvm/.venv:$PYTHONPATH
+# And try to upgrade pip and install uv again
+source $HOME/repos/n9kv-kvm/.venv/bin/activate
+pip install --upgrade pip
+pip install uv
+```
+
 ### uv sync
 
 To install dependencies used in this repository, including ansible,
@@ -147,6 +176,16 @@ source $HOME/repos/n9kv-kvm/.venv/bin/activate
 ansible-playbook --version
 # whereis should show $HOME/repos/n9kv-kvm/.venv/bin/ansible-playbook
 whereis ansible-playbook
+```
+
+If ansible-playbook shows a different path, then your `PYTHONPATH` environment
+variable contains a path to a different `ansible-playbook` that is overriding
+the local installation path.  This may be OK if you prefer to use the other
+version.  Else, modify your `PYTHONPATH` accordingly, e.g.:
+
+```bash
+unset PYTHONPATH
+export PYTHONPATH=$HOME/repos/n9kv-kvm/.venv:$PYTHONPATH
 ```
 
 ### Setup bridges

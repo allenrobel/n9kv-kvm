@@ -233,19 +233,44 @@ graph TB
 ```bash
 (n9kv-kvm) arobel@Allen-M4 n9kv-kvm % tree
 .
+├── cockpit
+│   ├── cockpit.png
+│   ├── README.md
+│   └── usr
+│       ├── local
+│       │   └── bin
+│       │       ├── nexus9000v_monitor.py
+│       │       ├── nexus9000v-monitor.service
+│       │       ├── nexus9000v-monitor.timer
+│       │       └── README.md
+│       └── share
+│           └── cockpit
+│               └── nexus9000v
+│                   ├── index.html
+│                   ├── manifest.json
+│                   ├── nexus-monitor-dark-theme.css
+│                   ├── nexus-monitor-light-theme.css
+│                   ├── nexus-monitor.css
+│                   ├── nexus-monitor.js
+│                   └── README.md
 ├── config
 │   ├── ansible
 │   │   ├── dynamic_inventory.py
 │   │   ├── interface_mac_addresses_ER.yaml
 │   │   ├── interface_mac_addresses_L1.yaml
 │   │   ├── interface_mac_addresses_S1.yaml
-│   │   └── interface_mac_addresses_S2.yaml
+│   │   ├── interface_mac_addresses_S2.yaml
+│   │   ├── nxos_startup_config.j2
+│   │   └── startup_config_iso.yaml
 │   ├── bridges
 │   │   ├── 99-bridges.yaml
+│   │   ├── bridge.conf
 │   │   ├── bridges_config.sh
 │   │   ├── bridges_down.sh
 │   │   └── bridges_monitor.sh
+│   ├── nxos
 │   └── qemu
+│       ├── n9kv_qemu_ER_cdrom.sh
 │       ├── n9kv_qemu_ER.sh
 │       ├── n9kv_qemu_L1.sh
 │       ├── n9kv_qemu_S1.sh
@@ -262,6 +287,6 @@ graph TB
 ├── README.md
 └── uv.lock
 
-7 directories, 22 files
+15 directories, 39 files
 (n9kv-kvm) arobel@Allen-M4 n9kv-kvm %
 ```

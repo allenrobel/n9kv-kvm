@@ -235,7 +235,7 @@ In particular, verify that:
   the interface name (`enp34s0f0` below) to match your host
   (see the `link` parameter for `Vlan11` and `Vlan12` below).
 - Vlans 11 and 12 are not already associated with your
-  interface (the `id` parameter for `Vlan` and `Vlan12` below).
+  interface (the `id` parameter for `Vlan11` and `Vlan12` below).
 - The bridge names (e.g. `BR_ND_MGMT`, `BR_ER_S1`, etc) don't conflict
   with existing bridges on your host.
 - The ip addresses (`192.168.11.1/24` and `192.168.12.1/24`) don't

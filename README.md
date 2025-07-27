@@ -234,6 +234,7 @@ In particular, verify that:
 - The physical interface exists. You'll likely need to change
   the interface name (`enp34s0f0` below) to match your host
   (see the `link` parameter for `Vlan11` and `Vlan12` below).
+  To check your interfaces e.g. `ip link show`.
 - Vlans 11 and 12 are not already associated with your
   interface (the `id` parameter for `Vlan11` and `Vlan12` below).
 - The bridge names (e.g. `BR_ND_MGMT`, `BR_ER_S1`, etc) don't conflict

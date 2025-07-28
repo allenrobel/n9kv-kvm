@@ -857,6 +857,88 @@ total 1424
 (venv) arobel@cvd-2:~/repos/n9kv-kvm$ 
 ```
 
+### Startup the nexus9000v switches
+
+Review the contents of the following script and make any modifications
+e.g. for `CDROM_PATH` based on where you saved the config ISOs above,
+and where you saved the nexus9000v qcow2 image.
+
+```bash
+cat $HOME/repos/n9kv-kvm/config/qemu/n9kv_qemu_ER.sh
+```
+
+In particular, verify that:
+
+- `CDROM_PATH` and `CDROM_IMAGE` match the location where you saved the ISO config file (i.e. `output_dir`).
+- `N9KV_SHARED_IMAGE` matches the location of the nexus9000v qcow2 image
+
+Run the script
+
+```bash
+cd $HOME/repos/n9kv-kvm/config/qemu/
+sudo ./nd_qemu_ER.sh
+```
+
+Connect to the ER switch console
+
+```bash
+telnet localhost 9011
+```
+
+We'll bypass POAP here, but later you can set that up.
+
+- Type `yes` once POAP starts to break out of POAP.
+- Type `no` to bypass the configuration utility.
+- Set the password when asked.
+- login
+
+The startup config doesn't actually set the `boot`, so set that.
+
+```bash
+conf
+boot nxos bootflash:/boot nxos bootflash:/nxos64-cs.10.3.8.M.bin 
+end
+copy run start
+```
+
+Repeat the above for the other switches (S1, S2, L1).
+
+### Add switches to ND
+
+In ND, we've already created two fabrics, ISN and VXLAN.
+
+If you already know how to add switches
+
+- Add the ER switch to the ISN fabric
+- Add the S1, S2, L1 switches to the VXLAN fabric
+
+If you need help with this, I'll complete this section in the next few days...
+
+### Fix duplicate mac addresses on interswitch-links
+
+Supposedly, (according to the internets...) nexus9000v should startup with unique
+interface mac addresses, based on its serial number (which is why the n9kv_qemu_*.sh
+scripts include a `SWITCH_SERIAL` parameter that is added to the -smbios line in
+the qemu-system-x86_64 parameters.). This doesn't seem to be the case though, which
+has completely destroyed my faith in the internets. So you'll probably see that the
+switches cannot peer over their inter-switch links.
+
+To fix this, there are some Ansible playbooks in this repo that add `switch_freeform`
+policies to ND that configure unique mac addresses on all inter-switch links.
+
+```bash
+cd $HOME/repos/n9kv-kvm
+source ./venv/bin/activate
+cd $HOME/repos/n9kv-kvm/config/ansible
+ansible-playbook interface_mac_addresses_ER.yaml -i dynamic_inventory.py
+ansible-playbook interface_mac_addresses_S1.yaml -i dynamic_inventory.py
+ansible-playbook interface_mac_addresses_S1.yaml -i dynamic_inventory.py
+ansible-playbook interface_mac_addresses_L1.yaml -i dynamic_inventory.py
+```
+
+Once the switches are added, and the above scripts are run, do a
+Recalculate and Deploy on the VXLAN and ISN fabrics.
+
 ## Topology built by this repository
 
 - Two fabrics

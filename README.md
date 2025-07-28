@@ -466,7 +466,8 @@ arobel@cvd-2:~$
 
 ## chrony Installation and Configuration
 
-To install chrony, do the following.
+ND requires a reachable NTP service.  `chrony` is very lightweight so will
+serve our purposes nicely. To install `chrony`, do the following.
 
 ```bash
 sudo apt install chrony

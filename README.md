@@ -507,14 +507,19 @@ Nexus Dashboard.
 
 Before beginning, ND will ask you to connect with a web browser after
 the initial CLI install is complete.  If you use a proxy server, make
-sure that you can configured your browser NOT to use the proxy server
-for the ND address.  E.g. configure NO_PROXY environment variable:
+sure that you configure your browser NOT to use the proxy server
+for the ND address.  E.g. configure the `NO_PROXY` environment variable
+(some apps may read this as lowercase, so best to configure both).
+
+If you already have `NO_PROXY` configured, add 192.168.11.2 to your existing definition.
 
 ```bash
 export NO_PROXY=192.168.11.2
+export no_proxy=192.168.11.2
 ```
 
-If you use Google Chrome, you can also invoke it to not use a proxy:
+If you use Google Chrome, you can invoke it to not use a proxy (typically for
+debugging when things aren't working as expected.)
 
 ```bash
 google-chrome --no-proxy-server &
@@ -621,8 +626,9 @@ Here, we'll need to:
 - Configure NTP server
 - Configure persistent IP addresses for services (DHCP, POAP, etc)
 
-Depending on ND version, you'll see an initial "Journey" screen, though ND 3.2(1) and ND 4.1 are different.
-But, in general, follow the steps on this screen to configure the above items.
+Depending on ND version, you'll see an initial "Journey" screen, though
+ND 3.2(1) and ND 4.1 are different.  But, in general, follow the steps on
+this screen to configure the above items.
 
 For the DNS and NTP servers, use the Vlan11 address (192.168.11.1).
 
@@ -640,6 +646,61 @@ of IPs in each of Vlan11 and Vlan12 for these e.g.:
 
 This leaves the upper range of addresses for nexus9000v mgmt0 addresses,
 client/server VMs, etc.
+
+I skip the proxy setup since I don't want ND using our proxy
+when its connecting to the local n9kv switches.
+
+### ND - Create ISN and VXLAN fabrics
+
+Look at the documentation for creating these fabric types.
+
+Some general guidelines.
+
+The main thing is to enable back2back&ToExternal and its suboptions.  Without this,
+the ER (edge router) switch in the ISN fabric will not get automatically configured
+when you Recalculate & Deploy the configurations and VRF Lite will not work.
+
+- ISN Fabric
+  - ND 4.1
+    - Choose Multisite & External Connectivity for the fabric type
+    - Fabric Name ISN
+    - BGP AS # 65001
+  - ND 3.x
+    - Choose External Connectivity Network for the fabric type
+    - Fabric Name ISN
+    - BGP AS # 65001
+
+- VXLAN Fabric
+  - ND 4.1
+    - Under Manage -> Fabrics click Create Fabric
+    - Click Create new LAN fabric, then click Next (lower right)
+    - Choose VXLAN as the fabric type, then click Next
+    - Click Configuration mode Advanced
+    - Overlay routing protocol BGP
+    - BGP ASN 65002
+    - Name VXLAN
+    - Click Next
+    - On the Advanced setting screen, clock Resources
+    - Click the VRF Lite Deployment popup and select back2backAndToExternal
+    - Enable all three of
+      - Auto Deploy for Peer
+      - Auto Deploy Default VRF
+      - Auto Deploy Default VRF for Peer
+    - Click Next
+    - Click View fabric details and you're done.
+  - ND 3.x
+    - Choose Data Center VXLAN EVPN for the fabric type
+    - Fabric Name VXLAN
+    - Under General Parameters
+      - BGP ASN 65002
+    - Under Fabric Settings -> `Resources` enable the following
+      - Click the VRF Lite Deployment popup and select Back2Back&ToExternal
+      - Auto Deploy for Peer
+      - Auto Deploy Default VRF
+      - Auto Deploy Default VRF for Peer
+
+
+For the VXLAN
 
 ## Nexus 9000v (n9kv) configuration and startup
 

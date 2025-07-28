@@ -885,7 +885,7 @@ Console access:
 telnet localhost 9011
 ```
 
-Connect to the ER switch console
+#### Connect to the ER switch console
 
 ```bash
 telnet localhost 9011
@@ -900,15 +900,29 @@ things seem to work OK with 4G size.
 Bad Partition bootflash size 4G too small < min 8G
 ```
 
-We'll bypass POAP here, but later you can set that up.
+#### Set the password and login
 
-- Wait for 
-- Type `yes` once POAP starts to break out of POAP.
-- Type `no` to bypass the configuration utility.
-- Set the password when asked.
-- login
+```bash
+---- System Admin Account Setup ----
 
-The startup config doesn't actually set the `boot`, so set that.
+
+Do you want to enforce secure password standard (yes/no) [y]: no
+
+  Enter the password for "admin": 
+  Confirm the password for "admin": 
+
+
+User Access Verification
+ER login: admin
+Password: 
+# skipping copyright, etc...
+ER#
+```
+
+#### Set the boot parameter
+
+The startup config doesn't actually set the `boot` parameter, so set
+that manually.
 
 ```bash
 conf

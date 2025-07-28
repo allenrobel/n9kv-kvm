@@ -389,7 +389,7 @@ DNSMASQ_EXCEPT="lo"
 sudo service start dnsmasq
 ```
 
-### Check the status dnsmasq for any errors
+### Check service dnsmasq status for any errors
 
 - sudo service dnsmasq status
 

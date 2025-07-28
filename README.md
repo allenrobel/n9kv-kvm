@@ -824,11 +824,11 @@ in the `vars` section are populated based on the contents of
 
 ```yaml
   vars:
-    boot_image: "nexus-cs-10.3.8M.bin"
+    nxos_image: "nexus-cs-10.3.8M.bin"
     output_dir: "/iso/nxos/config"
 ```
 
-- boot_image - Set this to the image name (.bin) that is extracted from the n9kv `.qcow2` during bootup.
+- nxos_image - Set this to the image name (.bin) that is extracted from the n9kv `.qcow2` during bootup.
 - output_dir - Set this to the location the n9kv startup config ISOs will be written to.
 
 ### Run the Ansible script
@@ -836,7 +836,7 @@ in the `vars` section are populated based on the contents of
 ```bash
 cd $HOME/repos/n9kv-kvm/config/ansible
 source $HOME/repos/n9kv-kvm/.venv/bin/activate
-ansible-playbook startup_config_iso.yaml -i dynamic_inventory.py
+sudo ansible-playbook startup_config_iso.yaml -i dynamic_inventory.py
 ```
 
 ### Verify the ISO images are created
@@ -844,17 +844,17 @@ ansible-playbook startup_config_iso.yaml -i dynamic_inventory.py
 Substitute the path below with the `output_dir` from above.
 
 ```bash
-(venv) arobel@cvd-2:~/repos/n9kv-kvm$ ls -l /iso/nxos/config
+(.venv) arobel@cvd-3:~/repos/n9kv-kvm/config/ansible$ ls -l /iso/nxos/config
 total 1424
--rw-r--r-- 1 arobel arobel    135 Jul 25 00:14 ER.cfg
--rw-r--r-- 1 root   root   358400 Jul 25 01:53 ER.iso
--rw-r--r-- 1 arobel arobel    135 Jul 25 00:14 L1.cfg
--rw-r--r-- 1 root   root   358400 Jul 25 01:53 L1.iso
--rw-r--r-- 1 arobel arobel    135 Jul 25 00:14 S1.cfg
--rw-r--r-- 1 root   root   358400 Jul 25 01:53 S1.iso
--rw-r--r-- 1 arobel arobel    135 Jul 25 00:14 S2.cfg
--rw-r--r-- 1 root   root   358400 Jul 25 01:53 S2.iso
-(venv) arobel@cvd-2:~/repos/n9kv-kvm$ 
+-rw-r--r-- 1 root root    172 Jul 28 20:39 ER.cfg
+-rw-r--r-- 1 root root 358400 Jul 28 20:40 ER.iso
+-rw-r--r-- 1 root root    172 Jul 28 20:39 L1.cfg
+-rw-r--r-- 1 root root 358400 Jul 28 20:40 L1.iso
+-rw-r--r-- 1 root root    172 Jul 28 20:39 S1.cfg
+-rw-r--r-- 1 root root 358400 Jul 28 20:40 S1.iso
+-rw-r--r-- 1 root root    172 Jul 28 20:39 S2.cfg
+-rw-r--r-- 1 root root 358400 Jul 28 20:40 S2.iso
+(.venv) arobel@cvd-3:~/repos/n9kv-kvm/config/ansible$
 ```
 
 ### Startup the nexus9000v switches

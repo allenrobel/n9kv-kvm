@@ -1,7 +1,7 @@
 # Summary
 
 Bringup a small VXLAN lab with Cisco Nexus Dashboard and Cisco Nexus9000v
-(aka n9kv) using Ubuntu 24.04.2 LTS virtualization stack.
+(aka n9kv) using Ubuntu 24.04.2 LTS virtualization stack. [Topology](#topology-built-by-this-repository)
 
 NOTE: You'll need a Cisco account to download Nexus Dashboard and Nexus9000v images.
 
@@ -12,13 +12,15 @@ NOTE: You'll need a Cisco account to download Nexus Dashboard and Nexus9000v ima
 
 ## Software Environment
 
-This repository has been tested with the following software versions.
+This repository has been tested with the software versions listed below.
 
 A note about the `Installation` links below.  Components should be installed
 in the order they appear in this document since some components depend on
-previously-install components.  These `Installation` links are intended
-as a convenience after you have this up and running by following things
-in the order presented.
+previously-installed components.  The intent of the `Installation` links
+is twofold:
+
+- Provide an overview of what lies ahead
+- Provide easy reference access to specific sections after the project is up and running
 
 It's assumed Ubuntu 24.04.2 LTS is already installed on hardware that
 meets the [Hardware Requirements](#hardware-requirements) and on which

@@ -572,8 +572,9 @@ With that out of the way, let's get started.
 
 ### ND CLI based initial bringup
 
-Edit one of the `nd_qemu_*.sh` files (e.g. `nd_qemu_321e.sh`) to suit your
-environment e.g. the ND image path and name.  Note the `ND_NAME` setting
+Edit one of the `nd_qemu_*.sh` files (e.g. `nd_qemu_321e.sh`) in
+`$HOME/repos/n9kv-kvm/config/qemu/` to suit your environment e.g.
+the ND image path and name.  Note the `ND_NAME` setting
 in this file.  This is what you will console to below.
 
 Also, take note of disk space requirements.  The ND qcow2 images

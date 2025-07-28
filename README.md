@@ -387,19 +387,22 @@ The only things we need to add/modify in the chrony configuration are:
 - `local stratum 15`
   - Synchronize to any time source with a lower (i.e. a better) stratum than 15
 - `server` Use this if you want to use a specific NTP server as a time source
+  - iburst is optional and tells chrony to send a burst of NTP requests to the
+    time source for faster synchronization
 - `pool` Use this if you want to use a pool of servers as a time source
 
 In my case, there's an NTP server in the lab so I'm using that.
 
 ```bash
-server 10.1.2.3
+server 10.1.2.3 iburst
 allow 192.168.11.0/24
 allow 192.168.12.0/24
 local stratum 15
 ```
 
 Once you've edited `/etc/chrony/chrony.conf` with your changes, restart the
-service (or stop and start it).
+service (or stop and start it).  You may have to stop/start twice if you are
+using a server instead of a pool (don't ask me why!).
 
 ```bash
 sudo service chrony stop
@@ -412,13 +415,15 @@ Check the status
 
 You should see in the startup log that a source was selected e.g.
 
-```
+```bash
 sudo service chrony status
 <stuff removed>
 Jul 28 00:02:35 cvd-2 chronyd[202142]: Selected source 10.1.2.3
 ```
 
-You can use the `chronyc` command to monitor `chrony`.  For example:
+You can use the `chronyc` command to monitor `chrony`.  For example,
+if `Leap status` shows `Not synchronized`, then chrony has not yet
+synced with your chosen time source.
 
 ```bash
 (n9kv-kvm) arobel@cvd-2:~/repos/n9kv-kvm$ chronyc tracking

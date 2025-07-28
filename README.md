@@ -694,12 +694,14 @@ client/server VMs, etc.
 I skip the proxy setup since I don't want ND using our proxy
 when its connecting to the local n9kv switches.
 
-### ND - Wait a long time
+### ND - Wait a loooooooong time
 
-After accepting the configuration, ND will reboot.  Go get a few cups of coffee and come back in an hour or so.
-When ND is ready, login and you'll see all the configuration options in the sidebar (ND 4.1), or you'll be
-above to connect to Nexus Dashboard Fabric Manager (ND 3.x).  These will be unavailable until ND is fully
-booted and its microservices have all started.
+After accepting the configuration, ND will reboot.  Go get a few cups of coffee and come back in a
+few hours or so.  When ND is ready, login using the password you entered during CLI setup, and
+you'll see:
+
+- ND 3.2 The dropdown menu "Admin Console", when clicked, will contain `Nexus Dashboard Fabric Manager`
+- ND 4.1 The sidebar will contain all configuration sections (Home, Manage, Analyze, Admin)
 
 ### ND - Access the documentation
 

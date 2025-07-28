@@ -650,6 +650,33 @@ client/server VMs, etc.
 I skip the proxy setup since I don't want ND using our proxy
 when its connecting to the local n9kv switches.
 
+### ND - Wait a long time
+
+After accepting the configuration, ND will reboot.  Go get a few cups of coffee and come back in an hour or so.
+When ND is ready, login and you'll see all the configuration options in the sidebar (ND 4.1), or you'll be
+above to connect to Nexus Dashboard Fabric Manager (ND 3.x).  These will be unavailable until ND is fully
+booted and its microservices have all started.
+
+### ND - Access the documentation
+
+The documentation is available on your ND instance.  Point your browser to:
+
+https://192.168.11.2/#/helpCenter
+
+### ND - Access the API documentation
+
+Likewise, the REST API documentation is available directly from ND:
+
+- ND 4.1
+  - https://192.168.11.2/help-center/swagger
+- ND 3.x
+  - https://192.168.11.2/apidocs/
+
+For ND 3.x, there are two sets of API documentation.
+
+- ND (this is what you see when accessing the URL for ND 3.x)
+- NDFC (click on the Nexus Dashboard dropdown menu and select Nexus Dashboard Fabric Controller
+
 ### ND - Create ISN and VXLAN fabrics
 
 Look at the documentation for creating these fabric types.
@@ -771,7 +798,18 @@ ansible-playbook startup_config_iso.yaml -i dynamic_inventory.py
 Substitute the path below with the `output_dir` from above.
 
 ```bash
-ls -l 
+(venv) arobel@cvd-2:~/repos/n9kv-kvm$ ls -l /iso/nxos/config
+total 1424
+-rw-r--r-- 1 arobel arobel    135 Jul 25 00:14 ER.cfg
+-rw-r--r-- 1 root   root   358400 Jul 25 01:53 ER.iso
+-rw-r--r-- 1 arobel arobel    135 Jul 25 00:14 L1.cfg
+-rw-r--r-- 1 root   root   358400 Jul 25 01:53 L1.iso
+-rw-r--r-- 1 arobel arobel    135 Jul 25 00:14 S1.cfg
+-rw-r--r-- 1 root   root   358400 Jul 25 01:53 S1.iso
+-rw-r--r-- 1 arobel arobel    135 Jul 25 00:14 S2.cfg
+-rw-r--r-- 1 root   root   358400 Jul 25 01:53 S2.iso
+(venv) arobel@cvd-2:~/repos/n9kv-kvm$ 
+```
 
 ## Topology built by this repository
 

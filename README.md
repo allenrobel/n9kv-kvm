@@ -26,8 +26,10 @@ This has been tested with the following.
   - 2.18.7
 - [QEMU](https://www.qemu.org)
   - qemu-system-x86_64 version 8.2.2
+  - `sudo apt update`
+  - `sudo apt install qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virt-manager`
 - [OVMF](https://wiki.ubuntu.com/UEFI/OVMF) (used for nk9v BIOS)
-  - apt install ovmf
+  - `sudo apt install ovmf`
 - [Cockpit](https://cockpit-project.org)
   - Optional (for monitoring n9kv VMs)
   - Version 343

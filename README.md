@@ -3,36 +3,44 @@
 Bringup a small VXLAN lab with Cisco Nexus Dashboard and Cisco Nexus9000v
 (aka n9kv) using Ubuntu 24.04.2 LTS virtualization stack.
 
+NOTE: You'll need a Cisco account to download Nexus Dashboard and Nexus9000v images.
+
 ## Software Environment
 
 This has been tested with the following.
 
 - Cisco Nexus Dashboard
   - nd-dk9.3.2.1e.qcow2
-- Cisco Nexus9000v
+- [Cisco Nexus9000v](https://www.cisco.com/c/en/us/td/docs/dcn/nx-os/nexus9000/103x/n9000v-n9300v-9500v/cisco-nexus-9000v-9300v-9500v-guide-release-103x.html)
   - nexus9300v64.10.3.8.M.qcow2
 - Ubuntu
-  - 24.04.2 LTS
+  - [24.04.2 LTS](https://ubuntu.com/desktop)
 - Python
-  - 3.13
+  - [3.13.5](https://www.python.org/downloads/release/python-3135/)
   - The stock Python 3.12 on Ubuntu 24.04.2 LTS should also work
-- Ansible
+  - `sudo add-apt-repository ppa:deadsnakes/ppa`
+  - `sudo apt update`
+  - `sudo apt install python3.13`
+  - `sudo apt install python3.13-venv python3.13-dev`
+- [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#installing-and-upgrading-ansible-with-pip)
   - 2.18.7
-- QEMU
+- [QEMU](https://www.qemu.org)
   - qemu-system-x86_64 version 8.2.2
-- OVMF (used for nk9v BIOS)
+- [OVMF](https://wiki.ubuntu.com/UEFI/OVMF) (used for nk9v BIOS)
   - apt install ovmf
 - [Cockpit](https://cockpit-project.org)
   - Optional (for monitoring n9kv VMs)
   - Version 343
-- dnsmasq
+- [dnsmasq](https://wiki.debian.org/dnsmasq)
   - DNS server (for ND)
   - 2.90-2ubuntu0.1
-- chrony
+  - `sudo apt update`
+  - `sudo apt install dnsmasq`
+- [chrony](https://chrony-project.org)
   - NTP server (for ND)
   - chrony/noble-updates,now 4.5-1ubuntu4.2
-
-NOTE: You'll need a Cisco account to download Nexus Dashboard and Nexus9000v images.
+  - `sudo apt update`
+  - `sudo apt install chrony`
 
 ## Hardware Requirements
 

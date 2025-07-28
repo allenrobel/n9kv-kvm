@@ -5,56 +5,56 @@ Bringup a small VXLAN lab with Cisco Nexus Dashboard and Cisco Nexus9000v
 
 NOTE: You'll need a Cisco account to download Nexus Dashboard and Nexus9000v images.
 
+## Hardware Requirements
+
+- At least 500GB disk (preferrably 1TB)
+- At least 256GB RAM (preferrably 512GB)
+
 ## Software Environment
 
-This has been tested with the following.
+This repository has been tested with the following software versions.
 
-NOTE: `Installation` links below link to sections of this document that should be followed to
-install a specific piece of softare.  For example, the Installation link for Ansible links to
-`Upgrade pip and install uv` since Ansible is installed using `uv sync` and `uv` is installed
-with `pip` (so this whole -- seemingly unrelated -- section should be followed).
+A note about the `Installation` links below.  Components should be installed
+in the order they appear in this document since some components depend on
+previously-install components.  These `Installation` links are intended
+as a convenience after you have this up and running by following things
+in the order presented.
+
+It's assumed Ubuntu 24.04.2 LTS is already installed on hardware that
+meets the [Hardware Requirements](#hardware-requirements) and on which
+[KVM is supported](#kvm-support).
 
 - [Cisco Nexus Dashboard](https://www.cisco.com/c/en/us/support/data-center-analytics/nexus-dashboard/series.html)
   - nd-dk9.3.2.1e.qcow2
+  - [Installation](#nd-install-nexus-dashboard)
 - [Cisco Nexus9000v](https://www.cisco.com/c/en/us/td/docs/dcn/nx-os/nexus9000/103x/n9000v-n9300v-9500v/cisco-nexus-9000v-9300v-9500v-guide-release-103x.html)
   - nexus9300v64.10.3.8.M.qcow2
+  - [Installation](#nexus-9000v-configuration-and-startup)
 - Ubuntu
   - [24.04.2 LTS](https://ubuntu.com/desktop)
 - Python
   - [3.13.5](https://www.python.org/downloads/release/python-3135/)
   - The stock Python 3.12 on Ubuntu 24.04.2 LTS should also work
   - [Installation](#install-python-313)
-  - `sudo add-apt-repository ppa:deadsnakes/ppa`
-  - `sudo apt update`
-  - `sudo apt install python3.13`
-  - `sudo apt install python3.13-venv python3.13-dev`
 - [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#installing-and-upgrading-ansible-with-pip)
   - 2.18.7
   - [Installation](#upgrade-pip-and-install-uv)
 - [QEMU](https://www.qemu.org)
   - qemu-system-x86_64 version 8.2.2
-  - `sudo apt update`
-  - `sudo apt install qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virt-manager`
+  - [Installation](#qemu-and-libvirt-virtualization-stack)
 - [OVMF](https://wiki.ubuntu.com/UEFI/OVMF) (used for nk9v BIOS)
-  - `sudo apt install ovmf`
+  - [Installation](#ovmf)
 - [Cockpit](https://cockpit-project.org)
   - Optional (for monitoring n9kv VMs)
   - Version 343
 - [dnsmasq](https://wiki.debian.org/dnsmasq)
   - DNS server (for ND)
   - 2.90-2ubuntu0.1
-  - `sudo apt update`
-  - `sudo apt install dnsmasq`
+  - [Installation](#dnsmasq-installation-and-configuration)
 - [chrony](https://chrony-project.org)
   - NTP server (for ND)
   - chrony/noble-updates,now 4.5-1ubuntu4.2
-  - `sudo apt update`
-  - `sudo apt install chrony`
-
-## Hardware Requirements
-
-- At least 500GB disk (preferrably 1TB)
-- At least 256GB RAM (preferrably 512GB)
+  - [Installation](#chrony-installation-and-configuration)
 
 ## Dependencies
 
@@ -63,6 +63,7 @@ with `pip` (so this whole -- seemingly unrelated -- section should be followed).
 Check if KVM is supported. If this returns error(s) things are not going to work for you.
 
 ```bash
+sudo apt install cpu-checker
 kvm-ok
 ```
 
@@ -84,7 +85,7 @@ sudo apt install python3.13
 sudo apt install python3.13-venv python3.13-dev
 ```
 
-### Virtualization stack
+### QEMU and libvirt Virtualization Stack
 
 You'll need the virtualization stack consisting of qemu and libvirt.
 Install them as follows.
@@ -183,6 +184,27 @@ export PYTHONPATH=$HOME/repos/n9kv-kvm/.venv:$PYTHONPATH
 source $HOME/repos/n9kv-kvm/.venv/bin/activate
 pip install --upgrade pip
 pip install uv
+```
+
+### uv dependency tree
+
+When you run `uv sync` in the next section the following dependencies will be installed.
+
+```bash
+(n9kv-kvm) arobel@Allen-M4 n9kv-kvm % uv tree
+Resolved 11 packages in 7ms
+n9kv-kvm v0.1.0
+└── ansible v11.8.0
+    └── ansible-core v2.18.7
+        ├── cryptography v45.0.5
+        │   └── cffi v1.17.1
+        │       └── pycparser v2.22
+        ├── jinja2 v3.1.6
+        │   └── markupsafe v3.0.2
+        ├── packaging v25.0
+        ├── pyyaml v6.0.2
+        └── resolvelib v1.0.1
+(n9kv-kvm) arobel@Allen-M4 n9kv-kvm %
 ```
 
 ### uv sync
@@ -345,7 +367,7 @@ Some bridges will be DOWN. This is expected and we'll fix it later.
 (.venv) arobel@cvd-3:~/repos/n9kv-kvm/config/bridges$
 ```
 
-## dnsmasq installation and configuration
+## dnsmasq Installation and Configuration
 
 ND requires a reachable DNS server.  Since we are assuming that everything
 is local to your host on non-public IPs, we'll use dnsmasq since it's pretty
@@ -439,7 +461,7 @@ Jul 28 02:44:27 cvd-2 systemd[1]: Started dnsmasq.service - dnsmasq - A lightwei
 arobel@cvd-2:~$
 ```
 
-## chrony installation and configuration
+## chrony Installation and Configuration
 
 To install chrony, do the following.
 
@@ -515,7 +537,7 @@ Leap status     : Normal
 (n9kv-kvm) arobel@cvd-2:~/repos/n9kv-kvm$
 ```
 
-## ND - Install Nexus Dashboard
+## ND Install Nexus Dashboard
 
 Now that the servers we need are setup and running, let's install
 Nexus Dashboard.
@@ -743,7 +765,7 @@ when you Recalculate & Deploy the configurations and VRF Lite will not work.
       - Auto Deploy Default VRF
       - Auto Deploy Default VRF for Peer
 
-## Nexus 9000v (n9kv) configuration and startup
+## Nexus 9000v configuration and startup
 
 We will be using an Ansible playbook to generate the n9kv startup-config
 ISO files.

@@ -367,6 +367,61 @@ listen-address=192.168.12.1
 no-dhcp-interface=*
 ```
 
+### Edit /etc/default/dnsmasq
+
+This file is specific to Ubuntu.  Uncomment and set the following options in this file.
+
+- `IGNORE_RESOLVCONF`
+  - Even though we set `server=` above, this is not enough on Ubuntu
+  - We also need to set `IGNORE_RESOLVCONF=yes` so that dnsmasq does not try to read a non-existent /run/dnsmasq/resolv.conf
+- `DNSMASQ_EXCEPT`
+  - Without setting `DNSMASQ_EXCEPT="lo"` you'll get the following error in `service dnsmasq status`
+  - resolvconf[6641]: Failed to set DNS configuration: Link lo is loopback device.
+
+```bash
+IGNORE_RESOLVCONF=yes
+DNSMASQ_EXCEPT="lo"
+```
+
+### Start the dnsmasq service
+
+```bash
+sudo service start dnsmasq
+```
+
+### Check the status dnsmasq for any errors
+
+- sudo service dnsmasq status
+
+```bash
+arobel@cvd-2:~$ sudo service dnsmasq status
+[sudo] password for arobel:
+● dnsmasq.service - dnsmasq - A lightweight DHCP and caching DNS server
+     Loaded: loaded (/usr/lib/systemd/system/dnsmasq.service; enabled; preset: enabled)
+     Active: active (running) since Mon 2025-07-28 02:44:27 UTC; 17min ago
+    Process: 210061 ExecStartPre=/usr/share/dnsmasq/systemd-helper checkconfig (code=exited, status=0/SUCCESS)
+    Process: 210067 ExecStart=/usr/share/dnsmasq/systemd-helper exec (code=exited, status=0/SUCCESS)
+    Process: 210074 ExecStartPost=/usr/share/dnsmasq/systemd-helper start-resolvconf (code=exited, status=0/SUCCESS)
+   Main PID: 210072 (dnsmasq)
+      Tasks: 1 (limit: 618896)
+     Memory: 840.0K (peak: 3.6M)
+        CPU: 79ms
+     CGroup: /system.slice/dnsmasq.service
+             └─210072 /usr/sbin/dnsmasq -x /run/dnsmasq/dnsmasq.pid -u dnsmasq -I lo -7 /etc/dnsmasq.d,.dpkg-dist,.dpkg-old,.dpkg>
+
+Jul 28 02:44:27 cvd-2 dnsmasq[210072]: started, version 2.90 cachesize 1000
+Jul 28 02:44:27 cvd-2 dnsmasq[210072]: compile time options: IPv6 GNU-getopt DBus no-UBus i18n IDN2 DHCP DHCPv6 no-Lua TFTP connt>
+Jul 28 02:44:27 cvd-2 dnsmasq[210072]: using nameserver 1.1.1.1#53
+Jul 28 02:44:27 cvd-2 dnsmasq[210072]: using nameserver 8.8.8.8#53
+Jul 28 02:44:27 cvd-2 dnsmasq[210072]: reading /etc/resolv.conf
+Jul 28 02:44:27 cvd-2 dnsmasq[210072]: using nameserver 1.1.1.1#53
+Jul 28 02:44:27 cvd-2 dnsmasq[210072]: using nameserver 8.8.8.8#53
+Jul 28 02:44:27 cvd-2 dnsmasq[210072]: using nameserver 127.0.0.53#53
+Jul 28 02:44:27 cvd-2 dnsmasq[210072]: cleared cache
+Jul 28 02:44:27 cvd-2 systemd[1]: Started dnsmasq.service - dnsmasq - A lightweight DHCP and caching DNS server.
+arobel@cvd-2:~$
+```
+
 ## chrony installation and configuration
 
 To install chrony, do the following.
@@ -443,10 +498,31 @@ Leap status     : Normal
 (n9kv-kvm) arobel@cvd-2:~/repos/n9kv-kvm$
 ```
 
-## Install Nexus Dashboard (ND)
+## ND - Install Nexus Dashboard
 
 Now that the servers we need are setup and running, let's install
 Nexus Dashboard.
+
+### ND - Things to be aware of
+
+Before beginning, ND will ask you to connect with a web browser after
+the initial CLI install is complete.  If you use a proxy server, make
+sure that you can configured your browser NOT to use the proxy server
+for the ND address.  E.g. configure NO_PROXY environment variable:
+
+```bash
+export NO_PROXY=192.168.11.2
+```
+
+If you use Google Chrome, you can also invoke it to not use a proxy:
+
+```bash
+google-chrome --no-proxy-server &
+```
+
+With that out of the way, let's get started.
+
+### ND CLI based initial bringup
 
 Edit one of the `nd_qemu_*.sh` files (e.g. `nd_qemu_321e.sh`) to suit your
 environment e.g. the ND image path and name.  Note the `ND_NAME` setting
@@ -456,7 +532,7 @@ Also, take note of disk space requirements.  The ND qcow2 images
 range from 15.9GB (321e) to 16.4GB (4.1 EFT), so ensure your
 `ND_SOURCE_DIR` (see below) has at least this much space.
 
-Also note that `ND_INSTALL_DIR` (see below) needs to have enough
+And note that `ND_INSTALL_DIR` (see below) needs to have enough
 space to hold both of the created disk1 and disk2 files.  With
 ND 4.1, and a very minimal configuration, this is 50GB, but these
 disks are configured to grow to 500GB (e.g. ND hosts nexus9000v images
@@ -537,9 +613,20 @@ System up, please wait for UI to be online.
 System UI online, please login to https://192.168.11.2 to continue.
 ```
 
-Use a web browser to finish the ND configuration. ND provides screens
-to configure at least three "persistent IPs" which are used for services
-provided by ND, including DHCP and POAP.  I prefer using the lower range
+### ND - Use a web browser to finish the configuration
+
+Here, we'll need to:
+
+- Configure DNS server
+- Configure NTP server
+- Configure persistent IP addresses for services (DHCP, POAP, etc)
+
+Depending on ND version, you'll see an initial "Journey" screen, though ND 3.2(1) and ND 4.1 are different.
+But, in general, follow the steps on this screen to configure the above items.
+
+For the DNS and NTP servers, use the Vlan11 address (192.168.11.1).
+
+For the persistent IP addresses, I prefer using the lower range
 of IPs in each of Vlan11 and Vlan12 for these e.g.:
 
 - Vlan11

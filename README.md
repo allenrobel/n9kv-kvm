@@ -18,12 +18,14 @@ This has been tested with the following.
 - Python
   - [3.13.5](https://www.python.org/downloads/release/python-3135/)
   - The stock Python 3.12 on Ubuntu 24.04.2 LTS should also work
+  - [Installation](#install-python-313)
   - `sudo add-apt-repository ppa:deadsnakes/ppa`
   - `sudo apt update`
   - `sudo apt install python3.13`
   - `sudo apt install python3.13-venv python3.13-dev`
 - [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#installing-and-upgrading-ansible-with-pip)
   - 2.18.7
+  - [Installation](#upgrade-pip-and-install-uv)
 - [QEMU](https://www.qemu.org)
   - qemu-system-x86_64 version 8.2.2
   - `sudo apt update`
@@ -59,7 +61,7 @@ Check if KVM is supported. If this returns error(s) things are not going to work
 kvm-ok
 ```
 
-### Python
+### Install Python 3.13
 
 I use Python 3.13, but the stock Python 3.12 on Ubuntu 24.04.2 LTS should be fine.
 
@@ -70,7 +72,7 @@ This PPA contains more recent Python versions packaged for Ubuntu.
 sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt update
 
-# Install Python 3.13
+# Install
 sudo apt install python3.13
 
 # Install additional packages, especially python3.13-venv which we use further below

@@ -876,7 +876,7 @@ Run the script
 
 ```bash
 cd $HOME/repos/n9kv-kvm/config/qemu/
-sudo ./nd_qemu_ER.sh
+sudo ./n9kv_qemu_ER.sh
 ```
 
 Connect to the ER switch console

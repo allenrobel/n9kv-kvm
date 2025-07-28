@@ -7,5 +7,5 @@ boot nxos bootflash:/{{ boot_image }}
 interface mgmt0
   no cdp enable
   vrf member management
-  ip address {{ mgmt_ip }}
+  ip address {{ mgmt_ip }}/24
   no shutdown

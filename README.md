@@ -902,6 +902,10 @@ Bad Partition bootflash size 4G too small < min 8G
 
 #### Set the password and login
 
+We've intentionally omitted a password setting in the startup config,
+so you can set it when the nexus9000v boots to whatever local security
+standards are applicable to you.
+
 ```bash
 ---- System Admin Account Setup ----
 

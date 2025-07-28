@@ -1,9 +1,9 @@
 # Summary
 
-Bringup a small VXLAN lab with Cisco Nexus Dashboard and Cisco Nexus9000v (n9kv)
-using Ubuntu 24.04.2 LTS virtualization stack.
+Bringup a small VXLAN lab with Cisco Nexus Dashboard and Cisco Nexus9000v
+(aka n9kv) using Ubuntu 24.04.2 LTS virtualization stack.
 
-## Environment
+## Software Environment
 
 This has been tested with the following.
 
@@ -22,10 +22,22 @@ This has been tested with the following.
   - qemu-system-x86_64 version 8.2.2
 - OVMF (used for nk9v BIOS)
   - apt install ovmf
-- [Cockpit](https://cockpit-project.org) (optional)
+- [Cockpit](https://cockpit-project.org)
+  - Optional (for monitoring n9kv VMs)
   - Version 343
+- dnsmasq
+  - DNS server (for ND)
+  - 2.90-2ubuntu0.1
+- chrony
+  - NTP server (for ND)
+  - chrony/noble-updates,now 4.5-1ubuntu4.2
 
 NOTE: You'll need a Cisco account to download Nexus Dashboard and Nexus9000v images.
+
+## Hardware Requirements
+
+- At least 500GB disk (preferrably 1TB)
+- At least 256GB RAM (preferrably 512GB)
 
 ## Dependencies
 
@@ -316,7 +328,120 @@ Some bridges will be DOWN. This is expected and we'll fix it later.
 (.venv) arobel@cvd-3:~/repos/n9kv-kvm/config/bridges$
 ```
 
+## dnsmasq installation and configuration
+
+ND requires a reachable DNS server.  Since we are assuming that everything
+is local to your host on non-public IPs, we'll use dnsmasq since it's pretty
+light weight.
+
+```bash
+sudo apt update
+sudo apt install dsnmasq
+```
+
+### Edit /etc/dnsmasq.conf
+
+We'll need to modify some lines in `/etc/dnsmasq.conf`
+
+We'll modify this with just enough changes for our project. Specifically:
+
+- `port=` Listen on the standard port 53
+- `server=` Configure upstream DNS servers to forward queries to
+  - Cloudflare (1.1.1.1)
+  - Google (8.8.8.8)
+- `no-hosts` do not read /etc/hosts
+- `listen-address=` Bind to and listen for requests from Vlan11 and Vlan12 interfaces
+  - For reasons I don't understand, using `interface=` multiple times resulted in dnsmasq errors...
+  - Hence, using `listen-address` instead.  This results in the same functionality.
+- `no-dhcp-interface` Disable dnsmasq DHCP on all interfaces (ND provides this service)
+- `cache-size` Specify cache size (default is 150)
+
+```bash
+port=53
+no-hosts
+server=1.1.1.1
+server=8.8.8.8
+cache-size=1000
+listen-address=192.168.11.1
+listen-address=192.168.12.1
+no-dhcp-interface=*
+```
+
+## chrony installation and configuration
+
+To install chrony, do the following.
+
+```bash
+sudo apt install chrony
+```
+
+The chrony configuration file is located here:
+
+`/etc/chrony/chrony.conf`
+
+The only things we need to add/modify in the chrony configuration are:
+
+- `allow`
+  - Enable chrony to function as an Network Time Protocol server
+  - Limit NTP reponses to the the subnet ranges for our project
+- `local stratum 15`
+  - Synchronize to any time source with a lower (i.e. a better) stratum than 15
+- `server` Use this if you want to use a specific NTP server as a time source
+- `pool` Use this if you want to use a pool of servers as a time source
+
+In my case, there's an NTP server in the lab so I'm using that.
+
+```bash
+server 10.1.2.3
+allow 192.168.11.0/24
+allow 192.168.12.0/24
+local stratum 15
+```
+
+Once you've edited `/etc/chrony/chrony.conf` with your changes, restart the
+service (or stop and start it).
+
+```bash
+sudo service chrony stop
+sudu service chrony start
+```
+
+Check the status
+
+- sudo chrony status
+
+You should see in the startup log that a source was selected e.g.
+
+```
+sudo service chrony status
+<stuff removed>
+Jul 28 00:02:35 cvd-2 chronyd[202142]: Selected source 10.1.2.3
+```
+
+You can use the `chronyc` command to monitor `chrony`.  For example:
+
+```bash
+(n9kv-kvm) arobel@cvd-2:~/repos/n9kv-kvm$ chronyc tracking
+Reference ID    : 0A12BE01 (_gateway)
+Stratum         : 4
+Ref time (UTC)  : Mon Jul 28 00:04:46 2025
+System time     : 0.000004790 seconds fast of NTP time
+Last offset     : +0.000015556 seconds
+RMS offset      : 0.000008368 seconds
+Frequency       : 1.498 ppm fast
+Residual freq   : +0.079 ppm
+Skew            : 0.040 ppm
+Root delay      : 0.001343844 seconds
+Root dispersion : 0.002986593 seconds
+Update interval : 64.4 seconds
+Leap status     : Normal
+(n9kv-kvm) arobel@cvd-2:~/repos/n9kv-kvm$
+```
+
 ## Install Nexus Dashboard (ND)
+
+Now that the servers we need are setup and running, let's install
+Nexus Dashboard.
 
 Edit one of the `nd_qemu_*.sh` files (e.g. `nd_qemu_321e.sh`) to suit your
 environment e.g. the ND image path and name.  Note the `ND_NAME` setting
@@ -329,7 +454,7 @@ range from 15.9GB (321e) to 16.4GB (4.1 EFT), so ensure your
 Also note that `ND_INSTALL_DIR` (see below) needs to have enough
 space to hold both of the created disk1 and disk2 files.  With
 ND 4.1, and a very minimal configuration, this is 50GB, but these
-disks are configured to grow to 500GB (e.g. ND hosts n9kv images
+disks are configured to grow to 500GB (e.g. ND hosts nexus9000v images
 which will grow the size of disk2 as you upload these images to ND),
 so plan accordingly based on your estimated usage.
 
@@ -421,7 +546,7 @@ of IPs in each of Vlan11 and Vlan12 for these e.g.:
   - 192.168.12.11
   - 192.168.12.12
 
-This leaves the upper range of addresses for n9kv mgmt0 addresses,
+This leaves the upper range of addresses for nexus9000v mgmt0 addresses,
 client/server VMs, etc.
 
 ## Nexus 9000v (n9kv) configuration and startup

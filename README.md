@@ -9,7 +9,7 @@ NOTE: You'll need a Cisco account to download Nexus Dashboard and Nexus9000v ima
 
 This has been tested with the following.
 
-- Cisco Nexus Dashboard
+- [Cisco Nexus Dashboard](https://www.cisco.com/c/en/us/support/data-center-analytics/nexus-dashboard/series.html)
   - nd-dk9.3.2.1e.qcow2
 - [Cisco Nexus9000v](https://www.cisco.com/c/en/us/td/docs/dcn/nx-os/nexus9000/103x/n9000v-n9300v-9500v/cisco-nexus-9000v-9300v-9500v-guide-release-103x.html)
   - nexus9300v64.10.3.8.M.qcow2

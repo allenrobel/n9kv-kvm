@@ -49,6 +49,7 @@ meets the [Hardware Requirements](#hardware-requirements) and on which
 - [Cockpit](https://cockpit-project.org)
   - Optional (for monitoring n9kv VMs)
   - Version 343
+  - [Installation (work in progress)](https://github.com/allenrobel/n9kv-kvm/tree/main/cockpit)
 - [dnsmasq](https://wiki.debian.org/dnsmasq)
   - DNS server (for ND)
   - 2.90-2ubuntu0.1

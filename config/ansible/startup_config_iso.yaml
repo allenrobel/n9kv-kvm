@@ -20,7 +20,7 @@
 #
 # Locally defined variables (see vars below):
 # output_dir: should match CDROM_PATH in qemu/n9kv_qemu_*.sh
-# boot_image: should match the NX-OS image used in the QEMU scripts
+# nxos_image: should match the NX-OS image used in the QEMU scripts
 # switches: list of switches with their hostnames, management IPs, config file names, and ISO file names.
 ---
 - name: Create NX-OS Startup Configuration Files and ISO Images
@@ -28,7 +28,7 @@
   gather_facts: true
   vars:
     # Default NX-OS image name
-    boot_image: "nexus-cs-10.3.8M.bin"
+    nxos_image: "nexus-cs-10.3.8M.bin"
 
     # Output directory for configs and ISOs
     # If you want to change this to your local user directory, either use
@@ -79,7 +79,7 @@
       vars:
         hostname: "{{ item.hostname }}"
         mgmt_ip: "{{ item.mgmt_ip }}"
-        boot_image: "{{ boot_image }}"
+        boot_image: "{{ nxos_image }}"
 
     - name: Check if mkisofs is available
       command: which mkisofs

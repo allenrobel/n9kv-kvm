@@ -859,6 +859,8 @@ total 1424
 
 ### Startup the nexus9000v switches
 
+#### Review shell script contents
+
 Review the contents of the following script and make any modifications
 e.g. for `CDROM_PATH` based on where you saved the config ISOs above,
 and where you saved the nexus9000v qcow2 image.
@@ -872,11 +874,15 @@ In particular, verify that:
 - `CDROM_PATH` and `CDROM_IMAGE` match the location where you saved the ISO config file (i.e. `output_dir`).
 - `N9KV_SHARED_IMAGE` matches the location of the nexus9000v qcow2 image
 
-Run the script
+#### Run the ER shell script
 
 ```bash
 cd $HOME/repos/n9kv-kvm/config/qemu/
 sudo ./n9kv_qemu_ER.sh
+# In the script output, you'll see the port number used
+# to connect to the switch console
+Console access:
+telnet localhost 9011
 ```
 
 Connect to the ER switch console
@@ -885,8 +891,18 @@ Connect to the ER switch console
 telnet localhost 9011
 ```
 
+You'll notice the following, but you can ignore it.  The shell script above
+does try to resize the image, but that doesn't help.  If anyone has a solution,
+open an issue in this repo and I'll update the docs (thanks!).  For now,
+things seem to work OK with 4G size.
+
+```bash
+Bad Partition bootflash size 4G too small < min 8G
+```
+
 We'll bypass POAP here, but later you can set that up.
 
+- Wait for 
 - Type `yes` once POAP starts to break out of POAP.
 - Type `no` to bypass the configuration utility.
 - Set the password when asked.

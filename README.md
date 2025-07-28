@@ -699,9 +699,6 @@ when you Recalculate & Deploy the configurations and VRF Lite will not work.
       - Auto Deploy Default VRF
       - Auto Deploy Default VRF for Peer
 
-
-For the VXLAN
-
 ## Nexus 9000v (n9kv) configuration and startup
 
 We will be using an Ansible playbook to generate the n9kv startup-config

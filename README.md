@@ -41,6 +41,8 @@ meets the [Hardware Requirements](#hardware-requirements) and on which
 - [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#installing-and-upgrading-ansible-with-pip)
   - 2.18.7
   - [Installation](#upgrade-pip-and-install-uv)
+- NDFC Ansible Collection
+  - [Installation](./docs/install_ansible_collection.md)
 - [QEMU](https://www.qemu.org)
   - qemu-system-x86_64 version 8.2.2
   - [Installation](#qemu-and-libvirt-virtualization-stack)

@@ -800,7 +800,7 @@ containing (e.g. for the edge router, ER):
 ```bash
 configure terminal
 hostname ER
-boot nxos bootflash:/nexus-cs-10.3.8M.bin
+boot nxos bootflash:/nxos64-cs.10.3.8.M.bin
 
 interface mgmt0
   no cdp enable
@@ -825,7 +825,7 @@ in the `vars` section are populated based on the contents of
 
 ```yaml
   vars:
-    nxos_image: "nexus-cs-10.3.8M.bin"
+    nxos_image: "nxos64-cs.10.3.8.M.bin"
     output_dir: "/iso/nxos/config"
 ```
 
@@ -959,6 +959,18 @@ If you already know how to add switches
 - Add the S1, S2, L1 switches to fabric `VXLAN`
 
 If you need help with this, I'll complete this section in the next few days...
+
+### ND 4.1 Add switches
+
+- In the sidebar, click `Manage` -> `Fabrics`
+- On the `Fabrics` page, click `Actions` -> `Add Fabric`
+- On the `Add Fabric` page complete the following
+  - `Fabric Name` ISN
+  - `Fabric Seed Switch Type` Cisco
+  - `Fabric Seed Switch` 192.168.11.111
+  - `User Name` admin
+  - `Password` The password you assigned to the ER switch
+  - Click `Add`
 
 ### Fix duplicate mac addresses on interswitch-links
 

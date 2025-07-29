@@ -737,12 +737,12 @@ Recalculate & Deploy.
 - Fabric `ISN`
   - ND 4.1
     - Choose `Multisite & External Connectivity` for the fabric type
-    - Fabric Name ISN
-    - BGP AS # 65001
+    - `Fabric Name` ISN
+    - `BGP AS #` 65001
   - ND 3.x
     - Choose `External Connectivity Network` for the fabric type
-    - Fabric Name ISN
-    - BGP AS # 65001
+    - `Fabric Name` ISN
+    - `BGP AS #` 65001
 
 - Fabric `VXLAN`
   - ND 4.1

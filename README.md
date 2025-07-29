@@ -219,8 +219,7 @@ n9kv-kvm v0.1.0
 
 ### uv sync
 
-To install dependencies used in this repository, including ansible,
-run the following.
+To install dependencies used in this repository, do the following.
 
 ```bash
 source $HOME/repos/n9kv-kvm/.venv/bin/activate

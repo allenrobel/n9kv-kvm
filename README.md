@@ -924,29 +924,6 @@ Password:
 ER#
 ```
 
-#### Set the boot parameter
-
-The startup config doesn't actually set the `boot` parameter, so set
-that manually.
-
-- conf
-- boot nxos bootflash:/nxos64-cs.10.3.8.M.bin
-- end
-- copy run start
-
-```bash
-ER# conf
-Enter configuration commands, one per line. End with CNTL/Z.
-ER(config)# boot nxos bootflash:/nxos64-cs.10.3.8.M.bin
-Performing image verification and compatibility check, please wait....
-ER(config)# end
-ER# copy run start
-[########################################] 100%
-Copy complete, now saving to disk (please wait)...
-Copy complete.
-ER# 
-```
-
 Repeat the above for the other switches (S1, S2, L1).
 
 ### Add switches to ND

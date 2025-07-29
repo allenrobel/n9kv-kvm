@@ -1044,6 +1044,23 @@ graph TB
 │       ├── n9kv_qemu_S2.sh
 │       ├── nd_qemu_321e.sh
 │       └── nd_qemu_EFT.sh
+├── docs
+│   ├── images
+│   │   ├── nd4_1_journey.png
+│   │   ├── nd4_10_cluster_install.png
+│   │   ├── nd4_11_system_software.png
+│   │   ├── nd4_12_release_details.png
+│   │   ├── nd4_13_whats_new.png
+│   │   ├── nd4_2_basic_information.png
+│   │   ├── nd4_4_node_details_cluster_connectivity.png
+│   │   ├── nd4_5_persistent_ips.png
+│   │   ├── nd4_6_persistent_ips_added.png
+│   │   ├── nd4_7_summary.png
+│   │   ├── nd4_8_summary_error.png
+│   │   └── nd4_9_login.png
+│   ├── install_ansible_collection.md
+│   ├── nd3_bringup_web.md
+│   └── nd4_bringup_web.md
 ├── env
 │   ├── env_ansible.sh
 │   ├── env_libvirt.sh
@@ -1054,6 +1071,6 @@ graph TB
 ├── README.md
 └── uv.lock
 
-14 directories, 39 files
+16 directories, 54 files
 (n9kv-kvm) arobel@Allen-M4 n9kv-kvm %
 ```

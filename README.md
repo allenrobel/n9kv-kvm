@@ -197,18 +197,23 @@ When you run `uv sync` in the next section the following dependencies will be in
 
 ```bash
 (n9kv-kvm) arobel@Allen-M4 n9kv-kvm % uv tree
-Resolved 11 packages in 7ms
+Resolved 16 packages in 7ms
 n9kv-kvm v0.1.0
-└── ansible v11.8.0
-    └── ansible-core v2.18.7
-        ├── cryptography v45.0.5
-        │   └── cffi v1.17.1
-        │       └── pycparser v2.22
-        ├── jinja2 v3.1.6
-        │   └── markupsafe v3.0.2
-        ├── packaging v25.0
-        ├── pyyaml v6.0.2
-        └── resolvelib v1.0.1
+├── ansible v11.8.0
+│   └── ansible-core v2.18.7
+│       ├── cryptography v45.0.5
+│       │   └── cffi v1.17.1
+│       │       └── pycparser v2.22
+│       ├── jinja2 v3.1.6
+│       │   └── markupsafe v3.0.2
+│       ├── packaging v25.0
+│       ├── pyyaml v6.0.2
+│       └── resolvelib v1.0.1
+└── requests v2.32.4
+    ├── certifi v2025.7.14
+    ├── charset-normalizer v3.4.2
+    ├── idna v3.10
+    └── urllib3 v2.5.0
 (n9kv-kvm) arobel@Allen-M4 n9kv-kvm %
 ```
 

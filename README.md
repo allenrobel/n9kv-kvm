@@ -812,9 +812,9 @@ interface mgmt0
 Several items above are derived from variables located in
 two places, as shown below:
 
-- hostname : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (ER_HOSTNAME)
-- boot nxos : $HOME/repos/n9kv-kvm/config/ansible/startup_config_iso.yaml (boot_image var)
-- ip address : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (ER_IP4)
+- `hostname` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`ER_HOSTNAME`)
+- `boot nxos` : $HOME/repos/n9kv-kvm/config/ansible/startup_config_iso.yaml (`nxos_image` var)
+- `ip address` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`ER_IP4`)
 
 ### Edit the startup_config_iso.yaml playbook
 
@@ -829,8 +829,8 @@ in the `vars` section are populated based on the contents of
     output_dir: "/iso/nxos/config"
 ```
 
-- nxos_image - Set this to the image name (.bin) that is extracted from the n9kv `.qcow2` during bootup.
-- output_dir - Set this to the location the n9kv startup config ISOs will be written to.
+- `nxos_image` - Set this to the image name (.bin) that is extracted from the n9kv `.qcow2` during bootup.
+- `output_dir` - Set this to the location the n9kv startup config ISOs will be written to.
 
 ### Run the Ansible script
 
@@ -842,7 +842,7 @@ sudo ansible-playbook startup_config_iso.yaml -i dynamic_inventory.py
 
 ### Verify the ISO images are created
 
-Substitute the path below with the `output_dir` from above.
+Substitute the path below with the value of `output_dir` from above.
 
 ```bash
 (.venv) arobel@cvd-3:~/repos/n9kv-kvm/config/ansible$ ls -l /iso/nxos/config
@@ -951,26 +951,28 @@ Repeat the above for the other switches (S1, S2, L1).
 
 ### Add switches to ND
 
-In ND, we've already created two fabrics, ISN and VXLAN.
+In ND, we've already created two fabrics, `ISN` and `VXLAN`.
 
 If you already know how to add switches
 
-- Add the ER switch to the ISN fabric
-- Add the S1, S2, L1 switches to the VXLAN fabric
+- Add the ER switch to fabric `ISN`
+- Add the S1, S2, L1 switches to fabric `VXLAN`
 
 If you need help with this, I'll complete this section in the next few days...
 
 ### Fix duplicate mac addresses on interswitch-links
 
 Supposedly, (according to the internets...) nexus9000v should startup with unique
-interface mac addresses, based on its serial number (which is why the n9kv_qemu_*.sh
-scripts include a `SWITCH_SERIAL` parameter that is added to the -smbios line in
-the qemu-system-x86_64 parameters.). This doesn't seem to be the case though, which
-has completely destroyed my faith in the internets. So you'll probably see that the
-switches cannot peer over their inter-switch links.
+interface mac addresses, based on its serial number (which is why we included a
+`SWITCH_SERIAL` parameter in the n9kv_qemu_*.sh scripts that is added to the
+`-smbios` line in the qemu-system-x86_64 parameters). Alas, this doesn't seem to
+be the case, which has completely destroyed my faith in the internets. So you'll
+probably see that the switches cannot peer over their inter-switch links.
 
-To fix this, there are some Ansible playbooks in this repo that add `switch_freeform`
-policies to ND that configure unique mac addresses on all inter-switch links.
+To fix this, we provide some Ansible playbooks in this repo that add
+`switch_freeform` policies to ND that configure unique mac addresses
+on all inter-switch links.  After all switches are added to their
+respective fabrics, run the following playbooks.
 
 ```bash
 cd $HOME/repos/n9kv-kvm
@@ -982,8 +984,8 @@ ansible-playbook interface_mac_addresses_S1.yaml -i dynamic_inventory.py
 ansible-playbook interface_mac_addresses_L1.yaml -i dynamic_inventory.py
 ```
 
-Once the switches are added, and the above scripts are run, do a
-Recalculate and Deploy on the VXLAN and ISN fabrics.
+After running the above scripts do a `Recalculate and Deploy` in ND
+on the VXLAN and ISN fabrics.
 
 ## Topology built by this repository
 

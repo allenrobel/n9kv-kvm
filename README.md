@@ -664,44 +664,9 @@ System UI online, please login to https://192.168.11.2 to continue.
 
 ### ND - Use a web browser to finish the configuration
 
-Here, we'll need to:
+#### [ND 4.1 Configuration Web Browser](./docs/nd4_bringup_web.md)
 
-- Configure DNS server
-- Configure NTP server
-- Configure persistent IP addresses for services (DHCP, POAP, etc)
-
-Depending on ND version, you'll see an initial "Journey" screen, though
-ND 3.2(1) and ND 4.1 are different.  But, in general, follow the steps on
-this screen to configure the above items.
-
-For the DNS and NTP servers, use the Vlan11 address (192.168.11.1).
-
-For the persistent IP addresses, I prefer using the lower range
-of IPs in each of Vlan11 and Vlan12 for these e.g.:
-
-- Vlan11
-  - 192.168.11.10
-  - 192.168.11.11
-  - 192.168.11.12
-- Vlan12
-  - 192.168.12.10
-  - 192.168.12.11
-  - 192.168.12.12
-
-This leaves the upper range of addresses for nexus9000v mgmt0 addresses,
-client/server VMs, etc.
-
-I skip the proxy setup since I don't want ND using our proxy
-when its connecting to the local n9kv switches.
-
-### ND - Wait a loooooooong time
-
-After accepting the configuration, ND will reboot.  Go get a few cups of coffee and come back in a
-few hours or so.  When ND is ready, login using the password you entered during CLI setup, and
-you'll see:
-
-- ND 3.2 The dropdown menu "Admin Console", when clicked, will contain `Nexus Dashboard Fabric Manager`
-- ND 4.1 The sidebar will contain all configuration sections (Home, Manage, Analyze, Admin)
+#### ND 3.x Configuration Web Browser (TODO)
 
 ### ND - Access the documentation
 
@@ -832,7 +797,7 @@ in the `vars` section are populated based on the contents of
 - `nxos_image` - Set this to the image name (.bin) that is extracted from the n9kv `.qcow2` during bootup.
 - `output_dir` - Set this to the location the n9kv startup config ISOs will be written to.
 
-### Run the Ansible script
+### Run the startup_config_iso.yaml playbook
 
 ```bash
 cd $HOME/repos/n9kv-kvm/config/ansible
@@ -858,9 +823,9 @@ total 1424
 (.venv) arobel@cvd-3:~/repos/n9kv-kvm/config/ansible$
 ```
 
-### Startup the nexus9000v switches
+### nexus9000v Startup
 
-#### Review shell script contents
+#### nexus9000v Startup Review Shell Script Contents
 
 Review the contents of the following script and make any modifications
 e.g. for `CDROM_PATH` based on where you saved the config ISOs above,
@@ -875,7 +840,7 @@ In particular, verify that:
 - `CDROM_PATH` and `CDROM_IMAGE` match the location where you saved the ISO config file (i.e. `output_dir`).
 - `N9KV_SHARED_IMAGE` matches the location of the nexus9000v qcow2 image
 
-#### Run the ER shell script
+#### nexus9000v Startup Run the ER Shell Script
 
 ```bash
 cd $HOME/repos/n9kv-kvm/config/qemu/
@@ -886,7 +851,7 @@ Console access:
 telnet localhost 9011
 ```
 
-#### Connect to the ER switch console
+#### nexus9000v Startup Connect to the ER Switch Console
 
 ```bash
 telnet localhost 9011
@@ -901,7 +866,7 @@ things seem to work OK with 4G size.
 Bad Partition bootflash size 4G too small < min 8G
 ```
 
-#### Set the password and login
+#### nexus9000v Startup Set the Password and Login
 
 We've intentionally omitted a password setting in the startup config,
 so you can set it when the nexus9000v boots to whatever local security

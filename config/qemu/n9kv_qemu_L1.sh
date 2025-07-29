@@ -7,7 +7,7 @@ SWITCH_ROLE="Leaf Switch"
 SWITCH_SERIAL=9ABCDEF031
 NEIGHBOR_1=S1
 NEIGHBOR_2=S2
-MGMT_BRIDGE=BR_ND_MGMT
+MGMT_BRIDGE=BR_ND_DATA
 ISL_BRIDGE_1=BR_S1_L1
 ISL_BRIDGE_2=BR_S2_L1
 # MAC_1 sets mgmt0 mac address
@@ -84,8 +84,8 @@ qemu-system-x86_64 \
     -drive file=$VM_IMAGE,if=none,id=drive-sata-disk0,format=qcow2,cache=writethrough \
     -device ide-hd,bus=ahci0.0,drive=drive-sata-disk0,bootindex=1 \
     -monitor telnet:localhost:$MONITOR_PORT,server,nowait \
-    -netdev bridge,id=ND_MGMT,br=$MGMT_BRIDGE \
-    -device $MODEL,netdev=ND_MGMT,mac=$MAC_1 \
+    -netdev bridge,id=ND_DATA,br=$MGMT_BRIDGE \
+    -device $MODEL,netdev=ND_DATA,mac=$MAC_1 \
     -netdev bridge,id=ISL_BRIDGE_1,br=$ISL_BRIDGE_1 \
     -device $MODEL,netdev=ISL_BRIDGE_1,mac=$MAC_2 \
     -netdev bridge,id=ISL_BRIDGE_2,br=$ISL_BRIDGE_2 \

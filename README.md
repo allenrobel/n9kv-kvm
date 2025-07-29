@@ -938,6 +938,11 @@ To fix this, we provide some Ansible playbooks in this repo that add
 on all inter-switch links.  After all switches are added to their
 respective fabrics, run the following playbooks.
 
+These playbooks require the NDFC Ansible Collection.  So if you
+haven't already, follow the link here to install it.
+
+[Install NDFC Ansible Collection](./docs/install_ansible_collection.md)
+
 ```bash
 cd $HOME/repos/n9kv-kvm
 source ./venv/bin/activate

@@ -244,6 +244,14 @@ unset PYTHONPATH
 export PYTHONPATH=$HOME/repos/n9kv-kvm/.venv:$PYTHONPATH
 ```
 
+### Install the NDFC Ansible Collection
+
+We'll need this collection to run playbooks later that fix
+nexus9000v inter-switch mac address issues.
+
+Follow the steps outlined in
+[Install NDFC Ansible Collection](./docs/install_ansible_collection.md)
+
 ### Setup bridges
 
 #### Configure qemu to allow the bridges used in this project

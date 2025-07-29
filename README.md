@@ -729,48 +729,49 @@ Look at the documentation for creating these fabric types.
 
 Some general guidelines.
 
-The main thing is to enable back2back&ToExternal and its suboptions.  Without this,
-the ER (edge router) switch in the ISN fabric will not get automatically configured
-when you Recalculate & Deploy the configurations and VRF Lite will not work.
+The main thing is to enable `back2back&ToExternal` and its suboptions.  Without this,
+ND will not automatically configure peering between the Border Spines (S1, S2) in
+fabric `VXLAN`, and the ER (Edge Router) in fabric `ISN` when you invoke
+Recalculate & Deploy.
 
-- ISN Fabric
+- Fabric `ISN`
   - ND 4.1
-    - Choose Multisite & External Connectivity for the fabric type
+    - Choose `Multisite & External Connectivity` for the fabric type
     - Fabric Name ISN
     - BGP AS # 65001
   - ND 3.x
-    - Choose External Connectivity Network for the fabric type
+    - Choose `External Connectivity Network` for the fabric type
     - Fabric Name ISN
     - BGP AS # 65001
 
-- VXLAN Fabric
+- Fabric `VXLAN`
   - ND 4.1
-    - Under Manage -> Fabrics click Create Fabric
-    - Click Create new LAN fabric, then click Next (lower right)
-    - Choose VXLAN as the fabric type, then click Next
-    - Click Configuration mode Advanced
-    - Overlay routing protocol BGP
-    - BGP ASN 65002
-    - Name VXLAN
-    - Click Next
-    - On the Advanced setting screen, clock Resources
-    - Click the VRF Lite Deployment popup and select back2backAndToExternal
+    - Under `Manage -> Fabrics` click `Create Fabric`
+    - Click `Create new LAN fabric`, then click `Next` (lower right)
+    - Choose VXLAN as the fabric type, then click `Next`
+    - Click `Configuration mode Advanced`
+    - `Overlay routing protocol` BGP
+    - `BGP ASN` 65002
+    - `Name` VXLAN
+    - Click `Next`
+    - On the `Advanced settings` screen, click `Resources`
+    - Click the `VRF Lite Deployment` popup and select `back2backAndToExternal`
     - Enable all three of
-      - Auto Deploy for Peer
-      - Auto Deploy Default VRF
-      - Auto Deploy Default VRF for Peer
-    - Click Next
-    - Click View fabric details and you're done.
+      - `Auto Deploy for Peer`
+      - `Auto Deploy Default VRF`
+      - `Auto Deploy Default VRF for Peer`
+    - Click `Next`
+    - Click `View fabric details` and you're done.
   - ND 3.x
-    - Choose Data Center VXLAN EVPN for the fabric type
-    - Fabric Name VXLAN
-    - Under General Parameters
-      - BGP ASN 65002
-    - Under Fabric Settings -> `Resources` enable the following
-      - Click the VRF Lite Deployment popup and select Back2Back&ToExternal
-      - Auto Deploy for Peer
-      - Auto Deploy Default VRF
-      - Auto Deploy Default VRF for Peer
+    - Choose `Data Center VXLAN EVPN` for the fabric type
+    - `Fabric Name` VXLAN
+    - Under `General Parameters`
+      - `BGP ASN` 65002
+    - Under `Fabric Settings -> Resources` enable the following
+      - Click the `VRF Lite Deployment` popup and select `Back2Back&ToExternal`
+      - `Auto Deploy for Peer`
+      - `Auto Deploy Default VRF`
+      - `Auto Deploy Default VRF for Peer`
 
 ## Nexus 9000v configuration and startup
 

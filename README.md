@@ -256,7 +256,7 @@ nexus9000v inter-switch mac address issues.
 Follow the steps outlined in
 [Install NDFC Ansible Collection](./docs/install_ansible_collection.md)
 
-### Setup bridges
+### Setup Bridges
 
 #### Configure qemu to allow the bridges used in this project
 
@@ -338,13 +338,13 @@ netplan try
 netplan apply
 ```
 
-If the above commands result in a warning like below:
+The above commands might result in a warning similar to below.
 
 ```bash
 ** (process:37526): WARNING **: 18:03:28.923: Permissions for /etc/netplan/00-installer-config.yaml are too open. Netplan configuration should NOT be accessible by others.
 ```
 
-Then modify the permissions of the files in `/etc/netplan` as follows
+If so, modify the permissions of the files in `/etc/netplan` as follows
 and try to apply the bridges configuration again.
 
 ```bash
@@ -371,7 +371,8 @@ Verify netplan was applied correctly.
 
 - ip link show type bridge | grep BR_
 
-Some bridges will be DOWN. This is expected and we'll fix it later.
+Some bridges (e.g. `BR_ER_S1`) will show `state DOWN`. This is expected until we bringup,
+the nexus9000v switches.
 
 ```bash
 (.venv) arobel@cvd-3:~/repos/n9kv-kvm/config/bridges$ ip link show type bridge | grep BR_
@@ -480,80 +481,9 @@ arobel@cvd-2:~$
 
 ## chrony Installation and Configuration
 
-ND requires a reachable NTP service.  `chrony` is very lightweight so will
-serve our purposes nicely. To install `chrony`, do the following.
+Follow the steps at the following link to install chrony for this project.
 
-```bash
-sudo apt install chrony
-```
-
-The chrony configuration file is located here:
-
-`/etc/chrony/chrony.conf`
-
-The only things we need to add/modify in the chrony configuration are:
-
-- `allow`
-  - Enable chrony to function as an Network Time Protocol server
-  - Limit NTP reponses to the the subnet ranges for our project
-- `local stratum 15`
-  - Synchronize to any time source with a lower (i.e. a better) stratum than 15
-- `server` Use this if you want to use a specific NTP server as a time source
-  - iburst is optional and tells chrony to send a burst of NTP requests to the
-    time source for faster synchronization
-- `pool` Use this if you want to use a pool of servers as a time source
-
-In my case, there's an NTP server in the lab so I'm using that.
-
-```bash
-server 10.1.2.3 iburst
-allow 192.168.11.0/24
-allow 192.168.12.0/24
-local stratum 15
-```
-
-Once you've edited `/etc/chrony/chrony.conf` with your changes, restart the
-service (or stop and start it).  You may have to stop/start twice if you are
-using a server instead of a pool (don't ask me why!).
-
-```bash
-sudo service chrony stop
-sudu service chrony start
-```
-
-Check the status
-
-- sudo chrony status
-
-You should see in the startup log that a source was selected e.g.
-
-```bash
-sudo service chrony status
-<stuff removed>
-Jul 28 00:02:35 cvd-2 chronyd[202142]: Selected source 10.1.2.3
-```
-
-You can use the `chronyc` command to monitor `chrony`.  For example,
-if `Leap status` shows `Not synchronized`, then chrony has not yet
-synced with your chosen time source.
-
-```bash
-(n9kv-kvm) arobel@cvd-2:~/repos/n9kv-kvm$ chronyc tracking
-Reference ID    : 0A12BE01 (_gateway)
-Stratum         : 4
-Ref time (UTC)  : Mon Jul 28 00:04:46 2025
-System time     : 0.000004790 seconds fast of NTP time
-Last offset     : +0.000015556 seconds
-RMS offset      : 0.000008368 seconds
-Frequency       : 1.498 ppm fast
-Residual freq   : +0.079 ppm
-Skew            : 0.040 ppm
-Root delay      : 0.001343844 seconds
-Root dispersion : 0.002986593 seconds
-Update interval : 64.4 seconds
-Leap status     : Normal
-(n9kv-kvm) arobel@cvd-2:~/repos/n9kv-kvm$
-```
+[Install and Manage chrony](./docs/chrony.md)
 
 ## ND Install Nexus Dashboard
 

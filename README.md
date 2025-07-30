@@ -28,10 +28,10 @@ meets the [Hardware Requirements](#hardware-requirements) and on which
 
 - [Cisco Nexus Dashboard](https://www.cisco.com/c/en/us/support/data-center-analytics/nexus-dashboard/series.html)
   - nd-dk9.3.2.1e.qcow2
-  - [Installation](#nd-install-nexus-dashboard)
+  - [Installation](./docs/nd_installation.md)
 - [Cisco Nexus9000v](https://www.cisco.com/c/en/us/td/docs/dcn/nx-os/nexus9000/103x/n9000v-n9300v-9500v/cisco-nexus-9000v-9300v-9500v-guide-release-103x.html)
   - nexus9300v64.10.3.8.M.qcow2
-  - [Installation](#nexus-9000v-configuration-and-startup)
+  - [Installation](./docs/n9kv_bringup.md)
 - Ubuntu
   - [24.04.2 LTS](https://ubuntu.com/desktop)
 - Python
@@ -40,14 +40,14 @@ meets the [Hardware Requirements](#hardware-requirements) and on which
   - [Installation](#install-python-313)
 - [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#installing-and-upgrading-ansible-with-pip)
   - 2.18.7
-  - [Installation](#upgrade-pip-and-install-uv)
+  - [Installation](./docs/clone_prepare_repo.md)
 - NDFC Ansible Collection
   - [Installation](./docs/install_ansible_collection.md)
 - [QEMU](https://www.qemu.org)
   - qemu-system-x86_64 version 8.2.2
-  - [Installation](#qemu-and-libvirt-virtualization-stack)
+  - [Installation](#install-qemu-and-libvirt-virtualization-stack)
 - [OVMF](https://wiki.ubuntu.com/UEFI/OVMF) (used for nk9v BIOS)
-  - [Installation](#ovmf)
+  - [Installation](#install-ovmf)
 - [Cockpit](https://cockpit-project.org)
   - Optional (for monitoring n9kv VMs)
   - Version 343

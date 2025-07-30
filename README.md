@@ -454,22 +454,9 @@ Follow the link below to bringup the fabrics under Nexus Dashboard 4.1 for this 
 
 #### ND 3.2 Fabrics Bringup
 
-- ND 3.x
-  - Choose `External Connectivity Network` for the fabric type
-  - `Fabric Name` ISN
-  - `BGP AS #` 65001
+Follow the link below to bringup the fabrics under Nexus Dashboard 3.2 for this project.
 
-- Fabric `VXLAN`
-  - ND 3.x
-    - Choose `Data Center VXLAN EVPN` for the fabric type
-    - `Fabric Name` VXLAN
-    - Under `General Parameters`
-      - `BGP ASN` 65002
-    - Under `Fabric Settings -> Resources` enable the following
-      - Click the `VRF Lite Deployment` popup and select `Back2Back&ToExternal`
-      - `Auto Deploy for Peer`
-      - `Auto Deploy Default VRF`
-      - `Auto Deploy Default VRF for Peer`
+[Fabrics Bringup, ND 3.2](./docs/nd3_fabrics_bringup.md)
 
 ## nexus9000v Initial Configuration and Bringup
 

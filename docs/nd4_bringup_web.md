@@ -166,7 +166,7 @@ The documentation is available on your ND instance.  Point your browser to:
 
 https://192.168.11.2/#/helpCenter
 
-### ND - Access the API documentation
+### ND - Access the REST API documentation
 
 Likewise, the REST API documentation is available directly from ND:
 

@@ -428,95 +428,7 @@ With that out of the way, let's get started.
 
 ### ND CLI based initial bringup
 
-Edit one of the `nd_qemu_*.sh` files (e.g. `nd_qemu_321e.sh`) in
-`$HOME/repos/n9kv-kvm/config/qemu/` to suit your environment e.g.
-the ND image path and name.  Note the `ND_NAME` setting
-in this file.  This is what you will console to below.
-
-Also, take note of disk space requirements.  The ND qcow2 images
-range from 15.9GB (321e) to 16.4GB (4.1 EFT), so ensure your
-`ND_SOURCE_DIR` (see below) has at least this much space.
-
-And note that `ND_INSTALL_DIR` (see below) needs to have enough
-space to hold both of the created disk1 and disk2 files.  With
-ND 4.1, and a very minimal configuration, this is 50GB, but these
-disks are configured to grow to 500GB (e.g. ND hosts nexus9000v images
-which will grow the size of disk2 as you upload these images to ND),
-so plan accordingly based on your estimated usage.
-
-```bash
-ND_SOURCE_DIR=/iso/nd         # The directory containing ND_IMAGE
-ND_IMAGE=nd-dk9.3.2.1e.qcow2  # The ND image name
-ND_INSTALL_DIR=/iso/nd/321e   # Where to create ND disk1 and disk2
-ND_MGMT_NET=BR_ND_MGMT        # Bridge for ND's management network
-ND_DATA_NET=BR_ND_DATA        # Bridge for ND's data network
-ND_NAME=nd_321e               # Name of ND instance (use for console below)
-```
-
-Below are current sizes in a newly-installed ND 4.1 EFT setup.
-
-```bash
-arobel@cvd-2:~$ ls -l /iso/nd/4.1.0.156b/running
-total 47226124
--rw-r--r-- 1 libvirt-qemu kvm  1349058560 Jul 27 18:47 nd-node1-disk1.qcow2
--rw-r--r-- 1 libvirt-qemu kvm 47009562624 Jul 27 18:47 nd-node1-disk2.qcow2
-arobel@cvd-2:~$
-```
-
-Once you've reviewed and modified the ND setup script, run it and connect
-to the virsh console to finish the ND setup.
-
-```bash
-cd $HOME/repos/n9kv-kvm/config/qemu
-sudo ./nd_qemu_321e.sh
-virsh console nd_321e
-```
-
-After connecting to the virsh console, give the setup some time
-(5 to 10 minutes) and you'll eventually see something similar to
-the output below.
-
-Press return and answer the questions for Admin Password,
-Management Network IP Address/Mask, and Cluster Leader (answer
-Y to cluster leader since we are using a single node setup).
-
-You'll use an address within `Vlan11` connected to `BR_ND_MGMT`
-for Management Network IP Address/Mask.  See the preceeding section
-`Configure netplan` to configure `Vlan11` and the bridges.
-
-```bash
-Press any key to run first-boot setup on this console...
-
-Fri Jul 25 02:22:46 UTC 2025: Starting Nexus Dashboard setup utility
-Welcome to Nexus Dashboard 4.1.0.156b 
-Press Enter to manually bootstrap your node...
-Admin Password: 
-Reenter Admin Password: 
-Management Network: 
-  IP Address/Mask: 192.168.11.2/24
-Is Cluster Leader? Note: only one node in the cluster must be leader. (Y/n): Y
-Please review the config
-Cluster Leader: true
-Management Network:
-  Gateway: 192.168.11.1
-  IP Address/Mask: 192.168.11.2/24
-
-Re-enter config?(y/N): N
-
-System configured successfully
-Initializing System on first boot. Please wait..
-Fri Jul 25 02:24:29 UTC 2025: Nexus Dashboard setup complete.
-
-<skip stuff...>
-
-Nexus Dashboard localhost ttyS0
-
-Nexus Dashboard (4.1.0.156b): system initialized successfully
-Please wait for system to boot : [########################################] 100%
-System up, please wait for UI to be online.
-
-System UI online, please login to https://192.168.11.2 to continue.
-```
+#### [ND Bringup - CLI Phase](./docs/nd_bringup_cli.md)
 
 ### ND - Use a web browser to finish the configuration
 
@@ -524,65 +436,22 @@ System UI online, please login to https://192.168.11.2 to continue.
 
 #### ND 3.x Configuration Web Browser (TODO)
 
-### ND - Access the documentation
-
-The documentation is available on your ND instance.  Point your browser to:
-
-https://192.168.11.2/#/helpCenter
-
-### ND - Access the API documentation
-
-Likewise, the REST API documentation is available directly from ND:
-
-- ND 4.1
-  - https://192.168.11.2/help-center/swagger
-- ND 3.x
-  - https://192.168.11.2/apidocs/
-
-For ND 3.x, there are two sets of API documentation.
-
-- ND (this is what you see when accessing the URL for ND 3.x)
-- NDFC (click on the Nexus Dashboard dropdown menu and select Nexus Dashboard Fabric Controller
-
 ### ND - Create ISN and VXLAN fabrics
 
-Look at the documentation for creating these fabric types.
+#### ND 4.1 Fabrics Bringup
 
-Some general guidelines.
+Follow the link below to bringup the fabrics under Nexus Dashboard 4.1 for this project.
 
-The main thing is to enable `back2back&ToExternal` and its suboptions.  Without this,
-ND will not automatically configure peering between the Border Spines (S1, S2) in
-fabric `VXLAN`, and the ER (Edge Router) in fabric `ISN` when you invoke
-Recalculate & Deploy.
+[Fabrics Bringup, ND 4.1](./docs/nd4_fabrics_bringup.md)
 
-- Fabric `ISN`
-  - ND 4.1
-    - Choose `Multisite & External Connectivity` for the fabric type
-    - `Fabric Name` ISN
-    - `BGP AS #` 65001
-  - ND 3.x
-    - Choose `External Connectivity Network` for the fabric type
-    - `Fabric Name` ISN
-    - `BGP AS #` 65001
+#### ND 3.2 Fabrics Bringup
+
+- ND 3.x
+  - Choose `External Connectivity Network` for the fabric type
+  - `Fabric Name` ISN
+  - `BGP AS #` 65001
 
 - Fabric `VXLAN`
-  - ND 4.1
-    - Under `Manage -> Fabrics` click `Create Fabric`
-    - Click `Create new LAN fabric`, then click `Next` (lower right)
-    - Choose VXLAN as the fabric type, then click `Next`
-    - Click `Configuration mode Advanced`
-    - `Overlay routing protocol` BGP
-    - `BGP ASN` 65002
-    - `Name` VXLAN
-    - Click `Next`
-    - On the `Advanced settings` screen, click `Resources`
-    - Click the `VRF Lite Deployment` popup and select `back2backAndToExternal`
-    - Enable all three of
-      - `Auto Deploy for Peer`
-      - `Auto Deploy Default VRF`
-      - `Auto Deploy Default VRF for Peer`
-    - Click `Next`
-    - Click `View fabric details` and you're done.
   - ND 3.x
     - Choose `Data Center VXLAN EVPN` for the fabric type
     - `Fabric Name` VXLAN

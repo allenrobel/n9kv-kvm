@@ -166,19 +166,11 @@ Follow the link below to install Nexus Dashboard.
 
 [Install Nexus Dashboard](./docs/nd_installation.md)
 
-### ND - Create ISN and VXLAN fabrics
+## Create Nexus Dashboard Fabrics
 
-#### ND 4.1 Fabrics Bringup
+Follow the link below to create the Nexus Dashboard fabrics used in this project.
 
-Follow the link below to bringup the fabrics under Nexus Dashboard 4.1 for this project.
-
-[Fabrics Bringup, ND 4.1](./docs/nd4_fabrics_bringup.md)
-
-#### ND 3.2 Fabrics Bringup
-
-Follow the link below to bringup the fabrics under Nexus Dashboard 3.2 for this project.
-
-[Fabrics Bringup, ND 3.2](./docs/nd3_fabrics_bringup.md)
+[Create ISN and VXLAN Fabrics](./docs/nd_create_fabrics.md)
 
 ## nexus9000v Initial Configuration and Bringup
 
@@ -186,19 +178,9 @@ Follow the link below to configure and bringup the nexus9000v VMs for this proje
 
 [nexus9000v Configuration and Startup](./docs/n9kv_bringup.md)
 
-## Add switches to ND
+## Add nexus9000v Switches to Nexus Dashboard Fabrics
 
-In ND, we've already created two fabrics, `ISN` and `VXLAN`.
-
-Follow the following link to add switches to ND 4.1
-
-[Add Switches, ND 4.1](./docs/nd4_add_switches.md)
-
-Follow the following link to add switches to ND 3.2
-
-Contents of this link are under construction and should be complete in the next couple days...
-
-[Add Switches, ND 3.2](./docs/nd3_add_switches.md)
+[Add nexus9000v Switches](./docs/nd_add_switches.md)
 
 ## Fix duplicate mac addresses on interswitch-links
 

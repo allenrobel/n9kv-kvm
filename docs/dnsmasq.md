@@ -56,7 +56,7 @@ DNSMASQ_EXCEPT="lo"
 ## Start the dnsmasq service
 
 ```bash
-sudo service start dnsmasq
+sudo service dnsmasq start
 ```
 
 ## Check service dnsmasq status for any errors

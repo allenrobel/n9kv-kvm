@@ -61,9 +61,11 @@ meets the [Hardware Requirements](#hardware-requirements) and on which
   - chrony/noble-updates,now 4.5-1ubuntu4.2
   - [Installation](#chrony-installation-and-configuration)
 
-## Dependencies
+## Install and Setup
 
-### KVM Support
+We've arranged the steps below so that dependencies For best results, follow the steps below in order.
+
+## KVM Support
 
 Check if KVM is supported. If this returns error(s) things are not going to work for you.
 
@@ -72,7 +74,7 @@ sudo apt install cpu-checker
 kvm-ok
 ```
 
-### Install Python 3.13
+## Install Python 3.13
 
 I use Python 3.13, but the stock Python 3.12 on Ubuntu 24.04.2 LTS should be fine.
 
@@ -90,7 +92,7 @@ sudo apt install python3.13
 sudo apt install python3.13-venv python3.13-dev
 ```
 
-### QEMU and libvirt Virtualization Stack
+## Install QEMU and libvirt Virtualization Stack
 
 You'll need the virtualization stack consisting of qemu and libvirt.
 Install them as follows.
@@ -118,7 +120,7 @@ sudo systemctl status libvirtd
 virt-manager
 ```
 
-### OVMF
+## Install OVMF
 
 You'll need OVMF for the nexus9000v BIOS
 
@@ -126,13 +128,13 @@ You'll need OVMF for the nexus9000v BIOS
 sudo apt install ovmf
 ```
 
-### Clone and Prepare the `n9kv-kvm` Repository
+## Clone and Prepare the `n9kv-kvm` Repository
 
 Follow the link below to clone this project's repository.
 
 [Clone and Prepare Repository](./docs/clone_prepare_repo.md)
 
-### Install the NDFC Ansible Collection
+## Install the NDFC Ansible Collection
 
 We'll need this collection to run playbooks later that fix
 nexus9000v inter-switch mac address issues.
@@ -140,7 +142,7 @@ nexus9000v inter-switch mac address issues.
 Follow the steps outlined in
 [Install NDFC Ansible Collection](./docs/install_ansible_collection.md)
 
-### Setup Bridges
+## Setup Bridges
 
 Follow the link below to configure the bridges used for this project.
 
@@ -158,52 +160,11 @@ Follow the link below to install and configure `chrony` for this project.
 
 [Install, Configure, and Manage chrony](./docs/chrony.md)
 
-## ND Install Nexus Dashboard
+## Nexus Dashboard Installation
 
-Now that the servers we need are setup and running, let's install
-Nexus Dashboard.
+Follow the link below to install Nexus Dashboard.
 
-### ND - Things to be aware of
-
-Before beginning, ND will ask you to connect with a web browser after
-the initial CLI install is complete.  If you use a proxy server, make
-sure that you configure your browser NOT to use the proxy server
-for the ND address.  E.g. configure the `NO_PROXY` environment variable
-(some apps may read this as lowercase, so best to configure both).
-
-If you already have `NO_PROXY` configured, add 192.168.11.2 to your existing definition.
-
-```bash
-export NO_PROXY=192.168.11.2
-export no_proxy=192.168.11.2
-```
-
-If you use Google Chrome, you can invoke it to not use a proxy (typically for
-debugging when things aren't working as expected.)
-
-```bash
-google-chrome --no-proxy-server &
-```
-
-With that out of the way, let's get started.
-
-### ND CLI based initial bringup
-
-Follow the link below for initial CLI phase of the Nexus Dashboard bringup.
-
-[ND Bringup - CLI Phase](./docs/nd_bringup_cli.md)
-
-### ND 4.1 Browser based final bringup
-
-Follow the link below for the final phase of the Nexus Dashboard 4.1 bringup.
-
-[ND 4.1 Configuration Web Browser](./docs/nd4_bringup_web.md)
-
-### ND 3.2 Browser based final brinup (TODO)
-
-Follow the link below for the final phase of the Nexus Dashboard 3.2 bringup.
-
-TODO...
+[Install Nexus Dashboard](./docs/nd_installation.md)
 
 ### ND - Create ISN and VXLAN fabrics
 

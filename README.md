@@ -282,6 +282,7 @@ graph TB
 ├── docs
 │   ├── bridges.md
 │   ├── chrony.md
+│   ├── clone_prepare_repo.md
 │   ├── dnsmasq.md
 │   ├── images
 │   │   ├── nd4_1_journey.png
@@ -299,7 +300,10 @@ graph TB
 │   ├── install_ansible_collection.md
 │   ├── n9kv_bringup.md
 │   ├── n9kv_fix_interface_mac_addresses.md
+│   ├── nd_add_switches.md
 │   ├── nd_bringup_cli.md
+│   ├── nd_create_fabrics.md
+│   ├── nd_installation.md
 │   ├── nd3_add_switches.md
 │   ├── nd3_bringup_web.md
 │   ├── nd3_fabrics_bringup.md
@@ -316,5 +320,6 @@ graph TB
 ├── README.md
 └── uv.lock
 
-16 directories, 64 files
+16 directories, 68 files
+(n9kv-kvm) arobel@Allen-M4 n9kv-kvm %
 ```

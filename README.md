@@ -428,13 +428,21 @@ With that out of the way, let's get started.
 
 ### ND CLI based initial bringup
 
-#### [ND Bringup - CLI Phase](./docs/nd_bringup_cli.md)
+Follow the link below for initial CLI phase of the Nexus Dashboard bringup.
 
-### ND - Use a web browser to finish the configuration
+[ND Bringup - CLI Phase](./docs/nd_bringup_cli.md)
 
-#### [ND 4.1 Configuration Web Browser](./docs/nd4_bringup_web.md)
+### ND 4.1 Browser based final bringup
 
-#### ND 3.x Configuration Web Browser (TODO)
+Follow the link below for the final phase of the Nexus Dashboard 4.1 bringup.
+
+[ND 4.1 Configuration Web Browser](./docs/nd4_bringup_web.md)
+
+### ND 3.2 Browser based final brinup (TODO)
+
+Follow the link below for the final phase of the Nexus Dashboard 3.2 bringup.
+
+TODO...
 
 ### ND - Create ISN and VXLAN fabrics
 
@@ -465,156 +473,9 @@ Follow the link below to bringup the fabrics under Nexus Dashboard 4.1 for this 
 
 ## Nexus 9000v configuration and startup
 
-We will be using an Ansible playbook to generate the n9kv startup-config
-ISO files.
+Follow the link below to configure and start nexus9000v VMs for this project.
 
-- $HOME/repos/n9kv-kvm/config/ansible/startup_config_iso.yaml
-
-This script uses a Jinja2 template to create the configs.
-
-- $HOME/repos/n9kv-kvm/config/ansible/nxos_startup_config.j2
-
-It then creates the ISO file, containing the startup-config
-(renamed to nxos_config.txt), that n9kv will read as its
-startup configuration.
-
-### Edit the Jinja2 template
-
-Have a look at the template and make any desired edits.
-
-- $HOME/repos/n9kv-kvm/config/ansible/nxos_startup_config.j2
-
-The template currently contains a very minimal startup config
-containing (e.g. for the edge router, ER):
-
-```bash
-configure terminal
-hostname ER
-boot nxos bootflash:/nxos64-cs.10.3.8.M.bin
-
-interface mgmt0
-  no cdp enable
-  vrf member management
-  ip address 192.168.11.111/24
-  no shutdown
-```
-
-Several items above are derived from variables located in
-two places, as shown below:
-
-- `hostname` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`ER_HOSTNAME`)
-- `boot nxos` : $HOME/repos/n9kv-kvm/config/ansible/startup_config_iso.yaml (`nxos_image` var)
-- `ip address` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`ER_IP4`)
-
-### Edit the startup_config_iso.yaml playbook
-
-The `vars` section of this playbook contains the following items
-that need to be modified for your environment.  The other items
-in the `vars` section are populated based on the contents of
-`$HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py`
-
-```yaml
-  vars:
-    nxos_image: "nxos64-cs.10.3.8.M.bin"
-    output_dir: "/iso/nxos/config"
-```
-
-- `nxos_image` - Set this to the image name (.bin) that is extracted from the n9kv `.qcow2` during bootup.
-- `output_dir` - Set this to the location the n9kv startup config ISOs will be written to.
-
-### Run the startup_config_iso.yaml playbook
-
-```bash
-cd $HOME/repos/n9kv-kvm/config/ansible
-source $HOME/repos/n9kv-kvm/.venv/bin/activate
-sudo ansible-playbook startup_config_iso.yaml -i dynamic_inventory.py
-```
-
-### Verify the ISO images are created
-
-Substitute the path below with the value of `output_dir` from above.
-
-```bash
-(.venv) arobel@cvd-3:~/repos/n9kv-kvm/config/ansible$ ls -l /iso/nxos/config
-total 1424
--rw-r--r-- 1 root root    172 Jul 28 20:39 ER.cfg
--rw-r--r-- 1 root root 358400 Jul 28 20:40 ER.iso
--rw-r--r-- 1 root root    172 Jul 28 20:39 L1.cfg
--rw-r--r-- 1 root root 358400 Jul 28 20:40 L1.iso
--rw-r--r-- 1 root root    172 Jul 28 20:39 S1.cfg
--rw-r--r-- 1 root root 358400 Jul 28 20:40 S1.iso
--rw-r--r-- 1 root root    172 Jul 28 20:39 S2.cfg
--rw-r--r-- 1 root root 358400 Jul 28 20:40 S2.iso
-(.venv) arobel@cvd-3:~/repos/n9kv-kvm/config/ansible$
-```
-
-### nexus9000v Startup
-
-#### nexus9000v Startup Review Shell Script Contents
-
-Review the contents of the following script and make any modifications
-e.g. for `CDROM_PATH` based on where you saved the config ISOs above,
-and where you saved the nexus9000v qcow2 image.
-
-```bash
-cat $HOME/repos/n9kv-kvm/config/qemu/n9kv_qemu_ER.sh
-```
-
-In particular, verify that:
-
-- `CDROM_PATH` and `CDROM_IMAGE` match the location where you saved the ISO config file (i.e. `output_dir`).
-- `N9KV_SHARED_IMAGE` matches the location of the nexus9000v qcow2 image
-
-#### nexus9000v Startup Run the ER Shell Script
-
-```bash
-cd $HOME/repos/n9kv-kvm/config/qemu/
-sudo ./n9kv_qemu_ER.sh
-# In the script output, you'll see the port number used
-# to connect to the switch console
-Console access:
-telnet localhost 9011
-```
-
-#### nexus9000v Startup Connect to the ER Switch Console
-
-```bash
-telnet localhost 9011
-```
-
-You'll notice the following, but you can ignore it.  The shell script above
-does try to resize the image, but that doesn't help.  If anyone has a solution,
-open an issue in this repo and I'll update the docs (thanks!).  For now,
-things seem to work OK with 4G size.
-
-```bash
-Bad Partition bootflash size 4G too small < min 8G
-```
-
-#### nexus9000v Startup Set the Password and Login
-
-We've intentionally omitted a password setting in the startup config,
-so you can set it when the nexus9000v boots to whatever local security
-standards are applicable to you.
-
-```bash
----- System Admin Account Setup ----
-
-
-Do you want to enforce secure password standard (yes/no) [y]: no
-
-  Enter the password for "admin": 
-  Confirm the password for "admin": 
-
-
-User Access Verification
-ER login: admin
-Password: 
-# skipping copyright, etc...
-ER#
-```
-
-Repeat the above for the other switches (S1, S2, L1).
+[nexus9000v Configuration and Starup](./docs/n9kv_bringup.md)
 
 ### Add switches to ND
 

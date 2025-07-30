@@ -471,11 +471,11 @@ Follow the link below to bringup the fabrics under Nexus Dashboard 4.1 for this 
       - `Auto Deploy Default VRF`
       - `Auto Deploy Default VRF for Peer`
 
-## Nexus 9000v configuration and startup
+## nexus9000v Initial Configuration and Bringup
 
-Follow the link below to configure and start nexus9000v VMs for this project.
+Follow the link below to configure and bringup the nexus9000v VMs for this project.
 
-[nexus9000v Configuration and Starup](./docs/n9kv_bringup.md)
+[nexus9000v Configuration and Startup](./docs/n9kv_bringup.md)
 
 ### Add switches to ND
 

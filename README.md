@@ -128,7 +128,7 @@ sudo apt install ovmf
 
 ### Clone and Prepare the `n9kv-kvm` Repository
 
-Follow the link below to configure the bridges used for this project.
+Follow the link below to clone this project's repository.
 
 [Clone and Prepare Repository](./docs/clone_prepare_repo.md)
 

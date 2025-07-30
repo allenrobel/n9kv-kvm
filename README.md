@@ -598,6 +598,8 @@ graph TB
 │       ├── nd_qemu_321e.sh
 │       └── nd_qemu_EFT.sh
 ├── docs
+│   ├── chrony.md
+│   ├── dnsmasq.md
 │   ├── images
 │   │   ├── nd4_1_journey.png
 │   │   ├── nd4_10_cluster_install.png
@@ -612,8 +614,12 @@ graph TB
 │   │   ├── nd4_8_summary_error.png
 │   │   └── nd4_9_login.png
 │   ├── install_ansible_collection.md
+│   ├── n9kv_bringup.md
+│   ├── n9kv_fix_interface_mac_addresses.md
+│   ├── nd_bringup_cli.md
 │   ├── nd3_bringup_web.md
-│   └── nd4_bringup_web.md
+│   ├── nd4_bringup_web.md
+│   └── nd4_fabrics_bringup.md
 ├── env
 │   ├── env_ansible.sh
 │   ├── env_libvirt.sh
@@ -624,6 +630,6 @@ graph TB
 ├── README.md
 └── uv.lock
 
-16 directories, 54 files
+16 directories, 60 files
 (n9kv-kvm) arobel@Allen-M4 n9kv-kvm %
 ```

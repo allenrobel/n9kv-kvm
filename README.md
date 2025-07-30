@@ -502,35 +502,13 @@ If you need help with this, I'll complete this section in the next few days...
 
 ### Fix duplicate mac addresses on interswitch-links
 
-Supposedly, (according to the internets...) nexus9000v should startup with unique
-interface mac addresses, based on its serial number (which is why we included a
-`SWITCH_SERIAL` parameter in the n9kv_qemu_*.sh scripts that is added to the
-`-smbios` line in the qemu-system-x86_64 parameters). Alas, this doesn't seem to
-be the case, which has completely destroyed my faith in the internets. So you'll
-probably see that the switches cannot peer over their inter-switch links.
+You'll notice that the nexus9000v switches are complaining about bridge
+disputes, etc, on their Eth1/1-2 interaces.  Follow this link to fix
+this.  The nexus9000v switches will not be able to peer until this is
+addressed.
 
-To fix this, we provide some Ansible playbooks in this repo that add
-`switch_freeform` policies to ND that configure unique mac addresses
-on all inter-switch links.  After all switches are added to their
-respective fabrics, run the following playbooks.
+[nexus9000v Fix Interface Mac Addresses](./docs/n9kv_fix_interface_mac_addresses.md)
 
-These playbooks require the NDFC Ansible Collection.  So if you
-haven't already, follow the link here to install it.
-
-[Install NDFC Ansible Collection](./docs/install_ansible_collection.md)
-
-```bash
-cd $HOME/repos/n9kv-kvm
-source ./venv/bin/activate
-cd $HOME/repos/n9kv-kvm/config/ansible
-ansible-playbook interface_mac_addresses_ER.yaml -i dynamic_inventory.py
-ansible-playbook interface_mac_addresses_S1.yaml -i dynamic_inventory.py
-ansible-playbook interface_mac_addresses_S1.yaml -i dynamic_inventory.py
-ansible-playbook interface_mac_addresses_L1.yaml -i dynamic_inventory.py
-```
-
-After running the above scripts do a `Recalculate and Deploy` in ND
-on the VXLAN and ISN fabrics.
 
 ## Topology built by this repository
 

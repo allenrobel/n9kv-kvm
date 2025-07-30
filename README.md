@@ -453,6 +453,7 @@ graph TB
 │       ├── nd_qemu_321e.sh
 │       └── nd_qemu_EFT.sh
 ├── docs
+│   ├── bridges.md
 │   ├── chrony.md
 │   ├── dnsmasq.md
 │   ├── images
@@ -472,7 +473,10 @@ graph TB
 │   ├── n9kv_bringup.md
 │   ├── n9kv_fix_interface_mac_addresses.md
 │   ├── nd_bringup_cli.md
+│   ├── nd3_add_switches.md
 │   ├── nd3_bringup_web.md
+│   ├── nd3_fabrics_bringup.md
+│   ├── nd4_add_switches.md
 │   ├── nd4_bringup_web.md
 │   └── nd4_fabrics_bringup.md
 ├── env
@@ -485,6 +489,5 @@ graph TB
 ├── README.md
 └── uv.lock
 
-16 directories, 60 files
-(n9kv-kvm) arobel@Allen-M4 n9kv-kvm %
+16 directories, 64 files
 ```

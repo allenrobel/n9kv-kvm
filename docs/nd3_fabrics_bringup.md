@@ -5,6 +5,15 @@
 In the dropdown menu next to `Nexus Dashboard`, select `Fabric Controller`
 to enter the Nexus Dashboard Fabric Controller (NDFC) app.
 
+Below are summary steps for creating the fabrics used in this project.
+The outlines follow the GUI paths to effect the desired configurations.
+For example, `Manage` refers to the `Manage` button in the left sidebar.
+`Fabrics` to the suboption when clicking `Manage`, `Actions` to the
+button at the top-right of the Fabrics page, etc.
+
+We'll add screen grabs later but hopefully below will provide enough
+breadcrumbs to make it through this step.
+
 - Manage
   - Fabrics
   - Actions

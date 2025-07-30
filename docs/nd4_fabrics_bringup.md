@@ -1,8 +1,13 @@
 # ND 4.1 - Create ISN and VXLAN fabrics
 
-Below are summary steps for creating ISN and VXLAN fabrics.
+Below are summary steps for creating the fabrics used in this project.
+The outlines follow the GUI paths to effect the desired configurations.
+For example, `Manage` refers to the `Manage` button in the left sidebar.
+`Fabrics` to the suboption when clicking `Manage`, and `Actions` to the
+button at the top-right of the Fabrics page, etc.
 
-We will add more detail later, including screen grabs.
+We'll add screen grabs later but hopefully below will provide enough
+breadcrumbs to make it through this step.
 
 ## ISN (inter-site network) fabric bringup
 

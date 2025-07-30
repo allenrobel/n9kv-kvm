@@ -477,7 +477,7 @@ Follow the link below to configure and bringup the nexus9000v VMs for this proje
 
 [nexus9000v Configuration and Startup](./docs/n9kv_bringup.md)
 
-### Add switches to ND
+## Add switches to ND
 
 In ND, we've already created two fabrics, `ISN` and `VXLAN`.
 
@@ -500,7 +500,7 @@ If you need help with this, I'll complete this section in the next few days...
   - `Password` The password you assigned to the ER switch
   - Click `Add`
 
-### Fix duplicate mac addresses on interswitch-links
+## Fix duplicate mac addresses on interswitch-links
 
 You'll notice that the nexus9000v switches are complaining about bridge
 disputes, etc, on their Eth1/1-2 interaces.  Follow this link to fix
@@ -508,7 +508,6 @@ this.  The nexus9000v switches will not be able to peer until this is
 addressed.
 
 [nexus9000v Fix Interface Mac Addresses](./docs/n9kv_fix_interface_mac_addresses.md)
-
 
 ## Topology built by this repository
 

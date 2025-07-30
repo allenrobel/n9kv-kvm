@@ -63,7 +63,7 @@ meets the [Hardware Requirements](#hardware-requirements) and on which
 
 ## Install and Setup
 
-We've arranged the steps below so that dependencies For best results, follow the steps below in order.
+We've arranged the steps below so that dependencies for later steps are met by earler steps. For best results, follow the steps below in order.
 
 ## KVM Support
 

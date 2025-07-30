@@ -468,31 +468,20 @@ Follow the link below to configure and bringup the nexus9000v VMs for this proje
 
 In ND, we've already created two fabrics, `ISN` and `VXLAN`.
 
-If you already know how to add switches
+Follow the following link to add switches to ND 4.1
 
-- Add the ER switch to fabric `ISN`
-- Add the S1, S2, L1 switches to fabric `VXLAN`
+[Add Switches, ND 4.1](./docs/nd4_add_switches.md)
 
-If you need help with this, I'll complete this section in the next few days...
+Follow the following link to add switches to ND 3.2
 
-### ND 4.1 Add switches
-
-- In the sidebar, click `Manage` -> `Fabrics`
-- On the `Fabrics` page, click `Actions` -> `Add Fabric`
-- On the `Add Fabric` page complete the following
-  - `Fabric Name` ISN
-  - `Fabric Seed Switch Type` Cisco
-  - `Fabric Seed Switch` 192.168.11.111
-  - `User Name` admin
-  - `Password` The password you assigned to the ER switch
-  - Click `Add`
+[Add Switches, ND 3.2](./docs/nd3_add_switches.md)
 
 ## Fix duplicate mac addresses on interswitch-links
 
 You'll notice that the nexus9000v switches are complaining about bridge
-disputes, etc, on their Eth1/1-2 interaces.  Follow this link to fix
-this.  The nexus9000v switches will not be able to peer until this is
-addressed.
+disputes, etc, on their Eth1/1-2 interaces, and they are unable to peer.
+
+Follow this link to fix this.
 
 [nexus9000v Fix Interface Mac Addresses](./docs/n9kv_fix_interface_mac_addresses.md)
 

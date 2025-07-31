@@ -39,8 +39,8 @@ Follow the link below for the final phase of the Nexus Dashboard 4.1 bringup.
 
 [ND 4.1 Configuration Web Browser](./nd4_bringup_web.md)
 
-## ND 3.2 Browser based final brinup (TODO)
+## ND 3.2 Browser based final bringup
 
 Follow the link below for the final phase of the Nexus Dashboard 3.2 bringup.
 
-TODO...
+[ND 3.2 Configuration Web Browser](./nd3_bringup_web.md)

@@ -39,7 +39,7 @@ Once you login, you'll see the `Journey` screen.
 
 Under `2) Cluster Bringup` click `Go`
 
-![ND 4.1 Journey Screen](./images/nd4_1_journey.png)
+![ND 4.1 Journey Screen](./images/nd4/01_journey.png)
 
 ## Basic Information Screen
 
@@ -47,7 +47,7 @@ Under `2) Cluster Bringup` click `Go`
 - `LAN (default)` Be sure to click on this!!!  In my setup, SAN was selected by default.
 - Click `Next`
 
-![ND 4.1 Cluster Bringup Basic Information](./images/nd4_2_basic_information.png)
+![ND 4.1 Cluster Bringup Basic Information](./images/nd4/02_basic_information.png)
 
 ## Node Details Screen
 
@@ -65,7 +65,7 @@ TODO: Add Node Details Screengrab...
 - At the far right of the screen (to the right of Configuration status `Incomplete`, click the pen icon
   - This brings up the `Edit Node` screen
 
-![ND 4.1 Node Details Cluster Connectivity](./images/nd4_4_node_details_cluster_connectivity.png)
+![ND 4.1 Node Details Cluster Connectivity](./images/nd4/04_node_details_cluster_connectivity.png)
 
 ## Edit Node Screen
 
@@ -98,13 +98,13 @@ hold nexus9000v and other VMs.
 - `IPv4 Address(es)` 192.168.12.10,192.168.12.11,192.168.12.12
 - Click the `Add IP Address(es)` button
 
-![ND 4.1 Node Details Persistent Ips](./images/nd4_5_persistent_ips.png)
+![ND 4.1 Node Details Persistent Ips](./images/nd4/05_persistent_ips.png)
 
 ## Persistent IPs Added Screen
 
 - Click `Next` after the IPs are added.
 
-![ND 4.1 Node Details Persistent Ips](./images/nd4_6_persistent_ips_added.png)
+![ND 4.1 Node Details Persistent Ips](./images/nd4/06_persistent_ips_added.png)
 
 ## Summary Screen
 
@@ -112,7 +112,7 @@ Clicking `Next` takes you to the Summary screen where you can review the configu
 
 If everything looks OK, click `Save`
 
-![ND 4.1 Summary Screen](./images/nd4_7_summary.png)
+![ND 4.1 Summary Screen](./images/nd4/07_summary.png)
 
 If you take too long on the Summary Screen, you may see the Cluster Bringup screen, but then get
 kicked back to the Summary screen.  If you click Save again, you'll see the following error:
@@ -125,14 +125,14 @@ Cluster Bringup screen again.  Sigh!
 Once the progress bar in the Cluster Bringup screen reaches 100%, ND will reboot and
 you'll then wait for the login screen.
 
-![ND 4.1 Summary Screen](./images/nd4_8_summary_error.png)
+![ND 4.1 Summary Screen](./images/nd4/08_summary_error.png)
 
 ## Login Screen
 
 - `Username` admin
 - `Password` whatever you entered during the CLI bringup.
 
-![ND 4.1 Login Screen](./images/nd4_9_login.png)
+![ND 4.1 Login Screen](./images/nd4/09_login.png)
 
 If you login immediately, you'll see something like this.
 
@@ -140,13 +140,13 @@ If you login immediately, you'll see something like this.
 
 Wait a very long time for everything to come up (couple hours).
 
-![ND 4.1 Cluster Install Screen](./images/nd4_10_cluster_install.png)
+![ND 4.1 Cluster Install Screen](./images/nd4/10_cluster_install.png)
 
 ## System Software Screen
 
 You'll see a screen similar to below at some point.
 
-![ND 4.1 System Software Screen](./images/nd4_11_system_software.png)
+![ND 4.1 System Software Screen](./images/nd4/11_system_software.png)
 
 Clicking on `Release details` will show a detailed status of progress.
 
@@ -154,11 +154,11 @@ Clicking on `What's new?` shows a summary of new features in ND 4.1
 
 ## Release Details Screen
 
-![ND 4.1 Release Details Screen](./images/nd4_12_release_details.png)
+![ND 4.1 Release Details Screen](./images/nd4/12_release_details.png)
 
 ## What's New Screen
 
-![ND 4.1 Release Details Screen](./images/nd4_13_whats_new.png)
+![ND 4.1 Release Details Screen](./images/nd4/13_whats_new.png)
 
 ### ND - Access the documentation
 

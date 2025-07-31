@@ -124,7 +124,7 @@ Login and you'll be back at the progress page.
 
 ![ND 3.2 Progress](./images/nd3/12_progress.png)
 
-Again, wait until the systems is fully up.
+Again, wait until the system is fully up.
 
 ## Meet Nexus Dashboard
 

@@ -82,10 +82,21 @@ in the `vars` section are populated based on the contents of
 
 ## Run the startup_config_iso.yaml playbook
 
+If you want to store the ISO files in a location only writable by root, use the following.
+
+```bash
+cd $HOME/repos/n9kv-kvm/config/ansible
+export PYTHONPATH=$HOME/repos/n9kv-kvm/.venv
+sudo -E bash -c "source $HOME/repos/n9kv-kvm/.venv/bin/activate"; ansible-playbook startup_config_iso.yaml -i dynamic_inventory.py
+```
+
+Else, if the ISO files are being written to a location you have write access to:
+
 ```bash
 cd $HOME/repos/n9kv-kvm/config/ansible
 source $HOME/repos/n9kv-kvm/.venv/bin/activate
-sudo ansible-playbook startup_config_iso.yaml -i dynamic_inventory.py
+export PYTHONPATH=$HOME/repos/n9kv-kvm/.venv
+ansible-playbook startup_config_iso.yaml -i dynamic_inventory.py
 ```
 
 ## Verify the ISO images are created

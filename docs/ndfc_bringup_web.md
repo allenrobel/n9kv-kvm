@@ -79,7 +79,7 @@ Rather than click `Refresh` here, the message is asking to reload your browser.
 
 In Chrome, that's Ctrl+R, or click the reload icon to the left of the URL field.
 
-![Features Updated Message](./images/ndfc/08_featues_updated.png)
+![Features Updated Message](./images/ndfc/08_features_updated.png)
 
 ## Introduction or Set Credentials
 

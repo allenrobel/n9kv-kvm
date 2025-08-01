@@ -124,3 +124,7 @@ Clicking `Set Credentials` will bring up the `LAN Credentials Management` screen
 ![Set Credentials Dialog](./images/ndfc/13_success.png)
 
 NDFC is now configured.
+
+Proceed to the `Fabrics Bringup` section when ready.
+
+[Fabrics Bringup](./nd3_fabrics_bringup.md)

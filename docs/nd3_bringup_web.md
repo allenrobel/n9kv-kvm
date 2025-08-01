@@ -129,13 +129,14 @@ Again, wait until the system is fully up.
 ## Meet Nexus Dashboard
 
 Once the system is up, you'll be presented with some informational
-screens.  Click through these and then proceed to the
-[Create Nexus Dashboard Fabrics](https://github.com/allenrobel/n9kv-kvm/tree/main?tab=readme-ov-file#create-nexus-dashboard-fabrics)
-section in this repository.
+screens.  Click through these.
 
 ![ND 3.2 Progress](./images/nd3/13_meet_nexus_dashboard.png)
 
 ![ND 3.2 Progress](./images/nd3/14_getting_started_map.png)
+
+When ready, proceed to the
+[NDFC application bringup section](https://github.com/allenrobel/n9kv-kvm/blob/main/docs/nd_installation.md#nd-32-broswer-based-fabric-controller-ndfc-bringup).
 
 ## ND - Access the documentation
 

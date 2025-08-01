@@ -44,3 +44,12 @@ Follow the link below for the final phase of the Nexus Dashboard 4.1 bringup.
 Follow the link below for the final phase of the Nexus Dashboard 3.2 bringup.
 
 [ND 3.2 Configuration Web Browser](./nd3_bringup_web.md)
+
+## ND 3.2 Broswer based Fabric Controller (NDFC) bringup
+
+Since, with ND 3.2, the Fabric Controller (NDFC) is a separate application,
+we need to configure it after ND 3.2 has been brought up.
+
+Follow the link below for NDFC configuration steps.
+
+[NDFC Configuration](./ndfc_bringup_web.md)

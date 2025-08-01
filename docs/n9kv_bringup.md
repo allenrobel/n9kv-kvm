@@ -160,6 +160,11 @@ things seem to work OK with 4G size.
 Bad Partition bootflash size 4G too small < min 8G
 ```
 
+### Be Patient
+
+Give the nexus9000v time to boot (15-30 minutes).  It will spend a lot of this time
+seemingly hung at `Loading system software`.  Patience is a virtue here!
+
 ### Set the Password and Login
 
 We've intentionally omitted a password setting in the startup config,

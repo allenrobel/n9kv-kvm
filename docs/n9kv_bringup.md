@@ -26,13 +26,13 @@ It then creates the ISO file, containing the startup-config
 (renamed to `nxos_config.txt`), that n9kv will read as its
 startup configuration.
 
-## Edit the Jinja2 template
+## (Optional) Edit the Jinja2 template
 
 Have a look at the template and make any desired edits.
 
 - `$HOME/repos/n9kv-kvm/config/ansible/nxos_startup_config.j2`
 
-The template currently contains a startup config containing what
+The template generates the startup config containing what
 is necessary for nexus9000v to boot and to be reachable to
 Nexus Dashboard.
 

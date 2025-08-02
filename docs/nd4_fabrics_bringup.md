@@ -1,4 +1,4 @@
-# ND 4.1 - Create ISN and VXLAN fabrics
+# ND 4.1 - Create ISN, SITE1, and SITE2 fabrics
 
 Below are summary steps for creating the fabrics used in this project.
 The outlines follow the GUI paths to effect the desired configurations.
@@ -31,17 +31,17 @@ breadcrumbs to make it through this step.
                 - Summary
                   - Review and click `Submit`
 
-## VXLAN fabric bringup
+## SITE1 and SITE2 fabric bringup
 
 ### General Guidelines
 
-To enable VRF Lite peering between the S1 and S2 Border Spines in fabric VXLAN and
-the ER Edge Router in fabric ISN, it's imperitive that you enable `back2back&ToExternal`
+To enable VRF Lite peering between the S1 and S2 Border Spines in fabrics SITE1 and SITE2
+and the ER Edge Router in fabric ISN, it's imperitive that you enable `back2back&ToExternal`
 and its relevant suboptions (suboptions depend on your goals but, for now, enable them
 all). Without doing so, ND will not automatically configure this peering when you invoke
 `Recalculate and Deploy`.
 
-### Summary VXLAN
+### Summary SITE1
 
 - Manage
   - Fabrics
@@ -53,9 +53,37 @@ all). Without doing so, ND will not automatically configure this peering when yo
         - `Settings`
           - `Configuration mode`
             - Select `Advanced` (important!)
-          - `Name` VXLAN
+          - `Name` SITE1
           - `Overlay routing protcol` iBGP
           - `BGP ASN` 65002
+          - Click `Next`
+            - `Advanced settings`
+              - Click the `Resources` tab (middle-top of page)
+              - Scroll down to `VRF Lite Deployment`
+                - Click and set to `back2BackAndExternal`
+              - Enable the following
+                - `Auto Deploy for Peer`
+                - `Auto Deploy Default VRF`
+                - `Auto Deploy Default VRF for Peer`
+            - Click `Next`
+              - `Summary`
+                - Review and click `Submit`
+
+### Summary SITE2
+
+- Manage
+  - Fabrics
+    - Create Fabric
+      - `Create new LAN fabric`
+      - Click `Next`
+      - Select `VXLAN`
+      - Click `Next`
+        - `Settings`
+          - `Configuration mode`
+            - Select `Advanced` (important!)
+          - `Name` SITE2
+          - `Overlay routing protcol` iBGP
+          - `BGP ASN` 65003
           - Click `Next`
             - `Advanced settings`
               - Click the `Resources` tab (middle-top of page)

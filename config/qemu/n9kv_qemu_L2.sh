@@ -1,24 +1,24 @@
 #!/bin/bash
 
 # Switch configuration parameters
-SWITCH_NAME=L1
+SWITCH_NAME=L2
 SWITCH_ROLE="Leaf Switch"
 # SWITCH_SERIAL must be unique per switch and is required for n9kv bootup with unique MAC addresses
-SWITCH_SERIAL=9ABCDEF031
-NEIGHBOR_1=S1
-NEIGHBOR_2=H1
+SWITCH_SERIAL=9ABCDEF032
+NEIGHBOR_1=S2
+NEIGHBOR_2=H2
 MGMT_BRIDGE=BR_ND_DATA
-ISL_BRIDGE_1=BR_S1_L1
-ISL_BRIDGE_2=BR_L1_H1
+ISL_BRIDGE_1=BR_S2_L2
+ISL_BRIDGE_2=BR_L2_H2
 # MAC_1 sets mgmt0 mac address
 # The other two are for ISL links but, alas, are ignored by n9kv bootup.
 # We use the ./config/ansible/interface_mac_addresses_*.yaml scripts to set these.
-MAC_1="00:00:31:00:00:01"
-MAC_2="00:00:31:00:00:02"
-MAC_3="00:00:31:00:00:03"
+MAC_1="00:00:32:00:00:01"
+MAC_2="00:00:32:00:00:02"
+MAC_3="00:00:32:00:00:03"
 
-TELNET_PORT=9031   # Telnet port for console access
-MONITOR_PORT=4431  # Monitor port for QEMU
+TELNET_PORT=9032   # Telnet port for console access
+MONITOR_PORT=4432  # Monitor port for QEMU
 
 IMAGE_PATH=/iso/nxos
 # N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v64.10.3.8.M.qcow2

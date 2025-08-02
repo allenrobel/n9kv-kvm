@@ -64,6 +64,11 @@
         config_file: "{{ L1_HOSTNAME }}.cfg"
         iso_file: "{{ L1_HOSTNAME }}.iso"
 
+      - hostname: "{{ L2_HOSTNAME }}"
+        mgmt_ip: "{{ L2_IP4 }}"
+        config_file: "{{ L2_HOSTNAME }}.cfg"
+        iso_file: "{{ L2_HOSTNAME }}.iso"
+
   tasks:
     - name: Create output directory
       file:

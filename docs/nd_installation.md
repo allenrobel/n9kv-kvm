@@ -33,19 +33,14 @@ Follow the link below for initial CLI phase of the Nexus Dashboard bringup.
 
 [ND Bringup - CLI Phase](./nd_bringup_cli.md)
 
-## ND 4.1 Browser based bringup
+## ND Browser based bringup
 
-Follow the link below for the final phase of the Nexus Dashboard 4.1 bringup.
+Follow the appropriate link below for the final phase of the Nexus Dashboard bringup.
 
-[ND 4.1 Configuration Web Browser](./nd4_bringup_web.md)
+- [ND 4.1 Configuration Web Browser](./nd4_bringup_web.md)
+- [ND 3.2 Configuration Web Browser](./nd3_bringup_web.md)
 
-## ND 3.2 Browser based bringup
-
-Follow the link below to continue with Nexus Dashboard 3.2 bringup.
-
-Then follow the next link to bringup Nexus Dashboard Fabric Controller.
-
-[ND 3.2 Configuration Web Browser](./nd3_bringup_web.md)
+If you are installing ND 3.2, follow the link below to bringup Nexus Dashboard Fabric Controller.
 
 ## ND 3.2 Broswer based Fabric Controller (NDFC) bringup
 

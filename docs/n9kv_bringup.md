@@ -114,6 +114,8 @@ total 1424
 -rw-r--r-- 1 root root 358400 Jul 28 20:40 ER.iso
 -rw-r--r-- 1 root root    172 Jul 28 20:39 L1.cfg
 -rw-r--r-- 1 root root 358400 Jul 28 20:40 L1.iso
+-rw-r--r-- 1 root root    172 Jul 28 20:39 L2.cfg
+-rw-r--r-- 1 root root 358400 Jul 28 20:40 L2.iso
 -rw-r--r-- 1 root root    172 Jul 28 20:39 S1.cfg
 -rw-r--r-- 1 root root 358400 Jul 28 20:40 S1.iso
 -rw-r--r-- 1 root root    172 Jul 28 20:39 S2.cfg
@@ -196,4 +198,4 @@ Password:
 ER#
 ```
 
-Repeat the above for the other switches (S1, S2, L1).
+Repeat the above for the other switches (S1, S2, L1, L2).

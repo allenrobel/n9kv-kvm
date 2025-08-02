@@ -31,21 +31,21 @@
 - On the `ISN` page, click the blue `Actions` button, and then select `Recalculate and Deploy`
 - On the `Deploy Configuration - ISN` page, click `Deploy All`
 
-## Add S1, S2, and L1 Switches to VXLAN Fabric
+## Add S1, L1 Switches to SITE1 Fabric
 
 - In the sidebar, click `Manage` -> `Inventory`
 - On the `Inventory` page, click `Actions` -> `Add Switches`
 - On the `Add Switches` page, click `Choose Fabric`
-- In the `Select Fabric` dialog, choose `VXLAN` and click `Select`
+- In the `Select Fabric` dialog, choose `SITE1` and click `Select`
 - On the `Add Switches` page
   - `Switch Addition Mechanism` Discover
   - `Seed IP` 192.168.11.131
   - `Device Type` nx-os
   - `Username` admin
-  - `Password` The password you assigned to the S1, S2, and L1 switches
+  - `Password` The password you assigned to the S1, L1 switches
   - `Set as individual device write credential` Enable
   - `Max Hops` 1
-    - Since the seed switch is L1, and L1 is connected to S1 and S2, we need a 1 hop discovery radius
+    - Since the seed switch is L1, and L1 is connected to S1, a 1 hop discovery radius takes less time than 2 hop
   - `Preserve Config` Uncheck/Disable this (important!)
   - Click `Discover Switches`
 - The switches should be displayed in the `Discovery Results` section.
@@ -54,13 +54,49 @@
   - The Progress bar will start to increment and Status will change to `In Progress`
   - After some time, the Status will change to `Switch Added`
   - Click `Close` to exit this screen.
-- Back at the Inventory screen, select the S1 and S2 switches.
+- Back at the Inventory screen, select the S1 switch.
 - Click `Actions` and `Set Role`
 - In the `Select Role` dialog, select Border Spine
 - Click `Select`
 - Click `OK` in the Warning dialog
-  - The L1 switch is set to Leaf role by default, so we don't need to change its role
+  - Verify that the L1 switch is set to Leaf role by default.
+  - If it's set to something else, change it to Leaf in the same way you changed S1's role.
 - In the left sidebar, click `Manage` and `Fabrics`
-- On the `Fabrics` page, click the VXLAN fabric name (not the radio button, but the actual blue fabric name)
-- On the `VXLAN` page, click the blue `Actions` button, and then select `Recalculate and Deploy`
-- On the `Deploy Configuration - VXLAN` page, click `Deploy All`
+- On the `Fabrics` page, click the SITE1 fabric name (not the radio button, but the actual blue fabric name)
+- On the `SITE1` page, click the blue `Actions` button, and then select `Recalculate and Deploy`
+- On the `Deploy Configuration - SITE1` page, click `Deploy All`
+
+## Add S2, L2 Switches to SITE2 Fabric
+
+- In the sidebar, click `Manage` -> `Inventory`
+- On the `Inventory` page, click `Actions` -> `Add Switches`
+- On the `Add Switches` page, click `Choose Fabric`
+- In the `Select Fabric` dialog, choose `SITE2` and click `Select`
+- On the `Add Switches` page
+  - `Switch Addition Mechanism` Discover
+  - `Seed IP` 192.168.11.132
+  - `Device Type` nx-os
+  - `Username` admin
+  - `Password` The password you assigned to the S2, L2 switches
+  - `Set as individual device write credential` Enable
+  - `Max Hops` 1
+    - Since the seed switch is L2, and L2 is connected to S2, a 1 hop discovery radius takes less time than 2 hop
+  - `Preserve Config` Uncheck/Disable this (important!)
+  - Click `Discover Switches`
+- The switches should be displayed in the `Discovery Results` section.
+  - Their status should display as `Manageable`
+  - Select them and Click `Add Switches`
+  - The Progress bar will start to increment and Status will change to `In Progress`
+  - After some time, the Status will change to `Switch Added`
+  - Click `Close` to exit this screen.
+- Back at the Inventory screen, select the S2 switch.
+- Click `Actions` and `Set Role`
+- In the `Select Role` dialog, select Border Spine
+- Click `Select`
+- Click `OK` in the Warning dialog
+  - Verify that the L2 switch is set to Leaf role by default.
+  - If it's set to something else, change it to Leaf in the same way you changed S2's role.
+- In the left sidebar, click `Manage` and `Fabrics`
+- On the `Fabrics` page, click the SITE2 fabric name (not the radio button, but the actual blue fabric name)
+- On the `SITE2` page, click the blue `Actions` button, and then select `Recalculate and Deploy`
+- On the `Deploy Configuration - SITE2` page, click `Deploy All`

@@ -1,7 +1,9 @@
 # Summary
 
-Bringup a small VXLAN lab with Cisco Nexus Dashboard and Cisco Nexus9000v
-(aka n9kv) using Ubuntu 24.04.2 LTS virtualization stack. [Topology](#topology-built-by-this-repository)
+Bringup a small multi-site VXLAN lab with Cisco Nexus Dashboard and Cisco Nexus9000v
+(aka n9kv) using Ubuntu 24.04.2 LTS virtualization stack.
+
+[Topology](#topology-built-by-this-repository)
 
 NOTE: You'll need a Cisco account to download Nexus Dashboard and Nexus9000v images.
 
@@ -64,7 +66,8 @@ meets the [Hardware Requirements](#hardware-requirements) and on which
 
 ## Install and Setup
 
-We've arranged the steps below so that dependencies for later steps are met by earlier steps. For best results, follow the steps below in order.
+We've arranged the steps below so that dependencies for later steps are met by earlier steps.
+For best results, follow the steps below in order.
 
 ## KVM Support
 
@@ -253,7 +256,7 @@ graph TB
 ## Project Structure
 
 ```bash
-(n9kv-kvm) arobel@Allen-M4 n9kv-kvm % tree
+arobel@Allen-M4 n9kv-kvm % tree
 .
 ├── cockpit
 │   ├── cockpit.png
@@ -280,6 +283,7 @@ graph TB
 │   │   ├── dynamic_inventory.py
 │   │   ├── interface_mac_addresses_ER.yaml
 │   │   ├── interface_mac_addresses_L1.yaml
+│   │   ├── interface_mac_addresses_L2.yaml
 │   │   ├── interface_mac_addresses_S1.yaml
 │   │   ├── interface_mac_addresses_S2.yaml
 │   │   ├── nxos_startup_config.j2
@@ -294,6 +298,7 @@ graph TB
 │       ├── n9kv_qemu_ER_cdrom.sh
 │       ├── n9kv_qemu_ER.sh
 │       ├── n9kv_qemu_L1.sh
+│       ├── n9kv_qemu_L2.sh
 │       ├── n9kv_qemu_S1.sh
 │       ├── n9kv_qemu_S2.sh
 │       ├── nd_qemu_321e.sh
@@ -304,18 +309,89 @@ graph TB
 │   ├── clone_prepare_repo.md
 │   ├── dnsmasq.md
 │   ├── images
-│   │   ├── nd4_1_journey.png
-│   │   ├── nd4_10_cluster_install.png
-│   │   ├── nd4_11_system_software.png
-│   │   ├── nd4_12_release_details.png
-│   │   ├── nd4_13_whats_new.png
-│   │   ├── nd4_2_basic_information.png
-│   │   ├── nd4_4_node_details_cluster_connectivity.png
-│   │   ├── nd4_5_persistent_ips.png
-│   │   ├── nd4_6_persistent_ips_added.png
-│   │   ├── nd4_7_summary.png
-│   │   ├── nd4_8_summary_error.png
-│   │   └── nd4_9_login.png
+│   │   ├── nd3
+│   │   │   ├── 01_cluster_bringup.png
+│   │   │   ├── 02_node_details.png
+│   │   │   ├── 03_edit_node.png
+│   │   │   ├── 04_cluster_bringup.png
+│   │   │   ├── 05_deployment_mode.png
+│   │   │   ├── 06_external_service_ips.png
+│   │   │   ├── 07_cluster_bringup.png
+│   │   │   ├── 08_summary.png
+│   │   │   ├── 09_warning.png
+│   │   │   ├── 10_progress.png
+│   │   │   ├── 11_login.png
+│   │   │   ├── 12_progress.png
+│   │   │   ├── 13_meet_nexus_dashboard.png
+│   │   │   ├── 14_getting_started_map.png
+│   │   │   └── add_switches
+│   │   │       ├── 00_manage_inventory.png
+│   │   │       ├── 01_inventory.png
+│   │   │       ├── 02_pick_a_fabric.png
+│   │   │       ├── 03_select_fabric.png
+│   │   │       ├── 04_seed_switch_details.png
+│   │   │       ├── 05_discovery_results.png
+│   │   │       ├── 06_wait.png
+│   │   │       ├── 07_wait.png
+│   │   │       ├── 08_inventory.png
+│   │   │       ├── 09_pick_a_fabric.png
+│   │   │       ├── 10_select_fabric.png
+│   │   │       ├── 11_seed_switch_details.png
+│   │   │       ├── 12_warning_dialog.png
+│   │   │       ├── 13_discovery_results.png
+│   │   │       ├── 14_switches_reboot.png
+│   │   │       ├── 15_wait_for_switch_added.png
+│   │   │       ├── 16_set_role.png
+│   │   │       ├── 17_select_role.png
+│   │   │       ├── 18_warning.png
+│   │   │       ├── 19_border_spine_switch_role.png
+│   │   │       ├── 20_select_role.png
+│   │   │       ├── 21_warning.png
+│   │   │       ├── 22_set_role.png
+│   │   │       ├── 23_select_role.png
+│   │   │       ├── 24_warning.png
+│   │   │       ├── 25_wait.png
+│   │   │       ├── 26_all_switches_ready.png
+│   │   │       ├── 27_manage_fabrics.png
+│   │   │       ├── 28_vxlan_fabric.png
+│   │   │       ├── 29_recalculate_and_deploy.png
+│   │   │       ├── 30_wait.png
+│   │   │       ├── 31_deploy.png
+│   │   │       ├── 32_wait.png
+│   │   │       ├── 33_close.png
+│   │   │       ├── 34_close_window.png
+│   │   │       ├── 35_fabrics_isn.png
+│   │   │       ├── 36_recalculate_and_deploy.png
+│   │   │       ├── 37_deploy.png
+│   │   │       └── 38_close.png
+│   │   ├── nd4
+│   │   │   ├── 01_journey.png
+│   │   │   ├── 02_basic_information.png
+│   │   │   ├── 04_node_details_cluster_connectivity.png
+│   │   │   ├── 05_persistent_ips.png
+│   │   │   ├── 06_persistent_ips_added.png
+│   │   │   ├── 07_summary.png
+│   │   │   ├── 08_summary_error.png
+│   │   │   ├── 09_login.png
+│   │   │   ├── 10_cluster_install.png
+│   │   │   ├── 11_system_software.png
+│   │   │   ├── 12_release_details.png
+│   │   │   └── 13_whats_new.png
+│   │   └── ndfc
+│   │       ├── 00_first_access.png
+│   │       ├── 01_introduction.png
+│   │       ├── 02_journey.png
+│   │       ├── 03_operational_modes.png
+│   │       ├── 04_feature_selection.png
+│   │       ├── 05_summary.png
+│   │       ├── 06_controller_service_setup.png
+│   │       ├── 07_journey.png
+│   │       ├── 08_features_updated.png
+│   │       ├── 09_intro_set_credentials_behind.png
+│   │       ├── 10_set_credentials_intro_behind.png
+│   │       ├── 11_lan_credentials_management.png
+│   │       ├── 12_set_credentials.png
+│   │       └── 13_success.png
 │   ├── install_ansible_collection.md
 │   ├── n9kv_bringup.md
 │   ├── n9kv_fix_interface_mac_addresses.md
@@ -328,7 +404,9 @@ graph TB
 │   ├── nd3_fabrics_bringup.md
 │   ├── nd4_add_switches.md
 │   ├── nd4_bringup_web.md
-│   └── nd4_fabrics_bringup.md
+│   ├── nd4_fabrics_bringup.md
+│   ├── ndfc_bringup_web.md
+│   └── topology.mmd
 ├── env
 │   ├── env_ansible.sh
 │   ├── env_libvirt.sh
@@ -339,6 +417,6 @@ graph TB
 ├── README.md
 └── uv.lock
 
-16 directories, 68 files
-(n9kv-kvm) arobel@Allen-M4 n9kv-kvm %
+20 directories, 139 files
+arobel@Allen-M4 n9kv-kvm %
 ```

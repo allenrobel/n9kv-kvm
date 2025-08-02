@@ -202,19 +202,33 @@ Follow this link to fix this.
     - 1x Leaf (L1)
 
 ```mermaid
+!include .docs/topology.mmd
+```
+
+```mermaid
 graph TB
     subgraph ISN["ISN Fabric (Inter-Site Network)"]
         ER[Edge Router - ER]
     end
 
-    subgraph VXLAN["VXLAN Fabric"]
+    subgraph SITE1["SITE1"]
         S1[Border Spine - S1]
-        S2[Border Spine - S2]
         L1[Leaf - L1]
+        H1[Host - H1]
         
-        %% VXLAN fabric connections
+        %% SITE1 fabric connections
         S1 --- L1
-        S2 --- L1
+        L1 --- H1
+    end
+
+    subgraph SITE2["SITE2"]
+        S2[Border Spine - S2]
+        L2[Leaf - L2]
+        H2[Host - H2]
+        
+        %% SITE2 fabric connections
+        S2 --- L2
+        L2 --- H2
     end
 
     %% Inter-fabric connection
@@ -223,13 +237,16 @@ graph TB
 
     %% Styling
     classDef fabricBox fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef edgeRouter fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    classDef borderSpine fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    classDef leaf fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef edgeRouter fill:#fff3e0,stroke:#e65100,stroke-width:1px,color:#000000
+    classDef borderSpine fill:#f3e5f5,stroke:#4a148c,stroke-width:1px,color:#000000
+    classDef leaf fill:#a8f3c8,stroke:#2e7d32,stroke-width:1px,color:#000000
+    classDef host fill:#e8f2a0,stroke:#2e7d32,stroke-width:1px,color:#000000
 
     class ER edgeRouter
     class S1,S2 borderSpine
-    class L1 leaf
+    class L1,L2 leaf
+    class H1,H2 host
+        
 ```
 
 ## Project Structure

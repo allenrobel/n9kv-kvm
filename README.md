@@ -31,6 +31,7 @@ meets the [Hardware Requirements](#hardware-requirements) and on which
   - [Installation](./docs/nd_installation.md)
 - [Cisco Nexus9000v](https://www.cisco.com/c/en/us/td/docs/dcn/nx-os/nexus9000/103x/n9000v-n9300v-9500v/cisco-nexus-9000v-9300v-9500v-guide-release-103x.html)
   - nexus9300v64.10.3.8.M.qcow2
+  - nexus9500v64.10.5.3.F.qcow2
   - [Installation](./docs/n9kv_bringup.md)
 - Ubuntu
   - [24.04.2 LTS](https://ubuntu.com/desktop)

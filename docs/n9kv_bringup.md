@@ -2,10 +2,12 @@
 
 ## Download the nexus9000v image (Cisco Account Required)
 
-- Follow the link below, click on Downloads, and select 10.3(8) Download Options.
-- On this page, highlite 10.3(8)M and look for "Cisco Nexus 9000/3000 Virtual Switch for KVM"
-- This image is labeled `nexus9300v64.10.3.8.M.qcow2`
-- Later images might work, but we have not tested them (we'll update this page when we do).
+- Follow the link below, click on Downloads, and select from either 10.3(8) or 10.5(3) Download Options.
+- On this page, highlite 10.3(8)M or 10.5(3)F and look for "Cisco Nexus 9000/3000 Virtual Switch for KVM"
+- This image is labeled, depending on the version you've selected, either
+  - `nexus9300v64.10.3.8.M.qcow2`
+  - `nexus9300v64.10.5.3.F.qcow2`
+- Other images might work, but we have not tested them (we'll update this page when we do).
 
 [Nexus 9000v Download](https://www.cisco.com/c/en/us/support/switches/nexus-9000v-switch/model.html)
 
@@ -73,11 +75,13 @@ in the `vars` section are populated based on the contents of
 
 ```yaml
   vars:
-    nxos_image: "nxos64-cs.10.3.8.M.bin"
+    nxos_image: "nxos64-cs.10.5.3.F.bin"
     output_dir: "/iso/nxos/config"
 ```
 
-- `nxos_image` - Set this to the image name (.bin) that is extracted from the n9kv `.qcow2` during bootup.
+- `nxos_image` - Set this to the image name (.bin) that is extracted from the n9kv `.qcow2` during bootup. One of:
+  - `nxos64-cs.10.5.3.F.bin`
+  - `nxos64-cs.10.3.8.M.bin`
 - `output_dir` - Set this to the location the n9kv startup config ISOs will be written to.
 
 ## Run the startup_config_iso.yaml playbook
@@ -132,7 +136,11 @@ cat $HOME/repos/n9kv-kvm/config/qemu/n9kv_qemu_ER.sh
 In particular, verify that:
 
 - `CDROM_PATH` and `CDROM_IMAGE` match the location where you saved the ISO config file (i.e. `output_dir`).
-- `N9KV_SHARED_IMAGE` matches the location of the nexus9000v qcow2 image
+  - These scripts come set with the following
+    - `CDROM_PATH=/iso/nxos/config`
+- `N9KV_SHARED_IMAGE` matches the location of the nexus9000v qcow2 image.  These scripts come set with the following
+  - `IMAGE_PATH=/iso/nxos`
+  - `N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9500v64.10.5.3.F.qcow2`
 
 ### Run the ER Shell Script
 

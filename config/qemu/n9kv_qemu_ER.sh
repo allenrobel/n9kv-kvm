@@ -21,7 +21,9 @@ TELNET_PORT=9011   # Telnet port for console access
 MONITOR_PORT=4411  # Monitor port for QEMU
 
 IMAGE_PATH=/iso/nxos
-N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v64.10.3.8.M.qcow2
+# N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v64.10.3.8.M.qcow2
+N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9500v64.10.5.3.F.qcow2
+
 
 # sudo apt install ovmf
 BIOS_FILE=/usr/share/ovmf/OVMF.fd

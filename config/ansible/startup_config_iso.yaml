@@ -28,7 +28,8 @@
   gather_facts: true
   vars:
     # Default NX-OS image name
-    nxos_image: "nxos64-cs.10.3.8.M.bin"
+    # nxos_image: "nxos64-cs.10.3.8.M.bin"
+    nxos_image: "nxos64-cs.10.5.3.F.bin"
 
     # Output directory for configs and ISOs
     # If you want to change this to your local user directory, either use

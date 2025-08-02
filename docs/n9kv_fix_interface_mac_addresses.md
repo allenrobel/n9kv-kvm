@@ -41,6 +41,7 @@ ansible-playbook interface_mac_addresses_ER.yaml -i dynamic_inventory.py
 ansible-playbook interface_mac_addresses_S1.yaml -i dynamic_inventory.py
 ansible-playbook interface_mac_addresses_S2.yaml -i dynamic_inventory.py
 ansible-playbook interface_mac_addresses_L1.yaml -i dynamic_inventory.py
+ansible-playbook interface_mac_addresses_L2.yaml -i dynamic_inventory.py
 ```
 
 After running the above scripts do a `Recalculate and Deploy` in Nexus

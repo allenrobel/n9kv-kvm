@@ -23,7 +23,7 @@ sudo cat $HOME/repos/n9kv-kvm/config/bridges/bridge.conf >> /etc/qemu/bridge.con
 sudo cat /etc/qemu/bridge.conf
 ```
 
-It `/etc/qemu/bridge.conf` doesn't exist, create it.
+If `/etc/qemu/bridge.conf` doesn't exist, create it.
 
 ```bash
 sudo cp $HOME/repos/n9kv-kvm/config/bridges/bridge.conf /etc/qemu/bridge.conf

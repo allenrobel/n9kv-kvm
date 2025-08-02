@@ -44,7 +44,23 @@ network:
         stp: false
       interfaces: []
     
-    BR_S2_L1:
+    BR_S2_L2:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_L1_H1:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      parameters:
+        stp: false
+      interfaces: []
+    
+    BR_L2_H2:
       dhcp4: false
       dhcp6: false
       mtu: 9216

@@ -194,12 +194,17 @@ Follow this link to fix this.
 
 ## Topology built by this repository
 
-- Two fabrics
+- Three fabrics
   - ISN (inter-site network)
     - 1x Edge Router (ER)
-  - VXLAN (VxLAN)
-    - 2x Border Spines (S1, S2)
+  - SITE1 (VxLAN)
+    - 1x Border Spines (S1)
     - 1x Leaf (L1)
+    - 1x Host (H1)
+  - SITE2 (VxLAN)
+    - 1x Border Spines (S2)
+    - 1x Leaf (L2)
+    - 1x Host (H2)
 
 ```mermaid
 graph TB

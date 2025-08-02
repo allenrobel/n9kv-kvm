@@ -76,8 +76,8 @@ sudo chmod 600 /etc/netplan/99-bridges.yaml
 ## Apply the bridges configuration
 
 ```bash
-netplan try
-netplan apply
+sudo netplan try
+sudo netplan apply
 ```
 
 The above commands might result in a warning similar to below.
@@ -98,14 +98,8 @@ If the above commands result in messages like the following, you can ignore them
 
 ```bash
 (.venv) arobel@cvd-3:~/repos/n9kv-kvm/config/bridges$ sudo netplan try
-BR_ER_S2: reverting custom parameters for bridges and bonds is not supported
 BR_ER_S1: reverting custom parameters for bridges and bonds is not supported
-BR_ND_DATA: reverting custom parameters for bridges and bonds is not supported
-BR_ND_MGMT: reverting custom parameters for bridges and bonds is not supported
-BR_S2_L1: reverting custom parameters for bridges and bonds is not supported
-br0: reverting custom parameters for bridges and bonds is not supported
-BR_S1_L1: reverting custom parameters for bridges and bonds is not supported
-
+# etc...
 Please carefully review the configuration and use 'netplan apply' directly.
 ```
 
@@ -117,12 +111,14 @@ Some bridges (e.g. `BR_ER_S1`) will show `state DOWN`. This is expected until we
 the nexus9000v switches.
 
 ```bash
-(.venv) arobel@cvd-3:~/repos/n9kv-kvm/config/bridges$ ip link show type bridge | grep BR_
-10: BR_ER_S1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
-11: BR_ER_S2: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
-12: BR_ND_DATA: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default qlen 1000
-13: BR_ND_MGMT: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default qlen 1000
-14: BR_S1_L1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
-15: BR_S2_L1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
-(.venv) arobel@cvd-3:~/repos/n9kv-kvm/config/bridges$
+root@cvd-1:/home/arobel/repos/n9kv-kvm/config/bridges# ip link show type bridge | grep BR_
+6: BR_ER_S1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
+7: BR_ER_S2: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
+8: BR_ND_DATA: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default qlen 1000
+9: BR_ND_MGMT: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default qlen 1000
+10: BR_S1_L1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
+41: BR_L1_H1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
+42: BR_L2_H2: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
+43: BR_S2_L2: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
+root@cvd-1:/home/arobel/repos/n9kv-kvm/config/bridges# 
 ```

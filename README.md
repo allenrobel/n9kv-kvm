@@ -201,9 +201,7 @@ Follow this link to fix this.
     - 2x Border Spines (S1, S2)
     - 1x Leaf (L1)
 
-```mermaid
 !include .docs/topology.mmd
-```
 
 ```mermaid
 graph TB

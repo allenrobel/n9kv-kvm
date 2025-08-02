@@ -36,6 +36,7 @@ export ND_USERNAME=admin
 export ND_PASSWORD=your_nd_password
 export NO_PROXY=$ND_IP4
 export no_proxy=$ND_IP4
+export ANSIBLE_COLLECTIONS_PATH=$HOME/repos/ansible/collections
 ansible-playbook interface_mac_addresses_ER.yaml -i dynamic_inventory.py
 ansible-playbook interface_mac_addresses_S1.yaml -i dynamic_inventory.py
 ansible-playbook interface_mac_addresses_S2.yaml -i dynamic_inventory.py

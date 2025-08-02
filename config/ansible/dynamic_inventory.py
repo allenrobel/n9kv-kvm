@@ -32,10 +32,14 @@ ER_IP4 = environ.get("ER_IP4", "192.168.12.111")
 S1_IP4 = environ.get("S1_IP4", "192.168.12.121")
 S2_IP4 = environ.get("S2_IP4", "192.168.12.122")
 L1_IP4 = environ.get("L1_IP4", "192.168.12.131")
+L2_IP4 = environ.get("L2_IP4", "192.168.12.132")
 
+# Fabric types
+SITE1_FABRIC = environ.get("ND_SITE1_FABRIC", "SITE1")
+SITE2_FABRIC = environ.get("ND_SITE2_FABRIC", "SITE2")
+ISN_FABRIC = environ.get("ND_ISN_FABRIC", "ISN")
 
-FABRIC_VXLAN = environ.get("ND_FABRIC_VXLAN", "VXLAN")
-FABRIC_ISN = environ.get("ND_FABRIC_ISN", "ISN")
+# Device credentials
 ND_PASSWORD = environ.get("ND_PASSWORD", "SuperSecretPassword")
 ND_USERNAME = environ.get("ND_USERNAME", "admin")
 NXOS_PASSWORD = environ.get("NXOS_PASSWORD", "SuperSecretPassword")
@@ -47,6 +51,7 @@ ER_HOSTNAME = environ.get("ER_HOSTNAME", "ER")
 S1_HOSTNAME = environ.get("S1_HOSTNAME", "S1")
 S2_HOSTNAME = environ.get("S2_HOSTNAME", "S2")
 L1_HOSTNAME = environ.get("L1_HOSTNAME", "L1")
+L2_HOSTNAME = environ.get("L2_HOSTNAME", "L2")
 
 # Base set of interfaces
 ER_INTERFACE_1 = environ.get("ER_INTERFACE_1", "Ethernet1/1")
@@ -57,6 +62,8 @@ S2_INTERFACE_1 = environ.get("S2_INTERFACE_1", "Ethernet1/1")
 S2_INTERFACE_2 = environ.get("S2_INTERFACE_2", "Ethernet1/2")
 L1_INTERFACE_1 = environ.get("L1_INTERFACE_1", "Ethernet1/1")
 L1_INTERFACE_2 = environ.get("L1_INTERFACE_2", "Ethernet1/2")
+L2_INTERFACE_1 = environ.get("L2_INTERFACE_1", "Ethernet1/1")
+L2_INTERFACE_2 = environ.get("L2_INTERFACE_2", "Ethernet1/2")
 
 # Unique mac addresses for the above interfaces.
 ER_MAC_1 = environ.get("ER_MAC_1", "0000.0011.0001")
@@ -67,6 +74,8 @@ S2_MAC_1 = environ.get("S2_MAC_1", "0000.0022.0001")
 S2_MAC_2 = environ.get("S2_MAC_2", "0000.0022.0002")
 L1_MAC_1 = environ.get("L1_MAC_1", "0000.0031.0001")
 L1_MAC_2 = environ.get("L1_MAC_2", "0000.0031.0002")
+L2_MAC_1 = environ.get("L2_MAC_1", "0000.0032.0001")
+L2_MAC_2 = environ.get("L2_MAC_2", "0000.0032.0002")
 
 # output is printed to STDOUT, where ansible-playbook -i reads it.
 # If you change any vars above, be sure to add them below.
@@ -82,17 +91,20 @@ output = {
             "ansible_password": ND_PASSWORD,
             "ansible_python_interpreter": "python",
             "ansible_user": ND_USERNAME,
-            "FABRIC_VXLAN": FABRIC_VXLAN,
-            "FABRIC_ISN": FABRIC_ISN,
+            "SITE1_FABRIC": SITE1_FABRIC,
+            "SITE2_FABRIC": SITE2_FABRIC,
+            "ISN_FABRIC": ISN_FABRIC,
             "ND_IP4": ND_IP4,
             "ER_IP4": ER_IP4,
             "S1_IP4": S1_IP4,
             "S2_IP4": S2_IP4,
             "L1_IP4": L1_IP4,
+            "L2_IP4": L2_IP4,
             "ER_HOSTNAME": ER_HOSTNAME,
             "S1_HOSTNAME": S1_HOSTNAME,
             "S2_HOSTNAME": S2_HOSTNAME,
             "L1_HOSTNAME": L1_HOSTNAME,
+            "L2_HOSTNAME": L2_HOSTNAME,
             "ER_MAC_1": ER_MAC_1,
             "ER_MAC_2": ER_MAC_2,
             "S1_MAC_1": S1_MAC_1,
@@ -101,6 +113,8 @@ output = {
             "S2_MAC_2": S2_MAC_2,
             "L1_MAC_1": L1_MAC_1,
             "L1_MAC_2": L1_MAC_2,
+            "L2_MAC_1": L2_MAC_1,
+            "L2_MAC_2": L2_MAC_2,
             "ER_INTERFACE_1": ER_INTERFACE_1,
             "ER_INTERFACE_2": ER_INTERFACE_2,
             "S1_INTERFACE_1": S1_INTERFACE_1,
@@ -109,6 +123,8 @@ output = {
             "S2_INTERFACE_2": S2_INTERFACE_2,
             "L1_INTERFACE_1": L1_INTERFACE_1,
             "L1_INTERFACE_2": L1_INTERFACE_2,
+            "L2_INTERFACE_1": L2_INTERFACE_1,
+            "L2_INTERFACE_2": L2_INTERFACE_2,
             "ND_PASSWORD": ND_PASSWORD,
             "ND_USERNAME": ND_USERNAME,
             "NXOS_USERNAME": NXOS_USERNAME,
@@ -130,6 +146,7 @@ output = {
             "S1",
             "S2",
             "L1",
+            "L2",
         ],
         "vars": {
             "ansible_become": "true",

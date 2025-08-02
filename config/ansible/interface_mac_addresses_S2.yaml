@@ -5,10 +5,10 @@
     gather_facts: false
     vars:
     tasks:
-    - name: "{{ FABRIC_VXLAN }}.S2 switch_freeform policy"
+    - name: "{{ SITE2_FABRIC }}.S2 switch_freeform policy"
       cisco.dcnm.dcnm_policy:
         state: merged
-        fabric: "{{ FABRIC_VXLAN }}"
+        fabric: "{{ SITE2_FABRIC }}"
         use_desc_as_key: true
         config:
           - switch:

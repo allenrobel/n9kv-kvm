@@ -5,24 +5,23 @@
     gather_facts: false
     vars:
     tasks:
-    - name: "{{ ISN_FABRIC }}.ER switch_freeform policy"
+    - name: "{{ SITE2_FABRIC }}.L2 switch_freeform policy"
       cisco.dcnm.dcnm_policy:
         state: merged
-        fabric: "{{ ISN_FABRIC }}"
+        fabric: "{{ SITE2_FABRIC }}"
         use_desc_as_key: true
         config:
           - switch:
-            - ip: "{{ ER_IP4 }}"
+            - ip: "{{ L2_IP4 }}"
               policies:
                 - name: switch_freeform
                   create_additional_policy: false
                   priority: 101
-                  description: ER_interface_mac_addresses
+                  description: L2_interface_mac_addresses
                   policy_vars:
                     CONF: |
                       configure terminal
-                        interface {{ ER_INTERFACE_1 }}
-                          mac-address {{ ER_MAC_1 }}
-                        interface {{ ER_INTERFACE_2 }}
-                          mac-address {{ ER_MAC_2 }}
-
+                        interface {{ L2_INTERFACE_1 }}
+                          mac-address {{ L2_MAC_1 }}
+                        interface {{ L2_INTERFACE_2 }}
+                          mac-address {{ L2_MAC_2 }}

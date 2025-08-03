@@ -58,6 +58,12 @@ interface mgmt0
   vrf member management
   ip address 192.168.11.111/24
   no shutdown
+
+interface Ethernet1/1
+  no shutdown
+
+interface Ethernet1/2
+  no shutdown
 ```
 
 Several items above are derived from variables located in two places, as shown below:

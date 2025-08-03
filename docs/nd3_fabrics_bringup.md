@@ -34,6 +34,12 @@ breadcrumbs to make it through these steps.
 
 ## SITE1 Fabric
 
+We want to ensure three things.
+
+1. The IP ranges do not overlap with SITE2
+2. The BGP AS is unique vs ISN and SITE2
+3. `Back2Back&ToExternal` is set and suboptions are enabled
+
 - Manage
   - Actions
     - Create Fabric
@@ -44,16 +50,28 @@ breadcrumbs to make it through these steps.
       - General Parameters
         - `BGP AS #` 65002
       - Resources
+        - `Underlay Routing Loopback IP Range`
+          - 10.11.0.0/22
+        - `Underlay VTEP Loopback IP Range`
+          - 10.12.0.0/22
+        - `Underlay Subnet IP Range`
+          - 10.13.0.0/22
         - Scroll down to `VRF Lite Deployment`
         - Click the popup menu (current displays `Manual`) and select `Back2Back&ToExternal`
         - Enable the three suboptions directly below
           - `Auto Deploy for Peer`
           - `Auto Deploy Default VRF`
           - `Auto Deploy Default VRF for Peer`
-        - `VRF Lite Subnet IP Range` 10.221.0.0/16 (make this unique vs SITE2)
+        - `VRF Lite Subnet IP Range` 10.14.0.0/16 (make this unique vs SITE2)
         - Click `Save`
 
 ## SITE2 Fabric
+
+We want to ensure three things.
+
+1. The IP ranges do not overlap with SITE1
+2. The BGP AS is unique vs ISN and SITE1
+3. `Back2Back&ToExternal` is set and suboptions are enabled
 
 - Manage
   - Actions
@@ -65,11 +83,26 @@ breadcrumbs to make it through these steps.
       - General Parameters
         - `BGP AS #` 65003
       - Resources
+        - `Underlay Routing Loopback IP Range`
+          - 10.21.0.0/22
+        - `Underlay VTEP Loopback IP Range`
+          - 10.22.0.0/22
+        - `Underlay Subnet IP Range`
+          - 10.23.0.0/22
         - Scroll down to `VRF Lite Deployment`
         - Click the popup menu (current displays `Manual`) and select `Back2Back&ToExternal`
         - Enable the three suboptions directly below
           - `Auto Deploy for Peer`
           - `Auto Deploy Default VRF`
           - `Auto Deploy Default VRF for Peer`
-        - `VRF Lite Subnet IP Range` 10.222.0.0/16 (make this unique vs SITE1)
+        - `VRF Lite Subnet IP Range` 10.24.0.0/16 (make this unique vs SITE1)
         - Click `Save`
+
+## Review Fabrics
+
+On the Manage -> Fabrics screen, the `Fabric Health` column should indicate `Healthy`
+status for all three fabrics.
+
+If it does not, then double-click into the fabric(s) that show warnings, and review
+`Event Analytics` for the fabrics.  Most likely, there is an IP range conflict between
+fabrics.

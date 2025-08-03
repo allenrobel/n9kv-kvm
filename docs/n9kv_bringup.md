@@ -51,7 +51,7 @@ later if it's found these can be removed.)
 !Startup config saved at: Fri Jul 25 10:00:00 2025
 configure terminal
 hostname ER
-boot nxos bootflash:/nxos64-cs.10.3.8.M.bin
+boot nxos bootflash:/nxos64-cs.10.5.3.F.bin
 
 interface mgmt0
   no cdp enable
@@ -68,16 +68,17 @@ interface Ethernet1/2
 
 Several items above are derived from variables located in two places, as shown below:
 
-- `hostname` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`ER_HOSTNAME`)
-- `boot nxos` : $HOME/repos/n9kv-kvm/config/ansible/startup_config_iso.yaml (`nxos_image` var)
-- `ip address` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`ER_IP4`)
+- `ER` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`ER_HOSTNAME`)
+- `nxos64-cs.10.5.3.F.bin` : $HOME/repos/n9kv-kvm/config/ansible/startup_config_iso.yaml (`nxos_image` var)
+- `192.168.11.111/24` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`ER_IP4`)
+- `Ethernet1/1` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`ER_INTERFACE_1`)
+- `Ethernet1/2` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`ER_INTERFACE_2`)
 
 ## Edit the startup_config_iso.yaml playbook
 
-The `vars` section of this playbook contains the following items
-that need to be modified for your environment.  The other items
-in the `vars` section are populated based on the contents of
-`$HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py`
+The `vars` section of this playbook contains the following items that need to be modified
+for your environment.  The other items in the `vars` section are populated based on the
+contents of `$HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py`
 
 ```yaml
   vars:

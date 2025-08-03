@@ -50,6 +50,7 @@ breadcrumbs to make it through these steps.
           - `Auto Deploy for Peer`
           - `Auto Deploy Default VRF`
           - `Auto Deploy Default VRF for Peer`
+        - `VRF Lite Subnet IP Range` 10.221.0.0/16 (make this unique vs SITE2)
         - Click `Save`
 
 ## SITE2 Fabric
@@ -70,4 +71,5 @@ breadcrumbs to make it through these steps.
           - `Auto Deploy for Peer`
           - `Auto Deploy Default VRF`
           - `Auto Deploy Default VRF for Peer`
+        - `VRF Lite Subnet IP Range` 10.222.0.0/16 (make this unique vs SITE1)
         - Click `Save`

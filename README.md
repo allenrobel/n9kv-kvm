@@ -174,7 +174,7 @@ Follow the link below to install Nexus Dashboard.
 
 Follow the link below to create the Nexus Dashboard fabrics used in this project.
 
-[Create ISN and VXLAN Fabrics](./docs/nd_create_fabrics.md)
+[Create ISN, SITE1, and SITE2 Fabrics](./docs/nd_create_fabrics.md)
 
 ## nexus9000v Initial Configuration and Bringup
 

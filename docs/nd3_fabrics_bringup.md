@@ -12,7 +12,9 @@ For example, `Manage` refers to the `Manage` button in the left sidebar.
 button at the top-right of the Fabrics page, etc.
 
 We'll add screen grabs later but hopefully below will provide enough
-breadcrumbs to make it through this step.
+breadcrumbs to make it through these steps.
+
+## ISN Fabric
 
 - Manage
   - Fabrics
@@ -20,20 +22,47 @@ breadcrumbs to make it through this step.
     - Create Fabric
       - `Fabric Name` ISN
       - Click `Choose Fabric`
-      - From the popup, select `External Connectivity Network`
+      - From the popup, select `Multi-Site External Network`
+        - Scroll down to the last item in the list...
       - Click `Select`
       - General Parameters
         - `BGP AS #` 65001
         - `Fabric Monitor Mode` Uncheck/disable (important!)
+      - Advanced
+        - `Enable NX-API` Check/enable
         - Click `Save`
+
+## SITE1 Fabric
+
+- Manage
   - Actions
     - Create Fabric
-      - `Fabric Name` VXLAN
+      - `Fabric Name` SITE1
       - Click `Choose Fabric`
       - From the popup, select `Data Cemter VXLAN EVPN`
       - Click `Select`
       - General Parameters
         - `BGP AS #` 65002
+      - Resources
+        - Scroll down to `VRF Lite Deployment`
+        - Click the popup menu (current displays `Manual`) and select `Back2Back&ToExternal`
+        - Enable the three suboptions directly below
+          - `Auto Deploy for Peer`
+          - `Auto Deploy Default VRF`
+          - `Auto Deploy Default VRF for Peer`
+        - Click `Save`
+
+## SITE2 Fabric
+
+- Manage
+  - Actions
+    - Create Fabric
+      - `Fabric Name` SITE2
+      - Click `Choose Fabric`
+      - From the popup, select `Data Cemter VXLAN EVPN`
+      - Click `Select`
+      - General Parameters
+        - `BGP AS #` 65003
       - Resources
         - Scroll down to `VRF Lite Deployment`
         - Click the popup menu (current displays `Manual`) and select `Back2Back&ToExternal`

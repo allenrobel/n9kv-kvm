@@ -9,3 +9,9 @@ interface mgmt0
   vrf member management
   ip address {{ mgmt_ip }}/24
   no shutdown
+
+interface {{ interface_1 }}
+    no shutdown
+
+interface {{ interface_2 }}
+    no shutdown

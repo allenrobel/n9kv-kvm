@@ -48,26 +48,36 @@
         mgmt_ip: "{{ ER_IP4 }}"
         config_file: "{{ ER_HOSTNAME }}.cfg"
         iso_file: "{{ ER_HOSTNAME }}.iso"
+        interface_1: "{{ ER_INTERFACE_1 }}"
+        interface_2: "{{ ER_INTERFACE_2 }}"
 
       - hostname: "{{ S1_HOSTNAME }}"
         mgmt_ip: "{{ S1_IP4 }}"
         config_file: "{{ S1_HOSTNAME }}.cfg"
         iso_file: "{{ S1_HOSTNAME }}.iso"
+        interface_1: "{{ S1_INTERFACE_1 }}"
+        interface_2: "{{ S1_INTERFACE_2 }}"
 
       - hostname: "{{ S2_HOSTNAME }}"
         mgmt_ip: "{{ S2_IP4 }}"
         config_file: "{{ S2_HOSTNAME }}.cfg"
         iso_file: "{{ S2_HOSTNAME }}.iso"
+        interface_1: "{{ S2_INTERFACE_1 }}"
+        interface_2: "{{ S2_INTERFACE_2 }}"
 
       - hostname: "{{ L1_HOSTNAME }}"
         mgmt_ip: "{{ L1_IP4 }}"
         config_file: "{{ L1_HOSTNAME }}.cfg"
         iso_file: "{{ L1_HOSTNAME }}.iso"
+        interface_1: "{{ L1_INTERFACE_1 }}"
+        interface_2: "{{ L1_INTERFACE_2 }}"
 
       - hostname: "{{ L2_HOSTNAME }}"
         mgmt_ip: "{{ L2_IP4 }}"
         config_file: "{{ L2_HOSTNAME }}.cfg"
         iso_file: "{{ L2_HOSTNAME }}.iso"
+        interface_1: "{{ L2_INTERFACE_1 }}"
+        interface_2: "{{ L2_INTERFACE_2 }}"
 
   tasks:
     - name: Create output directory

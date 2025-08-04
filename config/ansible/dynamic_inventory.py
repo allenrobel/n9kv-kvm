@@ -33,6 +33,8 @@ S1_IP4 = environ.get("S1_IP4", "192.168.12.121")
 S2_IP4 = environ.get("S2_IP4", "192.168.12.122")
 L1_IP4 = environ.get("L1_IP4", "192.168.12.131")
 L2_IP4 = environ.get("L2_IP4", "192.168.12.132")
+L1_IP4_INTERFACE_2 = environ.get("L1_IP4_INTERFACE_2", "11.1.1.1")
+L2_IP4_INTERFACE_2 = environ.get("L2_IP4_INTERFACE_2", "22.1.1.1")
 
 # Fabric types
 SITE1_FABRIC = environ.get("ND_SITE1_FABRIC", "SITE1")
@@ -125,6 +127,8 @@ output = {
             "L1_INTERFACE_2": L1_INTERFACE_2,
             "L2_INTERFACE_1": L2_INTERFACE_1,
             "L2_INTERFACE_2": L2_INTERFACE_2,
+            "L1_IP4_INTERFACE_2": L1_IP4_INTERFACE_2,
+            "L2_IP4_INTERFACE_2": L2_IP4_INTERFACE_2,
             "ND_PASSWORD": ND_PASSWORD,
             "ND_USERNAME": ND_USERNAME,
             "NXOS_USERNAME": NXOS_USERNAME,

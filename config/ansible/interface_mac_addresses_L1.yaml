@@ -27,3 +27,4 @@
                         interface {{ L1_INTERFACE_2 }}
                           no switchport
                           mac-address {{ L1_MAC_2 }}
+                          ip address {{ L1_IP4_INTERFACE_2 }}/30

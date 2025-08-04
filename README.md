@@ -63,6 +63,9 @@ meets the [Hardware Requirements](#hardware-requirements) and on which
   - NTP server (for ND)
   - chrony/noble-updates,now 4.5-1ubuntu4.2
   - [Installation](#chrony-installation-and-configuration)
+- [debootstrap](https://launchpad.net/ubuntu/noble/amd64/debootstrap)
+  - Create LXC host containers for end-to-end testing (H1 and H2 in the topology shown further below)
+  - 1.0.134ubuntu1
 
 ## Install and Setup
 

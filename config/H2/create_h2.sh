@@ -5,10 +5,10 @@
 
 set -e
 
-CONTAINER_NAME="H1"
+CONTAINER_NAME="H2"
 ROOTFS_PATH="/var/lib/lxc/${CONTAINER_NAME}/rootfs"
 CONFIG_PATH="/var/lib/lxc/${CONTAINER_NAME}"
-ISL_BRIDGE="BR_L1_H1"
+ISL_BRIDGE="BR_L2_H2"
 MGMT_BRIDGE="BR_ND_MGMT"
 
 echo "Creating network tools container: ${CONTAINER_NAME}"
@@ -132,11 +132,11 @@ enable password zebra
 ! Interface configuration
 interface eth0
  description Management Interface
- ip address 192.168.11.141/24
+ ip address 192.168.11.142/24
 !
 interface eth1
  description Test Interface  
- ip address 11.1.1.1/30
+ ip address 22.1.1.1/30
 !
 ! Static routes
 ip route 0.0.0.0/0 192.168.11.1
@@ -227,8 +227,8 @@ case "$1" in
         ;;
     "show-config")
         echo "=== Container Network Configuration ==="
-        echo "Management Interface (eth0): 192.168.11.141/24 -> BR_ND_MGMT"
-        echo "Test Interface (eth1): 11.1.1.1/30 -> BR_L1_H1"
+        echo "Management Interface (eth0): 192.168.11.142/24 -> ${MGMT_BRIDGE}"
+        echo "Test Interface (eth1): 22.1.1.1/30 -> ${ISL_BRIDGE}"
         echo ""
         echo "=== Current Interface Status ==="
         ip addr show
@@ -253,11 +253,11 @@ cat > /usr/local/bin/container-init << 'INITSCRIPT'
 echo "Configuring network interfaces..."
 
 # Configure eth0 (management interface)
-ip addr add 192.168.11.141/24 dev eth0
+ip addr add 192.168.11.142/24 dev eth0
 ip link set eth0 up
 
 # Configure eth1 (test interface)  
-ip addr add 11.1.1.1/30 dev eth1
+ip addr add 22.1.1.1/30 dev eth1
 ip link set eth1 up
 
 # Add default route via management interface
@@ -332,12 +332,12 @@ cat > "/tmp/${CONTAINER_NAME}.xml" << EOF
     <interface type='bridge'>
       <source bridge='${MGMT_BRIDGE}'/>
       <model type='virtio'/>
-      <mac address='00:00:41:00:00:01'/>
+      <mac address='00:00:42:00:00:01'/>
     </interface>
     <interface type='bridge'>
       <source bridge='${ISL_BRIDGE}'/>
       <model type='virtio'/>
-      <mac address='00:00:41:00:00:02'/>
+      <mac address='00:00:42:00:00:02'/>
     </interface>
     <console type='pty'>
       <target type='lxc' port='0'/>
@@ -358,8 +358,8 @@ echo ""
 echo "Container '${CONTAINER_NAME}' created successfully!"
 echo ""
 echo "Network Configuration:"
-echo "  eth0: 192.168.11.141/24 -> ${MGMT_BRIDGE} (Management)"
-echo "  eth1: 11.1.1.1/30 -> ${ISL_BRIDGE} (Test Interface)"
+echo "  eth0: 192.168.11.142/24 -> ${MGMT_BRIDGE} (Management)"
+echo "  eth1: 22.1.1.1/30 -> ${ISL_BRIDGE} (Test Interface)"
 echo ""
 echo "To start the container:"
 echo "  sudo virsh -c lxc:/// start ${CONTAINER_NAME}"

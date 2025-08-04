@@ -22,13 +22,13 @@
     <interface type='bridge'>
       <source bridge='BR_ND_MGMT'/>
       <model type='virtio'/>
-      <mac address='00:00:41:00:00:01'/>
+      <mac address='00:00:42:00:00:01'/>
     </interface>
     <!-- Test interface - eth1 -->
     <interface type='bridge'>
-      <source bridge='BR_L1_H1'/>
+      <source bridge='BR_L2_H2'/>
       <model type='virtio'/>
-      <mac address='00:00:41:00:00:02'/>
+      <mac address='00:00:42:00:00:02'/>
     </interface>
     <!-- Console access -->
     <console type='pty'>

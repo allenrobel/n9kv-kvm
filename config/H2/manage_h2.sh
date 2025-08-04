@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Container management script for libvirt LXC host H1
+# Container management script for libvirt LXC host H2
 
-CONTAINER_NAME="H1"
+CONTAINER_NAME="H2"
 LXC_URI="lxc:///"
 XML=$CONTAINER_NAME.xml
 
@@ -43,7 +43,7 @@ case "$1" in
             echo "Container '$CONTAINER_NAME' defined successfully"
         else
             echo "ERROR: $XML not found"
-            echo "Run ./create_h1.sh first"
+            echo "Run ./create_h2.sh first"
             exit 1
         fi
         ;;

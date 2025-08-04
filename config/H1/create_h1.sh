@@ -19,32 +19,30 @@ sudo mkdir -p "${ROOTFS_PATH}"
 
 # Create a minimal Ubuntu rootfs
 echo "Creating Ubuntu rootfs..."
-sudo debootstrap --arch=amd64 jammy "${ROOTFS_PATH}" http://archive.ubuntu.com/ubuntu/
+sudo debootstrap --arch=amd64 --components=main,universe jammy "${ROOTFS_PATH}" http://archive.ubuntu.com/ubuntu/
 
 # Chroot into the container and install packages
 echo "Installing network tools and zebra..."
 sudo chroot "${ROOTFS_PATH}" /bin/bash << 'EOF'
-# Update package list
+# Update package list and add universe repository
+apt update
+add-apt-repository universe -y
 apt update
 
-# Install network tools
+# Install network tools (removed problematic packages)
 apt install -y \
     iputils-ping \
-    traceroute \
+    iputils-tracepath \
     mtr-tiny \
     netcat-openbsd \
     tcpdump \
-    nmap \
-    iperf3 \
-    hping3 \
     curl \
     wget \
-    dnsutils \
+    bind9-dnsutils \
     net-tools \
     iproute2 \
     iptables \
     bridge-utils \
-    vlan \
     ethtool \
     socat \
     openssh-server \
@@ -52,14 +50,20 @@ apt install -y \
     nano \
     htop \
     frr \
-    python3 \
-    python3-pip
+    python3
 
-# Install additional traffic generation tools
-pip3 install scapy
+# Try to install optional packages (don't fail if missing)
+apt install -y nmap || echo "nmap not available, skipping"
+apt install -y iperf3 || echo "iperf3 not available, skipping" 
+apt install -y hping3 || echo "hping3 not available, skipping"
+apt install -y vlan || echo "vlan not available, skipping"
 
-# Configure FRR (includes zebra)
-systemctl enable frr
+# Configure FRR (includes zebra) - check if service exists
+if systemctl list-unit-files | grep -q frr.service; then
+    systemctl enable frr
+else
+    echo "FRR service not available, will start manually"
+fi
 
 # Create a simple zebra config
 mkdir -p /etc/frr
@@ -109,9 +113,14 @@ log file /var/log/frr/zebra.log
 line vty
 ZEBRACFG
 
-# Set proper permissions
-chown frr:frr /etc/frr/zebra.conf
-chmod 640 /etc/frr/zebra.conf
+# Set proper permissions (check if frr user exists)
+if id "frr" &>/dev/null; then
+    chown frr:frr /etc/frr/zebra.conf
+    chmod 640 /etc/frr/zebra.conf
+else
+    echo "FRR user not found, using root ownership"
+    chmod 644 /etc/frr/zebra.conf
+fi
 
 # Create a network testing script
 cat > /usr/local/bin/network-test << 'TESTSCRIPT'
@@ -122,7 +131,7 @@ show_help() {
     echo "Network Testing Tools Container"
     echo "Available commands:"
     echo "  ping <target>          - Ping a target"
-    echo "  trace <target>         - Traceroute to target" 
+    echo "  trace <target>         - Tracepath to target" 
     echo "  mtr <target>           - MTR (traceroute + ping)"
     echo "  iperf-server [port]    - Start iperf3 server (default port 5201)"
     echo "  iperf-client <target>  - Run iperf3 client to target"
@@ -141,7 +150,7 @@ case "$1" in
         ping -c 4 "$2"
         ;;
     "trace")
-        traceroute "$2"
+        tracepath "$2"
         ;;
     "mtr")
         mtr -c 10 "$2"
@@ -225,8 +234,13 @@ echo "Network configuration:"
 ip addr show
 ip route show
 
-# Start FRR
-service frr start
+# Start FRR (check if service exists)
+if systemctl list-unit-files | grep -q frr.service; then
+    service frr start
+else
+    echo "FRR service not available, starting zebra manually"
+    /usr/lib/frr/zebra -d -f /etc/frr/zebra.conf || echo "Zebra not available"
+fi
 
 # Start SSH daemon
 service ssh start

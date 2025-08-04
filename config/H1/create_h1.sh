@@ -276,6 +276,22 @@ rm -rf /var/lib/apt/lists/*
 echo "Container rootfs prepared successfully"
 EOF
 
+# Find the correct libvirt_lxc emulator path
+LIBVIRT_LXC_PATH=$(find /usr -name "libvirt_lxc" 2>/dev/null | head -1)
+if [ -z "$LIBVIRT_LXC_PATH" ]; then
+    # Try common locations
+    if [ -f "/usr/lib/libvirt/libvirt_lxc" ]; then
+        LIBVIRT_LXC_PATH="/usr/lib/libvirt/libvirt_lxc"
+    elif [ -f "/usr/libexec/libvirt_lxc" ]; then
+        LIBVIRT_LXC_PATH="/usr/libexec/libvirt_lxc"
+    else
+        echo "ERROR: Could not find libvirt_lxc emulator"
+        echo "Please install: sudo apt install libvirt-daemon-driver-lxc"
+        exit 1
+    fi
+fi
+echo "Using libvirt_lxc emulator at: $LIBVIRT_LXC_PATH"
+
 # Create libvirt XML configuration
 echo "Creating libvirt XML configuration..."
 cat > "/tmp/${CONTAINER_NAME}.xml" << EOF
@@ -293,7 +309,7 @@ cat > "/tmp/${CONTAINER_NAME}.xml" << EOF
   <on_reboot>restart</on_reboot>
   <on_crash>destroy</on_crash>
   <devices>
-    <emulator>/usr/libexec/libvirt_lxc</emulator>
+    <emulator>${LIBVIRT_LXC_PATH}</emulator>
     <filesystem type='mount' accessmode='passthrough'>
       <source dir='${ROOTFS_PATH}'/>
       <target dir='/'/>

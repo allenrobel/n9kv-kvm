@@ -10,6 +10,11 @@ ROOTFS_PATH="/var/lib/lxc/${CONTAINER_NAME}/rootfs"
 CONFIG_PATH="/var/lib/lxc/${CONTAINER_NAME}"
 ISL_BRIDGE="BR_L2_H2"
 MGMT_BRIDGE="BR_ND_MGMT"
+ETH0_IP4="192.168.11.142"
+ETH0_MASK="24"
+ETH1_IP4="22.1.1.2"
+ETH1_MASK="30"
+GATEWAY_IP4="192.168.11.1"
 
 echo "Creating network tools container: ${CONTAINER_NAME}"
 
@@ -132,14 +137,14 @@ enable password zebra
 ! Interface configuration
 interface eth0
  description Management Interface
- ip address 192.168.11.142/24
+ ip address ${ETH0_IP4}/${ETH0_MASK}
 !
 interface eth1
- description Test Interface  
- ip address 22.1.1.1/30
+ description Test Interface
+ ip address ${ETH1_IP4}/${ETH1_MASK}
 !
 ! Static routes
-ip route 0.0.0.0/0 192.168.11.1
+ip route 0.0.0.0/0 ${GATEWAY_IP4} dev eth0
 !
 log file /var/log/frr/zebra.log
 !
@@ -227,8 +232,8 @@ case "$1" in
         ;;
     "show-config")
         echo "=== Container Network Configuration ==="
-        echo "Management Interface (eth0): 192.168.11.142/24 -> ${MGMT_BRIDGE}"
-        echo "Test Interface (eth1): 22.1.1.1/30 -> ${ISL_BRIDGE}"
+        echo "Management Interface (eth0): ${ETH0_IP4}/${ETH0_MASK} -> ${MGMT_BRIDGE}"
+        echo "Test Interface (eth1): ${ETH1_IP4}/${ETH1_MASK} -> ${ISL_BRIDGE}"
         echo ""
         echo "=== Current Interface Status ==="
         ip addr show
@@ -253,15 +258,15 @@ cat > /usr/local/bin/container-init << 'INITSCRIPT'
 echo "Configuring network interfaces..."
 
 # Configure eth0 (management interface)
-ip addr add 192.168.11.142/24 dev eth0
+ip addr add ${ETH0_IP4}/${ETH0_MASK} dev eth0
 ip link set eth0 up
 
-# Configure eth1 (test interface)  
-ip addr add 22.1.1.1/30 dev eth1
+# Configure eth1 (test interface)
+ip addr add ${ETH1_IP4}/${ETH1_MASK} dev eth1
 ip link set eth1 up
 
 # Add default route via management interface
-ip route add default via 192.168.11.1 dev eth0
+ip route add default via ${GATEWAY_IP4} dev eth0
 
 echo "Network configuration:"
 ip addr show
@@ -358,8 +363,8 @@ echo ""
 echo "Container '${CONTAINER_NAME}' created successfully!"
 echo ""
 echo "Network Configuration:"
-echo "  eth0: 192.168.11.142/24 -> ${MGMT_BRIDGE} (Management)"
-echo "  eth1: 22.1.1.1/30 -> ${ISL_BRIDGE} (Test Interface)"
+echo "  eth0: ${ETH0_IP4}/${ETH0_MASK} -> ${MGMT_BRIDGE} (Management)"
+echo "  eth1: ${ETH1_IP4}/${ETH1_MASK} -> ${ISL_BRIDGE} (Test Interface)"
 echo ""
 echo "To start the container:"
 echo "  sudo virsh -c lxc:/// start ${CONTAINER_NAME}"

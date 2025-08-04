@@ -22,11 +22,14 @@ the following variables to match your setup, or set environment variables for th
 Below, we set environment variables as we do not want to leave passwords laying
 around on disk.
 
-Replace `your_nd_password` with the password you used when bringup up
+Replace `your_nd_password` with the password you used when bringing up
 Nexus Dashboard.
 
-We also export the `no_proxy` and `NO_PROXY` environment variables
-with the address of Nexus Dashboard to avoid proxy-related errors.
+We also export the following:
+
+- `ND_IP4` The IP address of Nexus Dashboard
+- `no_proxy` and `NO_PROXY` environment variables with the address of Nexus Dashboard to avoid proxy-related errors.
+- `ANSIBLE_COLLECTIONS_PATH` so that the playbook tasks find the `cisco.dcnm.dcnm_policy` module.
 
 ```bash
 source $HOME/repos/n9kv-kvm/.venv/bin/activate
@@ -45,4 +48,4 @@ ansible-playbook interface_mac_addresses_L2.yaml -i dynamic_inventory.py
 ```
 
 After running the above scripts do a `Recalculate and Deploy` in Nexus
-Dashboard for the `VXLAN` and `ISN` fabrics.
+Dashboard for the `SITE1`, `SITE2`, and `ISN` fabrics.

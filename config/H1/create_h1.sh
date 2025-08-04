@@ -19,7 +19,25 @@ sudo mkdir -p "${ROOTFS_PATH}"
 
 # Create a minimal Ubuntu rootfs
 echo "Creating Ubuntu rootfs..."
-sudo debootstrap --arch=amd64 --components=main,universe jammy "${ROOTFS_PATH}" http://archive.ubuntu.com/ubuntu/
+# More robust debootstrap with retries
+for attempt in 1 2 3; do
+    echo "Attempt $attempt: Creating Ubuntu rootfs..."
+    if sudo debootstrap --arch=amd64 --verbose jammy "${ROOTFS_PATH}" http://us.archive.ubuntu.com/ubuntu/; then
+        echo "Debootstrap successful on attempt $attempt"
+        break
+    else
+        echo "Debootstrap failed on attempt $attempt"
+        if [ $attempt -lt 3 ]; then
+            echo "Cleaning up and retrying..."
+            sudo rm -rf "${ROOTFS_PATH}"
+            sudo mkdir -p "${ROOTFS_PATH}"
+            sleep 5
+        else
+            echo "All debootstrap attempts failed"
+            exit 1
+        fi
+    fi
+done
 
 # Chroot into the container and install packages
 echo "Installing network tools and zebra..."

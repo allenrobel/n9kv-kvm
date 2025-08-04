@@ -69,7 +69,7 @@ Click `Choose Fabric`
 
 ## 11. Select Fabric Screen (SITE1 Fabric switches)
 
-- Select the VXLAN fabric
+- Select the SITE1 fabric
 - Click `Select`
 
 ![Select Fabric](./images/nd3/add_switches/10_select_fabric.png)

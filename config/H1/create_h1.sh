@@ -42,8 +42,18 @@ done
 # Chroot into the container and install packages
 echo "Installing network tools and zebra..."
 sudo chroot "${ROOTFS_PATH}" /bin/bash << 'EOF'
+# Set locale to avoid perl warnings
+export DEBIAN_FRONTEND=noninteractive
+export LC_ALL=C
+export LANG=C
+
 # Update package list and add universe repository
 apt update
+
+# Install software-properties-common first to get add-apt-repository
+apt install -y software-properties-common
+
+# Add universe repository
 add-apt-repository universe -y
 apt update
 
@@ -68,7 +78,12 @@ apt install -y \
     nano \
     htop \
     frr \
-    python3
+    python3 \
+    locales
+
+# Generate locales to fix perl warnings
+locale-gen en_US.UTF-8
+update-locale LANG=en_US.UTF-8
 
 # Try to install optional packages (don't fail if missing)
 apt install -y nmap || echo "nmap not available, skipping"
@@ -335,6 +350,8 @@ echo "Libvirt XML configuration created at /tmp/${CONTAINER_NAME}.xml"
 
 # Define the container in libvirt
 echo "Defining container in libvirt..."
+# Remove existing domain if it exists
+sudo virsh -c lxc:/// undefine ${CONTAINER_NAME} 2>/dev/null || true
 sudo virsh -c lxc:/// define "/tmp/${CONTAINER_NAME}.xml"
 
 echo ""

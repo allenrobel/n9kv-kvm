@@ -64,8 +64,11 @@ meets the [Hardware Requirements](#hardware-requirements) and on which
   - chrony/noble-updates,now 4.5-1ubuntu4.2
   - [Installation](#chrony-installation-and-configuration)
 - [debootstrap](https://launchpad.net/ubuntu/noble/amd64/debootstrap)
-  - Create LXC host containers for end-to-end testing (H1 and H2 in the topology shown further below)
+  - Create LXC host containers for end-to-end network testing hosts (H1 and H2 in the topology shown further below)
   - 1.0.134ubuntu1
+- `libvirt-daemon-driver-lxc`
+  - LXC support for libvirt for H1 and H2 network testing endpoint hosts
+  - 10.0.0-2ubuntu8.8
 
 ## Install and Setup
 
@@ -197,6 +200,16 @@ disputes, etc, on their Eth1/1-2 interaces, and they are unable to peer.
 Follow this link to fix this.
 
 [nexus9000v Fix Interface Mac Addresses](./docs/n9kv_fix_interface_mac_addresses.md)
+
+## Install libvert LXC Support
+
+We are using LXC-style containers, running under libvirt, for network testing endpoint hosts.
+
+Before running their creation scripts, we need to install LXC support for libvirt.
+
+Follow this link to complete this step.
+
+[libvirt LXC Driver Installation](./docs/install_libvirt_lxc_driver.md)
 
 ## Topology built by this repository
 

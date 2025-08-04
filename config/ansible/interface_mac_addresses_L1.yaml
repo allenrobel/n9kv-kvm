@@ -22,6 +22,8 @@
                     CONF: |
                       configure terminal
                         interface {{ L1_INTERFACE_1 }}
+                          no switchport
                           mac-address {{ L1_MAC_1 }}
                         interface {{ L1_INTERFACE_2 }}
+                          no switchport
                           mac-address {{ L1_MAC_2 }}

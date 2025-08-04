@@ -22,7 +22,9 @@
                     CONF: |
                       configure terminal
                         interface {{ ER_INTERFACE_1 }}
+                          no switchport
                           mac-address {{ ER_MAC_1 }}
                         interface {{ ER_INTERFACE_2 }}
+                          no switchport
                           mac-address {{ ER_MAC_2 }}
 

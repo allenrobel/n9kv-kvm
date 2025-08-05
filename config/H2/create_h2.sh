@@ -335,9 +335,9 @@ cat > "/tmp/${CONTAINER_NAME}.xml" << EOF
     <init>/usr/local/bin/container-init</init>
   </os>
   <clock offset='utc'/>
-  <on_poweroff>destroy</on_poweroff>
+  <on_poweroff>restart</on_poweroff>
   <on_reboot>restart</on_reboot>
-  <on_crash>destroy</on_crash>
+  <on_crash>restart</on_crash>
   <devices>
     <emulator>${LIBVIRT_LXC_PATH}</emulator>
     <filesystem type='mount' accessmode='passthrough'>

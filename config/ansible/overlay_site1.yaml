@@ -31,25 +31,25 @@
         #   - ip_address: "{{ S1_IP4 }}"
         #     vrf_lite:
         #     - interface: "{{ S1_INTERFACE_1 }}"
-    # - name: Networks SITE1
-    #   cisco.dcnm.dcnm_network:
-    #     fabric: SITE1
-    #     state: merged
-    #     config:
-    #     - net_name: NET2
-    #       vrf_name: VRF2
-    #       net_id: 2
-    #       net_template: Default_Network_Universal
-    #       net_extension_template: Default_Network_Extension_Universal
-    #       vlan_id: 2
-    #       gw_ip_subnet: '22.1.1.1/24'
-    #       attach:
-    #       - ip_address: "{{ L1_IP4 }}"
-    #         ports: ["{{ L1_INTERFACE_2 }}"]
-    #         deploy: true
-    #       - ip_address: "{{ S1_IP4 }}"
-    #         ports: []
-    #         deploy: true
+    - name: Networks SITE1
+      cisco.dcnm.dcnm_network:
+        fabric: SITE1
+        state: merged
+        config:
+        - net_name: NET2
+          vrf_name: VRF2
+          net_id: 2
+          net_template: Default_Network_Universal
+          net_extension_template: Default_Network_Extension_Universal
+          vlan_id: 2
+          gw_ip_subnet: '22.1.1.1/24'
+          attach:
+          - ip_address: "{{ L1_IP4 }}"
+            ports: ["{{ L1_INTERFACE_2 }}"]
+            deploy: true
+          - ip_address: "{{ S1_IP4 }}"
+            ports: []
+            deploy: true
     #     - net_name: NET3
     #       vrf_name: VRF3
     #       net_id: 3

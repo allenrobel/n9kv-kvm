@@ -15,6 +15,7 @@
           net_extension_template: Default_Network_Extension_Universal
           vlan_id: 2
           gw_ip_subnet: 22.1.1.1/24
+          l3gw_on_border: true
           deploy: true
           attach:
           - ip_address: 192.168.12.131

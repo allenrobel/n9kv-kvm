@@ -1,60 +1,66 @@
-- name: VRFs SITE1
-  cisco.dcnm.dcnm_vrf:
-    fabric: SITE1
-    state: merged
-    config:
-    - vrf_name: VRF2
-      vrf_id: 9000002
-      vrf_template: Default_VRF_Universal
-      vrf_extension_template: Default_VRF_Extension_Universal
-      vlan_id: 2002
-      service_vrf_template: null
-      attach:
-      - ip_address: "{{ L1_IP4 }}"
-      - ip_address: "{{ S1_IP4 }}"
-        vrf_lite:
-          - interface: "{{ S1_INTERFACE_1 }}"
-    - vrf_name: VRF3
-      vrf_id: 9000003
-      vrf_template: Default_VRF_Universal
-      vrf_extension_template: Default_VRF_Extension_Universal
-      vlan_id: 2003
-      service_vrf_template: null
-      attach:
-      - ip_address: "{{ L1_IP4 }}"
-      - ip_address: "{{ S1_IP4 }}"
-        vrf_lite:
-          - interface: "{{ S1_INTERFACE_1 }}"
-  - name: Networks SITE1
-    cisco.dcnm.dcnm_network:
-      fabric: SITE1
-      state: merged
-      config:
-      - net_name: NET2
-        vrf_name: VRF2
-        net_id: 2
-        net_template: Default_Network_Universal
-        net_extension_template: Default_Network_Extension_Universal
-        vlan_id: 2
-        gw_ip_subnet: '22.1.1.1/24'
-        attach:
-        - ip_address: "{{ L1_IP4 }}"
-          ports: ["{{ L1_INTERFACE_2 }}"]
-          deploy: true
-        - ip_address: "{{ S1_IP4 }}"
-          ports: []
-          deploy: true
-      - net_name: NET3
-        vrf_name: VRF3
-        net_id: 3
-        net_template: Default_Network_Universal
-        net_extension_template: Default_Network_Extension_Universal
-        vlan_id: 3
-        gw_ip_subnet: '33.1.1.1/24'
-        attach:
-        - ip_address: "{{ L1_IP4 }}"
-          ports: ["{{ L1_INTERFACE_2 }}"]
-          deploy: true
-        - ip_address: "{{ S1_IP4 }}"
-          ports: []
-          deploy: true
+---
+-   hosts: nd
+    check_mode: false
+    gather_facts: false
+    vars:
+    tasks:
+    - name: VRFs SITE1
+      cisco.dcnm.dcnm_vrf:
+        fabric: SITE1
+        state: merged
+        config:
+        - vrf_name: VRF2
+          vrf_id: 9000002
+          vrf_template: Default_VRF_Universal
+          vrf_extension_template: Default_VRF_Extension_Universal
+          vlan_id: 2002
+          service_vrf_template: null
+          attach:
+          - ip_address: "{{ L1_IP4 }}"
+          - ip_address: "{{ S1_IP4 }}"
+            vrf_lite:
+            - interface: "{{ S1_INTERFACE_1 }}"
+        - vrf_name: VRF3
+          vrf_id: 9000003
+          vrf_template: Default_VRF_Universal
+          vrf_extension_template: Default_VRF_Extension_Universal
+          vlan_id: 2003
+          service_vrf_template: null
+          attach:
+          - ip_address: "{{ L1_IP4 }}"
+          - ip_address: "{{ S1_IP4 }}"
+            vrf_lite:
+            - interface: "{{ S1_INTERFACE_1 }}"
+    - name: Networks SITE1
+      cisco.dcnm.dcnm_network:
+        fabric: SITE1
+        state: merged
+        config:
+        - net_name: NET2
+          vrf_name: VRF2
+          net_id: 2
+          net_template: Default_Network_Universal
+          net_extension_template: Default_Network_Extension_Universal
+          vlan_id: 2
+          gw_ip_subnet: '22.1.1.1/24'
+          attach:
+          - ip_address: "{{ L1_IP4 }}"
+            ports: ["{{ L1_INTERFACE_2 }}"]
+            deploy: true
+          - ip_address: "{{ S1_IP4 }}"
+            ports: []
+            deploy: true
+        - net_name: NET3
+          vrf_name: VRF3
+          net_id: 3
+          net_template: Default_Network_Universal
+          net_extension_template: Default_Network_Extension_Universal
+          vlan_id: 3
+          gw_ip_subnet: '33.1.1.1/24'
+          attach:
+          - ip_address: "{{ L1_IP4 }}"
+            ports: ["{{ L1_INTERFACE_2 }}"]
+            deploy: true
+          - ip_address: "{{ S1_IP4 }}"
+            ports: []
+            deploy: true

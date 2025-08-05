@@ -48,8 +48,6 @@
             ports:
             - "{{ L1_INTERFACE_2 }}"
           - ip_address: "{{ S1_IP4 }}"
-            ports:
-          deploy: true
     #     - net_name: NET3
     #       vrf_name: VRF3
     #       net_id: 3

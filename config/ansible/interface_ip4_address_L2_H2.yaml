@@ -1,0 +1,26 @@
+# See dynamic_inventory.py for the variables used in this file.
+---
+-   hosts: nd
+    check_mode: false
+    gather_facts: false
+    vars:
+    tasks:
+    - name: "{{ SITE1_FABRIC }}.L2 switch_freeform policy IP4_L2_H2"
+      cisco.dcnm.dcnm_policy:
+        state: merged
+        fabric: "{{ SITE1_FABRIC }}"
+        use_desc_as_key: true
+        config:
+          - switch:
+            - ip: "{{ L2_IP4 }}"
+              policies:
+                - name: switch_freeform
+                  create_additional_policy: false
+                  priority: 101
+                  description: L2_interface_IP4_L2_H2
+                  policy_vars:
+                    CONF: |
+                      configure terminal
+                        interface {{ L2_INTERFACE_2 }}
+                          no switchport
+                          ip address {{ L2_IP4_INTERFACE_2 }}/30

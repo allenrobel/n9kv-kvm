@@ -45,7 +45,8 @@
           gw_ip_subnet: '22.1.1.1/24'
           attach:
           - ip_address: "{{ L1_IP4 }}"
-            ports: ["{{ L1_INTERFACE_2 }}"]
+            ports:
+            - "{{ L1_INTERFACE_2 }}"
             deploy: true
           - ip_address: "{{ S1_IP4 }}"
             ports: []

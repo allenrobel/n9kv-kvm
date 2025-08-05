@@ -23,4 +23,4 @@
                       configure terminal
                         interface {{ L1_INTERFACE_2 }}
                           no switchport
-                          ip address {{ L1_IP4_INTERFACE_2 }}/30
+                          ip address {{ L1_IP4_INTERFACE_2 }}/{{ L1_IP4_MASK }}

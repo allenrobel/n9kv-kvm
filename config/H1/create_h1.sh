@@ -233,7 +233,7 @@ case "$1" in
     "show-config")
         echo "=== Container Network Configuration ==="
         echo "Management Interface (eth0): ${ETH0_IP4} -> BR_ND_MGMT"
-        echo "Test Interface (eth1): ${ETH1_IP4} -> BR_L1_H1"
+        echo "Test Interface (eth1): ${ETH1_IP4}/${ETH1_IP4_MASK} -> BR_L1_H1"
         echo ""
         echo "=== Current Interface Status ==="
         ip addr show
@@ -262,7 +262,7 @@ ip addr add 192.168.11.141/24 dev eth0
 ip link set eth0 up
 
 # Configure eth1 (test interface)
-ip addr add ${ETH1_IP4} dev eth1
+ip addr add ${ETH1_IP4}/${ETH1_IP4_MASK} dev eth1
 ip link set eth1 up
 
 # Add default route via management interface

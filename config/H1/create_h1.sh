@@ -5,16 +5,16 @@
 
 set -e
 
-CONTAINER_NAME="H1"
-ROOTFS_PATH="/var/lib/lxc/${CONTAINER_NAME}/rootfs"
-CONFIG_PATH="/var/lib/lxc/${CONTAINER_NAME}"
-ISL_BRIDGE="BR_L1_H1"
-MGMT_BRIDGE="BR_ND_MGMT"
-ETH0_IP4="192.168.11.141"
-ETH0_IP4_MASK="24"
-ETH1_IP4="11.1.1.2"
-ETH1_IP4_MASK="30"
-GATEWAY_IP4="192.168.11.1"
+export CONTAINER_NAME="H1"
+export ROOTFS_PATH="/var/lib/lxc/${CONTAINER_NAME}/rootfs"
+export CONFIG_PATH="/var/lib/lxc/${CONTAINER_NAME}"
+export ISL_BRIDGE="BR_L1_H1"
+export MGMT_BRIDGE="BR_ND_MGMT"
+export ETH0_IP4="192.168.11.141"
+export ETH0_IP4_MASK="24"
+export ETH1_IP4="11.1.1.2"
+export ETH1_IP4_MASK="30"
+export GATEWAY_IP4="192.168.11.1"
 
 echo "Creating network tools container: ${CONTAINER_NAME}"
 
@@ -46,11 +46,21 @@ done
 
 # Chroot into the container and install packages
 echo "Installing network tools and zebra..."
-sudo chroot "${ROOTFS_PATH}" /bin/bash << 'EOF'
+sudo chroot "${ROOTFS_PATH}" /bin/bash << EOF
 # Set locale to avoid perl warnings
 export DEBIAN_FRONTEND=noninteractive
 export LC_ALL=C
 export LANG=C
+
+# Pass variables from host to chroot
+export CONTAINER_NAME="${CONTAINER_NAME}"
+export ETH0_IP4="${ETH0_IP4}"
+export ETH0_IP4_MASK="${ETH0_IP4_MASK}"
+export ETH1_IP4="${ETH1_IP4}"
+export ETH1_IP4_MASK="${ETH1_IP4_MASK}"
+export GATEWAY_IP4="${GATEWAY_IP4}"
+export ISL_BRIDGE="${ISL_BRIDGE}"
+export MGMT_BRIDGE="${MGMT_BRIDGE}"
 
 # Update package list and add universe repository
 apt update
@@ -130,21 +140,21 @@ FRRCFG
 # Basic zebra configuration
 cat > /etc/frr/zebra.conf << 'ZEBRACFG'
 ! Zebra configuration
-hostname H1
+hostname ${CONTAINER_NAME}
 password zebra
 enable password zebra
 !
 ! Interface configuration
 interface eth0
  description Management Interface
- ip address ${ETH0_IP4}/${ETH0_MASK}
+ ip address ${ETH0_IP4}/${ETH0_IP4_MASK}
 !
 interface eth1
  description Test Interface
  ip address ${ETH1_IP4}/${ETH1_IP4_MASK}
 !
 ! Static routes
-ip route 0.0.0.0/0 192.168.11.1
+ip route 0.0.0.0/0 ${GATEWAY_IP4}
 !
 log file /var/log/frr/zebra.log
 !
@@ -232,8 +242,8 @@ case "$1" in
         ;;
     "show-config")
         echo "=== Container Network Configuration ==="
-        echo "Management Interface (eth0): ${ETH0_IP4}/${ETH0_IP4_MASK} -> BR_ND_MGMT"
-        echo "Test Interface (eth1): ${ETH1_IP4}/${ETH1_IP4_MASK} -> BR_L1_H1"
+        echo "Management Interface (eth0): ${ETH0_IP4}/${ETH0_IP4_MASK} -> ${MGMT_BRIDGE}"
+        echo "Test Interface (eth1): ${ETH1_IP4}/${ETH1_IP4_MASK} -> ${ISL_BRIDGE}"
         echo ""
         echo "=== Current Interface Status ==="
         ip addr show
@@ -258,7 +268,7 @@ cat > /usr/local/bin/container-init << 'INITSCRIPT'
 echo "Configuring network interfaces..."
 
 # Configure eth0 (management interface)
-ip addr add 192.168.11.141/24 dev eth0
+ip addr add ${ETH0_IP4}/${ETH0_IP4_MASK} dev eth0
 ip link set eth0 up
 
 # Configure eth1 (test interface)

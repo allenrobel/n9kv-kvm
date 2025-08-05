@@ -5,16 +5,16 @@
 
 set -e
 
-CONTAINER_NAME="H2"
-ROOTFS_PATH="/var/lib/lxc/${CONTAINER_NAME}/rootfs"
-CONFIG_PATH="/var/lib/lxc/${CONTAINER_NAME}"
-ISL_BRIDGE="BR_L2_H2"
-MGMT_BRIDGE="BR_ND_MGMT"
-ETH0_IP4="192.168.11.142"
-ETH0_IP4_MASK="24"
-ETH1_IP4="22.1.1.2"
-ETH1_IP4_MASK="30"
-GATEWAY_IP4="192.168.11.1"
+export CONTAINER_NAME="H2"
+export ROOTFS_PATH="/var/lib/lxc/${CONTAINER_NAME}/rootfs"
+export CONFIG_PATH="/var/lib/lxc/${CONTAINER_NAME}"
+export ISL_BRIDGE="BR_L2_H2"
+export MGMT_BRIDGE="BR_ND_MGMT"
+export ETH0_IP4="192.168.11.142"
+export ETH0_IP4_MASK="24"
+export ETH1_IP4="22.1.1.2"
+export ETH1_IP4_MASK="30"
+export GATEWAY_IP4="192.168.11.1"
 
 echo "Creating network tools container: ${CONTAINER_NAME}"
 
@@ -46,11 +46,21 @@ done
 
 # Chroot into the container and install packages
 echo "Installing network tools and zebra..."
-sudo chroot "${ROOTFS_PATH}" /bin/bash << 'EOF'
+sudo chroot "${ROOTFS_PATH}" /bin/bash << EOF
 # Set locale to avoid perl warnings
 export DEBIAN_FRONTEND=noninteractive
 export LC_ALL=C
 export LANG=C
+
+# Pass variables from host to chroot
+export CONTAINER_NAME="${CONTAINER_NAME}"
+export ETH0_IP4="${ETH0_IP4}"
+export ETH0_IP4_MASK="${ETH0_IP4_MASK}"
+export ETH1_IP4="${ETH1_IP4}"
+export ETH1_IP4_MASK="${ETH1_IP4_MASK}"
+export GATEWAY_IP4="${GATEWAY_IP4}"
+export ISL_BRIDGE="${ISL_BRIDGE}"
+export MGMT_BRIDGE="${MGMT_BRIDGE}"
 
 # Update package list and add universe repository
 apt update
@@ -130,21 +140,21 @@ FRRCFG
 # Basic zebra configuration
 cat > /etc/frr/zebra.conf << 'ZEBRACFG'
 ! Zebra configuration
-hostname H1
+hostname ${CONTAINER_NAME}
 password zebra
 enable password zebra
 !
 ! Interface configuration
 interface eth0
  description Management Interface
- ip address ${ETH0_IP4}/${ETH0_MASK}
+ ip address ${ETH0_IP4}/${ETH0_IP4_MASK}
 !
 interface eth1
  description Test Interface
  ip address ${ETH1_IP4}/${ETH1_IP4_MASK}
 !
 ! Static routes
-ip route 0.0.0.0/0 ${GATEWAY_IP4} dev eth0
+ip route 0.0.0.0/0 ${GATEWAY_IP4}
 !
 log file /var/log/frr/zebra.log
 !

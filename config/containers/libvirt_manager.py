@@ -30,7 +30,7 @@ class LibvirtXMLGenerator:
         xml_template = Template(
             """<?xml version="1.0" encoding="UTF-8"?>
 <domain type='lxc'>
-  <n>{{ spec.name }}</n>
+  <name>{{ spec.name }}</name>
   <memory unit='KiB'>{{ spec.memory_kb }}</memory>
   <currentMemory unit='KiB'>{{ spec.memory_kb }}</currentMemory>
   <vcpu placement='static'>{{ spec.vcpus }}</vcpu>

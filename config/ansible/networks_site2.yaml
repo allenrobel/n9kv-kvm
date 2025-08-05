@@ -3,9 +3,9 @@
     check_mode: false
     gather_facts: false
     tasks:
-    - name: Networks SITE1
+    - name: Networks SITE2
       cisco.dcnm.dcnm_network:
-        fabric: SITE1
+        fabric: SITE2
         state: merged
         config:
         - net_name: n2
@@ -17,9 +17,9 @@
           gw_ip_subnet: 11.1.2.1/24
           deploy: true
           attach:
-          - ip_address: 192.168.12.121
+          - ip_address: 192.168.12.122
             ports: []
-          - ip_address: 192.168.12.131
+          - ip_address: 192.168.12.132
             ports:
             - Ethernet1/2
         - net_name: n3
@@ -31,8 +31,8 @@
           gw_ip_subnet: 11.1.3.1/24
           deploy: true
           attach:
-          - ip_address: 192.168.12.121
+          - ip_address: 192.168.12.122
             ports: []
-          - ip_address: 192.168.12.131
+          - ip_address: 192.168.12.132
             ports:
             - Ethernet1/2

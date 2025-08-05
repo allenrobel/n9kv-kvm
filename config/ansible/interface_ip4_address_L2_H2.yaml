@@ -5,10 +5,10 @@
     gather_facts: false
     vars:
     tasks:
-    - name: "{{ SITE1_FABRIC }}.L2 switch_freeform policy IP4_L2_H2"
+    - name: "{{ SITE2_FABRIC }}.L2 switch_freeform policy IP4_L2_H2"
       cisco.dcnm.dcnm_policy:
         state: merged
-        fabric: "{{ SITE1_FABRIC }}"
+        fabric: "{{ SITE2_FABRIC }}"
         use_desc_as_key: true
         config:
           - switch:

@@ -5,7 +5,6 @@ Setup script for modular container management system
 
 import subprocess
 import sys
-from pathlib import Path
 
 
 def install_system_dependencies():

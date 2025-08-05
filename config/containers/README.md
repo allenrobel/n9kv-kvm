@@ -86,14 +86,14 @@ python3 main.py create-h2
 ### H1 Container
 
 - **Management**: 192.168.11.141/24 on BR_ND_MGMT
-- **VLAN 2**: 11.1.1.1/30 on BR_L1_H1 (eth1.2)
-- **VLAN 3**: 11.1.1.5/30 on BR_L1_H1 (eth1.3)
+- **VLAN 2**: 11.1.2.141/24 on BR_L1_H1 (eth1.2)
+- **VLAN 3**: 11.1.3.141/30 on BR_L1_H1 (eth1.3)
 
 ### H2 Container
 
 - **Management**: 192.168.11.142/24 on BR_ND_MGMT
-- **VLAN 2**: 11.1.1.2/30 on BR_L1_H1 (eth1.2)
-- **VLAN 3**: 11.1.1.6/30 on BR_L1_H1 (eth1.3)
+- **VLAN 2**: 11.1.2.142/30 on BR_L1_H1 (eth1.2)
+- **VLAN 3**: 11.1.3.142/30 on BR_L1_H1 (eth1.3)
 
 ## Usage Examples
 

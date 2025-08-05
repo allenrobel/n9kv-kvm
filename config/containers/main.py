@@ -29,7 +29,7 @@ class ContainerSpecFactory:
             name="H1",
             management_interface=NetworkInterface(
                 name="eth0",
-                ip_address="192.168.11.141",
+                ip_address="192.168.12.141",
                 netmask="24",
                 bridge="BR_ND_MGMT",
                 mac_address="00:00:41:00:00:01",
@@ -46,18 +46,18 @@ class ContainerSpecFactory:
             vlans=[
                 VLANConfig(
                     vlan_id=2,
-                    ip_address="11.1.1.1",
-                    netmask="30",
+                    ip_address="11.1.2.141",
+                    netmask="24",
                     description="VLAN 2 Test Interface",
                 ),
                 VLANConfig(
                     vlan_id=3,
-                    ip_address="11.1.1.5",
-                    netmask="30",
+                    ip_address="11.1.3.141",
+                    netmask="24",
                     description="VLAN 3 Test Interface",
                 ),
             ],
-            gateway_ip="192.168.11.1",
+            gateway_ip="192.168.12.1",
         )
 
     @staticmethod
@@ -67,7 +67,7 @@ class ContainerSpecFactory:
             name="H2",
             management_interface=NetworkInterface(
                 name="eth0",
-                ip_address="192.168.11.142",
+                ip_address="192.168.12.142",
                 netmask="24",
                 bridge="BR_ND_MGMT",
                 mac_address="00:00:42:00:00:01",
@@ -84,18 +84,18 @@ class ContainerSpecFactory:
             vlans=[
                 VLANConfig(
                     vlan_id=2,
-                    ip_address="11.1.1.2",
-                    netmask="30",
+                    ip_address="11.1.2.142",
+                    netmask="24",
                     description="VLAN 2 Test Interface",
                 ),
                 VLANConfig(
                     vlan_id=3,
-                    ip_address="11.1.1.6",
-                    netmask="30",
+                    ip_address="11.1.3.142",
+                    netmask="24",
                     description="VLAN 3 Test Interface",
                 ),
             ],
-            gateway_ip="192.168.11.1",
+            gateway_ip="192.168.12.1",
         )
 
 

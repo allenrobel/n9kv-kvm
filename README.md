@@ -297,12 +297,12 @@ arobel@Allen-M4 n9kv-kvm % tree
 ├── config
 │   ├── ansible
 │   │   ├── dynamic_inventory.py
-│   │   ├── interface_mac_addresses_ER.yaml
-│   │   ├── interface_mac_addresses_L1.yaml
-│   │   ├── interface_mac_addresses_L2.yaml
 │   │   ├── interface_mac_addresses_S1.yaml
 │   │   ├── interface_mac_addresses_S2.yaml
+│   │   ├── networks_site1.yaml
 │   │   ├── nxos_startup_config.j2
+│   │   ├── overlay_site1.yaml
+│   │   ├── overlay_site2.yaml
 │   │   └── startup_config_iso.yaml
 │   ├── bridges
 │   │   ├── 99-bridges.yaml
@@ -310,6 +310,14 @@ arobel@Allen-M4 n9kv-kvm % tree
 │   │   ├── bridges_config.sh
 │   │   ├── bridges_down.sh
 │   │   └── bridges_monitor.sh
+│   ├── H1
+│   │   ├── create_h1.sh
+│   │   ├── H1.xml
+│   │   └── manage_h1.sh
+│   ├── H2
+│   │   ├── create_h2.sh
+│   │   ├── H2.xml
+│   │   └── manage_h2.sh
 │   └── qemu
 │       ├── n9kv_qemu_ER_cdrom.sh
 │       ├── n9kv_qemu_ER.sh
@@ -357,29 +365,34 @@ arobel@Allen-M4 n9kv-kvm % tree
 │   │   │       ├── 13_discovery_results.png
 │   │   │       ├── 14_switches_reboot.png
 │   │   │       ├── 15_wait_for_switch_added.png
-│   │   │       ├── 16_set_role.png
-│   │   │       ├── 17_select_role.png
-│   │   │       ├── 18_warning.png
-│   │   │       ├── 19_border_spine_switch_role.png
-│   │   │       ├── 20_select_role.png
-│   │   │       ├── 21_warning.png
-│   │   │       ├── 22_set_role.png
-│   │   │       ├── 23_select_role.png
-│   │   │       ├── 24_warning.png
-│   │   │       ├── 25_wait.png
-│   │   │       ├── 26_all_switches_ready.png
-│   │   │       ├── 27_manage_fabrics.png
-│   │   │       ├── 28_vxlan_fabric.png
-│   │   │       ├── 29_recalculate_and_deploy.png
-│   │   │       ├── 30_wait.png
-│   │   │       ├── 31_deploy.png
-│   │   │       ├── 32_wait.png
-│   │   │       ├── 33_close.png
-│   │   │       ├── 34_close_window.png
-│   │   │       ├── 35_fabrics_isn.png
-│   │   │       ├── 36_recalculate_and_deploy.png
-│   │   │       ├── 37_deploy.png
-│   │   │       └── 38_close.png
+│   │   │       ├── 16_add_switches.png
+│   │   │       ├── 17_pick_a_fabric.png
+│   │   │       ├── 18_select_fabric.png
+│   │   │       ├── 19_seed_switch_details.png
+│   │   │       ├── 20_warning.png
+│   │   │       ├── 21_discovery_results.png
+│   │   │       ├── 22_switches_reboot.png
+│   │   │       ├── 23_wait_for_switch_added.png
+│   │   │       ├── 24_wait_for_discovery_ok.png
+│   │   │       ├── 25_set_role.png
+│   │   │       ├── 26_select_role.png
+│   │   │       ├── 27_warning.png
+│   │   │       ├── 28_border_spine_switch_role.png
+│   │   │       ├── 29_select_role.png
+│   │   │       ├── 30_warning.png
+│   │   │       ├── 31_set_role.png
+│   │   │       ├── 32_select_role.png
+│   │   │       ├── 33_warning.png
+│   │   │       ├── 34_wait.png
+│   │   │       ├── 35_all_switches_ready.png
+│   │   │       ├── 36_manage_fabrics.png
+│   │   │       ├── 37_site1_fabric.png
+│   │   │       ├── 38_recalculate_and_deploy.png
+│   │   │       ├── 39_wait.png
+│   │   │       ├── 40_deploy.png
+│   │   │       ├── 41_wait.png
+│   │   │       ├── 42_close.png
+│   │   │       └── 43_close_window.png
 │   │   ├── nd4
 │   │   │   ├── 01_journey.png
 │   │   │   ├── 02_basic_information.png
@@ -409,6 +422,7 @@ arobel@Allen-M4 n9kv-kvm % tree
 │   │       ├── 12_set_credentials.png
 │   │       └── 13_success.png
 │   ├── install_ansible_collection.md
+│   ├── install_libvirt_lxc_driver.md
 │   ├── n9kv_bringup.md
 │   ├── n9kv_fix_interface_mac_addresses.md
 │   ├── nd_add_switches.md
@@ -431,8 +445,10 @@ arobel@Allen-M4 n9kv-kvm % tree
 │   └── show_nd_interfaces
 ├── pyproject.toml
 ├── README.md
+├── tmp_remove
+│   └── detour.md
 └── uv.lock
 
-20 directories, 139 files
+23 directories, 152 files
 arobel@Allen-M4 n9kv-kvm %
 ```

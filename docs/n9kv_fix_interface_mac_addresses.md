@@ -8,9 +8,9 @@ Now that the nexus9000v switches have booted, you may notice the following in th
 ```
 
 To fix this, we'll run Ansible playbooks to push `switch_freeform` policies to
-Nexus Dashboard that configure unique mac addresses on the inter-switch links.
-Without this, the nexus9000v will not be able to peer, since the interface
-Eth1/1-2 mac addresses are identical on all switches.
+Nexus Dashboard that configure unique mac addresses on the inter-switch links
+of the Border Spine switches. Without this, the nexus9000v will not be able to
+peer, since the interface Eth1/1-2 mac addresses are identical on all switches.
 
 These playbooks require the NDFC Ansible Collection.  So if you
 haven't already, follow the link here to install it.
@@ -40,12 +40,9 @@ export ND_PASSWORD=your_nd_password
 export NO_PROXY=$ND_IP4
 export no_proxy=$ND_IP4
 export ANSIBLE_COLLECTIONS_PATH=$HOME/repos/ansible/collections
-ansible-playbook interface_mac_addresses_ER.yaml -i dynamic_inventory.py
 ansible-playbook interface_mac_addresses_S1.yaml -i dynamic_inventory.py
 ansible-playbook interface_mac_addresses_S2.yaml -i dynamic_inventory.py
-ansible-playbook interface_mac_addresses_L1.yaml -i dynamic_inventory.py
-ansible-playbook interface_mac_addresses_L2.yaml -i dynamic_inventory.py
 ```
 
 After running the above scripts do a `Recalculate and Deploy` in Nexus
-Dashboard for the `SITE1`, `SITE2`, and `ISN` fabrics.
+Dashboard for the `SITE1`, and `SITE2` fabrics.

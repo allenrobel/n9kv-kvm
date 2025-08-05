@@ -4,29 +4,31 @@ Configuration file generators
 """
 
 from pathlib import Path
+
 from jinja2 import Template
 
-from interfaces import ConfigurationGenerator, CommandExecutor
+from interfaces import CommandExecutor, ConfigurationGenerator
 from models import ContainerSpec
+
 
 class FRRConfigGenerator(ConfigurationGenerator):
     """Generates FRR configuration files"""
-    
+
     def __init__(self, executor: CommandExecutor) -> None:
         self.executor: CommandExecutor = executor
-    
+
     def generate(self, spec: ContainerSpec, output_path: Path) -> None:
         """Generate FRR configuration"""
         frr_path: Path = output_path / "etc" / "frr"
-        
+
         self._create_frr_directory(frr_path)
         self._generate_daemons_config(frr_path)
         self._generate_zebra_config(spec, frr_path)
-    
+
     def _create_frr_directory(self, frr_path: Path) -> None:
         """Create FRR configuration directory"""
-        self.executor.run(['sudo', 'mkdir', '-p', str(frr_path)])
-    
+        self.executor.run(["sudo", "mkdir", "-p", str(frr_path)])
+
     def _generate_daemons_config(self, frr_path: Path) -> None:
         """Generate FRR daemons configuration"""
         daemons_config = """zebra=yes
@@ -45,14 +47,14 @@ pbrd=no
 bfdd=no
 fabricd=no
 """
-        
+
         daemons_file: Path = frr_path / "daemons"
-        self.executor.run(['sudo', 'tee', str(daemons_file)], 
-                         input_text=daemons_config)
-    
+        self.executor.run(["sudo", "tee", str(daemons_file)], input_text=daemons_config)
+
     def _generate_zebra_config(self, spec: ContainerSpec, frr_path: Path) -> None:
         """Generate Zebra configuration"""
-        zebra_template = Template("""
+        zebra_template = Template(
+            """
 ! Zebra configuration
 hostname {{ spec.name }}
 password zebra
@@ -76,24 +78,26 @@ ip route 0.0.0.0/0 {{ spec.gateway_ip }}
 log file /var/log/frr/zebra.log
 !
 line vty
-""")
-        
+"""
+        )
+
         zebra_config: str = zebra_template.render(spec=spec)
         zebra_file: Path = frr_path / "zebra.conf"
-        
-        self.executor.run(['sudo', 'tee', str(zebra_file)], 
-                         input_text=zebra_config)
-        self.executor.run(['sudo', 'chmod', '644', str(zebra_file)])
+
+        self.executor.run(["sudo", "tee", str(zebra_file)], input_text=zebra_config)
+        self.executor.run(["sudo", "chmod", "644", str(zebra_file)])
+
 
 class NetworkTestScriptGenerator(ConfigurationGenerator):
     """Generates network testing script"""
-    
+
     def __init__(self, executor: CommandExecutor) -> None:
         self.executor: CommandExecutor = executor
-    
+
     def generate(self, spec: ContainerSpec, output_path: Path) -> None:
         """Generate network testing script"""
-        script_template = Template("""#!/bin/bash
+        script_template = Template(
+            """#!/bin/bash
 # Network testing script for {{ spec.name }}
 
 show_help() {
@@ -165,25 +169,27 @@ case "$1" in
         ip route show ;;
     *) show_help ;;
 esac
-""")
-        
+"""
+        )
+
         script_content: str = script_template.render(spec=spec)
         script_path: Path = output_path / "usr" / "local" / "bin" / "network-test"
-        
-        self.executor.run(['sudo', 'mkdir', '-p', str(script_path.parent)])
-        self.executor.run(['sudo', 'tee', str(script_path)], 
-                         input_text=script_content)
-        self.executor.run(['sudo', 'chmod', '+x', str(script_path)])
+
+        self.executor.run(["sudo", "mkdir", "-p", str(script_path.parent)])
+        self.executor.run(["sudo", "tee", str(script_path)], input_text=script_content)
+        self.executor.run(["sudo", "chmod", "+x", str(script_path)])
+
 
 class ContainerInitScriptGenerator(ConfigurationGenerator):
     """Generates container initialization script"""
-    
+
     def __init__(self, executor: CommandExecutor) -> None:
         self.executor: CommandExecutor = executor
-    
+
     def generate(self, spec: ContainerSpec, output_path: Path) -> None:
         """Generate container init script"""
-        init_template = Template("""#!/bin/bash
+        init_template = Template(
+            """#!/bin/bash
 # Container initialization script for {{ spec.name }}
 
 echo "Initializing container {{ spec.name }}..."
@@ -227,11 +233,11 @@ echo "Container {{ spec.name }} initialized successfully"
 
 # Keep container running
 exec /bin/bash
-""")
-        
+"""
+        )
+
         init_content: str = init_template.render(spec=spec)
         init_path: Path = output_path / "usr" / "local" / "bin" / "container-init"
-        
-        self.executor.run(['sudo', 'tee', str(init_path)], 
-                         input_text=init_content)
-        self.executor.run(['sudo', 'chmod', '+x', str(init_path)])
+
+        self.executor.run(["sudo", "tee", str(init_path)], input_text=init_content)
+        self.executor.run(["sudo", "chmod", "+x", str(init_path)])

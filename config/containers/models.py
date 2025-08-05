@@ -6,9 +6,11 @@ Data models for container management system
 from dataclasses import dataclass
 from typing import List
 
+
 @dataclass(frozen=True)
 class VLANConfig:
     """Immutable VLAN configuration"""
+
     vlan_id: int
     ip_address: str
     netmask: str
@@ -18,9 +20,11 @@ class VLANConfig:
         if not (1 <= self.vlan_id <= 4094):
             raise ValueError(f"Invalid VLAN ID: {self.vlan_id}")
 
+
 @dataclass(frozen=True)
 class NetworkInterface:
     """Network interface configuration"""
+
     name: str
     ip_address: str
     netmask: str
@@ -28,9 +32,11 @@ class NetworkInterface:
     mac_address: str
     description: str = ""
 
+
 @dataclass(frozen=True)
 class ContainerSpec:
     """Complete container specification"""
+
     name: str
     management_interface: NetworkInterface
     test_interface: NetworkInterface

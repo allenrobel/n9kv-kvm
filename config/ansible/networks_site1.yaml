@@ -16,8 +16,8 @@
           vlan_id: 2
           gw_ip_subnet: 22.1.1.1/24
           attach:
-          - ip_address: 192.168.11.131
+          - ip_address: 192.168.12.131
             ports:
             - Ethernet1/2
-          - ip_address: 192.168.11.121
+          - ip_address: 192.168.12.121
             ports: []

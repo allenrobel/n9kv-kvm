@@ -13,14 +13,14 @@ fi
 # Add vlans to bridge
 for vlan in "${VLANS[@]}"; do
     echo "Adding VLAN $vlan to $BRIDGE..."
-    bridge vlan add dev $BRIDGE vid $vlan
+    sudo bridge vlan add dev $BRIDGE vid $vlan
 done
 
 # Add vlans to associated TAP interfaces
 for tap in $TAPS; do
     for vlan in "${VLANS[@]}"; do
         echo "Adding VLAN $vlan to $tap..."
-        bridge vlan add dev $tap vid $vlan
+        sudo bridge vlan add dev $tap vid $vlan
     done
 done
 
@@ -28,6 +28,6 @@ done
 for vnet in $VNETS; do
     for vlan in "${VLANS[@]}"; do
         echo "Adding VLAN $vlan to $vnet..."
-        bridge vlan add dev $vnet vid $vlan
+        sudo bridge vlan add dev $vnet vid $vlan
     done
 done

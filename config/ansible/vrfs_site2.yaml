@@ -20,14 +20,14 @@
           - ip_address: "{{ S2_IP4 }}"
             vrf_lite:
             - interface: "{{ S2_INTERFACE_1 }}"
-        - vrf_name: v3
-          vrf_id: 9000023
-          vrf_template: Default_VRF_Universal
-          vrf_extension_template: Default_VRF_Extension_Universal
-          vlan_id: 2023
-          service_vrf_template: null
-          attach:
-          - ip_address: "{{ L2_IP4 }}"
-          - ip_address: "{{ S2_IP4 }}"
-            vrf_lite:
-            - interface: "{{ S2_INTERFACE_1 }}"
+        # - vrf_name: v3
+        #   vrf_id: 9000023
+        #   vrf_template: Default_VRF_Universal
+        #   vrf_extension_template: Default_VRF_Extension_Universal
+        #   vlan_id: 2023
+        #   service_vrf_template: null
+        #   attach:
+        #   - ip_address: "{{ L2_IP4 }}"
+        #   - ip_address: "{{ S2_IP4 }}"
+        #     vrf_lite:
+        #     - interface: "{{ S2_INTERFACE_1 }}"

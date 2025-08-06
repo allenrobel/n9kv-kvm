@@ -1,0 +1,33 @@
+---
+-   hosts: nd
+    check_mode: false
+    gather_facts: false
+    vars:
+    tasks:
+    - name: VRFs SITE2
+      cisco.dcnm.dcnm_vrf:
+        fabric: SITE2
+        state: merged
+        config:
+        - vrf_name: v2
+          vrf_id: 9000002
+          vrf_template: Default_VRF_Universal
+          vrf_extension_template: Default_VRF_Extension_Universal
+          vlan_id: 2002
+          service_vrf_template: null
+          attach:
+          - ip_address: "{{ L2_IP4 }}"
+          - ip_address: "{{ S2_IP4 }}"
+            vrf_lite:
+            - interface: "{{ S2_INTERFACE_1 }}"
+        - vrf_name: v3
+          vrf_id: 9000003
+          vrf_template: Default_VRF_Universal
+          vrf_extension_template: Default_VRF_Extension_Universal
+          vlan_id: 2003
+          service_vrf_template: null
+          attach:
+          - ip_address: "{{ L2_IP4 }}"
+          - ip_address: "{{ S2_IP4 }}"
+            vrf_lite:
+            - interface: "{{ S2_INTERFACE_1 }}"

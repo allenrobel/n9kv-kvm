@@ -13,7 +13,7 @@ fi
 # Add vlans to bridge
 for vlan in "${VLANS[@]}"; do
     echo "Adding VLAN $vlan to $BRIDGE..."
-    sudo bridge vlan add vid $vlan dev $BRIDGE
+    sudo bridge vlan add vid $vlan dev $BRIDGE self
 done
 
 # Add vlans to associated TAP interfaces

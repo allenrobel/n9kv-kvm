@@ -85,13 +85,13 @@ python3 main.py create-h2
 
 ### H1 Container
 
-- **Management**: 192.168.11.141/24 on BR_ND_MGMT
+- **Management**: 192.168.12.141/24 on BR_ND_DATA
 - **VLAN 2**: 11.1.2.141/24 on BR_L1_H1 (eth1.2)
 - **VLAN 3**: 11.1.3.141/30 on BR_L1_H1 (eth1.3)
 
 ### H2 Container
 
-- **Management**: 192.168.11.142/24 on BR_ND_MGMT
+- **Management**: 192.168.12.142/24 on BR_ND_DATA
 - **VLAN 2**: 11.1.2.142/30 on BR_L1_H1 (eth1.2)
 - **VLAN 3**: 11.1.3.142/30 on BR_L1_H1 (eth1.3)
 
@@ -223,9 +223,9 @@ sudo usermod -aG libvirt $USER
 
 ```bash
 # Create required bridges manually if they don't exist
-sudo ip link add name BR_ND_MGMT type bridge
+sudo ip link add name BR_ND_DATA type bridge
 sudo ip link add name BR_L1_H1 type bridge
-sudo ip link set BR_ND_MGMT up
+sudo ip link set BR_ND_DATA up
 sudo ip link set BR_L1_H1 up
 ```
 

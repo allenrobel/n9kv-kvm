@@ -48,5 +48,5 @@ class ContainerSpec:
     def __post_init__(self) -> None:
         if not self.name:
             raise ValueError("Container name cannot be empty")
-        if not self.vlans:
-            raise ValueError("At least one VLAN must be configured")
+        # if not self.vlans:
+        #     raise ValueError("At least one VLAN must be configured")

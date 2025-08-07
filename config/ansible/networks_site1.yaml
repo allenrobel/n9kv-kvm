@@ -18,10 +18,7 @@
           deploy: true
           attach:
           - ip_address: 192.168.12.121
-            ports: []
           - ip_address: 192.168.12.131
-            ports:
-            - Ethernet1/2
         - net_name: n3
           vrf_name: v3
           net_id: 3
@@ -32,7 +29,4 @@
           deploy: true
           attach:
           - ip_address: 192.168.12.121
-            ports: []
           - ip_address: 192.168.12.131
-            ports:
-            - Ethernet1/2

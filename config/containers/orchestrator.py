@@ -74,10 +74,7 @@ class ContainerOrchestrator:
     def _setup_bridge_vlans(self, spec: ContainerSpec) -> None:
         """Setup bridge VLAN configuration"""
         vlan_ids: List[int] = [vlan.vlan_id for vlan in spec.vlans]
-        if vlan_ids:
-            self.bridge_manager.configure_bridge_vlans(spec.test_interface.bridge, vlan_ids)
-        else:
-            logger.info(f"No VLANs configured for {spec.name}, skipping bridge VLAN setup")
+        self.bridge_manager.configure_bridge_vlans(spec.test_interface.bridge, vlan_ids)
 
     def _generate_configurations(self, spec: ContainerSpec) -> None:
         """Generate all configuration files"""

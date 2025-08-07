@@ -38,6 +38,26 @@ class BridgeVLANManager:
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Failed to enable VLAN filtering on {bridge_name}: {e}")
 
+    def disable_vlan_filtering(self, bridge_name: str) -> None:
+        """Disable VLAN filtering on bridge"""
+        try:
+            self.executor.run(
+                [
+                    "sudo",
+                    "ip",
+                    "link",
+                    "set",
+                    bridge_name,
+                    "type",
+                    "bridge",
+                    "vlan_filtering",
+                    "0",
+                ]
+            )
+            logger.info(f"Disabled VLAN filtering on bridge: {bridge_name}")
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Failed to disable VLAN filtering on {bridge_name}: {e}")
+
     def add_vlan_to_bridge(self, bridge_name: str, vlan_id: int) -> None:
         """Add VLAN to bridge"""
         try:
@@ -61,7 +81,8 @@ class BridgeVLANManager:
     def configure_bridge_vlans(self, bridge_name: str, vlan_ids: List[int]) -> None:
         """Configure VLANs on bridge"""
         if not vlan_ids:
-            logger.info(f"No VLANs configured for bridge {bridge_name}, skipping VLAN filtering")
+            logger.info(f"No VLANs configured for bridge {bridge_name}, disabling VLAN filtering")
+            self.disable_vlan_filtering(bridge_name)
             return
             
         self.enable_vlan_filtering(bridge_name)

@@ -74,7 +74,10 @@ class ContainerOrchestrator:
     def _setup_bridge_vlans(self, spec: ContainerSpec) -> None:
         """Setup bridge VLAN configuration"""
         vlan_ids: List[int] = [vlan.vlan_id for vlan in spec.vlans]
-        self.bridge_manager.configure_bridge_vlans(spec.test_interface.bridge, vlan_ids)
+        if vlan_ids:
+            self.bridge_manager.configure_bridge_vlans(spec.test_interface.bridge, vlan_ids)
+        else:
+            logger.info(f"No VLANs configured for {spec.name}, skipping bridge VLAN setup")
 
     def _generate_configurations(self, spec: ContainerSpec) -> None:
         """Generate all configuration files"""
@@ -104,17 +107,25 @@ class ContainerOrchestrator:
             f"  {mgmt.name}: {mgmt.ip_address}/{mgmt.netmask} -> {mgmt.bridge} (Management)"
         )
 
-        for vlan in spec.vlans:
+        if spec.vlans:
+            for vlan in spec.vlans:
+                test = spec.test_interface
+                print(
+                    f"  {test.name}.{vlan.vlan_id}: {vlan.ip_address}/{vlan.netmask} -> {test.bridge} (VLAN {vlan.vlan_id})"
+                )
+            
+            print(f"\nBridge VLAN Configuration:")
+            vlan_ids = [v.vlan_id for v in spec.vlans]
+            print(
+                f"  Bridge {spec.test_interface.bridge} configured with VLANs: {vlan_ids}"
+            )
+        else:
             test = spec.test_interface
             print(
-                f"  {test.name}.{vlan.vlan_id}: {vlan.ip_address}/{vlan.netmask} -> {test.bridge} (VLAN {vlan.vlan_id})"
+                f"  {test.name}: {test.ip_address}/{test.netmask} -> {test.bridge} (Direct)"
             )
-
-        print(f"\nBridge VLAN Configuration:")
-        vlan_ids = [v.vlan_id for v in spec.vlans]
-        print(
-            f"  Bridge {spec.test_interface.bridge} configured with VLANs: {vlan_ids}"
-        )
+            print(f"\nBridge Configuration:")
+            print(f"  Bridge {test.bridge} configured without VLANs")
 
         print(f"\nContainer Management:")
         print(f"  Start:   sudo virsh -c lxc:/// start {spec.name}")
@@ -126,10 +137,13 @@ class ContainerOrchestrator:
         print(f"  network-test show-config     - Show configuration")
         print(f"  network-test mgmt-ping <ip>  - Ping via management")
 
-        for vlan in spec.vlans:
-            print(
-                f"  network-test vlan{vlan.vlan_id}-ping <ip> - Ping via VLAN {vlan.vlan_id}"
-            )
+        if spec.vlans:
+            for vlan in spec.vlans:
+                print(
+                    f"  network-test vlan{vlan.vlan_id}-ping <ip> - Ping via VLAN {vlan.vlan_id}"
+                )
+        else:
+            print(f"  network-test test-ping <ip>  - Ping via test interface")
 
         print(f"  network-test zebra-cli       - Access FRR/Zebra CLI")
         print(f"  network-test show-vlans      - Show VLAN interfaces")

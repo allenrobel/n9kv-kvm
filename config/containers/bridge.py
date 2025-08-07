@@ -60,6 +60,10 @@ class BridgeVLANManager:
 
     def configure_bridge_vlans(self, bridge_name: str, vlan_ids: List[int]) -> None:
         """Configure VLANs on bridge"""
+        if not vlan_ids:
+            logger.info(f"No VLANs configured for bridge {bridge_name}, skipping VLAN filtering")
+            return
+            
         self.enable_vlan_filtering(bridge_name)
 
         for vlan_id in vlan_ids:

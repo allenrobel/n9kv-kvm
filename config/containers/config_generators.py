@@ -65,6 +65,7 @@ interface {{ spec.management_interface.name }}
  description {{ spec.management_interface.description }}
  ip address {{ spec.management_interface.ip_address }}/{{ spec.management_interface.netmask }}
 !
+{% if spec.vlans %}
 {% for vlan in spec.vlans %}
 ! VLAN {{ vlan.vlan_id }} interface
 interface {{ spec.test_interface.name }}.{{ vlan.vlan_id }}
@@ -72,6 +73,13 @@ interface {{ spec.test_interface.name }}.{{ vlan.vlan_id }}
  ip address {{ vlan.ip_address }}/{{ vlan.netmask }}
 !
 {% endfor %}
+{% else %}
+! Direct test interface (no VLANs)
+interface {{ spec.test_interface.name }}
+ description {{ spec.test_interface.description }}
+ ip address {{ spec.test_interface.ip_address }}/{{ spec.test_interface.netmask }}
+!
+{% endif %}
 ! Static routes
 ip route 0.0.0.0/0 {{ spec.gateway_ip }}
 !
@@ -115,9 +123,13 @@ show_help() {
     echo "  show-vlans                 - Show VLAN interfaces"
     echo "  traffic-gen <target>       - Generate traffic with hping3"
     echo "  mgmt-ping <target>         - Ping via management interface"
+{% if spec.vlans %}
 {% for vlan in spec.vlans %}
     echo "  vlan{{ vlan.vlan_id }}-ping <target>      - Ping via VLAN {{ vlan.vlan_id }} interface"
 {% endfor %}
+{% else %}
+    echo "  test-ping <target>         - Ping via test interface"
+{% endif %}
     echo "  show-config                - Show current network configuration"
 }
 
@@ -146,21 +158,34 @@ case "$1" in
         ip -s link show ;;
     "show-vlans")
         echo "=== VLAN interfaces ==="
+{% if spec.vlans %}
 {% for vlan in spec.vlans %}
         ip addr show {{ spec.test_interface.name }}.{{ vlan.vlan_id }} 2>/dev/null || echo "{{ spec.test_interface.name }}.{{ vlan.vlan_id }} not configured"
 {% endfor %}
+{% else %}
+        echo "No VLANs configured - using direct interface"
+        ip addr show {{ spec.test_interface.name }} 2>/dev/null || echo "{{ spec.test_interface.name }} not configured"
+{% endif %}
         ;;
     "traffic-gen") hping3 -S -p 80 -c 10 "$2" ;;
     "mgmt-ping") ping -I {{ spec.management_interface.name }} -c 4 "$2" ;;
+{% if spec.vlans %}
 {% for vlan in spec.vlans %}
     "vlan{{ vlan.vlan_id }}-ping") ping -I {{ spec.test_interface.name }}.{{ vlan.vlan_id }} -c 4 "$2" ;;
 {% endfor %}
+{% else %}
+    "test-ping") ping -I {{ spec.test_interface.name }} -c 4 "$2" ;;
+{% endif %}
     "show-config")
         echo "=== Container Network Configuration ==="
         echo "Management Interface ({{ spec.management_interface.name }}): {{ spec.management_interface.ip_address }}/{{ spec.management_interface.netmask }} -> {{ spec.management_interface.bridge }}"
+{% if spec.vlans %}
 {% for vlan in spec.vlans %}
         echo "VLAN {{ vlan.vlan_id }} Interface ({{ spec.test_interface.name }}.{{ vlan.vlan_id }}): {{ vlan.ip_address }}/{{ vlan.netmask }} -> {{ spec.test_interface.bridge }}"
 {% endfor %}
+{% else %}
+        echo "Test Interface ({{ spec.test_interface.name }}): {{ spec.test_interface.ip_address }}/{{ spec.test_interface.netmask }} -> {{ spec.test_interface.bridge }}"
+{% endif %}
         echo ""
         echo "=== Current Interface Status ==="
         ip addr show
@@ -199,6 +224,8 @@ echo "Configuring management interface..."
 ip addr add {{ spec.management_interface.ip_address }}/{{ spec.management_interface.netmask }} dev {{ spec.management_interface.name }}
 ip link set {{ spec.management_interface.name }} up
 
+# Configure test interface
+{% if spec.vlans %}
 # Configure VLAN interfaces
 {% for vlan in spec.vlans %}
 echo "Configuring VLAN {{ vlan.vlan_id }} interface..."
@@ -207,8 +234,14 @@ ip addr add {{ vlan.ip_address }}/{{ vlan.netmask }} dev {{ spec.test_interface.
 ip link set {{ spec.test_interface.name }}.{{ vlan.vlan_id }} up
 {% endfor %}
 
-# Bring up base test interface
+# Bring up base test interface (for VLAN support)
 ip link set {{ spec.test_interface.name }} up
+{% else %}
+# Configure direct test interface (no VLANs)
+echo "Configuring test interface directly..."
+ip addr add {{ spec.test_interface.ip_address }}/{{ spec.test_interface.netmask }} dev {{ spec.test_interface.name }}
+ip link set {{ spec.test_interface.name }} up
+{% endif %}
 
 # Add default route
 ip route add default via {{ spec.gateway_ip }} dev {{ spec.management_interface.name }}

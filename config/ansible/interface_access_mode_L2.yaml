@@ -1,0 +1,19 @@
+---
+- hosts: nd
+  check_mode: false
+  gather_facts: false
+  tasks:
+  - name: Configure SITE2.L2.Eth1/2 as access interface
+    cisco.dcnm.dcnm_interface:
+      fabric: "{{ SITE2_FABRIC }}"
+      state: merged
+      config:
+      - name: "{{ L2_INTERFACE_2 }}"
+        type: eth
+        switch:
+        - "{{ L2_IP4 }}"
+        deploy: true
+        profile:
+          admin_state: true
+          mode: access
+          access_vlan: 2

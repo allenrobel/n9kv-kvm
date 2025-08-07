@@ -1,4 +1,7 @@
 # See dynamic_inventory.py for the variables used in this file.
+# NOTES:
+# 1. Interfaces should already be configured as routed interfaces by
+#    Nexus Dashboard before running this playbook.
 ---
 -   hosts: nd
     check_mode: false
@@ -22,8 +25,6 @@
                     CONF: |
                       configure terminal
                         interface {{ S2_INTERFACE_1 }}
-                          no switchport
                           mac-address {{ S2_MAC_1 }}
                         interface {{ S2_INTERFACE_2 }}
-                          no switchport
                           mac-address {{ S2_MAC_2 }}

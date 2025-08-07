@@ -9,7 +9,7 @@ import sys
 
 from executor import SystemCommandExecutor
 from factory import ContainerSystemFactory
-from models import ContainerSpec, NetworkInterface, VLANConfig
+from models import ContainerSpec, NetworkInterface
 from requirements import RequirementsChecker
 
 # Configure logging

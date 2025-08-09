@@ -6,7 +6,7 @@ light weight.
 
 ```bash
 sudo apt update
-sudo apt install dsnmasq
+sudo apt install dnsmasq
 ```
 
 ## Edit /etc/dnsmasq.conf

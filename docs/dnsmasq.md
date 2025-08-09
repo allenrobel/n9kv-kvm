@@ -1,8 +1,15 @@
 # Install dnsmasq
 
-Nexus Dashboard requires a reachable DNS server.  Since we are assuming that everything
-is local to your host on non-public IPs, we'll use dnsmasq since it's pretty
-light weight.
+Nexus Dashboard requires a reachable DNS server.
+
+## Skip if not needed
+
+If you already have an external nameserver, feel free to skip the below and use it instead.
+
+## Installation
+
+Since we are assuming that everything is local to your host on non-public IPs, we'll use
+dnsmasq since it offers everything we need without a lot of bloat.
 
 ```bash
 sudo apt update

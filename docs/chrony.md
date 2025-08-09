@@ -1,5 +1,9 @@
 # Install and Configure chrony
 
+## Skip if not needed
+
+If you already have an external time server, feel free to skip the below and use it instead.
+
 ## Install chrony
 
 ND requires a reachable NTP service.  `chrony` is very lightweight so will

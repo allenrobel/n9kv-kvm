@@ -4,7 +4,8 @@ Nexus Dashboard requires a reachable DNS server.
 
 ## Skip if not needed
 
-If you already have an external nameserver, feel free to skip the below and use it instead.
+If you already have an external nameserver, feel free to skip the below and use
+your external server during Nexus Dashboard installation.
 
 ## Installation
 
@@ -42,6 +43,7 @@ cache-size=1000
 listen-address=192.168.11.1
 listen-address=192.168.12.1
 no-dhcp-interface=*
+bind-interfaces
 ```
 
 ## Edit /etc/default/dnsmasq
@@ -97,4 +99,26 @@ Jul 28 02:44:27 cvd-2 dnsmasq[210072]: using nameserver 127.0.0.53#53
 Jul 28 02:44:27 cvd-2 dnsmasq[210072]: cleared cache
 Jul 28 02:44:27 cvd-2 systemd[1]: Started dnsmasq.service - dnsmasq - A lightweight DHCP and caching DNS server.
 arobel@cvd-2:~$
+```
+
+## Troubleshooting
+
+If you get an error like the following, the most likely culprit is `systemd-resolved` is running.
+
+```bash
+failed to create listening socket for port 53: Address already in use
+```
+
+To verify if `systemd-resolved` is running:
+
+```bash
+sudo ss -lp "sport = :domain"
+```
+
+To disable `systemd-resolved` and ensure it doesn't start on boot, do the following.
+
+```bash
+sudo systemctl stop systemd-resolved
+sudo systemctl disable systemd-resolved
+sudo systemctl mask systemd-resolved
 ```

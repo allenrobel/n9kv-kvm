@@ -2,7 +2,8 @@
 
 ## Skip if not needed
 
-If you already have an external time server, feel free to skip the below and use it instead.
+If you already have an external time server, feel free to skip the below and use
+your external server during Nexus Dashboard installation.
 
 ## Install chrony
 

@@ -1,7 +1,7 @@
 # Nexus9000v Monitoring with Cockpit
 
 [Cockpit](https://cockpit-project.org) is a web-based graphical interface for
-managing and monitoring servers.  It's completely optional so, if it's not
+managing and monitoring networked devices.  It's completely optional so, if it's not
 your thing, feel free to ignore this section.
 
 The files in this directory include:

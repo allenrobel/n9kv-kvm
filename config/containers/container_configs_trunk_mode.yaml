@@ -17,11 +17,11 @@ containers:
       description: "Test Interface"
     vlans:
       - vlan_id: 2
-        ip_address: "11.1.2.141"
+        ip_address: "192.0.1.141"
         netmask: "24"
         description: "VLAN 2 Test Interface"
       - vlan_id: 3
-        ip_address: "11.1.3.141"
+        ip_address: "192.0.2.142"
         netmask: "24"
         description: "VLAN 3 Test Interface"
     gateway_ip: "192.168.12.1"
@@ -46,11 +46,11 @@ containers:
       description: "Test Interface"
     vlans:
       - vlan_id: 2
-        ip_address: "11.1.2.142"
+        ip_address: "192.0.1.142"
         netmask: "24"
         description: "VLAN 2 Test Interface"
       - vlan_id: 3
-        ip_address: "11.1.3.142"
+        ip_address: "192.0.2.142"
         netmask: "24"
         description: "VLAN 3 Test Interface"
     gateway_ip: "192.168.12.1"

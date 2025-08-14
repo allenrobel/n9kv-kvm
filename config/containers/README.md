@@ -4,14 +4,6 @@ A Python-based system for creating and managing libvirt LXC containers with VLAN
 
 ## Architecture
 
-### 🏗️ **SOLID Principles Applied**
-
-- **Single Responsibility**: Each class has one focused purpose
-- **Open/Closed**: Extensible through interfaces and factories
-- **Liskov Substitution**: All implementations are interchangeable
-- **Interface Segregation**: Minimal, focused interfaces
-- **Dependency Inversion**: High-level modules depend on abstractions
-
 ### 📁 **Module Structure**
 
 ```bash
@@ -37,8 +29,8 @@ A Python-based system for creating and managing libvirt LXC containers with VLAN
 ### 🌐 **Network Configuration**
 
 - **Dual-homed containers**: Management + test interfaces
-- **VLAN support**: 802.1Q tagging with bridge filtering
-- **Automatic bridge configuration**: VLAN filtering enabled
+- **VLAN support**: Optional 802.1Q tagging with bridge filtering
+- **Automatic bridge configuration**: VLAN filtering enabled/disabled based on container configuration
 - **Per-VLAN IP addressing**: Clean separation of traffic
 
 ### 🔧 **Container Capabilities**
@@ -47,13 +39,6 @@ A Python-based system for creating and managing libvirt LXC containers with VLAN
 - **Comprehensive testing tools**: ping, traceroute, mtr, iperf3, nmap
 - **VLAN-specific testing**: Per-VLAN ping and traffic generation
 - **SSH access**: Remote management capability
-
-### 💻 **Development Quality**
-
-- **Full type hints**: Complete type safety
-- **Comprehensive logging**: Detailed operation tracking
-- **Error handling**: Graceful failure recovery
-- **Modular testing**: Each component easily unit testable
 
 ## Quick Start
 
@@ -75,25 +60,35 @@ python3 main.py --check
 
 ```bash
 # Create H1 container
-python3 main.py create-h1
+sudo python3 main.py --config $HOME/repos/n9kv-kvm/config/containers/container_configs_access_mode.yaml H1
 
 # Create H2 container  
-python3 main.py create-h2
+sudo python3 main.py --config $HOME/repos/n9kv-kvm/config/containers/container_configs_access_mode.yaml H1
 ```
 
 ## Container Specifications
 
-### H1 Container
+### H1 Container (access mode interfaces)
 
-- **Management**: 192.168.12.141/24 on BR_ND_DATA
-- **VLAN 2**: 11.1.2.141/24 on BR_L1_H1 (eth1.2)
-- **VLAN 3**: 11.1.3.141/30 on BR_L1_H1 (eth1.3)
+- eth0: 192.168.12.141/24 on BR_ND_DATA
+- eth1: 192.0.1.141/24 on BR_L1_H1
 
-### H2 Container
+### H2 Container (access mode interfaces)
 
-- **Management**: 192.168.12.142/24 on BR_ND_DATA
-- **VLAN 2**: 11.1.2.142/30 on BR_L1_H1 (eth1.2)
-- **VLAN 3**: 11.1.3.142/30 on BR_L1_H1 (eth1.3)
+- eth0: 192.168.12.142/24 on BR_ND_DATA
+- eth1: 192.0.1.142/24 on BR_L1_H1
+
+### H1 Container (trunk mode interfaces)
+
+- eth0: 192.168.12.141/24 on BR_ND_DATA
+- eth1.2: 192.0.1.141/24 on BR_L1_H1
+- eth1.3: 11.1.3.141/30 on BR_L1_H1
+
+### H2 Container (trunk mode interfaces)
+
+- eth0: 192.168.12.142/24 on BR_ND_DATA
+- eth1.2: 192.0.1.142/24 on BR_L1_H1
+- eth1.3: 11.1.3.142/30 on BR_L1_H1
 
 ## Usage Examples
 
@@ -123,8 +118,8 @@ network-test show-config
 network-test mgmt-ping 192.168.11.1
 
 # Test VLAN connectivity
-network-test vlan2-ping 11.1.1.2    # Ping H2 on VLAN 2
-network-test vlan3-ping 11.1.1.6    # Ping H2 on VLAN 3
+network-test vlan2-ping 192.0.1.142    # Ping H2 on VLAN 2
+network-test vlan3-ping 192.0.2.142    # Ping H2 on VLAN 3
 
 # Show VLAN interfaces
 network-test show-vlans
@@ -134,19 +129,24 @@ network-test zebra-cli
 
 # Traffic generation
 network-test iperf-server            # Start server
-network-test iperf-client 11.1.1.2  # Connect to target
+network-test iperf-client 192.0.1.2  # Connect to target
 ```
 
 ### Bridge VLAN Verification
 
 ```bash
 # Check bridge VLAN configuration
+# NOTE: bridge may or may not be configured for VLAN based on container configurations
 bridge vlan show dev BR_L1_H1
 
 # Should show VLANs 2 and 3 configured
 ```
 
 ## Extension Guide
+
+TODO: 2025-08-14 - Need to update this section to reflect recent changes.
+
+Much of the below should be ignored until the above TODO is addressed.
 
 ### Adding New Container Types
 
@@ -361,5 +361,3 @@ For issues and questions:
 4. Check libvirt and system logs for additional context
 
 ---
-
-*This system provides a solid foundation for network testing environments with clean, maintainable, and extensible Python code following enterprise best practices.*

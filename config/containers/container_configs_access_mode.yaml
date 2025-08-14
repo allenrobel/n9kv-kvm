@@ -10,7 +10,7 @@ containers:
       description: "Management Interface"
     test_interface:
       name: "eth1"
-      ip_address: "11.1.2.141"
+      ip_address: "192.0.1.141"
       netmask: "24"
       bridge: "BR_L1_H1"
       mac_address: "00:00:41:00:00:02"
@@ -31,7 +31,7 @@ containers:
       description: "Management Interface"
     test_interface:
       name: "eth1"
-      ip_address: "11.1.2.142"
+      ip_address: "192.0.1.142"
       netmask: "24"
       bridge: "BR_L2_H2"
       mac_address: "00:00:42:00:00:02"

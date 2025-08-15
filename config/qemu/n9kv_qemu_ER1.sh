@@ -14,18 +14,18 @@ NEIGHBOR_3=CR1
 ISL_BRIDGE_1=BR_ER1_BG1
 ISL_BRIDGE_2=BR_ER1_BG2
 ISL_BRIDGE_3=BR_CR1_ER1
-# MAC_1 sets mgmt0 mac address
-# MAC_1="00:00:$SID:00:00:01"
+# MAC_MGMT sets mgmt0 mac address
+# MAC_MGMT="00:00:$SID:00:00:01"
 # MAC_2="00:00:$SID:00:00:02"
 # MAC_3="00:00:$SID:00:00:03"
 # MAC_4="00:00:$SID:00:00:04"
 
 # To this format:
 BASE_MAC="52:54:00"
-MAC_1="$BASE_MAC:$(printf "%02d" $SID):00:01"  # mgmt0
-MAC_2="$BASE_MAC:$(printf "%02d" $SID):01:01"  # eth1/1  
-MAC_3="$BASE_MAC:$(printf "%02d" $SID):01:02"  # eth1/2
-MAC_4="$BASE_MAC:$(printf "%02d" $SID):01:03"  # eth1/3
+MAC_MGMT="$BASE_MAC:$(printf "%02d" $SID):00:01"  # mgmt0
+# MAC_2="$BASE_MAC:$(printf "%02d" $SID):01:01"  # eth1/1  
+# MAC_3="$BASE_MAC:$(printf "%02d" $SID):01:02"  # eth1/2
+# MAC_4="$BASE_MAC:$(printf "%02d" $SID):01:03"  # eth1/3
 
 TELNET_PORT=90$SID   # Telnet port for console access
 MONITOR_PORT=44$SID  # Monitor port for QEMU
@@ -96,15 +96,14 @@ qemu-system-x86_64 \
     -device ide-hd,bus=ahci0.0,drive=drive-sata-disk0,bootindex=1 \
     -monitor telnet:localhost:$MONITOR_PORT,server,nowait \
     -netdev bridge,id=ND_DATA,br=$MGMT_BRIDGE \
-    -device $MODEL,netdev=ND_DATA,mac=$MAC_1 \
+    -device $MODEL,netdev=ND_DATA,mac=$MAC_MGMT \
     -netdev bridge,id=ISL_BRIDGE_1,br=$ISL_BRIDGE_1 \
-    -device $MODEL,netdev=ISL_BRIDGE_1,mac=$MAC_2 \
+    -device $MODEL,netdev=ISL_BRIDGE_1 \
     -netdev bridge,id=ISL_BRIDGE_2,br=$ISL_BRIDGE_2 \
-    -device $MODEL,netdev=ISL_BRIDGE_2,mac=$MAC_3 \
+    -device $MODEL,netdev=ISL_BRIDGE_2 \
     -netdev bridge,id=ISL_BRIDGE_3,br=$ISL_BRIDGE_3 \
-    -device $MODEL,netdev=ISL_BRIDGE_3,mac=$MAC_4 \
+    -device $MODEL,netdev=ISL_BRIDGE_3 \
     -name $SWITCH_NAME &
-
 
 echo "$SWITCH_NAME instance created."
 echo "$SWITCH_NAME -> $NEIGHBOR_1: $ISL_BRIDGE_1"

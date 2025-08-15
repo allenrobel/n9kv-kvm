@@ -11,9 +11,6 @@ SWITCH_SERIAL=00000000$SID
 
 NEIGHBOR_1=ER1
 ISL_BRIDGE_1=BR_CR1_ER1
-# MAC_1 sets mgmt0 mac address
-MAC_1="00:00:$SID:00:00:01"
-MAC_2="00:00:$SID:00:00:02"
 
 TELNET_PORT=90$SID   # Telnet port for console access
 MONITOR_PORT=44$SID  # Monitor port for QEMU
@@ -69,7 +66,7 @@ qemu-system-x86_64 \
     -smbios type=1,manufacturer="Cisco",product="Nexus9000",serial="$SWITCH_SERIAL" \
     -enable-kvm \
     -machine type=q35,accel=kvm,kernel-irqchip=on \
-    -cpu qemu64,+ssse3,+sse4.1,+sse4.2,-smep,-smap,-spec-ctrl \
+    -cpu host \
     -smp $VCPUS,sockets=1,cores=$VCPUS,threads=1 \
     -m $RAM \
     -object memory-backend-ram,id=ram-node0,size=${RAM}M \
@@ -84,9 +81,9 @@ qemu-system-x86_64 \
     -device ide-hd,bus=ahci0.0,drive=drive-sata-disk0,bootindex=1 \
     -monitor telnet:localhost:$MONITOR_PORT,server,nowait \
     -netdev bridge,id=ND_DATA,br=$MGMT_BRIDGE \
-    -device $MODEL,netdev=ND_DATA,mac=$MAC_1 \
+    -device $MODEL,netdev=ND_DATA \
     -netdev bridge,id=ISL_BRIDGE_1,br=$ISL_BRIDGE_1 \
-    -device $MODEL,netdev=ISL_BRIDGE_1,mac=$MAC_2 \
+    -device $MODEL,netdev=ISL_BRIDGE_1 \
     -name $SWITCH_NAME &
 
 

@@ -13,22 +13,12 @@ interface mgmt0
 interface {{ interface_1 }}
     no shutdown
 
-! DEBUG: interface_2 value: '{{ interface_2 }}' (type: {{ interface_2.__class__.__name__ if interface_2 is defined else 'undefined' }})
-! DEBUG: interface_2 is defined: {{ interface_2 is defined }}
-! DEBUG: interface_2 is not none: {{ interface_2 is not none }}
-! DEBUG: interface_2 truthy: {{ interface_2 if interface_2 else 'falsy' }}
-
-{% if interface_2 is not none %}
+{% if interface_2 %}
 interface {{ interface_2 }}
     no shutdown
 {% endif %}
 
-! DEBUG: interface_3 value: '{{ interface_3 }}' (type: {{ interface_3.__class__.__name__ if interface_3 is defined else 'undefined' }})
-! DEBUG: interface_3 is defined: {{ interface_3 is defined }}
-! DEBUG: interface_3 is not none: {{ interface_3 is not none }}
-! DEBUG: interface_3 truthy: {{ interface_3 if interface_3 else 'falsy' }}
-
-{% if interface_3 is not none %}
+{% if interface_3 %}
 interface {{ interface_3 }}
     no shutdown
 {% endif %}

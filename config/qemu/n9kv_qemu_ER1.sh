@@ -4,6 +4,8 @@
 SWITCH_NAME=ER1
 SWITCH_ROLE="Edge Router"
 SID=21
+generate_macs $SID
+
 # SWITCH_SERIAL must be unique per switch and is required for n9kv bootup with unique MAC addresses
 SWITCH_SERIAL=00000000$SID
 MGMT_BRIDGE=BR_ND_DATA
@@ -14,12 +16,6 @@ NEIGHBOR_3=CR1
 ISL_BRIDGE_1=BR_ER1_BG1
 ISL_BRIDGE_2=BR_ER1_BG2
 ISL_BRIDGE_3=BR_CR1_ER1
-
-# BASE_MAC="52:54:00"
-# MAC_MGMT="$BASE_MAC:$(printf "%02d" $SID):00:01"  # mgmt0
-# MAC_2="$BASE_MAC:$(printf "%02d" $SID):01:01"  # eth1/1  
-# MAC_3="$BASE_MAC:$(printf "%02d" $SID):01:02"  # eth1/2
-# MAC_4="$BASE_MAC:$(printf "%02d" $SID):01:03"  # eth1/3
 
 TELNET_PORT=90$SID   # Telnet port for console access
 MONITOR_PORT=44$SID  # Monitor port for QEMU
@@ -90,14 +86,24 @@ qemu-system-x86_64 \
     -device ide-hd,bus=ahci0.0,drive=drive-sata-disk0,bootindex=1 \
     -monitor telnet:localhost:$MONITOR_PORT,server,nowait \
     -netdev bridge,id=ND_DATA,br=$MGMT_BRIDGE \
-    -device $MODEL,netdev=ND_DATA \
+    -device $MODEL,netdev=ND_DATA,mac=$MAC_MGMT \
     -netdev bridge,id=ISL_BRIDGE_1,br=$ISL_BRIDGE_1 \
-    -device $MODEL,netdev=ISL_BRIDGE_1 \
+    -device $MODEL,netdev=ISL_BRIDGE_1,mac=$MAC_ETH1 \
     -netdev bridge,id=ISL_BRIDGE_2,br=$ISL_BRIDGE_2 \
-    -device $MODEL,netdev=ISL_BRIDGE_2 \
+    -device $MODEL,netdev=ISL_BRIDGE_2,mac=$MAC_ETH2 \
     -netdev bridge,id=ISL_BRIDGE_3,br=$ISL_BRIDGE_3 \
-    -device $MODEL,netdev=ISL_BRIDGE_3 \
+    -device $MODEL,netdev=ISL_BRIDGE_3,mac=$MAC_ETH3 \
     -name $SWITCH_NAME &
+
+# Function to generate unique MACs
+generate_macs() {
+    local sid=$1
+    BASE_MAC="52:54:00"
+    MAC_MGMT="$BASE_MAC:$(printf "%02x" $sid):00:01"
+    MAC_ETH1="$BASE_MAC:$(printf "%02x" $sid):01:01"
+    MAC_ETH2="$BASE_MAC:$(printf "%02x" $sid):01:02"
+    MAC_ETH3="$BASE_MAC:$(printf "%02x" $sid):01:03"
+}
 
 echo "$SWITCH_NAME instance created."
 echo "$SWITCH_NAME -> $NEIGHBOR_1: $ISL_BRIDGE_1"

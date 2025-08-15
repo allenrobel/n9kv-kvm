@@ -4,6 +4,7 @@
 SWITCH_NAME=SP1
 SWITCH_ROLE="Spine"
 SID=41
+generate_macs $SID
 
 # SWITCH_SERIAL must be unique per switch and is required for n9kv bootup with unique MAC addresses
 SWITCH_SERIAL=00000000$SID
@@ -81,13 +82,22 @@ qemu-system-x86_64 \
     -device ide-hd,bus=ahci0.0,drive=drive-sata-disk0,bootindex=1 \
     -monitor telnet:localhost:$MONITOR_PORT,server,nowait \
     -netdev bridge,id=ND_DATA,br=$MGMT_BRIDGE \
-    -device $MODEL,netdev=ND_DATA \
+    -device $MODEL,netdev=ND_DATA,mac=$MAC_MGMT \
     -netdev bridge,id=ISL_BRIDGE_1,br=$ISL_BRIDGE_1 \
-    -device $MODEL,netdev=ISL_BRIDGE_1 \
+    -device $MODEL,netdev=ISL_BRIDGE_1,mac=$MAC_ETH1 \
     -netdev bridge,id=ISL_BRIDGE_2,br=$ISL_BRIDGE_2 \
-    -device $MODEL,netdev=ISL_BRIDGE_2 \
+    -device $MODEL,netdev=ISL_BRIDGE_2,mac=$MAC_ETH2 \
     -name $SWITCH_NAME &
 
+# Function to generate unique MACs
+generate_macs() {
+    local sid=$1
+    BASE_MAC="52:54:00"
+    MAC_MGMT="$BASE_MAC:$(printf "%02x" $sid):00:01"
+    MAC_ETH1="$BASE_MAC:$(printf "%02x" $sid):01:01"
+    MAC_ETH2="$BASE_MAC:$(printf "%02x" $sid):01:02"
+    MAC_ETH3="$BASE_MAC:$(printf "%02x" $sid):01:03"
+}
 
 echo "$SWITCH_NAME instance created."
 echo ""

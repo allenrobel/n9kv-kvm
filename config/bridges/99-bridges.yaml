@@ -24,10 +24,6 @@ network:
   version: 2
   renderer: networkd
   vlans:
-    Vlan11:
-      id: 11
-      link: eno6
-      optional: true
     Vlan12:
       id: 12
       link: eno6
@@ -111,14 +107,5 @@ network:
       addresses:
       - 192.168.12.2/24
       - 2000:192:168:12::2/24
-      parameters:
-        stp: false
-
-    BR_ND_MGMT:
-      interfaces:
-      - Vlan11
-      addresses:
-      - 192.168.11.1/24
-      - 2000:192:168:11::1/24
       parameters:
         stp: false

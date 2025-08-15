@@ -20,7 +20,15 @@ network:
       link: enp34s0f0
       optional: true
   bridges:
-    BR_ER_S1:
+    BR_CR_ER:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_ER_BGW1:
       dhcp4: false
       dhcp6: false
       mtu: 9216
@@ -28,7 +36,15 @@ network:
         stp: false
       interfaces: []
     
-    BR_ER_S2:
+    BR_ER_BGW2:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_BGW1_S1:
       dhcp4: false
       dhcp6: false
       mtu: 9216
@@ -36,6 +52,14 @@ network:
         stp: false
       interfaces: []
     
+    BR_BGW2_S2:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      parameters:
+        stp: false
+      interfaces: []
+
     BR_S1_L1:
       dhcp4: false
       dhcp6: false
@@ -68,14 +92,14 @@ network:
         stp: false
       interfaces: []
 
-    BR_ND_MGMT:
-      interfaces:
-      - Vlan11
-      addresses:
-      - 192.168.11.1/24
-      - 2000:192:168:11::1/24
-      parameters:
-        stp: false
+    # BR_ND_MGMT:
+    #   interfaces:
+    #   - Vlan11
+    #   addresses:
+    #   - 192.168.11.1/24
+    #   - 2000:192:168:11::1/24
+    #   parameters:
+    #     stp: false
 
     BR_ND_DATA:
       interfaces:

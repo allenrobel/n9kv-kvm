@@ -117,8 +117,9 @@
         hostname: "{{ item.hostname }}"
         mgmt_ip: "{{ item.mgmt_ip }}"
         boot_image: "{{ nxos_image }}"
-        interface_1: "{{ item.interface_1 }}"
-        interface_2: "{{ item.interface_2 }}"
+        interface_1: "{{ item.interface_1 | default('') }}"
+        interface_2: "{{ item.interface_2 | default('') }}"
+        interface_3: "{{ item.interface_3 | default('') }}"
 
     - name: Check if mkisofs is available
       command: which mkisofs

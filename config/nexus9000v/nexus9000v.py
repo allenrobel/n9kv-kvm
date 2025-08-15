@@ -2,8 +2,8 @@
 """
 Nexus 9000v VM Manager
 
-Manager for creating and configuring Cisco Nexus 9000v VMs using QEMU/KVM
-with YAML-based configuration files.
+Manager for creating and configuring Cisco Nexus 9000v VMs
+using QEMU/KVM with YAML-based configuration files.
 """
 
 import subprocess
@@ -11,7 +11,7 @@ import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Protocol
+from typing import Any, Dict, List, Optional, Protocol
 
 try:
     import yaml
@@ -101,12 +101,7 @@ class QEMUCommandBuilder(ABC):  # pylint: disable=too-few-public-methods
     """Abstract base for QEMU command builders."""
 
     @abstractmethod
-    def build_command(
-        self,
-        config: SwitchConfig,
-        global_config: GlobalConfig,
-        interfaces: List[NetworkInterface],
-    ) -> List[str]:
+    def build_command(self, config: SwitchConfig, global_config: GlobalConfig, interfaces: List[NetworkInterface]) -> List[str]:
         """Build QEMU command arguments."""
         raise NotImplementedError
 
@@ -114,12 +109,7 @@ class QEMUCommandBuilder(ABC):  # pylint: disable=too-few-public-methods
 class NexusQEMUBuilder(QEMUCommandBuilder):  # pylint: disable=too-few-public-methods
     """QEMU command builder for Nexus 9000v switches."""
 
-    def build_command(
-        self,
-        config: SwitchConfig,
-        global_config: GlobalConfig,
-        interfaces: List[NetworkInterface],
-    ) -> List[str]:
+    def build_command(self, config: SwitchConfig, global_config: GlobalConfig, interfaces: List[NetworkInterface]) -> List[str]:
         """Build complete QEMU command for Nexus switch."""
 
         # Validate required files
@@ -225,6 +215,57 @@ class NexusQEMUBuilder(QEMUCommandBuilder):  # pylint: disable=too-few-public-me
         ]
 
 
+class ProcessValidator:  # pylint: disable=too-few-public-methods
+    """Validates system requirements and process status."""
+
+    @staticmethod
+    def check_system_requirements() -> List[str]:
+        """Check system requirements and return any issues."""
+        issues = []
+
+        # Check if running as root/sudo
+        import os
+
+        if os.geteuid() != 0:
+            issues.append("Script should be run with sudo for bridge access")
+
+        # Check if KVM is available
+        try:
+            subprocess.run(["kvm-ok"], capture_output=True, check=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            issues.append("KVM may not be available or kvm-ok not installed")
+
+        # Check if bridges exist (we'll check this in the VM manager)
+        return issues
+
+    @staticmethod
+    def check_bridges(bridges: List[str]) -> List[str]:
+        """Check if required bridges exist."""
+        issues = []
+        try:
+            result = subprocess.run(["brctl", "show"], capture_output=True, text=True)
+            bridge_output = result.stdout
+
+            for bridge in bridges:
+                if bridge not in bridge_output:
+                    issues.append(f"Bridge '{bridge}' not found")
+        except FileNotFoundError:
+            issues.append("brctl command not found - bridge-utils may not be installed")
+
+        return issues
+
+    @staticmethod
+    def check_process_running(pid: int) -> bool:
+        """Check if a process is still running."""
+        try:
+            import os
+
+            os.kill(pid, 0)
+            return True
+        except OSError:
+            return False
+
+
 class DiskManager:
     """Manages VM disk operations."""
 
@@ -239,18 +280,13 @@ class DiskManager:
             subprocess.run(["qemu-img", "resize", str(dest_disk), size], check=True)
 
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Failed to create VM disk: {e}") from e
+            raise RuntimeError(f"Failed to create VM disk: {e}")
 
     @staticmethod
     def get_disk_info(disk_path: Path) -> Dict[str, str]:
         """Get disk information."""
         try:
-            result = subprocess.run(
-                ["qemu-img", "info", str(disk_path)],
-                capture_output=True,
-                text=True,
-                check=True,
-            )
+            result = subprocess.run(["qemu-img", "info", str(disk_path)], capture_output=True, text=True, check=True)
             return {"output": result.stdout}
         except subprocess.CalledProcessError as e:
             return {"error": str(e)}
@@ -265,7 +301,7 @@ class ConfigLoader:
         global_config = GlobalConfig()
 
         if config_path and config_path.exists():
-            with open(config_path, "r", encoding="utf-8") as f:
+            with open(config_path, "r") as f:
                 data = yaml.safe_load(f)
                 # Update global config with values from file
                 for key, value in data.items():
@@ -280,7 +316,7 @@ class ConfigLoader:
         if not config_path.exists():
             raise FileNotFoundError(f"Switch config file not found: {config_path}")
 
-        with open(config_path, "r", encoding="utf-8") as f:
+        with open(config_path, "r") as f:
             data = yaml.safe_load(f)
 
         return SwitchConfig(**data)
@@ -292,16 +328,34 @@ class SwitchVMManager:  # pylint: disable=too-few-public-methods
     def __init__(
         self,
         global_config: GlobalConfig,
-        mac_generator: MACAddressGenerator = None,
-        qemu_builder: QEMUCommandBuilder = None,
+        mac_generator: Optional[MACAddressGenerator] = None,
+        qemu_builder: Optional[QEMUCommandBuilder] = None,
     ):
         self.global_config = global_config
         self.mac_generator = mac_generator or StandardMACGenerator()
         self.qemu_builder = qemu_builder or NexusQEMUBuilder()
         self.disk_manager = DiskManager()
 
-    def create_switch(self, config: SwitchConfig, dry_run: bool = False) -> Dict[str, any]:
+    def create_switch(self, config: SwitchConfig, dry_run: bool = False, debug: bool = False) -> Dict[str, Any]:
         """Create and start a Nexus switch VM."""
+
+        if debug:
+            # Check system requirements
+            issues = ProcessValidator.check_system_requirements()
+            if issues:
+                print("System requirement issues:")
+                for issue in issues:
+                    print(f"  - {issue}")
+                print()
+
+            # Check bridges
+            all_bridges = [config.mgmt_bridge] + config.isl_bridges
+            bridge_issues = ProcessValidator.check_bridges(all_bridges)
+            if bridge_issues:
+                print("Bridge issues:")
+                for issue in bridge_issues:
+                    print(f"  - {issue}")
+                print()
 
         # Generate network interfaces
         interfaces = self._generate_interfaces(config)
@@ -322,7 +376,7 @@ class SwitchVMManager:  # pylint: disable=too-few-public-methods
             }
 
         # Start VM
-        process = self._start_vm(qemu_cmd, config)
+        process = self._start_vm(qemu_cmd, config, debug=debug)
 
         return {
             "process_id": process.pid,
@@ -339,26 +393,12 @@ class SwitchVMManager:  # pylint: disable=too-few-public-methods
 
         # Management interface
         mgmt_mac = self.mac_generator.generate_mgmt_mac(config.sid, self.global_config.base_mac)
-        interfaces.append(
-            NetworkInterface(
-                name="ND_DATA",
-                bridge=config.mgmt_bridge,
-                mac=mgmt_mac,
-                interface_type=interface_type,
-            )
-        )
+        interfaces.append(NetworkInterface(name="ND_DATA", bridge=config.mgmt_bridge, mac=mgmt_mac, interface_type=interface_type))
 
         # ISL interfaces
         for i, bridge in enumerate(config.isl_bridges, 1):
             eth_mac = self.mac_generator.generate_ethernet_mac(config.sid, i, self.global_config.base_mac)
-            interfaces.append(
-                NetworkInterface(
-                    name=f"ISL_BRIDGE_{i}",
-                    bridge=bridge,
-                    mac=eth_mac,
-                    interface_type=interface_type,
-                )
-            )
+            interfaces.append(NetworkInterface(name=f"ISL_BRIDGE_{i}", bridge=bridge, mac=eth_mac, interface_type=interface_type))
 
         return interfaces
 
@@ -375,11 +415,35 @@ class SwitchVMManager:  # pylint: disable=too-few-public-methods
         # Create VM disk
         self.disk_manager.create_vm_disk(source_image, dest_disk, disk_size)
 
-    def _start_vm(self, qemu_cmd: List[str], config: SwitchConfig) -> subprocess.Popen:
+    def _start_vm(self, qemu_cmd: List[str], config: SwitchConfig, debug: bool = False) -> subprocess.Popen:
         """Start the VM process."""
         try:
-            # Start process
-            process = subprocess.Popen(qemu_cmd)  # pylint: disable=consider-using-with
+            if debug:
+                print("QEMU Command:")
+                print(" ".join(qemu_cmd))
+                print("\n" + "=" * 50 + "\n")
+
+            # Start process with proper output handling
+            if debug:
+                # In debug mode, show QEMU output
+                process = subprocess.Popen(qemu_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+
+                # Give it a moment to start
+                import time
+
+                time.sleep(2)
+
+                # Check if process is still running
+                if process.poll() is not None:
+                    # Process has exited, get output
+                    output, _ = process.communicate()
+                    print("QEMU process exited immediately. Output:")
+                    print(output)
+                    raise RuntimeError(f"QEMU process failed with exit code: {process.returncode}")
+
+            else:
+                # Normal mode - background process
+                process = subprocess.Popen(qemu_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
             print(f"{config.name} instance created.")
             print(f"Role: {config.role}")
@@ -393,10 +457,20 @@ class SwitchVMManager:  # pylint: disable=too-few-public-methods
             print(f"Monitor access: telnet localhost 44{config.sid:02d}")
             print(f"Process ID: {process.pid}")
 
+            if debug:
+                # Check process status after a moment
+                import time
+
+                time.sleep(1)
+                if process.poll() is not None:
+                    print(f"WARNING: Process {process.pid} has already exited!")
+                else:
+                    print(f"Process {process.pid} is running successfully")
+
             return process
 
         except Exception as e:
-            raise RuntimeError(f"Failed to start VM: {e}") from e
+            raise RuntimeError(f"Failed to start VM: {e}")
 
 
 def create_sample_configs():
@@ -415,7 +489,7 @@ def create_sample_configs():
         "default_interface_type": "e1000",
     }
 
-    with open("global_config.yaml", "w", encoding="utf-8") as f:
+    with open("global_config.yaml", "w") as f:
         yaml.dump(global_config, f, default_flow_style=False)
     print("Created global_config.yaml")
 
@@ -429,46 +503,11 @@ def create_sample_configs():
             "neighbors": ["BG1", "BG2", "CR1"],
             "isl_bridges": ["BR_ER1_BG1", "BR_ER1_BG2", "BR_CR1_ER1"],
         },
-        {
-            "name": "BG1",
-            "role": "Border Gateway",
-            "sid": 31,
-            "mgmt_bridge": "BR_ND_DATA",
-            "neighbors": ["ER1", "SP1"],
-            "isl_bridges": ["BR_ER1_BG1", "BR_BG1_SP1"],
-        },
-        {
-            "name": "BG2",
-            "role": "Border Gateway",
-            "sid": 32,
-            "mgmt_bridge": "BR_ND_DATA",
-            "neighbors": ["ER1", "SP2"],
-            "isl_bridges": ["BR_ER1_BG2", "BR_BG2_SP2"],
-        },
-        {
-            "name": "CR1",
-            "role": "Core Router",
-            "sid": 11,
-            "mgmt_bridge": "BR_ND_DATA",
-            "neighbors": ["ER1"],
-            "isl_bridges": ["BR_CR1_ER1"],
-        },
-        {
-            "name": "SP1",
-            "role": "Spine Switch",
-            "sid": 41,
-            "mgmt_bridge": "BR_ND_DATA",
-            "neighbors": ["BG1", "LE1"],
-            "isl_bridges": ["BR_BG1_SP1", "BR_SP1_LE1"],
-        },
-        {
-            "name": "SP2",
-            "role": "Spine Switch",
-            "sid": 42,
-            "mgmt_bridge": "BR_ND_DATA",
-            "neighbors": ["BG2", "LE2"],
-            "isl_bridges": ["BR_BG2_SP2", "BR_SP2_LE2"],
-        },
+        {"name": "BG1", "role": "Border Gateway", "sid": 31, "mgmt_bridge": "BR_ND_DATA", "neighbors": ["ER1", "SP1"], "isl_bridges": ["BR_ER1_BG1", "BR_BG1_SP1"]},
+        {"name": "BG2", "role": "Border Gateway", "sid": 32, "mgmt_bridge": "BR_ND_DATA", "neighbors": ["ER1", "SP2"], "isl_bridges": ["BR_ER1_BG2", "BR_BG2_SP2"]},
+        {"name": "CR1", "role": "Core Router", "sid": 11, "mgmt_bridge": "BR_ND_DATA", "neighbors": ["ER1"], "isl_bridges": ["BR_CR1_ER1"]},
+        {"name": "SP1", "role": "Spine Switch", "sid": 41, "mgmt_bridge": "BR_ND_DATA", "neighbors": ["BG1", "LE1"], "isl_bridges": ["BR_BG1_SP1", "BR_SP1_LE1"]},
+        {"name": "SP2", "role": "Spine Switch", "sid": 42, "mgmt_bridge": "BR_ND_DATA", "neighbors": ["BG2", "LE2"], "isl_bridges": ["BR_BG2_SP2", "BR_SP2_LE2"]},
         {
             "name": "LE1",
             "role": "Leaf Switch",
@@ -495,30 +534,22 @@ def create_sample_configs():
 
     for switch in switches:
         filename = f"{switch['name']}.yaml"
-        with open(filename, "w", encoding="utf-8") as f:
+        with open(filename, "w") as f:
             yaml.dump(switch, f, default_flow_style=False)
         print(f"Created {filename}")
 
 
 def main():
     """Main entry point."""
-    import argparse  # pylint: disable=import-outside-toplevel
+    import argparse
 
     parser = argparse.ArgumentParser(description="Nexus 9000v VM Manager")
     parser.add_argument("--config", type=Path, help="Switch configuration file (YAML)")
-    parser.add_argument(
-        "--global-config",
-        type=Path,
-        default=Path("global_config.yaml"),
-        help="Global configuration file (default: global_config.yaml)",
-    )
+    parser.add_argument("--global-config", type=Path, default=Path("global_config.yaml"), help="Global configuration file (default: global_config.yaml)")
     parser.add_argument("--dry-run", action="store_true", help="Show command without executing")
     parser.add_argument("--create-samples", action="store_true", help="Create sample config files")
-    parser.add_argument(
-        "--list-switches",
-        action="store_true",
-        help="List all switch config files in current directory",
-    )
+    parser.add_argument("--list-switches", action="store_true", help="List all switch config files in current directory")
+    parser.add_argument("--debug", action="store_true", help="Enable debug output and show QEMU command/output")
 
     args = parser.parse_args()
 
@@ -549,7 +580,7 @@ def main():
         manager = SwitchVMManager(global_config)
 
         # Create switch
-        result = manager.create_switch(switch_config, dry_run=args.dry_run)
+        result = manager.create_switch(switch_config, dry_run=args.dry_run, debug=args.debug)
 
         if args.dry_run:
             print("QEMU Command:")
@@ -561,7 +592,7 @@ def main():
             print(f"  Telnet: 90{switch_config.sid:02d}")
             print(f"  Monitor: 44{switch_config.sid:02d}")
 
-    except Exception as e:  # pylint: disable=broad-exception-caught
+    except Exception as e:
         print(f"Error: {e}")
         sys.exit(1)
 

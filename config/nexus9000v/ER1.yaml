@@ -1,0 +1,14 @@
+---
+# ER1.yaml - Edge Router configuration
+name: ER1
+role: Edge Router
+sid: 21
+mgmt_bridge: BR_ND_DATA
+neighbors:
+  - BG1
+  - BG2
+  - CR1
+isl_bridges:
+  - BR_ER1_BG1
+  - BR_ER1_BG2
+  - BR_CR1_ER1

@@ -1,0 +1,12 @@
+---
+# SP1.yaml - Spine Switch 1 configuration
+name: SP1
+role: Spine Switch
+sid: 41
+mgmt_bridge: BR_ND_DATA
+neighbors:
+  - BG1
+  - LE1
+isl_bridges:
+  - BR_BG1_SP1
+  - BR_SP1_LE1

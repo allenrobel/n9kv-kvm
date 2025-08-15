@@ -1,0 +1,12 @@
+---
+# BG1.yaml - Border Gateway 1 configuration
+name: BG1
+role: Border Gateway
+sid: 31
+mgmt_bridge: BR_ND_DATA
+neighbors:
+  - ER1
+  - SP1
+isl_bridges:
+  - BR_ER1_BG1
+  - BR_BG1_SP1

@@ -6,5 +6,18 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "ansible>=11.8.0",
+    "black>=25.1.0",
+    "flake8>=7.3.0",
+    "mypy>=1.17.1",
+    "pylint>=3.3.8",
     "requests>=2.32.4",
 ]
+
+[tool.black]
+line-length = 169
+
+[tool.flake8]
+max-line-length = 169
+
+[tool.pylint.format]
+max-line-length = 169

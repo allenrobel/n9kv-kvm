@@ -1,0 +1,12 @@
+---
+# SP2.yaml - Spine Switch 2 configuration
+name: SP2
+role: Spine Switch
+sid: 42
+mgmt_bridge: BR_ND_DATA
+neighbors:
+  - BG2
+  - LE2
+isl_bridges:
+  - BR_BG2_SP2
+  - BR_SP2_LE2

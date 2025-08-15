@@ -1,0 +1,10 @@
+# global_config.yaml - Global settings for all switches
+image_path: /iso1/nxos
+cdrom_path: /iso2/nxos/config
+bios_file: /usr/share/ovmf/OVMF.fd
+default_image: nexus9300v64.10.3.8.M.qcow2
+base_mac: 52:54:00
+default_ram: 16384
+default_vcpus: 4
+default_disk_size: 32G
+default_interface_type: e1000

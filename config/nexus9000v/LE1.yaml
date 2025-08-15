@@ -1,0 +1,12 @@
+---
+# LE1.yaml - Leaf Switch 1 configuration
+name: LE1
+role: Leaf Switch
+sid: 51
+mgmt_bridge: BR_ND_DATA
+neighbors:
+  - SP1
+  - HO1
+isl_bridges:
+  - BR_SP1_LE1
+  - BR_LE1_HO1

@@ -1,0 +1,10 @@
+---
+# CR1.yaml - Core Router configuration
+name: CR1
+role: Core Router
+sid: 11
+mgmt_bridge: BR_ND_DATA
+neighbors:
+  - ER1
+isl_bridges:
+  - BR_CR1_ER1

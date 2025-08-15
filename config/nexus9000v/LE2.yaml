@@ -1,0 +1,12 @@
+---
+# LE2.yaml - Leaf Switch 2 configuration
+name: LE2
+role: Leaf Switch
+sid: 52
+mgmt_bridge: BR_ND_DATA
+neighbors:
+  - SP2
+  - HO2
+isl_bridges:
+  - BR_SP2_LE2
+  - BR_LE2_HO2

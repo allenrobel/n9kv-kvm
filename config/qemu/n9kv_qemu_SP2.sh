@@ -11,7 +11,7 @@ NEIGHBOR_1=BG2
 NEIGHBOR_2=LE2
 MGMT_BRIDGE=BR_ND_DATA
 ISL_BRIDGE_1=BR_BG2_SP2
-ISL_BRIDGE_2=BR_SP2_HO2
+ISL_BRIDGE_2=BR_SP2_LE2
 # MAC_1 sets mgmt0 mac address
 # The other two are for ISL links but, alas, are ignored by n9kv bootup.
 # We use the ./config/ansible/interface_mac_addresses_*.yaml scripts to set these.

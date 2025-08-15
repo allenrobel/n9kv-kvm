@@ -1,20 +1,20 @@
 #!/bin/bash
 
 # Switch configuration parameters
-SWITCH_NAME=ER1
-SWITCH_ROLE="Edge Router"
-SID=21
+SWITCH_NAME=SP2
+SWITCH_ROLE="Spine"
+SID=42
+
 # SWITCH_SERIAL must be unique per switch and is required for n9kv bootup with unique MAC addresses
 SWITCH_SERIAL=00000000$SID
+NEIGHBOR_1=BG2
+NEIGHBOR_2=LE2
 MGMT_BRIDGE=BR_ND_DATA
-
-NEIGHBOR_1=BG1
-NEIGHBOR_2=BG2
-NEIGHBOR_3=CR1
-ISL_BRIDGE_1=BR_ER1_BG1
-ISL_BRIDGE_2=BR_ER1_BG2
-ISL_BRIDGE_3=BR_CR1_ER3
+ISL_BRIDGE_1=BR_BG2_SP2
+ISL_BRIDGE_2=BR_SP2_HO2
 # MAC_1 sets mgmt0 mac address
+# The other two are for ISL links but, alas, are ignored by n9kv bootup.
+# We use the ./config/ansible/interface_mac_addresses_*.yaml scripts to set these.
 MAC_1="00:00:$SID:00:00:01"
 MAC_2="00:00:$SID:00:00:02"
 MAC_3="00:00:$SID:00:00:03"
@@ -25,7 +25,6 @@ MONITOR_PORT=44$SID  # Monitor port for QEMU
 IMAGE_PATH=/iso1/nxos
 N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v64.10.3.8.M.qcow2
 # N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9500v64.10.5.3.F.qcow2
-
 
 # sudo apt install ovmf
 BIOS_FILE=/usr/share/ovmf/OVMF.fd
@@ -98,10 +97,12 @@ qemu-system-x86_64 \
 
 
 echo "$VM_NAME instance created."
+echo ""
 echo "$SWITCH_NAME -> $NEIGHBOR_1: $ISL_BRIDGE_1"
 echo "$SWITCH_NAME -> $NEIGHBOR_2: $ISL_BRIDGE_2"
 echo ""
 echo "$VM_NAME starting..."
+echo ""
 echo "All mgmt interfaces connected to $MGMT_BRIDGE bridge."
 echo ""
 echo "Console access:"

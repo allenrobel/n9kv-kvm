@@ -30,7 +30,7 @@ N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9300v64.10.3.8.M.qcow2
 BIOS_FILE=/usr/share/ovmf/OVMF.fd
 
 # To create dummy CD-ROM image with startup configuration
-# mkisofs -o ER.iso -l --iso-level 2 nxos_config.txt
+# mkisofs -o $SWITCH_NAME.iso -l --iso-level 2 nxos_config.txt
 # Or see the playbook in ./config/ansible/playbooks/startup_config_iso.yaml
 CDROM_PATH=/iso2/nxos/config
 CDROM_IMAGE=$CDROM_PATH/$SWITCH_NAME.iso
@@ -53,18 +53,18 @@ if [ ! -f $BIOS_FILE ]; then
     exit 1
 fi
 
-VM_IMAGE=$CDROM_PATH/$SWITCH_NAME.qcow2
+QCOW2=$CDROM_PATH/$SWITCH_NAME.qcow2
 # Create writable disk copies for each VM
 echo "Creating disk images..."
 # Create full copies instead of backing files
-cp $N9KV_SHARED_IMAGE $VM_IMAGE
+cp $N9KV_SHARED_IMAGE $QCOW2
 
 # Resize the copies
-qemu-img resize $VM_IMAGE $DISK_SIZE
+qemu-img resize $QCOW2 $DISK_SIZE
 
 # Verify sizes
 echo "Disk image sizes:"
-qemu-img info $VM_IMAGE | grep "virtual size"
+qemu-img info $QCOW2 | grep "virtual size"
 
 echo "Creating $SWITCH_NAME - $SWITCH_ROLE..."
 
@@ -83,7 +83,7 @@ qemu-system-x86_64 \
     -serial telnet:localhost:$TELNET_PORT,server=on,wait=off \
     -device ahci,id=ahci0,bus=pcie.0 \
     -drive file=$CDROM_IMAGE,media=cdrom \
-    -drive file=$VM_IMAGE,if=none,id=drive-sata-disk0,format=qcow2,cache=writethrough \
+    -drive file=$QCOW2,if=none,id=drive-sata-disk0,format=qcow2,cache=writethrough \
     -device ide-hd,bus=ahci0.0,drive=drive-sata-disk0,bootindex=1 \
     -monitor telnet:localhost:$MONITOR_PORT,server,nowait \
     -netdev bridge,id=ND_DATA,br=$MGMT_BRIDGE \

@@ -16,10 +16,10 @@
           vlan_id: 2002
           service_vrf_template: null
           attach:
-          - ip_address: "{{ L1_IP4 }}"
-          - ip_address: "{{ S1_IP4 }}"
+          - ip_address: "{{ LE1_IP4 }}"
+          - ip_address: "{{ SP1_IP4 }}"
             vrf_lite:
-            - interface: "{{ S1_INTERFACE_1 }}"
+            - interface: "{{ SP1_INTERFACE_1 }}"
         - vrf_name: v3
           vrf_id: 9000003
           vrf_template: Default_VRF_Universal
@@ -27,7 +27,7 @@
           vlan_id: 2003
           service_vrf_template: null
           attach:
-          - ip_address: "{{ L1_IP4 }}"
-          - ip_address: "{{ S1_IP4 }}"
+          - ip_address: "{{ LE1_IP4 }}"
+          - ip_address: "{{ SP1_IP4 }}"
             vrf_lite:
-            - interface: "{{ S1_INTERFACE_1 }}"
+            - interface: "{{ SP1_INTERFACE_1 }}"

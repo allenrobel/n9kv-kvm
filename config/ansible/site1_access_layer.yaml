@@ -15,7 +15,7 @@
         vlan_id: 2002
         service_vrf_template: null
         attach:
-        - ip_address: 192.168.12.131
+        - ip_address: "{{ LE1_IP4 }}"
 
   - name: Network n2 SITE1
     cisco.dcnm.dcnm_network:
@@ -31,17 +31,17 @@
         gw_ip_subnet: 11.1.2.1/24
         deploy: true
         attach:
-        - ip_address: 192.168.12.131
+        - ip_address: "{{ LE1_IP4 }}"
 
   - name: Configure Ethernet1/2 as access interface
     cisco.dcnm.dcnm_interface:
       fabric: SITE1
       state: merged
       config:
-      - name: Ethernet1/2
+      - name: "{{ LE1_INTERFACE_2 }}"
         type: eth
         switch:
-        - 192.168.12.131
+        - "{{ LE1_IP4 }}"
         deploy: true
         profile:
           admin_state: true

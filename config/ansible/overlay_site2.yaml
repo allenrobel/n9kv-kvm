@@ -9,58 +9,58 @@
         fabric: SITE2
         state: merged
         config:
-        - vrf_name: VRF2
+        - vrf_name: v2
           vrf_id: 9000002
           vrf_template: Default_VRF_Universal
           vrf_extension_template: Default_VRF_Extension_Universal
           vlan_id: 2002
           service_vrf_template: null
           attach:
-          - ip_address: "{{ L2_IP4 }}"
-          - ip_address: "{{ S2_IP4 }}"
+          - ip_address: "{{ LE2_IP4 }}"
+          - ip_address: "{{ SP2_IP4 }}"
             vrf_lite:
-              - interface: "{{ S2_INTERFACE_1 }}"
-        - vrf_name: VRF3
+              - interface: "{{ SP2_INTERFACE_1 }}"
+        - vrf_name: v3
           vrf_id: 9000003
           vrf_template: Default_VRF_Universal
           vrf_extension_template: Default_VRF_Extension_Universal
           vlan_id: 2003
           service_vrf_template: null
           attach:
-          - ip_address: "{{ L2_IP4 }}"
-          - ip_address: "{{ S2_IP4 }}"
+          - ip_address: "{{ LE2_IP4 }}"
+          - ip_address: "{{ SP2_IP4 }}"
             vrf_lite:
-              - interface: "{{ S2_INTERFACE_1 }}"
+              - interface: "{{ SP2_INTERFACE_1 }}"
     - name: Networks SITE2
       cisco.dcnm.dcnm_network:
         fabric: SITE2
         state: merged
         config:
-        - net_name: NET2
-          vrf_name: VRF2
+        - net_name: v2n1
+          vrf_name: v2
           net_id: 2
           net_template: Default_Network_Universal
           net_extension_template: Default_Network_Extension_Universal
           vlan_id: 2
           gw_ip_subnet: '11.2.1.1/24'
           attach:
-          - ip_address: "{{ L2_IP4 }}"
-            ports: ["{{ L2_INTERFACE_2 }}"]
+          - ip_address: "{{ LE2_IP4 }}"
+            ports: ["{{ LE2_INTERFACE_2 }}"]
             deploy: true
-          - ip_address: "{{ S2_IP4 }}"
+          - ip_address: "{{ SP2_IP4 }}"
             ports: []
             deploy: true
-        - net_name: NET3
-          vrf_name: VRF3
+        - net_name: v3n1
+          vrf_name: v3
           net_id: 3
           net_template: Default_Network_Universal
           net_extension_template: Default_Network_Extension_Universal
           vlan_id: 3
           gw_ip_subnet: '11.3.1.1/24'
           attach:
-          - ip_address: "{{ L2_IP4 }}"
-            ports: ["{{ L2_INTERFACE_2 }}"]
+          - ip_address: "{{ LE2_IP4 }}"
+            ports: ["{{ LE2_INTERFACE_2 }}"]
             deploy: true
-          - ip_address: "{{ S2_IP4 }}"
+          - ip_address: "{{ SP2_IP4 }}"
             ports: []
             deploy: true

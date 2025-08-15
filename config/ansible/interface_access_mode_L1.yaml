@@ -3,15 +3,15 @@
   check_mode: false
   gather_facts: false
   tasks:
-  - name: Configure SITE1.L1.Eth1/2 as access interface
+  - name: Configure SITE1.LE1.Eth1/2 as access interface
     cisco.dcnm.dcnm_interface:
       fabric: "{{ SITE1_FABRIC }}"
       state: merged
       config:
-      - name: "{{ L1_INTERFACE_2 }}"
+      - name: "{{ LE1_INTERFACE_2 }}"
         type: eth
         switch:
-        - "{{ L1_IP4 }}"
+        - "{{ LE1_IP4 }}"
         deploy: true
         profile:
           admin_state: true

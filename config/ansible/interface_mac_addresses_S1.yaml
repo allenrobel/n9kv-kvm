@@ -8,23 +8,23 @@
     gather_facts: false
     vars:
     tasks:
-    - name: "{{ SITE1_FABRIC }}.S1 switch_freeform policy"
+    - name: "{{ SITE1_FABRIC }}.SP1 switch_freeform policy"
       cisco.dcnm.dcnm_policy:
         state: merged
         fabric: "{{ SITE1_FABRIC }}"
         use_desc_as_key: true
         config:
           - switch:
-            - ip: "{{ S1_IP4 }}"
+            - ip: "{{ SP1_IP4 }}"
               policies:
                 - name: switch_freeform
                   create_additional_policy: false
                   priority: 101
-                  description: S1_interface_mac_addresses
+                  description: SP1_interface_mac_addresses
                   policy_vars:
                     CONF: |
                       configure terminal
-                        interface {{ S1_INTERFACE_1 }}
-                          mac-address {{ S1_MAC_1 }}
-                        interface {{ S1_INTERFACE_2 }}
-                          mac-address {{ S1_MAC_2 }}
+                        interface {{ SP1_INTERFACE_1 }}
+                          mac-address {{ SP1_MAC_1 }}
+                        interface {{ SP1_INTERFACE_2 }}
+                          mac-address {{ SP1_MAC_2 }}

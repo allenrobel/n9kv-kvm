@@ -15,10 +15,17 @@ ISL_BRIDGE_1=BR_ER1_BG1
 ISL_BRIDGE_2=BR_ER1_BG2
 ISL_BRIDGE_3=BR_CR1_ER1
 # MAC_1 sets mgmt0 mac address
-MAC_1="00:00:$SID:00:00:01"
-MAC_2="00:00:$SID:00:00:02"
-MAC_3="00:00:$SID:00:00:03"
-MAC_4="00:00:$SID:00:00:04"
+# MAC_1="00:00:$SID:00:00:01"
+# MAC_2="00:00:$SID:00:00:02"
+# MAC_3="00:00:$SID:00:00:03"
+# MAC_4="00:00:$SID:00:00:04"
+
+# To this format:
+BASE_MAC="52:54:00"
+MAC_1="$BASE_MAC:$(printf "%02d" $SID):00:01"  # mgmt0
+MAC_2="$BASE_MAC:$(printf "%02d" $SID):01:01"  # eth1/1  
+MAC_3="$BASE_MAC:$(printf "%02d" $SID):01:02"  # eth1/2
+MAC_4="$BASE_MAC:$(printf "%02d" $SID):01:03"  # eth1/3
 
 TELNET_PORT=90$SID   # Telnet port for console access
 MONITOR_PORT=44$SID  # Monitor port for QEMU

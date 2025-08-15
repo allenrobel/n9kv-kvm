@@ -10,17 +10,17 @@ interface mgmt0
   ip address {{ mgmt_ip }}/24
   no shutdown
 
-{% if interface_1 is defined %}
+{% if interface_1 is defined and interface_1 is not none %}
 interface {{ interface_1 }}
     no shutdown
 {% endif %}
 
-{% if interface_2 is defined %}
+{% if interface_2 is defined and interface_2 is not none %}
 interface {{ interface_2 }}
     no shutdown
 {% endif %}
 
-{% if interface_3 is defined %}
+{% if interface_3 is defined and interface_3 is not none %}
 interface {{ interface_3 }}
     no shutdown
 {% endif %}

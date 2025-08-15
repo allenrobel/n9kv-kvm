@@ -50,7 +50,7 @@ if [ ! -f $BIOS_FILE ]; then
     exit 1
 fi
 
-VM_IMAGE=$IMAGE_PATH/$SWITCH_NAME.qcow2
+VM_IMAGE=$CDROM_PATH/$SWITCH_NAME.qcow2
 # Create writable disk copies for each VM
 echo "Creating disk images..."
 # Create full copies instead of backing files
@@ -64,7 +64,6 @@ echo "Disk image sizes:"
 qemu-img info $VM_IMAGE | grep "virtual size"
 
 echo "Creating $SWITCH_NAME - $SWITCH_ROLE..."
-VM_NAME=$SWITCH_NAME
 
 qemu-system-x86_64 \
     -smbios type=1,manufacturer="Cisco",product="Nexus9000",serial="$SWITCH_SERIAL" \
@@ -88,13 +87,13 @@ qemu-system-x86_64 \
     -device $MODEL,netdev=ND_DATA,mac=$MAC_1 \
     -netdev bridge,id=ISL_BRIDGE_1,br=$ISL_BRIDGE_1 \
     -device $MODEL,netdev=ISL_BRIDGE_1,mac=$MAC_2 \
-    -name $VM_NAME &
+    -name $SWITCH_NAME &
 
 
-echo "$VM_NAME instance created."
+echo "$SWITCH_NAME instance created."
 echo "$SWITCH_NAME -> $NEIGHBOR_1: $ISL_BRIDGE_1"
 echo ""
-echo "$VM_NAME starting..."
+echo "$SWITCH_NAME starting..."
 echo "All mgmt interfaces connected to $MGMT_BRIDGE bridge."
 echo ""
 echo "Console access:"

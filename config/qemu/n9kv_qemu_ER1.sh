@@ -75,7 +75,6 @@ qemu-system-x86_64 \
     -smbios type=1,manufacturer="Cisco",product="Nexus9000",serial="$SWITCH_SERIAL" \
     -enable-kvm \
     -machine type=q35,accel=kvm,kernel-irqchip=on \
-    -append "mitigations=off quiet" \
     -cpu host \
     -smp $VCPUS,sockets=1,cores=$VCPUS,threads=1 \
     -m $RAM \

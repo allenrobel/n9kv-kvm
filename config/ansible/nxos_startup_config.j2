@@ -1,4 +1,3 @@
-
 !Time: Fri Jul 25 10:00:00 2025
 !Startup config saved at: Fri Jul 25 10:00:00 2025
 configure terminal
@@ -11,8 +10,10 @@ interface mgmt0
   ip address {{ mgmt_ip }}/24
   no shutdown
 
+{% if interface_1 is not none %}
 interface {{ interface_1 }}
     no shutdown
+{% endif %}
 
 {% if interface_2 is not none %}
 interface {{ interface_2 }}

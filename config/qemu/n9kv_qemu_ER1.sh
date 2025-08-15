@@ -81,7 +81,7 @@ qemu-system-x86_64 \
     -smbios type=1,manufacturer="Cisco",product="Nexus9000",serial="$SWITCH_SERIAL" \
     -enable-kvm \
     -machine type=q35,accel=kvm,kernel-irqchip=on \
-    -cpu qemu64,+ssse3,+sse4.1,+sse4.2,-smep,-smap,-spec-ctrl \
+    -cpu host \
     -smp $VCPUS,sockets=1,cores=$VCPUS,threads=1 \
     -m $RAM \
     -object memory-backend-ram,id=ram-node0,size=${RAM}M \

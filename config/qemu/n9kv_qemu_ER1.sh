@@ -18,6 +18,7 @@ ISL_BRIDGE_3=BR_CR1_ER3
 MAC_1="00:00:$SID:00:00:01"
 MAC_2="00:00:$SID:00:00:02"
 MAC_3="00:00:$SID:00:00:03"
+MAC_4="00:00:$SID:00:00:04"
 
 TELNET_PORT=90$SID   # Telnet port for console access
 MONITOR_PORT=44$SID  # Monitor port for QEMU
@@ -93,12 +94,15 @@ qemu-system-x86_64 \
     -device $MODEL,netdev=ISL_BRIDGE_1,mac=$MAC_2 \
     -netdev bridge,id=ISL_BRIDGE_2,br=$ISL_BRIDGE_2 \
     -device $MODEL,netdev=ISL_BRIDGE_2,mac=$MAC_3 \
+    -netdev bridge,id=ISL_BRIDGE_3,br=$ISL_BRIDGE_3 \
+    -device $MODEL,netdev=ISL_BRIDGE_3,mac=$MAC_4 \
     -name $SWITCH_NAME &
 
 
 echo "$SWITCH_NAME instance created."
 echo "$SWITCH_NAME -> $NEIGHBOR_1: $ISL_BRIDGE_1"
 echo "$SWITCH_NAME -> $NEIGHBOR_2: $ISL_BRIDGE_2"
+echo "$SWITCH_NAME -> $NEIGHBOR_3: $ISL_BRIDGE_3"
 echo ""
 echo "$SWITCH_NAME starting..."
 echo "All mgmt interfaces connected to $MGMT_BRIDGE bridge."

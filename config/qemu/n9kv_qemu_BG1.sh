@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# Function to generate unique MACs
+generate_macs() {
+    local sid=$1
+    BASE_MAC="52:54:00"
+    MAC_MGMT="$BASE_MAC:$(printf "%02x" $sid):00:01"
+    MAC_ETH1="$BASE_MAC:$(printf "%02x" $sid):01:01"
+    MAC_ETH2="$BASE_MAC:$(printf "%02x" $sid):01:02"
+    MAC_ETH3="$BASE_MAC:$(printf "%02x" $sid):01:03"
+}
+
 # Switch configuration parameters
 SWITCH_NAME=BG1
 SWITCH_ROLE="Border Gateway"
@@ -88,16 +98,6 @@ qemu-system-x86_64 \
     -netdev bridge,id=ISL_BRIDGE_2,br=$ISL_BRIDGE_2 \
     -device $MODEL,netdev=ISL_BRIDGE_2,mac=$MAC_ETH2 \
     -name $SWITCH_NAME &
-
-# Function to generate unique MACs
-generate_macs() {
-    local sid=$1
-    BASE_MAC="52:54:00"
-    MAC_MGMT="$BASE_MAC:$(printf "%02x" $sid):00:01"
-    MAC_ETH1="$BASE_MAC:$(printf "%02x" $sid):01:01"
-    MAC_ETH2="$BASE_MAC:$(printf "%02x" $sid):01:02"
-    MAC_ETH3="$BASE_MAC:$(printf "%02x" $sid):01:03"
-}
 
 echo "$SWITCH_NAME instance created."
 echo ""

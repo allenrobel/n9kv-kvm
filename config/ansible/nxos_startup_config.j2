@@ -4,6 +4,9 @@ configure terminal
 hostname {{ hostname }}
 boot nxos bootflash:/{{ boot_image }}
 
+vrf context management
+  ip route 0.0.0.0/0 {{ mgmt_gw }}
+
 interface mgmt0
   no cdp enable
   vrf member management

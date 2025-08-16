@@ -43,6 +43,7 @@ class RootfsBuilder:
                         "debootstrap",
                         "--arch=amd64",
                         "--verbose",
+                        "--option=Acquire::ForceIPv4=true",
                         "jammy",
                         str(rootfs_path),
                         mirror,

@@ -25,7 +25,7 @@ class RootfsBuilder:
     def create_ubuntu_rootfs(
         self,
         container_name: str,
-        mirror: str = "http://us.archive.ubuntu.com/ubuntu/",
+        mirror: str = "http://archive.ubuntu.com/ubuntu/",
         max_attempts: int = 3,
         force_ipv4: bool = True,
     ) -> None:
@@ -39,7 +39,6 @@ class RootfsBuilder:
                     f"Creating Ubuntu rootfs (attempt {attempt}/{max_attempts}) using {ip_mode}"
                 )
 
-                # Build debootstrap command
                 cmd = [
                     "sudo",
                     "debootstrap",
@@ -50,22 +49,26 @@ class RootfsBuilder:
                     mirror,
                 ]
                 
-                # Set environment to force IPv4 if requested
-                import os
-                env = os.environ.copy() if force_ipv4 else None
                 if force_ipv4:
-                    env['WGET_OPTIONS'] = '--inet4-only'
-                    # Also try setting APT options for newer systems
-                    env['APT_CONFIG'] = '/dev/stdin'
-                    # Use sudo -E to preserve environment
-                    cmd[0:1] = ["sudo", "-E"]
+                    # Force IPv4 by using environment variables that work better
+                    import os
+                    env = os.environ.copy()
+                    # Set multiple environment variables to force IPv4
+                    env.update({
+                        'WGET_OPTIONS': '--inet4-only',
+                        'CURL_OPTIONS': '-4',
+                        'APT_CONFIG': '/dev/null',  # Disable any APT config that might force IPv6
+                    })
+                    
+                    # Use env command to explicitly set environment
+                    cmd = [
+                        "sudo", "-E",  # Preserve environment
+                        "env",
+                        "WGET_OPTIONS=--inet4-only",
+                        "CURL_OPTIONS=-4",
+                    ] + cmd[1:]  # Remove the first 'sudo' since we're using sudo -E
                 
-                if force_ipv4:
-                    # For IPv4-only, pass APT config via stdin
-                    apt_config = "Acquire::ForceIPv4 \"true\";\n"
-                    self.executor.run(cmd, input_text=apt_config)
-                else:
-                    self.executor.run(cmd)
+                self.executor.run(cmd)
 
                 logger.info(f"Successfully created rootfs on attempt {attempt}")
                 return

@@ -2,8 +2,8 @@
 """
 Nexus 9000v VM Manager
 
-Manager for creating and configuring Cisco Nexus 9000v VMs
-using QEMU/KVM with YAML-based configuration files.
+Manager for creating and configuring Cisco Nexus 9000v VMs using QEMU/KVM
+with YAML-based configuration files.
 """
 
 import subprocess
@@ -88,13 +88,34 @@ class MACAddressGenerator(Protocol):
 class StandardMACGenerator:
     """Standard MAC address generator using predictable format."""
 
+    def _validate_base_mac(self, base_mac: str) -> str:
+        """Validate and normalize base MAC address."""
+        # Remove any quotes and whitespace
+        base_mac = base_mac.strip().strip("\"'")
+
+        # Validate format
+        parts = base_mac.split(":")
+        if len(parts) != 3:
+            raise ValueError(f"Base MAC must have 3 octets (e.g., '52:54:00'), got: {base_mac}")
+
+        # Validate each part is valid hex
+        try:
+            for part in parts:
+                int(part, 16)
+        except ValueError as exc:
+            raise ValueError(f"Invalid hex in base MAC: {base_mac}") from exc
+
+        return base_mac
+
     def generate_mgmt_mac(self, sid: int, base_mac: str) -> str:
         """Generate management interface MAC."""
+        base_mac = self._validate_base_mac(base_mac)
         return f"{base_mac}:{sid:02x}:00:01"
 
     def generate_ethernet_mac(self, sid: int, port: int, base_mac: str) -> str:
         """Generate ethernet interface MAC."""
-        return f"{base_mac}:{sid:02x}:01:{port:02d}"
+        base_mac = self._validate_base_mac(base_mac)
+        return f"{base_mac}:{sid:02x}:01:{port:02x}"
 
 
 class QEMUCommandBuilder(ABC):  # pylint: disable=too-few-public-methods
@@ -224,7 +245,7 @@ class ProcessValidator:  # pylint: disable=too-few-public-methods
         issues = []
 
         # Check if running as root/sudo
-        import os
+        import os  # pylint: disable=import-outside-toplevel
 
         if os.geteuid() != 0:
             issues.append("Script should be run with sudo for bridge access")
@@ -243,7 +264,7 @@ class ProcessValidator:  # pylint: disable=too-few-public-methods
         """Check if required bridges exist."""
         issues = []
         try:
-            result = subprocess.run(["brctl", "show"], capture_output=True, text=True)
+            result = subprocess.run(["brctl", "show"], capture_output=True, text=True, check=False)
             bridge_output = result.stdout
 
             for bridge in bridges:
@@ -258,7 +279,7 @@ class ProcessValidator:  # pylint: disable=too-few-public-methods
     def check_process_running(pid: int) -> bool:
         """Check if a process is still running."""
         try:
-            import os
+            import os  # pylint: disable=import-outside-toplevel
 
             os.kill(pid, 0)
             return True
@@ -280,7 +301,7 @@ class DiskManager:
             subprocess.run(["qemu-img", "resize", str(dest_disk), size], check=True)
 
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Failed to create VM disk: {e}")
+            raise RuntimeError(f"Failed to create VM disk: {e}") from e
 
     @staticmethod
     def get_disk_info(disk_path: Path) -> Dict[str, str]:
@@ -301,12 +322,20 @@ class ConfigLoader:
         global_config = GlobalConfig()
 
         if config_path and config_path.exists():
-            with open(config_path, "r") as f:
+            with open(config_path, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)
                 # Update global config with values from file
                 for key, value in data.items():
                     if hasattr(global_config, key):
-                        setattr(global_config, key, value)
+                        # Special handling for base_mac which might be parsed as time
+                        if key == "base_mac":
+                            if isinstance(value, str):
+                                setattr(global_config, key, value)
+                            else:
+                                # Convert time object back to string format
+                                setattr(global_config, key, str(value))
+                        else:
+                            setattr(global_config, key, value)
 
         return global_config
 
@@ -316,7 +345,7 @@ class ConfigLoader:
         if not config_path.exists():
             raise FileNotFoundError(f"Switch config file not found: {config_path}")
 
-        with open(config_path, "r") as f:
+        with open(config_path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
         return SwitchConfig(**data)
@@ -429,7 +458,7 @@ class SwitchVMManager:  # pylint: disable=too-few-public-methods
                 process = subprocess.Popen(qemu_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 
                 # Give it a moment to start
-                import time
+                import time  # pylint: disable=import-outside-toplevel
 
                 time.sleep(2)
 
@@ -443,7 +472,7 @@ class SwitchVMManager:  # pylint: disable=too-few-public-methods
 
             else:
                 # Normal mode - background process
-                process = subprocess.Popen(qemu_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                process = subprocess.Popen(qemu_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # pylint: disable=consider-using-with
 
             print(f"{config.name} instance created.")
             print(f"Role: {config.role}")
@@ -459,7 +488,7 @@ class SwitchVMManager:  # pylint: disable=too-few-public-methods
 
             if debug:
                 # Check process status after a moment
-                import time
+                import time  # pylint: disable=import-outside-toplevel
 
                 time.sleep(1)
                 if process.poll() is not None:
@@ -470,7 +499,7 @@ class SwitchVMManager:  # pylint: disable=too-few-public-methods
             return process
 
         except Exception as e:
-            raise RuntimeError(f"Failed to start VM: {e}")
+            raise RuntimeError(f"Failed to start VM: {e}") from e
 
 
 def create_sample_configs():
@@ -482,15 +511,16 @@ def create_sample_configs():
         "cdrom_path": "/iso2/nxos/config",
         "bios_file": "/usr/share/ovmf/OVMF.fd",
         "default_image": "nexus9300v64.10.3.8.M.qcow2",
-        "base_mac": "52:54:00",
+        "base_mac": "52:54:00",  # Explicitly quoted to prevent YAML time parsing
         "default_ram": 16384,
         "default_vcpus": 4,
         "default_disk_size": "32G",
         "default_interface_type": "e1000",
     }
 
-    with open("global_config.yaml", "w") as f:
-        yaml.dump(global_config, f, default_flow_style=False)
+    with open("global_config.yaml", "w", encoding="utf-8") as f:
+        # Use default_flow_style=False and allow_unicode=True for better formatting
+        yaml.dump(global_config, f, default_flow_style=False, allow_unicode=True)
     print("Created global_config.yaml")
 
     # Switch configurations
@@ -534,14 +564,14 @@ def create_sample_configs():
 
     for switch in switches:
         filename = f"{switch['name']}.yaml"
-        with open(filename, "w") as f:
-            yaml.dump(switch, f, default_flow_style=False)
+        with open(filename, "w", encoding="utf-8") as f:
+            yaml.dump(switch, f, default_flow_style=False, allow_unicode=True)
         print(f"Created {filename}")
 
 
 def main():
     """Main entry point."""
-    import argparse
+    import argparse  # pylint: disable=import-outside-toplevel
 
     parser = argparse.ArgumentParser(description="Nexus 9000v VM Manager")
     parser.add_argument("--config", type=Path, help="Switch configuration file (YAML)")
@@ -592,7 +622,7 @@ def main():
             print(f"  Telnet: 90{switch_config.sid:02d}")
             print(f"  Monitor: 44{switch_config.sid:02d}")
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Error: {e}")
         sys.exit(1)
 

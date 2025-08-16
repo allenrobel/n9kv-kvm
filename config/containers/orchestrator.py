@@ -41,7 +41,7 @@ class ContainerOrchestrator:
         self.xml_generator: LibvirtXMLGenerator = xml_generator
         self.domain_manager: LibvirtDomainManager = domain_manager
 
-    def create_container(self, spec: ContainerSpec) -> None:
+    def create_container(self, spec: ContainerSpec, force_ipv4: bool = True) -> None:
         """Create complete container"""
         logger.info(f"Creating container: {spec.name}")
 
@@ -53,7 +53,7 @@ class ContainerOrchestrator:
             self.fs_manager.create_container_directories(spec.name)
 
             # Create rootfs
-            self.rootfs_builder.create_ubuntu_rootfs(spec.name)
+            self.rootfs_builder.create_ubuntu_rootfs(spec.name, force_ipv4=force_ipv4)
 
             # Install packages
             self.package_installer.install_packages(spec.name)

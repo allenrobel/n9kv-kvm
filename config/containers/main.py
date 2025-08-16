@@ -28,8 +28,9 @@ def main() -> int:
         epilog="""
 Examples:
   python3 main.py --check                                    # Check requirements
-  python3 main.py --config access_mode_containers.yaml H1   # Create H1 from access mode config
-  python3 main.py --config trunk_mode_containers.yaml H2    # Create H2 from trunk mode config
+  python3 main.py --config access_mode_containers.yaml H1   # Create H1 from access mode config (IPv4 only)
+  python3 main.py --config trunk_mode_containers.yaml H2    # Create H2 from trunk mode config (IPv4 only)
+  python3 main.py --config access_mode_containers.yaml H1 --allow-ipv6  # Allow IPv6 for downloads
         """,
     )
 
@@ -53,6 +54,12 @@ Examples:
         "--list-containers", 
         action="store_true", 
         help="List available containers in the config file"
+    )
+
+    parser.add_argument(
+        "--allow-ipv6",
+        action="store_true",
+        help="Allow IPv6 for downloads (default: IPv4 only)"
     )
 
     args = parser.parse_args()
@@ -96,8 +103,9 @@ Examples:
         spec = config_loader.create_container_spec(args.container)
 
         # Create the container
+        force_ipv4 = not args.allow_ipv6  # Default to IPv4 unless --allow-ipv6 is specified
         logger.info(f"Creating container '{args.container}' from config '{args.config}'")
-        orchestrator.create_container(spec)
+        orchestrator.create_container(spec, force_ipv4=force_ipv4)
         logger.info(f"Successfully created container '{args.container}'")
         return 0
 

@@ -5,8 +5,8 @@ role: Border Gateway
 sid: 32
 mgmt_bridge: BR_ND_DATA
 neighbors:
-  - ER1
+  - BG1
   - SP2
 isl_bridges:
-  - BR_ER1_BG2
+  - BR_BG1_BG2
   - BR_BG2_SP2

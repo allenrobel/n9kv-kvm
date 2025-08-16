@@ -12,7 +12,7 @@ containers:
       name: "eth1"
       ip_address: "192.0.1.141"
       netmask: "24"
-      bridge: "BR_L1_H1"
+      bridge: "BR_LE1_HO1"
       mac_address: "00:00:41:00:00:02"
       description: "Test Interface"
     vlans: []
@@ -33,7 +33,7 @@ containers:
       name: "eth1"
       ip_address: "192.0.1.142"
       netmask: "24"
-      bridge: "BR_L2_H2"
+      bridge: "BR_LE2_HO2"
       mac_address: "00:00:42:00:00:02"
       description: "Test Interface"
     vlans: []

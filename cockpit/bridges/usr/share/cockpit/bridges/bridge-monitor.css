@@ -1,0 +1,161 @@
+.bridge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.bridge-card {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 1rem;
+    background: white;
+}
+
+.bridge-card.up {
+    border-left: 4px solid #28a745;
+}
+
+.bridge-card.down {
+    border-left: 4px solid #dc3545;
+}
+
+.bridge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.bridge-name {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.bridge-status {
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.status-up {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-down {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.bridge-metrics {
+    margin: 0.5rem 0;
+}
+
+.metric-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.metric {
+    text-align: center;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.rx-metric .metric-value {
+    color: #28a745;
+}
+
+.tx-metric .metric-value {
+    color: #007bff;
+}
+
+.metric-value {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.metric-label {
+    font-size: 0.8em;
+    color: #6c757d;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.metric-subtitle {
+    font-size: 0.7em;
+    color: #6c757d;
+    margin-top: 0.2rem;
+}
+
+.bridge-details {
+    margin-top: 0.5rem;
+    font-size: 0.9em;
+}
+
+.detail-row {
+    display: flex;
+    margin-bottom: 0.3rem;
+}
+
+.detail-label {
+    font-weight: bold;
+    min-width: 80px;
+    color: #495057;
+}
+
+.detail-value {
+    color: #6c757d;
+    flex: 1;
+}
+
+.stp-enabled {
+    color: #28a745;
+}
+
+.stp-disabled {
+    color: #dc3545;
+}
+
+.controls {
+    margin-bottom: 1rem;
+}
+
+.controls button {
+    margin-right: 0.5rem;
+}
+
+.refresh-btn {
+    margin-bottom: 1rem;
+}
+
+.error-message {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    padding: 1rem;
+    border-radius: 4px;
+    margin: 1rem 0;
+}
+
+.no-bridges {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem;
+}
+
+.last-updated {
+    font-size: 0.8em;
+    color: #6c757d;
+    text-align: right;
+    margin-bottom: 1rem;
+}

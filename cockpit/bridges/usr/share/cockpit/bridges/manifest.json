@@ -1,0 +1,15 @@
+{
+    "version": 0,
+    "name": "bridges",
+    "description": "Linux Bridge Statistics Monitor",
+    "requires": {
+        "cockpit": "120"
+    },
+    "tools": {
+        "bridges": {
+            "label": "Bridge Statistics",
+            "path": "index.html",
+            "order": 31
+        }
+    }
+}

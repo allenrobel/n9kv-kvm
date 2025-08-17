@@ -1,0 +1,259 @@
+/* Light theme for Bridge Statistics monitoring */
+body {
+    background-color: #ffffff;
+    color: #212529;
+}
+
+.container-fluid {
+    background-color: #ffffff;
+}
+
+h1 {
+    color: #212529;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 0.5rem;
+}
+
+.bridge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.bridge-card {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 1rem;
+    background: #ffffff;
+    color: #212529;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.bridge-card.up {
+    border-left: 4px solid #28a745;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 8px rgba(40, 167, 69, 0.2);
+}
+
+.bridge-card.down {
+    border-left: 4px solid #dc3545;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 8px rgba(220, 53, 69, 0.2);
+}
+
+.bridge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.bridge-name {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #212529;
+}
+
+.bridge-status {
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.status-up {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-down {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.bridge-metrics {
+    margin: 0.5rem 0;
+}
+
+.metric-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.metric {
+    text-align: center;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+}
+
+.rx-metric .metric-value {
+    color: #28a745;
+}
+
+.tx-metric .metric-value {
+    color: #007bff;
+}
+
+.metric-value {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.metric-label {
+    font-size: 0.8em;
+    color: #6c757d;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.metric-subtitle {
+    font-size: 0.7em;
+    color: #6c757d;
+    margin-top: 0.2rem;
+}
+
+.bridge-details {
+    margin-top: 0.5rem;
+    font-size: 0.9em;
+}
+
+.detail-row {
+    display: flex;
+    margin-bottom: 0.3rem;
+}
+
+.detail-label {
+    font-weight: bold;
+    min-width: 80px;
+    color: #495057;
+}
+
+.detail-value {
+    color: #6c757d;
+    flex: 1;
+}
+
+.stp-enabled {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.stp-disabled {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.controls {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+.controls button {
+    margin-right: 0.5rem;
+}
+
+/* Button styling for light theme */
+.btn {
+    background: #ffffff;
+    color: #212529;
+    border: 1px solid #ced4da;
+    padding: 8px 16px;
+    margin: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    background: #f8f9fa;
+    border-color: #adb5bd;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+    border-color: #0056b3;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    border-color: #6c757d;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+    border-color: #545b62;
+}
+
+.refresh-btn {
+    margin-bottom: 1rem;
+}
+
+.error-message {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    padding: 1rem;
+    border-radius: 4px;
+    margin: 1rem 0;
+}
+
+.no-bridges {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+}
+
+.last-updated {
+    font-size: 0.8em;
+    color: #6c757d;
+    text-align: right;
+    margin-bottom: 1rem;
+}
+
+/* Icon styling for light theme */
+.fa {
+    color: inherit;
+}
+
+/* Add some subtle animations */
+.bridge-card {
+    transition: all 0.3s ease;
+}
+
+.bridge-card:hover {
+    border-color: #adb5bd;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.metric {
+    transition: all 0.2s ease;
+}
+
+.metric:hover {
+    background: #e9ecef;
+    border-color: #ced4da;
+    transform: translateY(-1px);
+}

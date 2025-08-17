@@ -3,17 +3,17 @@ containers:
     name: "H1"
     management_interface:
       name: "eth0"
-      ip_address: "192.168.12.151"
+      ip_address: "192.168.12.161"
       netmask: "24"
       bridge: "BR_ND_DATA"
-      mac_address: "00:00:51:00:00:01"
+      mac_address: "00:00:61:00:00:01"
       description: "Management Interface"
     test_interface:
       name: "eth1"
-      ip_address: "192.0.1.151"
+      ip_address: "192.0.1.161"
       netmask: "24"
       bridge: "BR_LE1_HO1"
-      mac_address: "00:00:41:00:00:02"
+      mac_address: "00:00:61:00:00:02"
       description: "Test Interface"
     vlans: []
     gateway_ip: "192.168.12.1"
@@ -24,17 +24,17 @@ containers:
     name: "H2"
     management_interface:
       name: "eth0"
-      ip_address: "192.168.12.152"
+      ip_address: "192.168.12.162"
       netmask: "24"
       bridge: "BR_ND_DATA"
-      mac_address: "00:00:52:00:00:01"
+      mac_address: "00:00:62:00:00:01"
       description: "Management Interface"
     test_interface:
       name: "eth1"
-      ip_address: "192.0.1.152"
+      ip_address: "192.0.1.162"
       netmask: "24"
       bridge: "BR_LE2_HO2"
-      mac_address: "00:00:52:00:00:02"
+      mac_address: "00:00:62:00:00:02"
       description: "Test Interface"
     vlans: []
     gateway_ip: "192.168.12.1"

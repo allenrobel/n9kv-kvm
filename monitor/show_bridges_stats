@@ -1,3 +1,11 @@
+# Bridge RX/TX statistics
+#
+# To display one-time states
+# ./show_bridges_stats
+#
+# Also useful when run with watch
+# watch --color --differences ./show_bridges_stats
+#
 export BRIDGES="BR_BG1_BG2 BR_BG1_SP1 BR_BG2_SP2 BR_SP1_LE1 BR_SP2_LE2 BR_LE1_HO1 BR_LE2_HO2"
 
 # Show bridge RX/TX statistics

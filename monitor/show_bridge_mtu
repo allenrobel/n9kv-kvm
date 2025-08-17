@@ -1,4 +1,0 @@
-export BRIDGES="BR_BG1_BG2 BR_BG1_SP1 BR_BG2_SP2 BR_SP1_LE1 BR_SP2_LE2 BR_LE1_HO1 BR_LE2_HO2"
-
-# Show MTU on all bridges
-for bridge in $BRIDGES; do echo "$bridge MTU:"; ip link show $bridge | grep mtu; done

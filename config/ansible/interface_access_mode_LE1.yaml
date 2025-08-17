@@ -2,6 +2,10 @@
 - hosts: nd
   check_mode: false
   gather_facts: false
+  vars:
+    ansible_httpapi_use_ssl: true
+    ansible_httpapi_validate_certs: false
+    ansible_command_timeout: 30
   tasks:
   - name: Configure SITE1.LE1.Eth1/2 as access interface
     cisco.dcnm.dcnm_interface:
@@ -16,4 +20,3 @@
         profile:
           admin_state: true
           mode: access
-          access_vlan: 2

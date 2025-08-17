@@ -32,7 +32,7 @@ network:
     BR_CR1_ER1:
       dhcp4: false
       dhcp6: false
-      mtu: 9216
+      mtu: 1500
       parameters:
         stp: false
       interfaces: []
@@ -40,7 +40,7 @@ network:
     BR_ER1_BG1:
       dhcp4: false
       dhcp6: false
-      mtu: 9216
+      mtu: 1500
       parameters:
         stp: false
       interfaces: []
@@ -48,7 +48,7 @@ network:
     BR_ER1_BG2:
       dhcp4: false
       dhcp6: false
-      mtu: 9216
+      mtu: 1500
       parameters:
         stp: false
       interfaces: []
@@ -56,7 +56,7 @@ network:
     BR_BG1_SP1:
       dhcp4: false
       dhcp6: false
-      mtu: 9216
+      mtu: 1500
       parameters:
         stp: false
       interfaces: []
@@ -64,7 +64,7 @@ network:
     BR_BG2_SP2:
       dhcp4: false
       dhcp6: false
-      mtu: 9216
+      mtu: 1500
       parameters:
         stp: false
       interfaces: []
@@ -72,7 +72,7 @@ network:
     BR_SP1_LE1:
       dhcp4: false
       dhcp6: false
-      mtu: 9216
+      mtu: 1500
       parameters:
         stp: false
       interfaces: []
@@ -80,7 +80,7 @@ network:
     BR_SP2_LE2:
       dhcp4: false
       dhcp6: false
-      mtu: 9216
+      mtu: 1500
       parameters:
         stp: false
       interfaces: []
@@ -88,7 +88,7 @@ network:
     BR_LE1_HO1:
       dhcp4: false
       dhcp6: false
-      mtu: 9216
+      mtu: 1500
       parameters:
         stp: false
       interfaces: []
@@ -96,7 +96,7 @@ network:
     BR_LE2_HO2:
       dhcp4: false
       dhcp6: false
-      mtu: 9216
+      mtu: 1500
       parameters:
         stp: false
       interfaces: []

@@ -1,24 +1,23 @@
-# This provides the bridge configurations used in this repository.
-# If you don't want to use netplan for persistent network configuration,
-# you can ignore this file and use the bridges_config.sh script in this
-# directory instead for a non-persistent configuration.
-# Copy it to /etc/netplan/99-bridges.yaml on the target system.
-# sudo cp 99-bridges.yaml /etc/netplan/99-bridges.yaml
+# This file provides the bridge configurations used in this repository.
+#
+# Copy to /etc/netplan/99-bridges.yaml on the target system.
+#
+# sudo cp $HOME/repos/n9kv-kvm/config/bridges/99-bridges.yaml /etc/netplan/99-bridges.yaml
 # sudo chmod 600 /etc/netplan/99-bridges.yaml
 # sudo netplan try
 # sudo netplan apply
-
-# Bridge names are outlined below, along with the interfaces they connect.
+#
+# Bridge names are outlined below, along with the nexus9000v interfaces they connect.
+#
 # Src Interface      Dst Interface      Bridge
-# CR1_INTERFACE_1    ER1_INTERFACE_3    BR_CR1_ER1
-# ER1_INTERFACE_1    BG1_INTERFACE_1    BR_ER1_BG1
-# ER1_INTERFACE_2    BG2_INTERFACE_1    BR_ER1_BG2
+# BG1_INTERFACE_1    BG2_INTERFACE_1    BR_BG1_BG2
 # BG1_INTERFACE_2    SP1_INTERFACE_1    BR_BG1_SP1
 # BG2_INTERFACE_2    SP2_INTERFACE_1    BR_BG2_SP2
 # SP1_INTERFACE_2    LE1_INTERFACE_1    BR_SP1_LE1
 # SP2_INTERFACE_2    LE2_INTERFACE_1    BR_SP2_LE2
 # LE1_INTERFACE_2    HO1_INTERFACE_1    BR_LE1_HO1
 # LE2_INTERFACE_2    HO2_INTERFACE_1    BR_LE2_HO2
+# All mgmt0                             BR_ND_DATA
 
 network:
   version: 2
@@ -28,27 +27,13 @@ network:
       id: 12
       link: eno6
       optional: true
-  bridges:
-    BR_CR1_ER1:
-      dhcp4: false
-      dhcp6: false
-      mtu: 1500
-      parameters:
-        stp: false
-      interfaces: []
 
-    BR_ER1_BG1:
+  bridges:
+    BR_BG1_BG2:
       dhcp4: false
       dhcp6: false
       mtu: 1500
-      parameters:
-        stp: false
-      interfaces: []
-    
-    BR_ER1_BG2:
-      dhcp4: false
-      dhcp6: false
-      mtu: 1500
+      accept-ra: false
       parameters:
         stp: false
       interfaces: []
@@ -57,14 +42,16 @@ network:
       dhcp4: false
       dhcp6: false
       mtu: 1500
+      accept-ra: false
       parameters:
         stp: false
       interfaces: []
-    
+
     BR_BG2_SP2:
       dhcp4: false
       dhcp6: false
       mtu: 1500
+      accept-ra: false
       parameters:
         stp: false
       interfaces: []
@@ -73,14 +60,16 @@ network:
       dhcp4: false
       dhcp6: false
       mtu: 1500
+      accept-ra: false
       parameters:
         stp: false
       interfaces: []
-    
+
     BR_SP2_LE2:
       dhcp4: false
       dhcp6: false
       mtu: 1500
+      accept-ra: false
       parameters:
         stp: false
       interfaces: []
@@ -89,14 +78,16 @@ network:
       dhcp4: false
       dhcp6: false
       mtu: 1500
+      accept-ra: false
       parameters:
         stp: false
       interfaces: []
-    
+
     BR_LE2_HO2:
       dhcp4: false
       dhcp6: false
       mtu: 1500
+      accept-ra: false
       parameters:
         stp: false
       interfaces: []
@@ -107,5 +98,6 @@ network:
       addresses:
       - 192.168.12.2/24
       - 2000:192:168:12::2/24
+      accept-ra: false
       parameters:
         stp: false

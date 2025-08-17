@@ -16,4 +16,3 @@
         profile:
           admin_state: true
           mode: access
-          access_vlan: 2

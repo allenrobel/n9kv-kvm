@@ -14,30 +14,27 @@ button at the top-right of the Fabrics page, etc.
 We'll add screen grabs later but hopefully below will provide enough
 breadcrumbs to make it through these steps.
 
-## ISN Fabric
+## MSD Fabric
+
+TODO: This section may not be completely accurate with
+respect to menu names, etc.  We'll update it later...
 
 - Manage
   - Fabrics
   - Actions
     - Create Fabric
-      - `Fabric Name` ISN
+      - `Fabric Name` MSD
       - Click `Choose Fabric`
-      - From the popup, select `Multi-Site External Network`
-        - Scroll down to the last item in the list...
-      - Click `Select`
-      - General Parameters
-        - `BGP AS #` 65001
-        - `Fabric Monitor Mode` Uncheck/disable (important!)
-      - Advanced
-        - `Enable NX-API` Check/enable
-        - Click `Save`
+      - From the popup, select `Multi-Site Domain Fabric`
+
+TOTO complete this section...
 
 ## SITE1 Fabric
 
 We want to ensure three things.
 
 1. The IP ranges do not overlap with SITE2
-2. The BGP AS is unique vs ISN and SITE2
+2. The BGP AS is unique vs SITE2
 3. `Back2Back&ToExternal` is set and suboptions are enabled
 
 - Manage
@@ -48,7 +45,7 @@ We want to ensure three things.
       - From the popup, select `Data Cemter VXLAN EVPN`
       - Click `Select`
       - General Parameters
-        - `BGP AS #` 65002
+        - `BGP AS #` 65001
       - Resources
         - `Underlay Routing Loopback IP Range`
           - 10.11.0.0/22
@@ -81,7 +78,7 @@ We want to ensure three things.
       - From the popup, select `Data Cemter VXLAN EVPN`
       - Click `Select`
       - General Parameters
-        - `BGP AS #` 65003
+        - `BGP AS #` 65002
       - Resources
         - `Underlay Routing Loopback IP Range`
           - 10.21.0.0/22
@@ -106,3 +103,7 @@ status for all three fabrics.
 If it does not, then double-click into the fabric(s) that show warnings, and review
 `Event Analytics` for the fabrics.  Most likely, there is an IP range conflict between
 fabrics.
+
+## Add SITE1 and SITE2 to MSD Fabric
+
+TODO: Complete this section.

@@ -45,7 +45,8 @@ Without doing so, ND will not automatically configure this peering when you invo
 We also need to ensure there is no overlap between the address ranges
 that ND uses for various functions.  To do this, we'll modify the second
 octet of each of the ranges to match the site number e.g. 11, 12, 13, etc
-for SITE1 and 21, 22, 23, etc, for SITE2.
+for SITE1 and 21, 22, 23, etc, for SITE2.  Feel free to use a different
+scheme if you want.
 
 ### Summary SITE1
 
@@ -122,3 +123,7 @@ for SITE1 and 21, 22, 23, etc, for SITE2.
             - Click `Next`
               - `Summary`
                 - Review and click `Submit`
+
+## Add SITE1 and SITE2 to MSD Fabric Group
+
+TODO: Complete this section.

@@ -205,6 +205,18 @@ Follow this link to complete this step.
 
 [libvirt LXC Driver Installation](./docs/install_libvirt_lxc_driver.md)
 
+## Optional. Install Cockpit nexus9000v Monitoring Extension
+
+Follow the link below to install this extension.
+
+[Install Cockpit nexus9000v monitoring extension](./cockpit/nexus9000v/README.md)
+
+## Optional. Install Cockpit Linux Bridges Monitoring Extension
+
+Follow the link below to install this extension.
+
+[Install Cockpit Linux bridges monitoring extension](./cockpit/bridges/README.md)
+
 ## Topology built by this repository
 
 - Three fabrics

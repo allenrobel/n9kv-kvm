@@ -221,7 +221,7 @@ to connect to the switch console
 ```bash
 (n9kv-kvm) arobel@glide:~/repos/n9kv-kvm/config/nexus9000v$ sudo python3 nexus9000v.py --global-config global_config.yaml --config BG1.yaml
 Image resized.
-CR1 instance created.
+BG1 instance created.
 Role: Border Gateway
 SID: 31
 BG1 -> BG2: BR_BG1_BG2

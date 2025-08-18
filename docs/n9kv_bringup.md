@@ -50,29 +50,29 @@ later if it's found these can be removed.)
 !Time: Fri Jul 25 10:00:00 2025
 !Startup config saved at: Fri Jul 25 10:00:00 2025
 configure terminal
-hostname ER
+hostname BG1
 boot nxos bootflash:/nxos64-cs.10.5.3.F.bin
 
 interface mgmt0
   no cdp enable
   vrf member management
-  ip address 192.168.11.111/24
+  ip address 192.168.12.131/24
   no shutdown
 
 interface Ethernet1/1
-  no shutdown
+    no shutdown
 
 interface Ethernet1/2
-  no shutdown
+    no shutdown
 ```
 
 Several items above are derived from variables located in two places, as shown below:
 
-- `ER` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`ER_HOSTNAME`)
+- `BG1` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`BG1_HOSTNAME`)
 - `nxos64-cs.10.5.3.F.bin` : $HOME/repos/n9kv-kvm/config/ansible/startup_config_iso.yaml (`nxos_image` var)
-- `192.168.11.111/24` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`ER_IP4`)
-- `Ethernet1/1` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`ER_INTERFACE_1`)
-- `Ethernet1/2` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`ER_INTERFACE_2`)
+- `192.168.12.131/24` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`BG1_IP4`)
+- `Ethernet1/1` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`BG1_INTERFACE_1`)
+- `Ethernet1/2` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`BG1_INTERFACE_2`)
 
 ## Edit the startup_config_iso.yaml playbook
 
@@ -115,63 +115,136 @@ ansible-playbook startup_config_iso.yaml -i dynamic_inventory.py
 Substitute the path below with the value of `output_dir` from above.
 
 ```bash
-(.venv) arobel@cvd-3:~/repos/n9kv-kvm/config/ansible$ ls -l /iso/nxos/config
-total 1424
--rw-r--r-- 1 root root    172 Jul 28 20:39 ER.cfg
--rw-r--r-- 1 root root 358400 Jul 28 20:40 ER.iso
--rw-r--r-- 1 root root    172 Jul 28 20:39 L1.cfg
--rw-r--r-- 1 root root 358400 Jul 28 20:40 L1.iso
--rw-r--r-- 1 root root    172 Jul 28 20:39 L2.cfg
--rw-r--r-- 1 root root 358400 Jul 28 20:40 L2.iso
--rw-r--r-- 1 root root    172 Jul 28 20:39 S1.cfg
--rw-r--r-- 1 root root 358400 Jul 28 20:40 S1.iso
--rw-r--r-- 1 root root    172 Jul 28 20:39 S2.cfg
--rw-r--r-- 1 root root 358400 Jul 28 20:40 S2.iso
-(.venv) arobel@cvd-3:~/repos/n9kv-kvm/config/ansible$
+(n9kv-kvm) arobel@glide:~/repos/n9kv-kvm$ ls -l /iso2/nxos/config/
+total 46117076
+-rw-r--r-- 1 arobel arobel        340 Aug 15 04:07 BG1.cfg
+-rw-rw-r-- 1 arobel arobel     358400 Aug 15 04:07 BG1.iso
+-rw-r--r-- 1 root   root   6035668992 Aug 18 05:03 BG1.qcow2
+-rw-r--r-- 1 arobel arobel        340 Aug 15 04:07 BG2.cfg
+-rw-rw-r-- 1 arobel arobel     358400 Aug 15 04:07 BG2.iso
+-rw-r--r-- 1 root   root   6004015104 Aug 18 05:03 BG2.qcow2
+-rw-r--r-- 1 arobel arobel        302 Aug 15 04:07 CR1.cfg
+-rw-rw-r-- 1 arobel arobel     358400 Aug 15 04:07 CR1.iso
+-rw-r--r-- 1 root   root   5956173824 Aug 18 05:03 CR1.qcow2
+-rw-r--r-- 1 arobel arobel        378 Aug 15 19:13 ER1.cfg
+-rw-rw-r-- 1 arobel arobel     358400 Aug 15 19:13 ER1.iso
+-rw-r--r-- 1 root   root   5115805696 Aug 16 06:40 ER1.qcow2
+-rw-r--r-- 1 arobel arobel        340 Aug 15 04:07 LE1.cfg
+-rw-rw-r-- 1 arobel arobel     358400 Aug 15 04:07 LE1.iso
+-rw-r--r-- 1 root   root   6027935744 Aug 18 05:03 LE1.qcow2
+-rw-r--r-- 1 arobel arobel        340 Aug 15 04:07 LE2.cfg
+-rw-rw-r-- 1 arobel arobel     358400 Aug 15 04:07 LE2.iso
+-rw-r--r-- 1 root   root   6024527872 Aug 18 05:03 LE2.qcow2
+-rw-r--r-- 1 arobel arobel        340 Aug 15 04:07 SP1.cfg
+-rw-rw-r-- 1 arobel arobel     358400 Aug 15 04:07 SP1.iso
+-rw-r--r-- 1 root   root   6027608064 Aug 18 05:03 SP1.qcow2
+-rw-r--r-- 1 arobel arobel        340 Aug 15 04:07 SP2.cfg
+-rw-rw-r-- 1 arobel arobel     358400 Aug 15 04:07 SP2.iso
+-rw-r--r-- 1 root   root   6028787712 Aug 18 05:03 SP2.qcow2
+(n9kv-kvm) arobel@glide:~/repos/n9kv-kvm$
 ```
 
 ## nexus9000v Startup
 
-### Review Shell Script Contents
+### Review YAML File Contents for Global Configuration
 
-Review the contents of the following script and make any modifications
-e.g. for `CDROM_PATH` based on where you saved the config ISOs above,
-and where you saved the nexus9000v qcow2 image.
+Review the contents of the following YAML configuration file:
 
 ```bash
-cat $HOME/repos/n9kv-kvm/config/qemu/n9kv_qemu_ER.sh
+cat $HOME/repos/n9kv/config/nexus9000v/global_config.yaml
+```
+
+```yaml
+# global_config.yaml - Global settings for all switches
+image_path: /iso1/nxos
+cdrom_path: /iso2/nxos/config
+bios_file: /usr/share/ovmf/OVMF.fd
+default_image: nexus9300v64.10.3.8.M.qcow2
+base_mac: "52:54:00"  # <- Add quotes here
+default_ram: 16384
+default_vcpus: 4
+default_disk_size: 32G
+default_interface_type: e1000
 ```
 
 In particular, verify that:
 
-- `CDROM_PATH` and `CDROM_IMAGE` match the location where you saved the ISO config file (i.e. `output_dir`).
-  - These scripts come set with the following
-    - `CDROM_PATH=/iso/nxos/config`
-- `N9KV_SHARED_IMAGE` matches the location of the nexus9000v qcow2 image.  These scripts come set with the following
-  - `IMAGE_PATH=/iso/nxos`
-  - `N9KV_SHARED_IMAGE=$IMAGE_PATH/nexus9500v64.10.5.3.F.qcow2`
+- `image_path` matches the location of the nexus9000v qcow2 image.
+- `cdrom_path` matches the location where you saved the ISO config files
+  - i.e. `output_dir` in $HOME/repos/config/ansible/startup_config_iso.yaml
 
-### Run the ER Shell Script
+### Review YAML File Contents for individual switches
 
 ```bash
-cd $HOME/repos/n9kv-kvm/config/qemu/
-sudo ./n9kv_qemu_ER.sh
-# In the script output, you'll see the port number used
-# to connect to the switch console
-Console access:
-telnet localhost 9011
+(n9kv-kvm) arobel@glide:~/repos/n9kv-kvm/config/nexus9000v$ ls -l *.yaml | grep -v global_config
+-rw-rw-r-- 1 arobel arobel 181 Aug 16 06:41 BG1.yaml
+-rw-rw-r-- 1 arobel arobel 181 Aug 16 06:42 BG2.yaml
+-rw-rw-r-- 1 arobel arobel 150 Aug 15 23:36 CR1.yaml
+-rw-rw-r-- 1 arobel arobel 196 Aug 15 23:36 ER1.yaml
+-rw-rw-r-- 1 arobel arobel 175 Aug 15 23:36 LE1.yaml
+-rw-rw-r-- 1 arobel arobel 175 Aug 15 23:36 LE2.yaml
+-rw-rw-r-- 1 arobel arobel 177 Aug 15 23:36 SP1.yaml
+-rw-rw-r-- 1 arobel arobel 177 Aug 15 23:36 SP2.yaml
+(n9kv-kvm) arobel@glide:~/repos/n9kv-kvm/config/nexus9000v$
 ```
 
-### Connect to the ER Switch Console
+These files contain:
+
+- The hostname of the switch
+- The switch role
+- The switch ID
+- The management bridge (that interface mgmt0 connects to)
+- The switch's neighbors
+- The bridge names used to reach the switch's neighbors
+
+Example for BG1 switch.
+
+```yaml
+---
+# BG1.yaml - Border Gateway 1 configuration
+name: BG1
+role: Border Gateway
+sid: 31
+mgmt_bridge: BR_ND_DATA
+neighbors:
+  - BG2
+  - SP1
+isl_bridges:
+  - BR_BG1_BG2
+  - BR_BG1_SP1
+```
+
+### Run Python script that generates and starts the nexus9000v instances
 
 ```bash
-telnet localhost 9011
+cd $HOME/repos/n9kv-kvm/config/nexus9000v
+sudo python3 nexus9000v.py --global-config global_config.yaml --config BG1.yaml 
 ```
 
-You'll notice the following, but you can ignore it.  The shell script above
-does try to resize the image, but that doesn't help.  If anyone has a solution,
-open an issue in this repo and I'll update the docs (thanks!).  For now,
-things seem to work OK with 4G size.
+In the script output, you'll see the port number used
+to connect to the switch console
+
+```bash
+(n9kv-kvm) arobel@glide:~/repos/n9kv-kvm/config/nexus9000v$ sudo python3 nexus9000v.py --global-config global_config.yaml --config BG1.yaml
+Image resized.
+CR1 instance created.
+Role: Border Gateway
+SID: 31
+BG1 -> BG2: BR_BG1_BG2
+
+Console access: telnet localhost 9031
+Monitor access: telnet localhost 4431
+Process ID: 386740
+(n9kv-kvm) arobel@glide:~/repos/n9kv-kvm/config/nexus9000v$
+```
+
+### Connect to the BG1 Switch Console
+
+```bash
+telnet localhost 9031
+```
+
+You'll notice the following, but you can ignore it.
 
 ```bash
 Bad Partition bootflash size 4G too small < min 8G
@@ -199,10 +272,19 @@ Do you want to enforce secure password standard (yes/no) [y]: no
 
 
 User Access Verification
-ER login: admin
+BG1 login: admin
 Password: 
 # skipping copyright, etc...
-ER#
+BG1#
 ```
 
-Repeat the above for the other switches (S1, S2, L1, L2).
+To exit the console, use `Ctrl+]` (`control + ]` on a Mac) and then type `close` at the `telnet` prompt.
+
+```bash
+BG1#
+telnet> close
+Connection closed.
+(n9kv-kvm) arobel@glide:~/repos/n9kv-kvm/config/nexus9000v$
+```
+
+Repeat the above for the other switches (BG2, SP1, SP2, LE1, LE2).

@@ -1,0 +1,16 @@
+# bridge-monitor.service
+# Save as: /etc/systemd/system/bridge-monitor.service
+
+[Unit]
+Description=Linux Bridge Statistics Monitor
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/bin/bridge_monitor.py --json
+User=root
+StandardOutput=append:/var/log/bridge-monitor.log
+StandardError=append:/var/log/bridge-monitor.log
+
+[Install]
+WantedBy=multi-user.target

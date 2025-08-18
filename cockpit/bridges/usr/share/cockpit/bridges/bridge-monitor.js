@@ -103,6 +103,31 @@ function refreshData() {
     clearError();
     showLoading();
 
+    // First try to read from the cached status file
+    cockpit.file('/tmp/bridge-status.json').read()
+        .done(function(data) {
+            hideLoading();
+            try {
+                if (data) {
+                    const jsonData = JSON.parse(data);
+                    updateBridgeDisplay(jsonData);
+                } else {
+                    // If status file is empty, fall back to direct execution
+                    executeDirectly();
+                }
+            } catch (e) {
+                // If status file is corrupt or missing, fall back to direct execution
+                executeDirectly();
+            }
+        })
+        .fail(function() {
+            // If status file doesn't exist, fall back to direct execution
+            executeDirectly();
+        });
+}
+
+function executeDirectly() {
+    // Fallback: execute the script directly if status file is unavailable
     cockpit.spawn(['/usr/bin/python3', '/usr/local/bin/bridge_monitor.py', '--json'])
         .done(function(data) {
             hideLoading();

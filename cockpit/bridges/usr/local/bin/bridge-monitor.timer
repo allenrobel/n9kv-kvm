@@ -1,0 +1,13 @@
+# bridge-monitor.timer
+# Save as: /etc/systemd/system/bridge-monitor.timer
+
+[Unit]
+Description=Run Linux Bridge Statistics Monitor every 30 seconds
+Requires=bridge-monitor.service
+
+[Timer]
+OnCalendar=*:*:0/30
+Persistent=true
+
+[Install]
+WantedBy=timers.target

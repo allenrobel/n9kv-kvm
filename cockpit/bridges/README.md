@@ -19,15 +19,38 @@ A Cockpit web interface for monitoring Linux bridge statistics, including RX/TX 
    sudo cp -r usr/share/cockpit/bridges /usr/share/cockpit/
    sudo cp usr/local/bin/bridge_monitor.py /usr/local/bin/
    sudo chmod +x /usr/local/bin/bridge_monitor.py
+   sudo cp usr/local/bin/bridge-monitor.service /etc/systemd/system/
+   sudo cp usr/local/bin/bridge-monitor.timer /etc/systemd/system/
    ```
 
-2. Restart Cockpit:
+2. Enable and start the systemd timer for optimal performance:
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl enable bridge-monitor.timer
+   sudo systemctl start bridge-monitor.timer
+   ```
+
+3. Restart Cockpit:
    ```bash
    sudo systemctl restart cockpit
    ```
 
-3. Access the Bridge Statistics page in Cockpit at:
+4. Access the Bridge Statistics page in Cockpit at:
    `https://your-server:9090`
+
+## Performance Optimization
+
+The bridge monitor uses a systemd timer service that runs every 30 seconds to collect statistics and cache them in `/tmp/bridge-status.json`. This approach:
+
+- **Reduces CPU usage** - No persistent processes running
+- **Improves responsiveness** - Cockpit reads cached data instead of executing scripts
+- **Provides consistent updates** - Data refreshes automatically in the background
+
+You can check the service status with:
+```bash
+sudo systemctl status bridge-monitor.timer
+sudo systemctl status bridge-monitor.service
+```
 
 ## Command Line Usage
 

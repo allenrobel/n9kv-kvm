@@ -27,7 +27,7 @@ respect to menu names, etc.  We'll update it later...
       - Click `Choose Fabric`
       - From the popup, select `Multi-Site Domain Fabric`
 
-TOTO complete this section...
+TODO: Complete this section.
 
 ## SITE1 Fabric
 

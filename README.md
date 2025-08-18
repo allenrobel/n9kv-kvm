@@ -267,7 +267,7 @@ graph TD
 ## Project Structure
 
 ```bash
-(.venv) arobel@Allen-M4 n9kv-kvm % tree
+(n9kv-kvm) arobel@Allen-M4 n9kv-kvm % tree -I venv -I .pycache
 .
 ├── cockpit
 │   ├── bridges
@@ -431,15 +431,12 @@ graph TD
 │   │   │       ├── 25_set_role.png
 │   │   │       ├── 26_select_role.png
 │   │   │       ├── 27_warning.png
-│   │   │       ├── 28_border_spine_switch_role.png
-│   │   │       ├── 29_select_role.png
 │   │   │       ├── 30_warning.png
 │   │   │       ├── 31_set_role.png
 │   │   │       ├── 32_select_role.png
 │   │   │       ├── 33_warning.png
 │   │   │       ├── 34_wait.png
 │   │   │       ├── 35_all_switches_ready.png
-│   │   │       ├── 36_manage_fabrics.png
 │   │   │       ├── 37_site1_fabric.png
 │   │   │       ├── 38_recalculate_and_deploy.png
 │   │   │       ├── 39_wait.png
@@ -491,9 +488,11 @@ graph TD
 │   ├── ndfc_bringup_web.md
 │   └── topology.mmd
 ├── env
-│   ├── env_ansible.sh
-│   ├── env_libvirt.sh
-│   └── env_python.sh
+│   ├── 01-venv.sh
+│   ├── 02-ansible.sh
+│   ├── 03-libvirt.sh
+│   ├── 04-python.sh
+│   └── env.sh
 ├── monitor
 │   ├── set_bridges_mtu
 │   ├── show_bridges
@@ -503,6 +502,6 @@ graph TD
 ├── README.md
 └── uv.lock
 
-31 directories, 203 files
-(.venv) arobel@Allen-M4 n9kv-kvm %
+31 directories, 202 files
+(n9kv-kvm) arobel@Allen-M4 n9kv-kvm %
 ```

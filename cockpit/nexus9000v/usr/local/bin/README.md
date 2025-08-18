@@ -21,18 +21,31 @@ sudo cp ./nexus9000v_monitor.py /usr/local/bin
 sudo +x /usr/local/bin/nexus9000v_monitor.py
 ```
 
-## 3. Test to see that it's working
+## 3. Verify the backend script is working
 
 - sudo python3 /usr/local/bin/nexus9000v_monitor.py --table
 
 ```bash
-root@cvd-2:~# sudo python3 /usr/local/bin/nexus9000v_monitor.py --table
-2025-07-26 02:39:06,594 - INFO - Scanning for Nexus 9000v VMs...
-2025-07-26 02:39:06,781 - INFO - Found VM: ER (PID: 30813)
-VM NAME              PID      CPU%     MEM(MB)    UPTIME          STATUS    
---------             ---      ----     -------    -------         ------    
-ER                   30813    43.4     14162      1d 1h 37m       running   
-root@cvd-2:~# 
+arobel@glide:~/repos/n9kv-kvm$ source .venv/bin/activate
+(n9kv-kvm) arobel@glide:~/repos/n9kv-kvm$ source env/env.sh
+(n9kv-kvm) arobel@glide:~/repos/n9kv-kvm$ sudo python3 /usr/local/bin/nexus9000v_monitor.py --table
+[sudo] password for arobel:
+2025-08-18 19:56:36,752 - INFO - Scanning for Nexus 9000v VMs...
+2025-08-18 19:56:36,962 - INFO - Found VM: SP1 (PID: 27110)
+2025-08-18 19:56:37,112 - INFO - Found VM: SP2 (PID: 27170)
+2025-08-18 19:56:37,271 - INFO - Found VM: LE1 (PID: 27263)
+2025-08-18 19:56:37,422 - INFO - Found VM: LE2 (PID: 27356)
+2025-08-18 19:56:37,563 - INFO - Found VM: BG1 (PID: 45334)
+2025-08-18 19:56:37,694 - INFO - Found VM: BG2 (PID: 45383)
+VM NAME              PID      CPU%     MEM(MB)    UPTIME          STATUS
+--------             ---      ----     -------    -------         ------
+SP1                  27110    75.7     12294      2d 19h 35m      running
+SP2                  27170    76.5     12192      2d 19h 35m      running
+LE1                  27263    168.0    12386      2d 19h 35m      running
+LE2                  27356    80.5     12134      2d 19h 34m      running
+BG1                  45334    80.5     12212      2d 13h 10m      running
+BG2                  45383    81.2     12106      2d 13h 10m      running
+(n9kv-kvm) arobel@glide:~/repos/n9kv-kvm$
 ```
 
 ## 4. Add a service for persistent monitoring across host reboots

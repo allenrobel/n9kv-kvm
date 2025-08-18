@@ -1,4 +1,4 @@
-# Create ISN and VXLAN fabrics
+# Create MSD and VXLAN fabrics
 
 ## ND Fabrics Bringup
 

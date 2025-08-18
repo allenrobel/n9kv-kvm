@@ -2,6 +2,15 @@
 
 ## 1. Install Cockpit
 
+Cockpit typically comes pre-installed with Ubuntu Server 24.04.2 LTS.  You can
+check if it is installed on your server by accessing the following URL (replace
+your_server with your server's IP or hostname...)
+
+`https://your-server:9090`
+
+If it's not installed, you can install it by following the steps at the Cockpit
+project site.
+
 https://cockpit-project.org/running.html#ubuntu
 
 ## 2. Copy the backend script into /usr/local/bin and make executable

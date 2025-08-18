@@ -77,8 +77,42 @@ sudo systemctl status nexus9000v-monitor.timer
 sudo systemctl list-timers nexus9000v-monitor.timer
 ```
 
+```bash
+(n9kv-kvm) arobel@glide:~/repos/n9kv-kvm$ sudo systemctl status nexus9000v-monitor.timer
+● nexus9000v-monitor.timer - Run Nexus 9000v VM Monitor every 30 seconds
+     Loaded: loaded (/etc/systemd/system/nexus9000v-monitor.timer; enabled; preset: enabled)
+     Active: active (running) since Sun 2025-08-17 23:05:17 UTC; 20h ago
+    Trigger: n/a
+   Triggers: ● nexus9000v-monitor.service
+
+Aug 17 23:05:17 glide systemd[1]: Started nexus9000v-monitor.timer - Run Nexus 9000v VM Monitor every 30 seconds.
+(n9kv-kvm) arobel@glide:~/repos/n9kv-kvm$ sudo systemctl list-timers nexus9000v-monitor.timer
+NEXT                        LEFT LAST                         PASSED UNIT                     ACTIVATES
+Mon 2025-08-18 20:00:00 UTC   4s Mon 2025-08-18 19:59:32 UTC 22s ago nexus9000v-monitor.timer nexus9000v-monitor.service
+
+1 timers listed.
+Pass --all to see loaded but inactive timers, too.
+(n9kv-kvm) arobel@glide:~/repos/n9kv-kvm$
+```
+
 ## 8. View logs
 
 ```bash
 sudo journalctl -u nexus9000v-monitor.service -f
+```
+
+```bash
+(n9kv-kvm) arobel@glide:~/repos/n9kv-kvm$ sudo journalctl -u nexus9000v-monitor.service -f
+Aug 18 19:59:11 glide systemd[1]: Finished nexus9000v-monitor.service - Nexus 9000v VM Monitor.
+Aug 18 19:59:11 glide systemd[1]: nexus9000v-monitor.service: Consumed 1.007s CPU time.
+Aug 18 19:59:32 glide systemd[1]: Starting nexus9000v-monitor.service - Nexus 9000v VM Monitor...
+Aug 18 19:59:33 glide systemd[1]: nexus9000v-monitor.service: Deactivated successfully.
+Aug 18 19:59:33 glide systemd[1]: Finished nexus9000v-monitor.service - Nexus 9000v VM Monitor.
+Aug 18 19:59:33 glide systemd[1]: nexus9000v-monitor.service: Consumed 1.085s CPU time.
+Aug 18 20:00:14 glide systemd[1]: Starting nexus9000v-monitor.service - Nexus 9000v VM Monitor...
+Aug 18 20:00:16 glide systemd[1]: nexus9000v-monitor.service: Deactivated successfully.
+Aug 18 20:00:16 glide systemd[1]: Finished nexus9000v-monitor.service - Nexus 9000v VM Monitor.
+Aug 18 20:00:16 glide systemd[1]: nexus9000v-monitor.service: Consumed 1.119s CPU time.
+^C
+(n9kv-kvm) arobel@glide:~/repos/n9kv-kvm$
 ```

@@ -4,7 +4,7 @@
 managing and monitoring networked devices.  It's completely optional so, if it's not
 your thing, feel free to ignore this section.
 
-Cockpit typically comes as standard with Ubuntu Server 24.04.2 LTS.  You can
+Cockpit typically comes pre-installed with Ubuntu Server 24.04.2 LTS.  You can
 check if it is installed on your server by accessing the following URL (replace
 your_server with your server's IP or hostname...)
 

@@ -1,7 +1,13 @@
 # Cockpit Nexus9000v Monitoring UI files.
 
-First, [install Cockpit](https://cockpit-project.org/running.html#ubuntu) and
+First, [install Cockpit](https://cockpit-project.org/running.html#ubuntu) if it is not already installed, and
 [setup the backend python script](https://github.com/allenrobel/n9kv-kvm/blob/main/cockpit/usr/local/bin/README.md)
+
+Cockpit typically comes pre-installed with Ubuntu Server 24.04.2 LTS.  You can
+check if it is installed on your server by accessing the following URL (replace
+your_server with your server's IP or hostname...)
+
+`https://your-server:9090`
 
 Then follow the steps below.
 

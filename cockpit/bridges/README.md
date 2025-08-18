@@ -97,3 +97,11 @@ The monitor uses standard Linux networking tools
 - `bridge-monitor.js` - JavaScript frontend logic
 - `bridge-monitor.css` - Styling
 - `manifest.json` - Cockpit module manifest
+
+## End Result
+
+In the end, you'll have something in Cockpit that looks like below.
+Nexus 9000v are added and removed dynamically as you create and destroy
+them so, once setup, it's pretty low maintenance.
+
+![Cockpit Bridge Monitoring](cockpit.png)

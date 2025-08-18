@@ -26,4 +26,4 @@ In the end, you'll have something in Cockpit that looks like below.
 Nexus 9000v are added and removed dynamically as you create and destroy
 them so, once setup, it's pretty low maintenance.
 
-![nexus9000v Cockpit Monitoring Extension](cockpit.png)
+![nexus9000v Cockpit Monitoring Extension](cockpit_nexus9000v.png)

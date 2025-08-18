@@ -1,6 +1,6 @@
 # Add nexus9000v Switches to Nexus Dashboard
 
-In ND, we've already created three fabrics, `ISN`, `SITE1`, and `SITE2`.
+In ND, we've already created three fabrics, `MSD`, `SITE1`, and `SITE2`.
 
 Follow the approprate link to add switches to ND 4.1 or ND 3.2
 

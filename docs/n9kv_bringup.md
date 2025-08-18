@@ -83,7 +83,7 @@ contents of `$HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py`
 ```yaml
   vars:
     nxos_image: "nxos64-cs.10.5.3.F.bin"
-    output_dir: "/iso/nxos/config"
+    output_dir: "/iso2/nxos/config"
 ```
 
 - `nxos_image` - Set this to the image name (.bin) that is extracted from the n9kv `.qcow2` during bootup. One of:

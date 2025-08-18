@@ -57,10 +57,12 @@ meets the [Hardware Requirements](#hardware-requirements) and on which
   - [Installation (work in progress)](https://github.com/allenrobel/n9kv-kvm/tree/main/cockpit)
 - [dnsmasq](https://wiki.debian.org/dnsmasq)
   - DNS server (for ND)
+  - Optional (If a DNS server is already present in your environment)
   - 2.90-2ubuntu0.1
   - [Installation](#dnsmasq-installation-and-configuration)
 - [chrony](https://chrony-project.org)
   - NTP server (for ND)
+  - Optional (If an NTP server is already present in your environment)
   - chrony/noble-updates,now 4.5-1ubuntu4.2
   - [Installation](#chrony-installation-and-configuration)
 - [debootstrap](https://launchpad.net/ubuntu/noble/amd64/debootstrap)
@@ -146,8 +148,7 @@ Follow the link below to clone this project's repository.
 
 ## Install the NDFC Ansible Collection
 
-We'll need this collection to run playbooks later that fix
-nexus9000v inter-switch mac address issues.
+We'll need this collection to run playbooks later.
 
 Follow the steps outlined in
 [Install NDFC Ansible Collection](./docs/install_ansible_collection.md)
@@ -160,13 +161,15 @@ Follow the link below to configure the bridges used for this project.
 
 ## dnsmasq Installation and Configuration
 
-Follow the link below to install and configure `dnsmasq` for this project.
+If you do not already have a DNS server in your environment, follow the link
+below to install and configure `dnsmasq` for this project.
 
 [Install, Configure, and Manage dnsmasq](./docs/dnsmasq.md)
 
 ## chrony Installation and Configuration
 
-Follow the link below to install and configure `chrony` for this project.
+If you do not already have an NTP server in your environment, follow the link
+below to install and configure `chrony` for this project.
 
 [Install, Configure, and Manage chrony](./docs/chrony.md)
 
@@ -180,7 +183,7 @@ Follow the link below to install Nexus Dashboard.
 
 Follow the link below to create the Nexus Dashboard fabrics used in this project.
 
-[Create ISN, SITE1, and SITE2 Fabrics](./docs/nd_create_fabrics.md)
+[Create MSD, SITE1, and SITE2 Fabrics](./docs/nd_create_fabrics.md)
 
 ## nexus9000v Initial Configuration and Bringup
 
@@ -191,15 +194,6 @@ Follow the link below to configure and bringup the nexus9000v VMs for this proje
 ## Add nexus9000v Switches to Nexus Dashboard Fabrics
 
 [Add nexus9000v Switches](./docs/nd_add_switches.md)
-
-## Fix duplicate mac addresses on interswitch-links
-
-You'll notice that the nexus9000v switches are complaining about bridge
-disputes, etc, on their Eth1/1-2 interaces, and they are unable to peer.
-
-Follow this link to fix this.
-
-[nexus9000v Fix Interface Mac Addresses](./docs/n9kv_fix_interface_mac_addresses.md)
 
 ## Install libvert LXC Support
 
@@ -214,119 +208,179 @@ Follow this link to complete this step.
 ## Topology built by this repository
 
 - Three fabrics
-  - ISN (inter-site network)
-    - 1x Edge Router (ER)
+  - MSD (Multi Site Domain)
+    - Contains both SITE1 and SITE2 fabrics
   - SITE1 (VxLAN)
-    - 1x Border Spines (S1)
-    - 1x Leaf (L1)
-    - 1x Host (H1)
+    - 1x Border Gateway (BG1)
+    - 1x Leaf (LE1)
+    - 1x Host (HO1)
   - SITE2 (VxLAN)
-    - 1x Border Spines (S2)
-    - 1x Leaf (L2)
-    - 1x Host (H2)
+    - 1x Border Gateway (BG2)
+    - 1x Leaf (LE2)
+    - 1x Host (HO2)
 
 ```mermaid
-graph TB
-    subgraph ISN["ISN Fabric (Inter-Site Network)"]
-        ER[Edge Router - ER]
-    end
+graph TD
+    subgraph MSD["MSD Fabric (Multi-site Domain)"]
+        subgraph SITE2["SITE2 - VXLAN Fabric"]
+            BG2[Border Gateway - BG2]
+            SP2[Spine Switch - SP2]
+            LE2[Leaf Switch - LE2]
+            HO2[Host Container - HO2]
+            
+            %% SITE2 fabric connections (top-down)
+            BG2 --- SP2
+            SP2 --- LE2
+            LE2 --- HO2
+        end
 
-    subgraph SITE1["SITE1"]
-        S1[Border Spine - S1]
-        L1[Leaf - L1]
-        H1[Host - H1]
-        
-        %% SITE1 fabric connections
-        S1 --- L1
-        L1 --- H1
-    end
+        subgraph SITE1["SITE1 - VXLAN Fabric"]
+            BG1[Border Gateway - BG1]
+            SP1[Spine Switch - SP1]
+            LE1[Leaf Switch - LE1]
+            HO1[Host Container - HO1]
+            
+            %% SITE1 fabric connections (top-down)
+            BG1 --- SP1
+            SP1 --- LE1
+            LE1 --- HO1
+        end
 
-    subgraph SITE2["SITE2"]
-        S2[Border Spine - S2]
-        L2[Leaf - L2]
-        H2[Host - H2]
-        
-        %% SITE2 fabric connections
-        S2 --- L2
-        L2 --- H2
+        %% Inter-fabric connection (MSD backbone)
+        BG1 --- BG2
     end
-
-    %% Inter-fabric connection
-    ER --- S1
-    ER --- S2
 
     %% Styling
-    classDef fabricBox fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef edgeRouter fill:#fff3e0,stroke:#e65100,stroke-width:1px,color:#000000
-    classDef borderSpine fill:#f3e5f5,stroke:#4a148c,stroke-width:1px,color:#000000
-    classDef leaf fill:#a8f3c8,stroke:#2e7d32,stroke-width:1px,color:#000000
-    classDef host fill:#e8f2a0,stroke:#2e7d32,stroke-width:1px,color:#000000
+    classDef msdBox fill:#e3f2fd,stroke:#0d47a1,stroke-width:3px
+    classDef siteBox fill:#f1f8e9,stroke:#33691e,stroke-width:2px
+    classDef borderGateway fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000000
+    classDef spine fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000000
+    classDef leaf fill:#a8f3c8,stroke:#2e7d32,stroke-width:2px,color:#000000
+    classDef host fill:#e8f2a0,stroke:#558b2f,stroke-width:2px,color:#000000
 
-    class ER edgeRouter
-    class S1,S2 borderSpine
-    class L1,L2 leaf
-    class H1,H2 host
-        
+    class BG1,BG2 borderGateway
+    class SP1,SP2 spine
+    class LE1,LE2 leaf
+    class HO1,HO2 host
 ```
 
 ## Project Structure
 
 ```bash
-arobel@Allen-M4 n9kv-kvm % tree
+(.venv) arobel@Allen-M4 n9kv-kvm % tree
 .
 ├── cockpit
-│   ├── cockpit.png
-│   ├── README.md
-│   └── usr
-│       ├── local
-│       │   └── bin
-│       │       ├── nexus9000v_monitor.py
-│       │       ├── nexus9000v-monitor.service
-│       │       ├── nexus9000v-monitor.timer
-│       │       └── README.md
-│       └── share
-│           └── cockpit
-│               └── nexus9000v
-│                   ├── index.html
-│                   ├── manifest.json
-│                   ├── nexus-monitor-dark-theme.css
-│                   ├── nexus-monitor-light-theme.css
-│                   ├── nexus-monitor.css
-│                   ├── nexus-monitor.js
-│                   └── README.md
+│   ├── bridges
+│   │   ├── README.md
+│   │   └── usr
+│   │       ├── local
+│   │       │   └── bin
+│   │       │       ├── bridge_monitor.py
+│   │       │       ├── bridge-monitor.service
+│   │       │       └── bridge-monitor.timer
+│   │       └── share
+│   │           └── cockpit
+│   │               └── bridges
+│   │                   ├── bridge-monitor-dark-theme.css
+│   │                   ├── bridge-monitor-light-theme.css
+│   │                   ├── bridge-monitor.css
+│   │                   ├── bridge-monitor.js
+│   │                   ├── index.html
+│   │                   └── manifest.json
+│   └── nexus9000v
+│       ├── cockpit.png
+│       ├── README.md
+│       └── usr
+│           ├── local
+│           │   └── bin
+│           │       ├── nexus9000v_monitor.py
+│           │       ├── nexus9000v-monitor.service
+│           │       ├── nexus9000v-monitor.timer
+│           │       └── README.md
+│           └── share
+│               └── cockpit
+│                   └── nexus9000v
+│                       ├── index.html
+│                       ├── manifest.json
+│                       ├── nexus-monitor-dark-theme.css
+│                       ├── nexus-monitor-light-theme.css
+│                       ├── nexus-monitor.css
+│                       ├── nexus-monitor.js
+│                       └── README.md
 ├── config
 │   ├── ansible
 │   │   ├── dynamic_inventory.py
-│   │   ├── interface_mac_addresses_S1.yaml
-│   │   ├── interface_mac_addresses_S2.yaml
+│   │   ├── interface_access_mode_LE1.yaml
+│   │   ├── interface_access_mode_LE2.yaml
+│   │   ├── networks_msd.yaml
 │   │   ├── networks_site1.yaml
+│   │   ├── networks_site2.yaml
 │   │   ├── nxos_startup_config.j2
-│   │   ├── overlay_site1.yaml
 │   │   ├── overlay_site2.yaml
-│   │   └── startup_config_iso.yaml
+│   │   ├── site1_access_layer.yaml
+│   │   ├── startup_config_iso.yaml
+│   │   ├── vrfs_msd.yaml
+│   │   ├── vrfs_site1.yaml
+│   │   └── vrfs_site2.yaml
 │   ├── bridges
 │   │   ├── 99-bridges.yaml
+│   │   ├── add_vlans_BR_L1_H1.sh
+│   │   ├── add_vlans_BR_L2_H2.sh
 │   │   ├── bridge.conf
 │   │   ├── bridges_config.sh
 │   │   ├── bridges_down.sh
-│   │   └── bridges_monitor.sh
-│   ├── H1
-│   │   ├── create_h1.sh
-│   │   ├── H1.xml
-│   │   └── manage_h1.sh
-│   ├── H2
-│   │   ├── create_h2.sh
-│   │   ├── H2.xml
-│   │   └── manage_h2.sh
-│   └── qemu
-│       ├── n9kv_qemu_ER_cdrom.sh
-│       ├── n9kv_qemu_ER.sh
-│       ├── n9kv_qemu_L1.sh
-│       ├── n9kv_qemu_L2.sh
-│       ├── n9kv_qemu_S1.sh
-│       ├── n9kv_qemu_S2.sh
-│       ├── nd_qemu_321e.sh
-│       └── nd_qemu_EFT.sh
+│   │   ├── bridges_monitor.sh
+│   │   ├── vlans_del_BR_L1_H1.sh
+│   │   └── vlans_del_BR_L2_H2.sh
+│   ├── containers
+│   │   ├── __pycache__
+│   │   │   ├── bridge.cpython-313.pyc
+│   │   │   ├── config_generators.cpython-313.pyc
+│   │   │   ├── config_loader.cpython-313.pyc
+│   │   │   ├── executor.cpython-313.pyc
+│   │   │   ├── factory.cpython-313.pyc
+│   │   │   ├── filesystem.cpython-313.pyc
+│   │   │   ├── interfaces.cpython-313.pyc
+│   │   │   ├── libvirt_manager.cpython-313.pyc
+│   │   │   ├── main.cpython-313.pyc
+│   │   │   ├── models.cpython-313.pyc
+│   │   │   ├── orchestrator.cpython-313.pyc
+│   │   │   ├── packages.cpython-313.pyc
+│   │   │   ├── requirements.cpython-313.pyc
+│   │   │   └── rootfs.cpython-313.pyc
+│   │   ├── bridge.py
+│   │   ├── config_generators.py
+│   │   ├── config_loader.py
+│   │   ├── container_configs_access_mode.yaml
+│   │   ├── container_configs_trunk_mode.yaml
+│   │   ├── executor.py
+│   │   ├── factory.py
+│   │   ├── filesystem.py
+│   │   ├── interfaces.py
+│   │   ├── libvirt_manager.py
+│   │   ├── main.py
+│   │   ├── models.py
+│   │   ├── orchestrator.py
+│   │   ├── packages.py
+│   │   ├── README.md
+│   │   ├── requirements.py
+│   │   ├── rootfs.py
+│   │   └── setup.py
+│   ├── nd
+│   │   ├── nd_321e.sh
+│   │   └── nd_411g.sh
+│   └── nexus9000v
+│       ├── BG1.yaml
+│       ├── BG2.yaml
+│       ├── CR1.yaml
+│       ├── ER1.yaml
+│       ├── global_config.yaml
+│       ├── LE1.yaml
+│       ├── LE2.yaml
+│       ├── nexus9000v.py
+│       ├── README.md
+│       ├── SP1.yaml
+│       └── SP2.yaml
 ├── docs
 │   ├── bridges.md
 │   ├── chrony.md
@@ -424,7 +478,6 @@ arobel@Allen-M4 n9kv-kvm % tree
 │   ├── install_ansible_collection.md
 │   ├── install_libvirt_lxc_driver.md
 │   ├── n9kv_bringup.md
-│   ├── n9kv_fix_interface_mac_addresses.md
 │   ├── nd_add_switches.md
 │   ├── nd_bringup_cli.md
 │   ├── nd_create_fabrics.md
@@ -442,13 +495,14 @@ arobel@Allen-M4 n9kv-kvm % tree
 │   ├── env_libvirt.sh
 │   └── env_python.sh
 ├── monitor
+│   ├── set_bridges_mtu
+│   ├── show_bridges
+│   ├── show_bridges_stats
 │   └── show_nd_interfaces
 ├── pyproject.toml
 ├── README.md
-├── tmp_remove
-│   └── detour.md
 └── uv.lock
 
-23 directories, 152 files
-arobel@Allen-M4 n9kv-kvm %
+31 directories, 203 files
+(.venv) arobel@Allen-M4 n9kv-kvm %
 ```

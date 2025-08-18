@@ -21,9 +21,7 @@ class LibvirtXMLGenerator:
     def __init__(self, executor: CommandExecutor) -> None:
         self.executor: CommandExecutor = executor
 
-    def generate_xml(
-        self, spec: ContainerSpec, rootfs_path: Path, output_file: Path
-    ) -> None:
+    def generate_xml(self, spec: ContainerSpec, rootfs_path: Path, output_file: Path) -> None:
         """Generate libvirt XML configuration"""
         emulator_path: str = self._find_libvirt_emulator()
 
@@ -66,9 +64,7 @@ class LibvirtXMLGenerator:
 """
         )
 
-        xml_content: str = xml_template.render(
-            spec=spec, emulator_path=emulator_path, rootfs_path=str(rootfs_path)
-        )
+        xml_content: str = xml_template.render(spec=spec, emulator_path=emulator_path, rootfs_path=str(rootfs_path))
 
         with open(output_file, "w") as f:
             f.write(xml_content)
@@ -98,9 +94,7 @@ class LibvirtDomainManager:
     def define_domain(self, xml_file: Path) -> None:
         """Define domain from XML file"""
         try:
-            self.executor.run(
-                ["sudo", "virsh", "-c", "lxc:///", "define", str(xml_file)]
-            )
+            self.executor.run(["sudo", "virsh", "-c", "lxc:///", "define", str(xml_file)])
             logger.info(f"Domain defined from {xml_file}")
         except Exception as e:
             raise RuntimeError(f"Failed to define domain: {e}")
@@ -108,9 +102,7 @@ class LibvirtDomainManager:
     def undefine_domain(self, domain_name: str) -> None:
         """Remove domain definition"""
         try:
-            self.executor.run(
-                ["sudo", "virsh", "-c", "lxc:///", "undefine", domain_name], check=False
-            )  # Don't fail if domain doesn't exist
+            self.executor.run(["sudo", "virsh", "-c", "lxc:///", "undefine", domain_name], check=False)  # Don't fail if domain doesn't exist
             logger.info(f"Domain {domain_name} undefined (if it existed)")
         except Exception:
             pass  # Domain might not exist, which is fine

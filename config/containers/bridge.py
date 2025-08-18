@@ -34,9 +34,11 @@ class BridgeVLANManager:
                     "1",
                 ]
             )
-            logger.info(f"Enabled VLAN filtering on bridge: {bridge_name}")
+            msg = f"Enabled VLAN filtering on bridge: {bridge_name}"
+            logger.info(msg)
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Failed to enable VLAN filtering on {bridge_name}: {e}")
+            msg = f"Failed to enable VLAN filtering on {bridge_name}: {e}"
+            raise RuntimeError(msg) from e
 
     def disable_vlan_filtering(self, bridge_name: str) -> None:
         """Disable VLAN filtering on bridge"""
@@ -54,9 +56,11 @@ class BridgeVLANManager:
                     "0",
                 ]
             )
-            logger.info(f"Disabled VLAN filtering on bridge: {bridge_name}")
+            msg = f"Disabled VLAN filtering on bridge: {bridge_name}"
+            logger.info(msg)
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Failed to disable VLAN filtering on {bridge_name}: {e}")
+            msg = f"Failed to disable VLAN filtering on {bridge_name}: {e}"
+            raise RuntimeError(msg) from e
 
     def add_vlan_to_bridge(self, bridge_name: str, vlan_id: int) -> None:
         """Add VLAN to bridge"""
@@ -74,17 +78,20 @@ class BridgeVLANManager:
                     "self",
                 ]
             )
-            logger.info(f"Added VLAN {vlan_id} to bridge {bridge_name}")
+            msg = f"Added VLAN {vlan_id} to bridge {bridge_name}"
+            logger.info(msg)
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Failed to add VLAN {vlan_id} to {bridge_name}: {e}")
+            msg = f"Failed to add VLAN {vlan_id} to bridge {bridge_name}: {e}"
+            raise RuntimeError(msg) from e
 
     def configure_bridge_vlans(self, bridge_name: str, vlan_ids: List[int]) -> None:
         """Configure VLANs on bridge"""
         if not vlan_ids:
-            logger.info(f"No VLANs configured for bridge {bridge_name}, disabling VLAN filtering")
+            msg = f"No VLANs configured for bridge {bridge_name}, disabling VLAN filtering"
+            logger.info(msg)
             self.disable_vlan_filtering(bridge_name)
             return
-            
+
         self.enable_vlan_filtering(bridge_name)
 
         for vlan_id in vlan_ids:

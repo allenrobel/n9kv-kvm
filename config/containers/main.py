@@ -8,15 +8,13 @@ import logging
 import sys
 from pathlib import Path
 
+from config_loader import ConfigLoader
 from executor import SystemCommandExecutor
 from factory import ContainerSystemFactory
 from requirements import RequirementsChecker
-from config_loader import ConfigLoader
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -34,33 +32,15 @@ Examples:
         """,
     )
 
-    parser.add_argument(
-        "--config",
-        required=True,
-        help="Path to YAML configuration file"
-    )
+    parser.add_argument("--config", required=True, help="Path to YAML configuration file")
 
-    parser.add_argument(
-        "container",
-        nargs="?",
-        help="Container name to create (e.g., H1, H2)"
-    )
+    parser.add_argument("container", nargs="?", help="Container name to create (e.g., H1, H2)")
 
-    parser.add_argument(
-        "--check", action="store_true", help="Check system requirements only"
-    )
+    parser.add_argument("--check", action="store_true", help="Check system requirements only")
 
-    parser.add_argument(
-        "--list-containers", 
-        action="store_true", 
-        help="List available containers in the config file"
-    )
+    parser.add_argument("--list-containers", action="store_true", help="List available containers in the config file")
 
-    parser.add_argument(
-        "--allow-ipv6",
-        action="store_true",
-        help="Allow IPv6 for downloads (default: IPv4 only)"
-    )
+    parser.add_argument("--allow-ipv6", action="store_true", help="Allow IPv6 for downloads (default: IPv4 only)")
 
     args = parser.parse_args()
 
@@ -71,7 +51,7 @@ Examples:
     try:
         # Load configuration
         config_loader = ConfigLoader(args.config)
-        
+
         # List containers if requested (no requirements check needed)
         if args.list_containers:
             available_containers = config_loader.get_available_containers()

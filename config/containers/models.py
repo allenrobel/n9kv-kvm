@@ -53,12 +53,8 @@ class ContainerSpec:
         if not self.vlans:
             # No VLANs: test interface must have IP configured
             if not self.test_interface.ip_address or not self.test_interface.netmask:
-                raise ValueError(
-                    "When no VLANs are configured, test interface must have IP address and netmask"
-                )
+                raise ValueError("When no VLANs are configured, test interface must have IP address and netmask")
         else:
             # VLANs configured: test interface IP should be empty (VLANs provide IPs)
             if self.test_interface.ip_address and self.test_interface.ip_address.strip():
-                raise ValueError(
-                    "When VLANs are configured, test interface should not have direct IP address"
-                )
+                raise ValueError("When VLANs are configured, test interface should not have direct IP address")

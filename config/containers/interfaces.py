@@ -14,9 +14,7 @@ from models import ContainerSpec
 class CommandExecutor(Protocol):
     """Protocol for command execution"""
 
-    def run(
-        self, command: List[str], check: bool = True, input_text: Optional[str] = None
-    ) -> subprocess.CompletedProcess:
+    def run(self, command: List[str], check: bool = True, input_text: Optional[str] = None) -> subprocess.CompletedProcess:
         """Execute a command"""
         ...
 

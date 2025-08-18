@@ -44,9 +44,7 @@ class PackageInstaller:
 
     OPTIONAL_PACKAGES: List[str] = ["nmap", "iperf3", "hping3"]
 
-    def __init__(
-        self, executor: CommandExecutor, fs_manager: FileSystemManager
-    ) -> None:
+    def __init__(self, executor: CommandExecutor, fs_manager: FileSystemManager) -> None:
         self.executor: CommandExecutor = executor
         self.fs_manager: FileSystemManager = fs_manager
 
@@ -57,9 +55,7 @@ class PackageInstaller:
 
         try:
             logger.info(f"Installing packages in container: {container_name}")
-            self.executor.run(
-                ["sudo", "chroot", str(rootfs_path), "/bin/bash", "-c", install_script]
-            )
+            self.executor.run(["sudo", "chroot", str(rootfs_path), "/bin/bash", "-c", install_script])
             logger.info("Package installation completed successfully")
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Failed to install packages: {e}")
@@ -67,12 +63,7 @@ class PackageInstaller:
     def _generate_install_script(self) -> str:
         """Generate package installation script"""
         core_packages_str: str = " \\\n    ".join(self.CORE_PACKAGES)
-        optional_installs: str = "\n".join(
-            [
-                f'apt install -y {pkg} || echo "{pkg} not available, skipping"'
-                for pkg in self.OPTIONAL_PACKAGES
-            ]
-        )
+        optional_installs: str = "\n".join([f'apt install -y {pkg} || echo "{pkg} not available, skipping"' for pkg in self.OPTIONAL_PACKAGES])
 
         return f"""
 export DEBIAN_FRONTEND=noninteractive

@@ -6,11 +6,7 @@ Factory for creating container system components
 from typing import List
 
 from bridge import BridgeVLANManager
-from config_generators import (
-    ContainerInitScriptGenerator,
-    FRRConfigGenerator,
-    NetworkTestScriptGenerator,
-)
+from config_generators import ContainerInitScriptGenerator, FRRConfigGenerator, NetworkTestScriptGenerator
 from executor import SystemCommandExecutor
 from filesystem import FileSystemManager
 from interfaces import ConfigurationGenerator

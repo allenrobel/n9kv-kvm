@@ -100,27 +100,19 @@ class ContainerOrchestrator:
 
         print(f"\nNetwork Configuration:")
         mgmt = spec.management_interface
-        print(
-            f"  {mgmt.name}: {mgmt.ip_address}/{mgmt.netmask} -> {mgmt.bridge} (Management)"
-        )
+        print(f"  {mgmt.name}: {mgmt.ip_address}/{mgmt.netmask} -> {mgmt.bridge} (Management)")
 
         if spec.vlans:
             for vlan in spec.vlans:
                 test = spec.test_interface
-                print(
-                    f"  {test.name}.{vlan.vlan_id}: {vlan.ip_address}/{vlan.netmask} -> {test.bridge} (VLAN {vlan.vlan_id})"
-                )
-            
+                print(f"  {test.name}.{vlan.vlan_id}: {vlan.ip_address}/{vlan.netmask} -> {test.bridge} (VLAN {vlan.vlan_id})")
+
             print(f"\nBridge VLAN Configuration:")
             vlan_ids = [v.vlan_id for v in spec.vlans]
-            print(
-                f"  Bridge {spec.test_interface.bridge} configured with VLANs: {vlan_ids}"
-            )
+            print(f"  Bridge {spec.test_interface.bridge} configured with VLANs: {vlan_ids}")
         else:
             test = spec.test_interface
-            print(
-                f"  {test.name}: {test.ip_address}/{test.netmask} -> {test.bridge} (Direct)"
-            )
+            print(f"  {test.name}: {test.ip_address}/{test.netmask} -> {test.bridge} (Direct)")
             print(f"\nBridge Configuration:")
             print(f"  Bridge {test.bridge} configured without VLANs")
 
@@ -136,9 +128,7 @@ class ContainerOrchestrator:
 
         if spec.vlans:
             for vlan in spec.vlans:
-                print(
-                    f"  network-test vlan{vlan.vlan_id}-ping <ip> - Ping via VLAN {vlan.vlan_id}"
-                )
+                print(f"  network-test vlan{vlan.vlan_id}-ping <ip> - Ping via VLAN {vlan.vlan_id}")
         else:
             print(f"  network-test test-ping <ip>  - Ping via test interface")
 

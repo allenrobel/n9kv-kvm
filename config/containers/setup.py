@@ -33,9 +33,7 @@ def install_python_dependencies():
     """Install Python dependencies"""
     print("Installing Python dependencies...")
     try:
-        subprocess.run(
-            [sys.executable, "-m", "pip", "install", "jinja2>=3.1.0"], check=True
-        )
+        subprocess.run([sys.executable, "-m", "pip", "install", "jinja2>=3.1.0"], check=True)
         print("✓ Python dependencies installed")
         return True
     except subprocess.CalledProcessError as e:

@@ -54,9 +54,7 @@ class RequirementsChecker:
 
         if missing_tools:
             logger.error(f"Missing tools: {', '.join(missing_tools)}")
-            logger.info(
-                "Install with: sudo apt install debootstrap libvirt-daemon-driver-lxc bridge-utils"
-            )
+            logger.info("Install with: sudo apt install debootstrap libvirt-daemon-driver-lxc bridge-utils")
             return False
 
         return True

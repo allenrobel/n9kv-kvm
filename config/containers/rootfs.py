@@ -16,9 +16,7 @@ logger = logging.getLogger(__name__)
 class RootfsBuilder:
     """Builds container root filesystem"""
 
-    def __init__(
-        self, executor: CommandExecutor, fs_manager: FileSystemManager
-    ) -> None:
+    def __init__(self, executor: CommandExecutor, fs_manager: FileSystemManager) -> None:
         self.executor: CommandExecutor = executor
         self.fs_manager: FileSystemManager = fs_manager
 
@@ -35,9 +33,7 @@ class RootfsBuilder:
         for attempt in range(1, max_attempts + 1):
             try:
                 ip_mode = "IPv4" if force_ipv4 else "IPv4/IPv6"
-                logger.info(
-                    f"Creating Ubuntu rootfs (attempt {attempt}/{max_attempts}) using {ip_mode}"
-                )
+                logger.info(f"Creating Ubuntu rootfs (attempt {attempt}/{max_attempts}) using {ip_mode}")
 
                 cmd = [
                     "sudo",
@@ -48,26 +44,32 @@ class RootfsBuilder:
                     str(rootfs_path),
                     mirror,
                 ]
-                
+
                 if force_ipv4:
                     # Force IPv4 by using environment variables that work better
                     import os
+
                     env = os.environ.copy()
                     # Set multiple environment variables to force IPv4
-                    env.update({
-                        'WGET_OPTIONS': '--inet4-only',
-                        'CURL_OPTIONS': '-4',
-                        'APT_CONFIG': '/dev/null',  # Disable any APT config that might force IPv6
-                    })
-                    
+                    env.update(
+                        {
+                            "WGET_OPTIONS": "--inet4-only",
+                            "CURL_OPTIONS": "-4",
+                            "APT_CONFIG": "/dev/null",  # Disable any APT config that might force IPv6
+                        }
+                    )
+
                     # Use env command to explicitly set environment
                     cmd = [
-                        "sudo", "-E",  # Preserve environment
+                        "sudo",
+                        "-E",  # Preserve environment
                         "env",
                         "WGET_OPTIONS=--inet4-only",
                         "CURL_OPTIONS=-4",
-                    ] + cmd[1:]  # Remove the first 'sudo' since we're using sudo -E
-                
+                    ] + cmd[
+                        1:
+                    ]  # Remove the first 'sudo' since we're using sudo -E
+
                 self.executor.run(cmd)
 
                 logger.info(f"Successfully created rootfs on attempt {attempt}")
@@ -78,9 +80,7 @@ class RootfsBuilder:
                     logger.warning(f"Attempt {attempt} failed, retrying...")
                     self._cleanup_failed_rootfs(rootfs_path)
                 else:
-                    raise RuntimeError(
-                        f"Failed to create rootfs after {max_attempts} attempts: {e}"
-                    )
+                    raise RuntimeError(f"Failed to create rootfs after {max_attempts} attempts: {e}")
 
     def _cleanup_failed_rootfs(self, rootfs_path: Path) -> None:
         """Clean up failed rootfs creation"""

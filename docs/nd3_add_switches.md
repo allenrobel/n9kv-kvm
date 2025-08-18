@@ -1,59 +1,6 @@
 # Add Switches to Fabrics ND 3.2
 
-## 1. Add ER Switch to ISN Fabric
-
-We'll first add the ER switch to the ISN fabric.
-
-## 2. Select Inventory Screen (ER switch)
-
-Click `Manage -> Inventory`
-
-![Manage -> Inventory](./images/nd3/add_switches/00_manage_inventory.png)
-
-## 3. Inventory Screen (ER switch)
-
-Click Actions -> Add Switches
-
-![Actions -> Add Switches](./images/nd3/add_switches/01_inventory.png)
-
-## 4. Pick a Fabric Screen (ER switch)
-
-Click `Choose Fabric`
-
-![Pick a Fabric](./images/nd3/add_switches/02_pick_a_fabric.png)
-
-## 5. Select Fabric Screen (ER switch)
-
-- Select `ISN`
-- Click `Select`
-
-![Select Fabric](./images/nd3/add_switches/03_select_fabric.png)
-
-## 6. Seed Switch Details Screen (ER switch)
-
-- `Seed IP` 192.168.12.111
-- `Username` admin
-- `Password` whatever you set when bringup up the nexus9000v switches
-- `Max Hops` 0 (default of 2 will work, but 0 reduces the discovery time`
-- `Set as individual device write credential` Enable
-- Click `Discover Switches`
-
-![Seed Switch Details](./images/nd3/add_switches/04_seed_switch_details.png)
-
-## 7. Discovery Results Screen (ER switch)
-
-- Select the ER switch
-- Click `Add Switches`
-
-![Discovery Results](./images/nd3/add_switches/05_discovery_results.png)
-
-## 8. Wait for the switch to be added (ER switch)
-
-![Wait](./images/nd3/add_switches/06_wait.png)
-
-- Click `Close`
-
-![Wait](./images/nd3/add_switches/07_wait.png)
+NOTE: This section is out of date!
 
 ## 9. Inventory Screen (SITE1 Fabric Switches)
 
@@ -76,7 +23,7 @@ Click `Choose Fabric`
 
 ## 12. Seed Switch Details Screen (SITE1 Fabric switches)
 
-- `Seed IP` 192.168.12.131
+- `Seed IP` 192.168.12.141
 - `Username` admin
 - `Password` whatever you set when bringup up the nexus9000v switches
 - `Max Hops` 1 (default of 2 will work, but 1 reduces the discovery time`
@@ -94,7 +41,7 @@ Click `Choose Fabric`
 
 ## 14. Discovery Results Screen
 
-- Select switches (L1, S1)
+- Select switches (BG1, SP1, LE1)
 - Click `Add Switches`
 
 ![Discovery Results](./images/nd3/add_switches/13_discovery_results.png)
@@ -131,7 +78,7 @@ The switches will be rebooted.
 
 ## 19. Seed Switch Details Screen (SITE2 switches)
 
-- `Seed IP` 192.168.12.132
+- `Seed IP` 192.168.12.142
 - `Username` admin
 - `Password` whatever you set when bringing up the nexus9000v switches
 - `Max Hops` 1 (default of 2 will work, but 1 reduces the discovery time`
@@ -149,7 +96,7 @@ The switches will be rebooted.
 
 ## 21. Discovery Results Screen (SITE2 switches)
 
-- Select switches (L2, S2)
+- Select switches (BG2, SP2, LE2)
 - Click `Add Switches`
 
 ![Discovery Results](./images/nd3/add_switches/21_discovery_results.png)
@@ -177,46 +124,34 @@ Once all switches display OK, we can continue.
 
 We'll now change the roles of the switches.
 
-- ER (Edge Router role)
-- S1 (Border Spine role)
-- S2 (Border Spine role)
-- L1 (Leaf role)
-- L2 (Leaf role)
+- BG1 (Border Gateway)
+- BG2 (Border Gateway)
+- SP1 (Spine)
+- SP2 (Spine)
+- LE1 (Leaf)
+- LE2 (Leaf)
 
-- Select the ER switch
+## 24. Border Gateway Switch Role
+
+- Select the BG1 and BG2 switches
 - Click Actions -> Set Role
 
-![Set Role](./images/nd3/add_switches/25_set_role.png)
+## 25. Select Role Dialog (Border Gateway Switches)
 
-## 24. Select Role Dialog (ER)
-
-- Scroll down the list and select Edge Router
+- Select `Border Gateway`
 - Click `Select`
-
-![Select Role](./images/nd3/add_switches/26_select_role.png)
-
-## 25. Warning Dialog (ER)
-
-- Read and acknowledge the warning.  Click `OK`
-- We will Recalculate and Deploy later.
-
-![Warning Dialog](./images/nd3/add_switches/27_warning.png)
 
 ## 26. Border Spine Switch Role
 
-- Select the S1 and S2 switches
+- Select the SP1 and SP2 switches
 - Click Actions -> Set Role
 
-![Border Spine Switch Role](./images/nd3/add_switches/28_border_spine_switch_role.png)
+## 27 Select Role Dialog (Spine Switches)
 
-## 27 Select Role Dialog (Border Spine Switches)
-
-- Select `Border Spine`
+- Select `Spine`
 - Click `Select`
 
-![Select Role](./images/nd3/add_switches/29_select_role.png)
-
-## 28. Warning Dialog (Border Spine Switches)
+## 28. Warning Dialog (Spine Switches)
 
 - Read and acknowledge the warning.  Click `OK`
 - We will Recalculate and Deploy later.
@@ -225,7 +160,7 @@ We'll now change the roles of the switches.
 
 ## 29. Leaf Switch Role
 
-- Select the L1, L2 switches
+- Select the LE1, LE2 switches
 - Click Actions -> Set Role
 
 ![Set Role](./images/nd3/add_switches/31_set_role.png)
@@ -248,7 +183,7 @@ We'll now change the roles of the switches.
 
 Wait for all switches to become reachable (Discovery Status column will display `OK`).
 
-This will take time (15-30 minutes) as the S1, S2, L1, L2 switches reboot.
+This will take time (15-30 minutes) as the BG1, BG2, SP1, SP2, LE1, LE2 switches reboot.
 
 Click `Refresh` occasionally to avoid being logged out due to inactivity...
 
@@ -256,13 +191,13 @@ Click `Refresh` occasionally to avoid being logged out due to inactivity...
 
 ## 33. All Switches Are Ready
 
+NOTE: image is out of date...
+
 ![All Switches Ready](./images/nd3/add_switches/35_all_switches_ready.png)
 
 ## 34. Manage Fabrics
 
 - Click `Manage -> Fabrics`
-
-![Manage -> Fabrics](./images/nd3/add_switches/36_manage_fabrics.png)
 
 ## 35. SITE1 Fabric
 
@@ -314,16 +249,18 @@ On the switch consoles, during deployment, you'll see the following, which you c
 
 Perform steps 34-41 for the SITE2 fabric.
 
-## Fabrics (ISN)
+## Recalculate and Deploy
 
-Perform steps 34-41 for the ISN fabric.
+Perform a Recalculate and Deploy in the fabrics in the following order.
 
-## Fix Peering
-
-You'll notice on the switch consoles that they are not peering.
-
-This is because the mac address on all inter-switch interfaces are the same.
-
-Follow this link to fix that.
-
-[Fix Interface Mac Addresses](https://github.com/allenrobel/n9kv-kvm/blob/main/docs/n9kv_fix_interface_mac_addresses.md)
+- SITE1
+  - This establishes BGP peering between
+    - BG1 and SP1
+    - SP1 and LE1
+- SITE2
+  - This establishes BGP peering between
+    - BG2 and SP2
+    - SP2 and LE2
+- MSD
+  - This establishes BGP peering between
+    - BG1 and BG2

@@ -1,4 +1,4 @@
-# Cockpit Nexus9000v Monitoring UI files.
+# Cockpit Nexus9000v Monitoring UI files
 
 First, [install Cockpit](https://cockpit-project.org/running.html#ubuntu) if it is not already installed, and
 [setup the backend python script](https://github.com/allenrobel/n9kv-kvm/blob/main/cockpit/usr/local/bin/README.md)
@@ -32,4 +32,3 @@ sudo mkdir /usr/share/cockpit/nexus9000v
 cd $HOME/repos/n9kv-kvm/cockpit/usr/share/cockpit/nexus9000v/
 sudo cp * /usr/share/cockpit/nexus9000v
 ```
-

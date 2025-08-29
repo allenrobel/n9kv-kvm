@@ -40,7 +40,7 @@
     # Using ansible_env variable (use sudo -E ansible-playbook ...):
     # output_dir: "{{ ansible_env.HOME }}/nxos/configs"
     output_dir: "/iso2/nxos/config"
-    mgmt_gw: "192.168.12.1"
+    mgmt_gw1: "192.168.12.1"
 
     # List of switches to create configs for
     switches:
@@ -121,7 +121,7 @@
         hostname: "{{ item.hostname }}"
         mgmt_ip: "{{ item.mgmt_ip }}"
         boot_image: "{{ nxos_image }}"
-        mgmt_gw: "{{ mgmt_gw }}"
+        mgmt_gw: "{{ mgmt_gw1 }}"
         interface_1: "{{ item.interface_1 | default(None) }}"
         interface_2: "{{ item.interface_2 | default(None) }}"
         interface_3: "{{ item.interface_3 | default(None) }}"

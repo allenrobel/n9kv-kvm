@@ -16,6 +16,12 @@
 # The output directory for the generated configuration files and ISO images
 # is specified in the `output_dir` variable below.
 #
+# IMPORTANT
+#
+# If the NXOS_PASSWORD environment variable is not set, the playbook will
+# assign a password of SuperSecretPassword to the switch (per the default
+# defined in dynamic_inventory.py)
+#
 # Modify vars below to suit your environment
 #
 # Locally defined variables (see vars below):
@@ -29,6 +35,8 @@
   vars:
     # Default NX-OS image name
     nxos_image: "nxos64-cs.10.3.8.M.bin"
+    # Password for the admin user
+    admin_password: "{{ NXOS_PASSWORD }}"
 
     # Output directory for configs and ISOs
     # If you want to change this to your local user directory, either use

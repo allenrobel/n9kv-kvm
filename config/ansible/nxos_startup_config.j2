@@ -2,6 +2,8 @@
 !Startup config saved at: Fri Jul 25 10:00:00 2025
 configure terminal
 hostname {{ hostname }}
+no password strength-check
+username admin password 0 {{ admin_password }} role network-admin
 boot nxos bootflash:/{{ boot_image }}
 
 vrf context management

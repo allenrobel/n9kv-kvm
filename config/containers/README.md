@@ -1,6 +1,6 @@
 # Modular Network Container Management System
 
-A Python-based system for creating and managing libvirt LXC containers with VLAN support, following SOLID principles and enterprise best practices.
+A Python-based system for creating and managing libvirt LXC containers with VLAN support
 
 ## Architecture
 
@@ -70,25 +70,25 @@ sudo python3 main.py --config $HOME/repos/n9kv-kvm/config/containers/container_c
 
 ### H1 Container (access mode interfaces)
 
-- eth0: 192.168.12.141/24 on BR_ND_DATA
-- eth1: 192.0.1.141/24 on BR_L1_H1
+- eth0: 192.168.12.161/24 on BR_ND_DATA
+- eth1: 192.0.1.161/24 on BR_L1_H1
 
 ### H2 Container (access mode interfaces)
 
-- eth0: 192.168.12.142/24 on BR_ND_DATA
-- eth1: 192.0.1.142/24 on BR_L1_H1
+- eth0: 192.168.12.162/24 on BR_ND_DATA
+- eth1: 192.0.1.162/24 on BR_L1_H1
 
 ### H1 Container (trunk mode interfaces)
 
-- eth0: 192.168.12.141/24 on BR_ND_DATA
-- eth1.2: 192.0.1.141/24 on BR_L1_H1
-- eth1.3: 11.1.3.141/30 on BR_L1_H1
+- eth0: 192.168.12.161/24 on BR_ND_DATA
+- eth1.2: 192.0.1.161/24 on BR_L1_H1
+- eth1.3: 11.1.3.161/30 on BR_L1_H1
 
 ### H2 Container (trunk mode interfaces)
 
-- eth0: 192.168.12.142/24 on BR_ND_DATA
-- eth1.2: 192.0.1.142/24 on BR_L1_H1
-- eth1.3: 11.1.3.142/30 on BR_L1_H1
+- eth0: 192.168.12.162/24 on BR_ND_DATA
+- eth1.2: 192.0.1.162/24 on BR_L1_H1
+- eth1.3: 11.1.3.162/30 on BR_L1_H1
 
 ## Usage Examples
 
@@ -115,11 +115,11 @@ sudo virsh -c lxc:/// shutdown H1
 network-test show-config
 
 # Test management connectivity
-network-test mgmt-ping 192.168.11.1
+network-test mgmt-ping 192.168.12.1
 
-# Test VLAN connectivity
-network-test vlan2-ping 192.0.1.142    # Ping H2 on VLAN 2
-network-test vlan3-ping 192.0.2.142    # Ping H2 on VLAN 3
+# Test VLAN connectivity applicable only if dot1q enabled
+network-test vlan2-ping 192.0.1.162    # Ping H2 on VLAN 2
+network-test vlan3-ping 192.0.2.162    # Ping H2 on VLAN 3
 
 # Show VLAN interfaces
 network-test show-vlans
@@ -128,8 +128,8 @@ network-test show-vlans
 network-test zebra-cli
 
 # Traffic generation
-network-test iperf-server            # Start server
-network-test iperf-client 192.0.1.2  # Connect to target
+network-test iperf-server              # Start server on H1
+network-test iperf-client 192.0.1.161  # Connect to H2 from H2
 ```
 
 ### Bridge VLAN Verification

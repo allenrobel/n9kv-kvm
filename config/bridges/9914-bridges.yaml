@@ -1,0 +1,103 @@
+# This provides the bridge configurations used for SITE3/SITE4
+# in this repository.  This is needed ONLY if you want a second
+# virtual testbed on the same host.  For example, you could
+# use a second testbed for a different version of Nexus Dashboard.
+#
+# Copy it to /etc/netplan/9914-bridges.yaml on the target system.
+# sudo cp 9914-bridges.yaml /etc/netplan/9914-bridges.yaml
+# sudo chmod 600 /etc/netplan/9914-bridges.yaml
+# sudo netplan try
+# sudo netplan apply
+
+# Bridge names are outlined below, along with the interfaces they connect.
+#
+# Src Interface      Dst Interface      Bridge       Site
+# BG3_INTERFACE_1    BG4_INTERFACE_1    BR_BG3_BG4   MSD inter-site
+# BG3_INTERFACE_2    SP3_INTERFACE_1    BR_BG3_SP3   SITE3
+# BG4_INTERFACE_2    SP4_INTERFACE_1    BR_BG4_SP4   SITE4
+# SP3_INTERFACE_2    LE3_INTERFACE_1    BR_SP3_LE3   SITE3
+# SP4_INTERFACE_2    LE4_INTERFACE_1    BR_SP4_LE4   SITE4
+# LE3_INTERFACE_2    HO3_INTERFACE_1    BR_LE3_HO3   SITE3
+# LE4_INTERFACE_2    HO4_INTERFACE_1    BR_LE4_HO4   SITE4
+
+network:
+  version: 2
+  renderer: networkd
+  vlans:
+    Vlan14:
+      id: 14
+      link: eno6
+      optional: true
+  bridges:
+
+    BR_BG3_BG4:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_BG3_SP3:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_BG4_SP4:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_SP3_LE3:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_SP4_LE4:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_LE3_HO3:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_LE4_HO4:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_ND_DATA_14:
+      interfaces:
+      - Vlan14
+      addresses:
+      - 192.168.14.2/24
+      - 2000:192:168:14::2/24
+      parameters:
+        stp: false

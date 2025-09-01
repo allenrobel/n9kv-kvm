@@ -149,9 +149,13 @@
         state: directory
         mode: '0755'
 
-    - name: Debug switches data
+    - name: Debug SITE1/ SITE2 switches data
       debug:
-        var: switches
+        var: switches_site12
+
+    - name: Debug SITE3/ SITE4 switches data
+      debug:
+        var: switches_site34
 
     - name: Generate SITE1 / SITE2 NX-OS startup configuration files
       template:

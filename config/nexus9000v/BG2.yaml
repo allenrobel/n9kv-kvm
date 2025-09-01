@@ -1,4 +1,5 @@
 ---
+# SITE2
 # BG2.yaml - Border Gateway 2 configuration
 name: BG2
 role: Border Gateway

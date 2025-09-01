@@ -1,0 +1,12 @@
+---
+# SP4.yaml - Spine Switch 4 configuration
+name: SP4
+role: Spine Switch
+sid: 44
+mgmt_bridge: BR_ND_DATA
+neighbors:
+  - BG4
+  - LE4
+isl_bridges:
+  - BR_BG4_SP4
+  - BR_SP4_LE4

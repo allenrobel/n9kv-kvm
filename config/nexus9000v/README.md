@@ -6,7 +6,7 @@ global_config.yaml for common settings
 
 ## Per-switch configs
 
-Individual YAML files (e.g., ER1.yaml, BG1.yaml)
+Individual YAML files (e.g., BG1.yaml, SP2.yaml)
 
 ## Override capability
 

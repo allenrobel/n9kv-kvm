@@ -1,4 +1,6 @@
 ---
+# NOT USED
+# SITE1-2
 # CR1.yaml - Core Router configuration
 name: CR1
 role: Core Router

@@ -1,4 +1,6 @@
 ---
+# NOT USED
+# SITE1-2
 # ER1.yaml - Edge Router configuration
 name: ER1
 role: Edge Router

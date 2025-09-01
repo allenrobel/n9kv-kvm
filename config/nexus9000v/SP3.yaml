@@ -1,0 +1,12 @@
+---
+# SP3.yaml - Spine Switch 3 configuration
+name: SP3
+role: Spine Switch
+sid: 43
+mgmt_bridge: BR_ND_DATA
+neighbors:
+  - BG3
+  - LE3
+isl_bridges:
+  - BR_BG3_SP3
+  - BR_SP3_LE3

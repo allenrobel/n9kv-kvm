@@ -1,4 +1,5 @@
 ---
+# SITE1
 # BG1.yaml - Border Gateway 1 configuration
 name: BG1
 role: Border Gateway

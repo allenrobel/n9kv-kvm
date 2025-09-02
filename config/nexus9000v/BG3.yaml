@@ -4,7 +4,7 @@
 name: BG3
 role: Border Gateway
 sid: 33
-mgmt_bridge: BR_ND_DATA
+mgmt_bridge: BR_ND_DATA_14
 neighbors:
   - BG4
   - SP3

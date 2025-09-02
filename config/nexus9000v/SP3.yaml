@@ -3,7 +3,7 @@
 name: SP3
 role: Spine Switch
 sid: 43
-mgmt_bridge: BR_ND_DATA
+mgmt_bridge: BR_ND_DATA_14
 neighbors:
   - BG3
   - LE3

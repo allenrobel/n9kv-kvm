@@ -4,7 +4,7 @@
 name: LE3
 role: Leaf Switch
 sid: 53
-mgmt_bridge: BR_ND_DATA
+mgmt_bridge: BR_ND_DATA_14
 neighbors:
   - SP3
   - HO3

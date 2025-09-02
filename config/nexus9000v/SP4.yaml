@@ -3,7 +3,7 @@
 name: SP4
 role: Spine Switch
 sid: 44
-mgmt_bridge: BR_ND_DATA
+mgmt_bridge: BR_ND_DATA_14
 neighbors:
   - BG4
   - LE4

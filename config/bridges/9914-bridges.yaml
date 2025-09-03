@@ -19,6 +19,8 @@
 # SP4_INTERFACE_2    LE4_INTERFACE_1    BR_SP4_LE4   SITE4
 # LE3_INTERFACE_2    HO3_INTERFACE_1    BR_LE3_HO3   SITE3
 # LE4_INTERFACE_2    HO4_INTERFACE_1    BR_LE4_HO4   SITE4
+# VP3_INTERFACE_2    HO5_INTERFACE_1    BR_VP3_HO5   SITE4
+# VP4_INTERFACE_2    HO5_INTERFACE_2    BR_VP4_HO5   SITE4
 
 network:
   version: 2
@@ -75,6 +77,24 @@ network:
         stp: false
       interfaces: []
 
+    BR_SP4_VP3:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_SP4_VP4:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
     BR_LE3_HO3:
       dhcp4: false
       dhcp6: false
@@ -85,6 +105,24 @@ network:
       interfaces: []
 
     BR_LE4_HO4:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_VP3_HO5:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_VP4_HO5:
       dhcp4: false
       dhcp6: false
       mtu: 9216

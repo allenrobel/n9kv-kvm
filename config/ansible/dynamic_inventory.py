@@ -51,8 +51,13 @@ SP3_IP4 = environ.get("SP3_IP4", "192.168.14.141")
 SP4_IP4 = environ.get("SP4_IP4", "192.168.14.142")
 LE3_IP4 = environ.get("LE3_IP4", "192.168.14.151")
 LE4_IP4 = environ.get("LE4_IP4", "192.168.14.152")
+VP3_IP4 = environ.get("VP3_IP4", "192.168.12.163")
+VP4_IP4 = environ.get("VP4_IP4", "192.168.12.164")
 LE3_IP4_INTERFACE_2 = environ.get("LE3_IP4_INTERFACE_2", "192.168.0.151")
 LE4_IP4_INTERFACE_2 = environ.get("LE4_IP4_INTERFACE_2", "192.168.0.152")
+
+VP3_IP4_INTERFACE_2 = environ.get("VP3_IP4_INTERFACE_2", "192.168.0.161")
+VP4_IP4_INTERFACE_2 = environ.get("VP4_IP4_INTERFACE_2", "192.168.0.162")
 
 # Fabric types
 SITE1_FABRIC = environ.get("ND_SITE1_FABRIC", "SITE1")
@@ -90,6 +95,8 @@ SP3_HOSTNAME = environ.get("SP3_HOSTNAME", "SP3")
 SP4_HOSTNAME = environ.get("SP4_HOSTNAME", "SP4")
 LE3_HOSTNAME = environ.get("LE3_HOSTNAME", "LE3")
 LE4_HOSTNAME = environ.get("LE4_HOSTNAME", "LE4")
+VP3_HOSTNAME = environ.get("VP3_HOSTNAME", "VP3")
+VP4_HOSTNAME = environ.get("VP4_HOSTNAME", "VP4")
 
 # Links
 # Source             Destination        Bridge
@@ -152,12 +159,20 @@ SP3_INTERFACE_2 = environ.get("SP3_INTERFACE_2", "Ethernet1/2")
 
 SP4_INTERFACE_1 = environ.get("SP4_INTERFACE_1", "Ethernet1/1")
 SP4_INTERFACE_2 = environ.get("SP4_INTERFACE_2", "Ethernet1/2")
+SP4_INTERFACE_3 = environ.get("SP4_INTERFACE_3", "Ethernet1/3")
+SP4_INTERFACE_4 = environ.get("SP4_INTERFACE_4", "Ethernet1/4")
 
 LE3_INTERFACE_1 = environ.get("LE3_INTERFACE_1", "Ethernet1/1")
 LE3_INTERFACE_2 = environ.get("LE3_INTERFACE_2", "Ethernet1/2")
 
 LE4_INTERFACE_1 = environ.get("LE4_INTERFACE_1", "Ethernet1/1")
 LE4_INTERFACE_2 = environ.get("LE4_INTERFACE_2", "Ethernet1/2")
+
+VP3_INTERFACE_1 = environ.get("VP3_INTERFACE_1", "Ethernet1/1")
+VP3_INTERFACE_2 = environ.get("VP3_INTERFACE_2", "Ethernet1/2")
+
+VP4_INTERFACE_1 = environ.get("VP4_INTERFACE_1", "Ethernet1/1")
+VP4_INTERFACE_2 = environ.get("VP4_INTERFACE_2", "Ethernet1/2")
 
 # SITE3 / SITE4
 BG3_MAC_1 = environ.get("BG3_MAC_1", "0000.0033.0001")
@@ -171,12 +186,20 @@ SP3_MAC_2 = environ.get("SP3_MAC_2", "0000.0043.0002")
 
 SP4_MAC_1 = environ.get("SP4_MAC_1", "0000.0044.0001")
 SP4_MAC_2 = environ.get("SP4_MAC_2", "0000.0044.0002")
+SP4_MAC_3 = environ.get("SP4_MAC_3", "0000.0044.0003")
+SP4_MAC_4 = environ.get("SP4_MAC_4", "0000.0044.0004")
 
 LE3_MAC_1 = environ.get("LE3_MAC_1", "0000.0053.0001")
 LE3_MAC_2 = environ.get("LE3_MAC_2", "0000.0053.0002")
 
 LE4_MAC_1 = environ.get("LE4_MAC_1", "0000.0054.0001")
 LE4_MAC_2 = environ.get("LE4_MAC_2", "0000.0054.0002")
+
+VP3_MAC_1 = environ.get("VP3_MAC_1", "0000.0063.0001")
+VP3_MAC_2 = environ.get("VP3_MAC_2", "0000.0063.0002")
+
+VP4_MAC_1 = environ.get("VP4_MAC_1", "0000.0064.0001")
+VP4_MAC_2 = environ.get("VP4_MAC_2", "0000.0064.0002")
 
 # output is printed to STDOUT, where ansible-playbook -i reads it.
 # If you change any vars above, be sure to add them below.
@@ -209,6 +232,8 @@ output = {
             "SP4_IP4": SP4_IP4,
             "LE3_IP4": LE3_IP4,
             "LE4_IP4": LE4_IP4,
+            "VP3_IP4": VP3_IP4,
+            "VP4_IP4": VP4_IP4,
             "BG1_HOSTNAME": BG1_HOSTNAME,
             "BG2_HOSTNAME": BG2_HOSTNAME,
             "SP1_HOSTNAME": SP1_HOSTNAME,
@@ -221,6 +246,8 @@ output = {
             "SP4_HOSTNAME": SP4_HOSTNAME,
             "LE3_HOSTNAME": LE3_HOSTNAME,
             "LE4_HOSTNAME": LE4_HOSTNAME,
+            "VP3_HOSTNAME": VP3_HOSTNAME,
+            "VP4_HOSTNAME": VP4_HOSTNAME,
             "BG1_MAC_1": BG1_MAC_1,
             "BG1_MAC_2": BG1_MAC_2,
             "BG2_MAC_1": BG2_MAC_1,
@@ -241,10 +268,16 @@ output = {
             "SP3_MAC_2": SP3_MAC_2,
             "SP4_MAC_1": SP4_MAC_1,
             "SP4_MAC_2": SP4_MAC_2,
+            "SP4_MAC_3": SP4_MAC_3,
+            "SP4_MAC_4": SP4_MAC_4,
             "LE3_MAC_1": LE3_MAC_1,
             "LE3_MAC_2": LE3_MAC_2,
             "LE4_MAC_1": LE4_MAC_1,
             "LE4_MAC_2": LE4_MAC_2,
+            "VP3_MAC_1": VP3_MAC_1,
+            "VP3_MAC_2": VP3_MAC_2,
+            "VP4_MAC_1": VP4_MAC_1,
+            "VP4_MAC_2": VP4_MAC_2,
             "BG1_INTERFACE_1": BG1_INTERFACE_1,
             "BG1_INTERFACE_2": BG1_INTERFACE_2,
             "BG2_INTERFACE_1": BG2_INTERFACE_1,
@@ -267,12 +300,20 @@ output = {
             "SP3_INTERFACE_2": SP3_INTERFACE_2,
             "SP4_INTERFACE_1": SP4_INTERFACE_1,
             "SP4_INTERFACE_2": SP4_INTERFACE_2,
+            "SP4_INTERFACE_3": SP4_INTERFACE_3,
+            "SP4_INTERFACE_4": SP4_INTERFACE_4,
             "LE3_INTERFACE_1": LE3_INTERFACE_1,
             "LE3_INTERFACE_2": LE3_INTERFACE_2,
             "LE4_INTERFACE_1": LE4_INTERFACE_1,
             "LE4_INTERFACE_2": LE4_INTERFACE_2,
             "LE3_IP4_INTERFACE_2": LE3_IP4_INTERFACE_2,
             "LE4_IP4_INTERFACE_2": LE4_IP4_INTERFACE_2,
+            "VP3_INTERFACE_1": VP3_INTERFACE_1,
+            "VP3_INTERFACE_2": VP3_INTERFACE_2,
+            "VP4_INTERFACE_1": VP4_INTERFACE_1,
+            "VP4_INTERFACE_2": VP4_INTERFACE_2,
+            "VP3_IP4_INTERFACE_2": VP3_IP4_INTERFACE_2,
+            "VP4_IP4_INTERFACE_2": VP4_IP4_INTERFACE_2,
             "ND_PASSWORD": ND_PASSWORD,
             "ND_USERNAME": ND_USERNAME,
             "NXOS_USERNAME": NXOS_USERNAME,
@@ -309,6 +350,8 @@ output = {
             "LE2",
             "LE3",
             "LE4",
+            "VP3",
+            "VP4",
         ],
         "vars": {
             "ansible_become": "true",

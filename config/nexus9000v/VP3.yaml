@@ -1,0 +1,13 @@
+---
+# SITE4
+# VP3.yaml - VPC Switch 3 configuration
+name: VP3
+role: Leaf Switch
+sid: 63
+mgmt_bridge: BR_ND_DATA_14
+neighbors:
+  - SP4
+  - HO5
+isl_bridges:
+  - BR_SP4_VP3
+  - BR_VP3_HO5

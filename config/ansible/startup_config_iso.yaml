@@ -142,6 +142,20 @@
         interface_1: "{{ LE4_INTERFACE_1 }}"
         interface_2: "{{ LE4_INTERFACE_2 }}"
 
+      - hostname: "{{ VP3_HOSTNAME }}"
+        mgmt_ip: "{{ VP3_IP4 }}"
+        config_file: "{{ VP3_HOSTNAME }}.cfg"
+        iso_file: "{{ VP3_HOSTNAME }}.iso"
+        interface_1: "{{ VP3_INTERFACE_1 }}"
+        interface_2: "{{ VP3_INTERFACE_2 }}"
+
+      - hostname: "{{ VP4_HOSTNAME }}"
+        mgmt_ip: "{{ VP4_IP4 }}"
+        config_file: "{{ VP4_HOSTNAME }}.cfg"
+        iso_file: "{{ VP4_HOSTNAME }}.iso"
+        interface_1: "{{ VP4_INTERFACE_1 }}"
+        interface_2: "{{ VP4_INTERFACE_2 }}"
+
   tasks:
     - name: Create output directory
       file:

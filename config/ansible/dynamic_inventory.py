@@ -41,8 +41,8 @@ SP1_IP4 = environ.get("SP1_IP4", "192.168.12.141")
 SP2_IP4 = environ.get("SP2_IP4", "192.168.12.142")
 LE1_IP4 = environ.get("LE1_IP4", "192.168.12.151")
 LE2_IP4 = environ.get("LE2_IP4", "192.168.12.152")
-LE1_IP4_INTERFACE_2 = environ.get("LE1_IP4_INTERFACE_2", "192.168.0.151")
-LE2_IP4_INTERFACE_2 = environ.get("LE2_IP4_INTERFACE_2", "192.168.0.152")
+LE1_IP4_INTERFACE_2 = environ.get("LE1_IP4_INTERFACE_2", "192.168.0.161")
+LE2_IP4_INTERFACE_2 = environ.get("LE2_IP4_INTERFACE_2", "192.168.0.162")
 
 # SITE3 / SITE4
 BG3_IP4 = environ.get("BG3_IP4", "192.168.14.131")
@@ -53,11 +53,11 @@ LE3_IP4 = environ.get("LE3_IP4", "192.168.14.151")
 LE4_IP4 = environ.get("LE4_IP4", "192.168.14.152")
 VP3_IP4 = environ.get("VP3_IP4", "192.168.14.153")
 VP4_IP4 = environ.get("VP4_IP4", "192.168.14.154")
-LE3_IP4_INTERFACE_2 = environ.get("LE3_IP4_INTERFACE_2", "192.168.0.151")
-LE4_IP4_INTERFACE_2 = environ.get("LE4_IP4_INTERFACE_2", "192.168.0.152")
+LE3_IP4_INTERFACE_2 = environ.get("LE3_IP4_INTERFACE_2", "192.168.0.161")
+LE4_IP4_INTERFACE_2 = environ.get("LE4_IP4_INTERFACE_2", "192.168.0.162")
 
-VP3_IP4_INTERFACE_2 = environ.get("VP3_IP4_INTERFACE_2", "192.168.0.161")
-VP4_IP4_INTERFACE_2 = environ.get("VP4_IP4_INTERFACE_2", "192.168.0.162")
+VP3_IP4_INTERFACE_2 = environ.get("VP3_IP4_INTERFACE_2", "192.168.0.163")
+VP4_IP4_INTERFACE_2 = environ.get("VP4_IP4_INTERFACE_2", "192.168.0.164")
 
 # Fabric types
 SITE1_FABRIC = environ.get("ND_SITE1_FABRIC", "SITE1")
@@ -74,8 +74,6 @@ NXOS_PASSWORD = environ.get("NXOS_PASSWORD", "SuperSecretPassword")
 NXOS_USERNAME = environ.get("NXOS_USERNAME", "admin")
 
 # Switch hostnames
-# CR = Core Router (route server)
-# ER = Edge Router
 # BG = Border Gateway
 # SP = Spine
 # LE = Leaf

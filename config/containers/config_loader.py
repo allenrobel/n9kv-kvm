@@ -27,7 +27,7 @@ class ConfigLoader:
 
     def load_config(self) -> Dict[str, Any]:
         """Load and parse the YAML configuration file"""
-        with open(self.config_file, "r") as f:
+        with open(self.config_file, "r", encoding="utf-8") as f:
             return yaml.safe_load(f)
 
     def create_container_spec(self, container_name: str) -> ContainerSpec:

@@ -1,5 +1,5 @@
 # global_config.yaml - Global settings for all switches
-image_path: /iso1/nxos
+image_path: /iso1/nxos/qcow2
 cdrom_path: /iso2/nxos/config
 bios_file: /usr/share/ovmf/OVMF.fd
 default_image: nexus9300v64.10.3.8.M.qcow2

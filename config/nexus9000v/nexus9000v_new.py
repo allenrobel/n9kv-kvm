@@ -604,6 +604,7 @@ def create_sample_configs():
             "vcpus": 2,
             "external_storage_size": "25G",
             "enable_external_storage": True
+        },
         {
             "name": "LE2",
             "role": "Leaf Switch",

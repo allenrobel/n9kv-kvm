@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-NXOS_VERSION=10.6.2.F
+NXOS_VERSION=10.6.1.F
 NXOS_QCOW2_DIR=/iso1/nxos/qcow2
 NXOS_BIN_DIR=/iso1/nxos/bin
 

@@ -8,4 +8,5 @@ default_image: nexus9300v64.10.6.2.F.qcow2
 default_interface_type: e1000
 default_ram: 16384
 default_vcpus: 4
+external_storage_enabled: true
 image_path: /iso1/nxos/qcow2

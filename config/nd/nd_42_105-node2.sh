@@ -4,16 +4,16 @@
 ND_SOURCE_DIR=/iso1/nd/42.105
 ND_IMAGE=nd-dk9.4.2.0.105.qcow2
 ND_NAME=nd42.105.2
-ND_INSTALL_DIR=/iso2/nd/$ND_NAME
+ND_INSTALL_DIR=/iso3/nd/$ND_NAME
 ND_MGMT_NET=outside
-ND_DATA_NET=BR_ND_DATA-14
+ND_DATA_NET=BR_ND_DATA_14
 mkdir $ND_INSTALL_DIR
-qemu-img create -f qcow2 -F qcow2 -b $ND_SOURCE_DIR/$ND_IMAGE $ND_INSTALL_DIR/nd-node2-disk1.qcow2
-qemu-img create -f qcow2 $ND_INSTALL_DIR/nd-node2-disk2.qcow2 500G
+qemu-img create -f qcow2 -F qcow2 -b $ND_SOURCE_DIR/$ND_IMAGE $ND_INSTALL_DIR/nd-node1-disk1.qcow2
+qemu-img create -f qcow2 $ND_INSTALL_DIR/nd-node1-disk2.qcow2 500G
 sudo virt-install --name $ND_NAME \
     --vcpus 16 --ram 96000 --osinfo linux2020 \
-    --disk path=$ND_INSTALL_DIR/nd-node2-disk1.qcow2 \
-    --disk path=$ND_INSTALL_DIR/nd-node2-disk2.qcow2 \
+    --disk path=$ND_INSTALL_DIR/nd-node1-disk1.qcow2 \
+    --disk path=$ND_INSTALL_DIR/nd-node1-disk2.qcow2 \
     --network bridge:$ND_MGMT_NET,model=virtio,address.type=pci,address.domain=0,address.bus=0,address.slot=3 \
     --network bridge:$ND_DATA_NET,model=virtio,address.type=pci,address.domain=0,address.bus=0,address.slot=4 \
     --noautoconsole --import

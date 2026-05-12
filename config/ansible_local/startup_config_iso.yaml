@@ -1,0 +1,184 @@
+# See dynamic_inventory.py for the variables used in this file.
+#
+# This ansible script generates NX-OS startup configuration files
+# and creates ISO images containing these configurations.
+# The generated files are used to boot Nexus 9000v switches in a
+# KVM environment and can be used with the QEMU/KVM scripts in this
+# repository.
+#
+# Depending on the ownership and write permissions for the location you
+# choose for the output directory, you may need to run this script with
+# root privileges.
+#
+# The script assumes the Jinja2 template in this directory, which defines
+# the NX-OS startup configuration. See `nxos_startup_config.j2`.
+#
+# The output directory for the generated configuration files and ISO images
+# is specified in the `output_dir` variable below.
+#
+# Modify vars below to suit your environment
+#
+# Locally defined variables (see vars below):
+# output_dir: should match CDROM_PATH in qemu/n9kv_qemu_*.sh
+# nxos_image: should match the NX-OS image used in the QEMU scripts
+# switches: list of switches with their hostnames, management IPs, config file names, and ISO file names.
+---
+- name: Create NX-OS Startup Configuration Files and ISO Images
+  hosts: localhost
+  gather_facts: true
+  vars:
+    # Default NX-OS image name
+    nxos_image: "nxos64-cs.10.3.8.M.bin"
+    # nxos_image: "nxos64-cs.10.5.3.F.bin"
+
+    # Output directory for configs and ISOs
+    # If you want to change this to your local user directory, either use
+    # the absolute path or use -E with sudu when running the playbook
+    # to preserve the $HOME environment variable.
+    # Examples:
+    # Absolute path (use sudo ansible-playbook ...):
+    # output_dir: "/home/user/nxos/configs"
+    # Using ansible_env variable (use sudo -E ansible-playbook ...):
+    # output_dir: "{{ ansible_env.HOME }}/nxos/configs"
+    output_dir: "/iso2/nxos/config"
+
+    # List of switches to create configs for
+    switches:
+      - hostname: "{{ ER_HOSTNAME }}"
+        mgmt_ip: "{{ ER_IP4 }}"
+        config_file: "{{ ER_HOSTNAME }}.cfg"
+        iso_file: "{{ ER_HOSTNAME }}.iso"
+        interface_1: "{{ ER_INTERFACE_1 }}"
+        interface_2: "{{ ER_INTERFACE_2 }}"
+
+      - hostname: "{{ S1_HOSTNAME }}"
+        mgmt_ip: "{{ S1_IP4 }}"
+        config_file: "{{ S1_HOSTNAME }}.cfg"
+        iso_file: "{{ S1_HOSTNAME }}.iso"
+        interface_1: "{{ S1_INTERFACE_1 }}"
+        interface_2: "{{ S1_INTERFACE_2 }}"
+
+      - hostname: "{{ S2_HOSTNAME }}"
+        mgmt_ip: "{{ S2_IP4 }}"
+        config_file: "{{ S2_HOSTNAME }}.cfg"
+        iso_file: "{{ S2_HOSTNAME }}.iso"
+        interface_1: "{{ S2_INTERFACE_1 }}"
+        interface_2: "{{ S2_INTERFACE_2 }}"
+
+      - hostname: "{{ L1_HOSTNAME }}"
+        mgmt_ip: "{{ L1_IP4 }}"
+        config_file: "{{ L1_HOSTNAME }}.cfg"
+        iso_file: "{{ L1_HOSTNAME }}.iso"
+        interface_1: "{{ L1_INTERFACE_1 }}"
+        interface_2: "{{ L1_INTERFACE_2 }}"
+
+      - hostname: "{{ L2_HOSTNAME }}"
+        mgmt_ip: "{{ L2_IP4 }}"
+        config_file: "{{ L2_HOSTNAME }}.cfg"
+        iso_file: "{{ L2_HOSTNAME }}.iso"
+        interface_1: "{{ L2_INTERFACE_1 }}"
+        interface_2: "{{ L2_INTERFACE_2 }}"
+
+  tasks:
+    - name: Create output directory
+      file:
+        path: "{{ output_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Generate NX-OS startup configuration files
+      template:
+        src: nxos_startup_config.j2
+        dest: "{{ output_dir }}/{{ item.config_file }}"
+        mode: '0644'
+      loop: "{{ switches }}"
+      vars:
+        hostname: "{{ item.hostname }}"
+        mgmt_ip: "{{ item.mgmt_ip }}"
+        boot_image: "{{ nxos_image }}"
+        interface_1: "{{ item.interface_1 }}"
+        interface_2: "{{ item.interface_2 }}"
+
+    - name: Check if mkisofs is available
+      command: which mkisofs
+      register: mkisofs_check
+      failed_when: false
+      changed_when: false
+
+    - name: Check if genisoimage is available (if mkisofs not found)
+      command: which genisoimage
+      register: genisoimage_check
+      failed_when: false
+      changed_when: false
+      when: mkisofs_check.rc != 0
+
+    - name: Install genisoimage package if neither tool found (Debian/Ubuntu)
+      package:
+        name: genisoimage
+        state: present
+      become: true
+      when: 
+        - mkisofs_check.rc != 0
+        - genisoimage_check.rc != 0 or genisoimage_check is skipped
+        - ansible_os_family == "Debian"
+
+    - name: Install genisoimage package if neither tool found (RedHat/CentOS)
+      package:
+        name: genisoimage
+        state: present
+      become: true
+      when: 
+        - mkisofs_check.rc != 0
+        - genisoimage_check.rc != 0 or genisoimage_check is skipped
+        - ansible_os_family == "RedHat"
+
+    - name: Determine which ISO tool to use
+      set_fact:
+        iso_command: >-
+          {%- if mkisofs_check.rc == 0 -%}
+          mkisofs
+          {%- elif genisoimage_check is defined and genisoimage_check.rc == 0 -%}
+          genisoimage
+          {%- else -%}
+          mkisofs
+          {%- endif -%}
+
+    - name: Create ISO files with startup configurations (copy to nxos_config.txt first)
+      shell: |
+        # Copy the specific config file to nxos_config.txt
+        cp {{ output_dir }}/{{ item.config_file }} {{ output_dir }}/nxos_config.txt
+        
+        # Create ISO with nxos_config.txt
+        {{ iso_command }} -o {{ output_dir }}/{{ item.iso_file }} \
+          -l --iso-level 2 \
+          -V "{{ item.hostname }}_CONFIG" \
+          {{ output_dir }}/nxos_config.txt
+        
+        # Clean up the temporary file
+        rm {{ output_dir }}/nxos_config.txt
+      loop: "{{ switches }}"
+      register: iso_creation
+      changed_when: true
+
+    - name: Display created files
+      debug:
+        msg: |
+          Created configuration and ISO files:
+          {% for switch in switches %}
+          - Config: {{ output_dir }}/{{ switch.config_file }}
+          - ISO: {{ output_dir }}/{{ switch.iso_file }} (contains nxos_config.txt)
+          {% endfor %}
+          
+          Note: Each ISO file contains the config as 'nxos_config.txt' which NX-OS will automatically load.
+
+    - name: Verify ISO files were created
+      stat:
+        path: "{{ output_dir }}/{{ item.iso_file }}"
+      loop: "{{ switches }}"
+      register: iso_files
+
+    - name: Report ISO file creation status
+      debug:
+        msg: "ISO file {{ item.item.iso_file }} - Size: {{ item.stat.size }} bytes"
+      loop: "{{ iso_files.results }}"
+      when: item.stat.exists

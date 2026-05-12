@@ -1,0 +1,49 @@
+---
+- hosts: nd
+  check_mode: false
+  gather_facts: false
+  tasks:
+  - name: VRF v2 SITE1
+    cisco.dcnm.dcnm_vrf:
+      fabric: SITE1
+      state: merged
+      config:
+      - vrf_name: v2
+        vrf_id: 9000002
+        vrf_template: Default_VRF_Universal
+        vrf_extension_template: Default_VRF_Extension_Universal
+        vlan_id: 2002
+        service_vrf_template: null
+        attach:
+        - ip_address: 192.168.12.131
+
+  - name: Network n2 SITE1
+    cisco.dcnm.dcnm_network:
+      fabric: SITE1
+      state: merged
+      config:
+      - net_name: n2
+        vrf_name: v2
+        net_id: 2
+        net_template: Default_Network_Universal
+        net_extension_template: Default_Network_Extension_Universal
+        vlan_id: 2
+        gw_ip_subnet: 11.1.2.1/24
+        deploy: true
+        attach:
+        - ip_address: 192.168.12.131
+
+  - name: Configure Ethernet1/2 as access interface
+    cisco.dcnm.dcnm_interface:
+      fabric: SITE1
+      state: merged
+      config:
+      - name: Ethernet1/2
+        type: eth
+        switch:
+        - 192.168.12.131
+        deploy: true
+        profile:
+          admin_state: true
+          mode: access
+          access_vlan: 2

@@ -9,5 +9,5 @@ neighbors:
   - S3_BG1
   - S4_SP1
 isl_bridges:
-  - BR_ISN_S3BG1_S4BG1_1
+  - BR_ISN_S3_S4_1
   - BR_S4_BG1_SP1_1

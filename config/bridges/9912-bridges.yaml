@@ -11,7 +11,7 @@
 # Bridge names are outlined below, along with the nexus9000v interfaces they connect.
 #
 # Src Interface           Dst Interface           Bridge
-# S1_BG1_INTERFACE_1      S2_BG1_INTERFACE_1      BR_ISN_S1BG1_S2BG1_1   (cross-site MSD)
+# S1_BG1_INTERFACE_1      S2_BG1_INTERFACE_1      BR_ISN_S1_S2_1   (cross-site MSD)
 # S1_BG1_INTERFACE_2      S1_SP1_INTERFACE_1      BR_S1_BG1_SP1_1
 # S2_BG1_INTERFACE_2      S2_SP1_INTERFACE_1      BR_S2_BG1_SP1_1
 # S1_SP1_INTERFACE_2      S1_LE1_INTERFACE_1      BR_S1_SP1_LE1_1
@@ -20,8 +20,8 @@
 # S2_LE1_INTERFACE_2      S2_H1_INTERFACE_1       BR_S2_LE1_H1_1
 # S1_SP1_INTERFACE_3      S1_LE2_INTERFACE_1      BR_S1_SP1_LE2_1
 # S1_LE1_INTERFACE_3      S1_LE2_INTERFACE_2      BR_S1_LE1_LE2_1   (VPC peer-link)
-# S1_LE1_INTERFACE_4      S1_TOR1_INTERFACE_1     BR_S1_LE1_TOR1_1
-# S1_LE2_INTERFACE_3      S1_TOR1_INTERFACE_2     BR_S1_LE2_TOR1_1
+# S1_LE1_INTERFACE_4      S1_TOR1_INTERFACE_1     BR_S1_LE1_T1_1
+# S1_LE2_INTERFACE_3      S1_TOR1_INTERFACE_2     BR_S1_LE2_T1_1
 # All mgmt0                                       BR_ND_DATA_12
 
 network:
@@ -34,7 +34,7 @@ network:
       optional: true
 
   bridges:
-    BR_ISN_S1BG1_S2BG1_1:
+    BR_ISN_S1_S2_1:
       dhcp4: false
       dhcp6: false
       mtu: 9216
@@ -115,7 +115,7 @@ network:
         stp: false
       interfaces: []
 
-    BR_S1_LE1_TOR1_1:
+    BR_S1_LE1_T1_1:
       dhcp4: false
       dhcp6: false
       mtu: 9216
@@ -124,7 +124,7 @@ network:
         stp: false
       interfaces: []
 
-    BR_S1_LE2_TOR1_1:
+    BR_S1_LE2_T1_1:
       dhcp4: false
       dhcp6: false
       mtu: 9216

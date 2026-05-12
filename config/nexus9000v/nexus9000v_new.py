@@ -579,8 +579,8 @@ def create_sample_configs():
 
     # Switch configurations
     switches = [
-        {"name": "S1_BG1", "role": "Border Gateway", "sid": 31, "mgmt_bridge": "BR_ND_DATA_12", "neighbors": ["S2_BG1", "S1_SP1"], "isl_bridges": ["BR_ISN_S1BG1_S2BG1_1", "BR_S1_BG1_SP1_1"]},
-        {"name": "S2_BG1", "role": "Border Gateway", "sid": 32, "mgmt_bridge": "BR_ND_DATA_12", "neighbors": ["S1_BG1", "S2_SP1"], "isl_bridges": ["BR_ISN_S1BG1_S2BG1_1", "BR_S2_BG1_SP1_1"]},
+        {"name": "S1_BG1", "role": "Border Gateway", "sid": 31, "mgmt_bridge": "BR_ND_DATA_12", "neighbors": ["S2_BG1", "S1_SP1"], "isl_bridges": ["BR_ISN_S1_S2_1", "BR_S1_BG1_SP1_1"]},
+        {"name": "S2_BG1", "role": "Border Gateway", "sid": 32, "mgmt_bridge": "BR_ND_DATA_12", "neighbors": ["S1_BG1", "S2_SP1"], "isl_bridges": ["BR_ISN_S1_S2_1", "BR_S2_BG1_SP1_1"]},
         {"name": "S1_SP1", "role": "Spine Switch", "sid": 41, "mgmt_bridge": "BR_ND_DATA_12", "neighbors": ["S1_BG1", "S1_LE1"], "isl_bridges": ["BR_S1_BG1_SP1_1", "BR_S1_SP1_LE1_1"]},
         {"name": "S2_SP1", "role": "Spine Switch", "sid": 42, "mgmt_bridge": "BR_ND_DATA_12", "neighbors": ["S2_BG1", "S2_LE1"], "isl_bridges": ["BR_S2_BG1_SP1_1", "BR_S2_SP1_LE1_1"]},
         {

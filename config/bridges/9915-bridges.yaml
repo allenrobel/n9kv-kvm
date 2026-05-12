@@ -15,7 +15,7 @@
 # DATA Network: BR_ND_DATA_15 -> Vlan15
 #
 # Src Interface           Dst Interface           Bridge                       Site
-# S5_BG1_INTERFACE_1      S6_BG1_INTERFACE_1      BR_ISN_S5BG1_S6BG1_1         MSD inter-site
+# S5_BG1_INTERFACE_1      S6_BG1_INTERFACE_1      BR_ISN_S5_S6_1         MSD inter-site
 # S5_BG1_INTERFACE_2      S5_SP1_INTERFACE_1      BR_S5_BG1_SP1_1              SITE5
 # S6_BG1_INTERFACE_2      S6_SP1_INTERFACE_1      BR_S6_BG1_SP1_1              SITE6
 # S5_SP1_INTERFACE_2      S5_LE1_INTERFACE_1      BR_S5_SP1_LE1_1              SITE5
@@ -37,7 +37,7 @@ network:
       optional: true
   bridges:
 
-    BR_ISN_S5BG1_S6BG1_1:
+    BR_ISN_S5_S6_1:
       dhcp4: false
       dhcp6: false
       mtu: 9216

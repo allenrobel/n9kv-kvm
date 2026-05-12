@@ -12,4 +12,4 @@ neighbors:
 isl_bridges:
   - BR_S1_SP1_LE2_1
   - BR_S1_LE1_LE2_1
-  - BR_S1_LE2_TOR1_1
+  - BR_S1_LE2_T1_1

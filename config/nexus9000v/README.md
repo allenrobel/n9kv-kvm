@@ -59,4 +59,4 @@ isl_bridges: [BR_S1_SP1_LE1_1, BR_S1_LE1_H1_1]
 ram: 20480
 ```
 
-Bridge naming: `BR_S<site>_<upper>_<lower>_<n>` for intra-site links (upper = higher in topology BG > SP > LE > TOR), `BR_ISN_<site><role><idx>_<site><role><idx>_<n>` for cross-site links, link-index suffix `_<n>` always present.
+Bridge naming: `BR_S<site>_<upper>_<lower>_<n>` for intra-site links (upper = higher in topology BG > SP > LE > T; `TOR` is shortened to `T` in bridge names only, to fit under Linux's 15-char IFNAMSIZ limit), `BR_ISN_S<a>_S<b>_<n>` for cross-site links. Link-index suffix `_<n>` always present.

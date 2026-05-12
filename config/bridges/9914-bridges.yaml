@@ -12,7 +12,7 @@
 # Bridge names are outlined below, along with the interfaces they connect.
 #
 # Src Interface           Dst Interface           Bridge                       Site
-# S3_BG1_INTERFACE_1      S4_BG1_INTERFACE_1      BR_ISN_S3BG1_S4BG1_1         MSD inter-site
+# S3_BG1_INTERFACE_1      S4_BG1_INTERFACE_1      BR_ISN_S3_S4_1         MSD inter-site
 # S3_BG1_INTERFACE_2      S3_SP1_INTERFACE_1      BR_S3_BG1_SP1_1              SITE3
 # S4_BG1_INTERFACE_2      S4_SP1_INTERFACE_1      BR_S4_BG1_SP1_1              SITE4
 # S3_SP1_INTERFACE_2      S3_LE1_INTERFACE_1      BR_S3_SP1_LE1_1              SITE3
@@ -34,7 +34,7 @@ network:
       optional: true
   bridges:
 
-    BR_ISN_S3BG1_S4BG1_1:
+    BR_ISN_S3_S4_1:
       dhcp4: false
       dhcp6: false
       mtu: 9216

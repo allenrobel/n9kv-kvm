@@ -11,7 +11,7 @@
 # SITE1/SITE2 bridges (canonical, from 9912-bridges.yaml).
 BRIDGES=(
     BR_ND_DATA_12
-    BR_ISN_S1BG1_S2BG1_1
+    BR_ISN_S1_S2_1
     BR_S1_BG1_SP1_1
     BR_S2_BG1_SP1_1
     BR_S1_SP1_LE1_1
@@ -19,8 +19,8 @@ BRIDGES=(
     BR_S2_SP1_LE1_1
     BR_S1_LE1_LE2_1
     BR_S1_LE1_H1_1
-    BR_S1_LE1_TOR1_1
-    BR_S1_LE2_TOR1_1
+    BR_S1_LE1_T1_1
+    BR_S1_LE2_T1_1
     BR_S2_LE1_H1_1
 )
 

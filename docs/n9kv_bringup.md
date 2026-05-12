@@ -204,7 +204,7 @@ neighbors:
   - S2_BG1
   - S1_SP1
 isl_bridges:
-  - BR_ISN_S1BG1_S2BG1_1
+  - BR_ISN_S1_S2_1
   - BR_S1_BG1_SP1_1
 ```
 
@@ -224,7 +224,7 @@ Image resized.
 S1_BG1 instance created.
 Role: Border Gateway
 SID: 31
-S1_BG1 -> S2_BG1: BR_ISN_S1BG1_S2BG1_1
+S1_BG1 -> S2_BG1: BR_ISN_S1_S2_1
 
 Console access: telnet localhost 9031
 Monitor access: telnet localhost 4431

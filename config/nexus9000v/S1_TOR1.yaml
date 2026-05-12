@@ -9,5 +9,5 @@ neighbors:
   - S1_LE1
   - S1_LE2
 isl_bridges:
-  - BR_S1_LE1_TOR1_1
-  - BR_S1_LE2_TOR1_1
+  - BR_S1_LE1_T1_1
+  - BR_S1_LE2_T1_1

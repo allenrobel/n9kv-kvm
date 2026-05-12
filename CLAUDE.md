@@ -10,8 +10,8 @@ This is **not** a deployable software project. It is a collection of scripts, co
 
 The project assumes you have sourced the environment before running anything. Two parallel environment trees exist:
 
-- `env/` — primary/dev environment
-- `env_prod/` — production lab host environment
+- `env/` — primary/dev environment (safe to commit)
+- `env_prod/` — production lab host environment. **NEVER commit `env_prod/`.** It contains real passwords and other secrets that must not be made public. Treat it as untracked-only: do not `git add env_prod/`, do not include it in a `git add -A` / `git add .`, and do not stage individual files inside it. If a future change needs to share *structure* from `env_prod/`, copy the relevant file into `env/` with secrets stripped and commit that instead.
 
 Source one of them (they wire up `VIRTUAL_ENV`, Ansible vars, `LIBVIRT_DEFAULT_URI`, and `PYTHONPATH`):
 

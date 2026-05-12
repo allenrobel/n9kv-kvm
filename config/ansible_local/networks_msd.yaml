@@ -17,10 +17,10 @@
           gw_ip_subnet: 11.1.2.1/24
           deploy: true
           attach:
-          - ip_address: "{{ L1_IP4 }}"
-          - ip_address: "{{ L2_IP4 }}"
-          - ip_address: "{{ S1_IP4 }}"
-          - ip_address: "{{ S2_IP4 }}"
+          - ip_address: "{{ S1_LE1_IP4 }}"
+          - ip_address: "{{ S2_LE1_IP4 }}"
+          - ip_address: "{{ S1_SP1_IP4 }}"
+          - ip_address: "{{ S2_SP1_IP4 }}"
         - net_name: n3
           vrf_name: v3
           net_id: 3
@@ -30,7 +30,7 @@
           gw_ip_subnet: 11.1.3.1/24
           deploy: true
           attach:
-          - ip_address: "{{ L1_IP4 }}"
-          - ip_address: "{{ L2_IP4 }}"
-          - ip_address: "{{ S1_IP4 }}"
-          - ip_address: "{{ S2_IP4 }}"
+          - ip_address: "{{ S1_LE1_IP4 }}"
+          - ip_address: "{{ S2_LE1_IP4 }}"
+          - ip_address: "{{ S1_SP1_IP4 }}"
+          - ip_address: "{{ S2_SP1_IP4 }}"

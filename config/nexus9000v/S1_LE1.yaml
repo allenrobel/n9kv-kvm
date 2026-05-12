@@ -1,0 +1,17 @@
+---
+# SITE1
+# S1_LE1.yaml - Leaf Switch 1 in SITE1 (VPC pair member with S1_LE2; uplink to S1_TOR1)
+name: S1_LE1
+role: Leaf Switch
+sid: 51
+mgmt_bridge: BR_ND_DATA_12
+neighbors:
+  - S1_SP1
+  - S1_H1
+  - S1_LE2
+  - S1_TOR1
+isl_bridges:
+  - BR_S1_SP1_LE1_1
+  - BR_S1_LE1_H1_1
+  - BR_S1_LE1_LE2_1
+  - BR_S1_LE1_TOR1_1

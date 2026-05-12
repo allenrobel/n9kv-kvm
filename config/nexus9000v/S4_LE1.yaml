@@ -1,0 +1,13 @@
+---
+# SITE4
+# S4_LE1.yaml - Leaf Switch 1 in SITE4
+name: S4_LE1
+role: Leaf Switch
+sid: 54
+mgmt_bridge: BR_ND_DATA_14
+neighbors:
+  - S4_SP1
+  - S4_H1
+isl_bridges:
+  - BR_S4_SP1_LE1_1
+  - BR_S4_LE1_H1_1

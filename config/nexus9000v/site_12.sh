@@ -1,7 +1,6 @@
-sudo python3 nexus9000v_new.py --config BG1.yaml
-sudo python3 nexus9000v_new.py --config BG2.yaml
-sudo python3 nexus9000v_new.py --config LE1.yaml
-sudo python3 nexus9000v_new.py --config LE2.yaml
-sudo python3 nexus9000v_new.py --config SP1.yaml
-sudo python3 nexus9000v_new.py --config SP2.yaml
-
+sudo python3 nexus9000v_new.py --config S1_BG1.yaml
+sudo python3 nexus9000v_new.py --config S2_BG1.yaml
+sudo python3 nexus9000v_new.py --config S1_LE1.yaml
+sudo python3 nexus9000v_new.py --config S2_LE1.yaml
+sudo python3 nexus9000v_new.py --config S1_SP1.yaml
+sudo python3 nexus9000v_new.py --config S2_SP1.yaml

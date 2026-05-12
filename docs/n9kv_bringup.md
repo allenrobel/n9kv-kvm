@@ -50,7 +50,7 @@ later if it's found these can be removed.)
 !Time: Fri Jul 25 10:00:00 2025
 !Startup config saved at: Fri Jul 25 10:00:00 2025
 configure terminal
-hostname BG1
+hostname S1_BG1
 boot nxos bootflash:/nxos64-cs.10.5.3.F.bin
 
 interface mgmt0
@@ -68,7 +68,7 @@ interface Ethernet1/2
 
 Several items above are derived from variables located in two places, as shown below:
 
-- `BG1` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`BG1_HOSTNAME`)
+- `S1_BG1` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`BG1_HOSTNAME`)
 - `nxos64-cs.10.5.3.F.bin` : $HOME/repos/n9kv-kvm/config/ansible/startup_config_iso.yaml (`nxos_image` var)
 - `192.168.12.131/24` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`BG1_IP4`)
 - `Ethernet1/1` : $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py (`BG1_INTERFACE_1`)
@@ -117,24 +117,24 @@ Substitute the path below with the value of `output_dir` from above.
 ```bash
 (n9kv-kvm) arobel@glide:~/repos/n9kv-kvm$ ls -l /iso2/nxos/config/
 total 46117076
--rw-r--r-- 1 arobel arobel        340 Aug 15 04:07 BG1.cfg
--rw-rw-r-- 1 arobel arobel     358400 Aug 15 04:07 BG1.iso
--rw-r--r-- 1 root   root   6035668992 Aug 18 05:03 BG1.qcow2
--rw-r--r-- 1 arobel arobel        340 Aug 15 04:07 BG2.cfg
--rw-rw-r-- 1 arobel arobel     358400 Aug 15 04:07 BG2.iso
--rw-r--r-- 1 root   root   6004015104 Aug 18 05:03 BG2.qcow2
--rw-r--r-- 1 arobel arobel        340 Aug 15 04:07 LE1.cfg
--rw-rw-r-- 1 arobel arobel     358400 Aug 15 04:07 LE1.iso
--rw-r--r-- 1 root   root   6027935744 Aug 18 05:03 LE1.qcow2
--rw-r--r-- 1 arobel arobel        340 Aug 15 04:07 LE2.cfg
--rw-rw-r-- 1 arobel arobel     358400 Aug 15 04:07 LE2.iso
--rw-r--r-- 1 root   root   6024527872 Aug 18 05:03 LE2.qcow2
--rw-r--r-- 1 arobel arobel        340 Aug 15 04:07 SP1.cfg
--rw-rw-r-- 1 arobel arobel     358400 Aug 15 04:07 SP1.iso
--rw-r--r-- 1 root   root   6027608064 Aug 18 05:03 SP1.qcow2
--rw-r--r-- 1 arobel arobel        340 Aug 15 04:07 SP2.cfg
--rw-rw-r-- 1 arobel arobel     358400 Aug 15 04:07 SP2.iso
--rw-r--r-- 1 root   root   6028787712 Aug 18 05:03 SP2.qcow2
+-rw-r--r-- 1 arobel arobel        340 Aug 15 04:07 S1_BG1.cfg
+-rw-rw-r-- 1 arobel arobel     358400 Aug 15 04:07 S1_BG1.iso
+-rw-r--r-- 1 root   root   6035668992 Aug 18 05:03 S1_BG1.qcow2
+-rw-r--r-- 1 arobel arobel        340 Aug 15 04:07 S2_BG1.cfg
+-rw-rw-r-- 1 arobel arobel     358400 Aug 15 04:07 S2_BG1.iso
+-rw-r--r-- 1 root   root   6004015104 Aug 18 05:03 S2_BG1.qcow2
+-rw-r--r-- 1 arobel arobel        340 Aug 15 04:07 S1_LE1.cfg
+-rw-rw-r-- 1 arobel arobel     358400 Aug 15 04:07 S1_LE1.iso
+-rw-r--r-- 1 root   root   6027935744 Aug 18 05:03 S1_LE1.qcow2
+-rw-r--r-- 1 arobel arobel        340 Aug 15 04:07 S2_LE1.cfg
+-rw-rw-r-- 1 arobel arobel     358400 Aug 15 04:07 S2_LE1.iso
+-rw-r--r-- 1 root   root   6024527872 Aug 18 05:03 S2_LE1.qcow2
+-rw-r--r-- 1 arobel arobel        340 Aug 15 04:07 S1_SP1.cfg
+-rw-rw-r-- 1 arobel arobel     358400 Aug 15 04:07 S1_SP1.iso
+-rw-r--r-- 1 root   root   6027608064 Aug 18 05:03 S1_SP1.qcow2
+-rw-r--r-- 1 arobel arobel        340 Aug 15 04:07 S2_SP1.cfg
+-rw-rw-r-- 1 arobel arobel     358400 Aug 15 04:07 S2_SP1.iso
+-rw-r--r-- 1 root   root   6028787712 Aug 18 05:03 S2_SP1.qcow2
 (n9kv-kvm) arobel@glide:~/repos/n9kv-kvm$
 ```
 
@@ -171,14 +171,14 @@ In particular, verify that:
 
 ```bash
 (n9kv-kvm) arobel@glide:~/repos/n9kv-kvm/config/nexus9000v$ ls -l *.yaml | grep -v global_config
--rw-rw-r-- 1 arobel arobel 181 Aug 16 06:41 BG1.yaml
--rw-rw-r-- 1 arobel arobel 181 Aug 16 06:42 BG2.yaml
+-rw-rw-r-- 1 arobel arobel 181 Aug 16 06:41 S1_BG1.yaml
+-rw-rw-r-- 1 arobel arobel 181 Aug 16 06:42 S2_BG1.yaml
 -rw-rw-r-- 1 arobel arobel 150 Aug 15 23:36 CR1.yaml
 -rw-rw-r-- 1 arobel arobel 196 Aug 15 23:36 ER1.yaml
--rw-rw-r-- 1 arobel arobel 175 Aug 15 23:36 LE1.yaml
--rw-rw-r-- 1 arobel arobel 175 Aug 15 23:36 LE2.yaml
--rw-rw-r-- 1 arobel arobel 177 Aug 15 23:36 SP1.yaml
--rw-rw-r-- 1 arobel arobel 177 Aug 15 23:36 SP2.yaml
+-rw-rw-r-- 1 arobel arobel 175 Aug 15 23:36 S1_LE1.yaml
+-rw-rw-r-- 1 arobel arobel 175 Aug 15 23:36 S2_LE1.yaml
+-rw-rw-r-- 1 arobel arobel 177 Aug 15 23:36 S1_SP1.yaml
+-rw-rw-r-- 1 arobel arobel 177 Aug 15 23:36 S2_SP1.yaml
 (n9kv-kvm) arobel@glide:~/repos/n9kv-kvm/config/nexus9000v$
 ```
 
@@ -191,40 +191,40 @@ These files contain:
 - The switch's neighbors
 - The bridge names used to reach the switch's neighbors
 
-Example for BG1 switch.
+Example for S1_BG1 switch.
 
 ```yaml
 ---
-# BG1.yaml - Border Gateway 1 configuration
-name: BG1
+# S1_BG1.yaml - Border Gateway 1 configuration
+name: S1_BG1
 role: Border Gateway
 sid: 31
 mgmt_bridge: BR_ND_DATA
 neighbors:
-  - BG2
-  - SP1
+  - S2_BG1
+  - S1_SP1
 isl_bridges:
-  - BR_BG1_BG2
-  - BR_BG1_SP1
+  - BR_ISN_S1BG1_S2BG1_1
+  - BR_S1_BG1_SP1_1
 ```
 
 ### Run Python script that generates and starts the nexus9000v instances
 
 ```bash
 cd $HOME/repos/n9kv-kvm/config/nexus9000v
-sudo python3 nexus9000v.py --global-config global_config.yaml --config BG1.yaml 
+sudo python3 nexus9000v.py --global-config global_config.yaml --config S1_BG1.yaml 
 ```
 
 In the script output, you'll see the port number used
 to connect to the switch console
 
 ```bash
-(n9kv-kvm) arobel@glide:~/repos/n9kv-kvm/config/nexus9000v$ sudo python3 nexus9000v.py --global-config global_config.yaml --config BG1.yaml
+(n9kv-kvm) arobel@glide:~/repos/n9kv-kvm/config/nexus9000v$ sudo python3 nexus9000v.py --global-config global_config.yaml --config S1_BG1.yaml
 Image resized.
-BG1 instance created.
+S1_BG1 instance created.
 Role: Border Gateway
 SID: 31
-BG1 -> BG2: BR_BG1_BG2
+S1_BG1 -> S2_BG1: BR_ISN_S1BG1_S2BG1_1
 
 Console access: telnet localhost 9031
 Monitor access: telnet localhost 4431
@@ -232,7 +232,7 @@ Process ID: 386740
 (n9kv-kvm) arobel@glide:~/repos/n9kv-kvm/config/nexus9000v$
 ```
 
-### Connect to the BG1 Switch Console
+### Connect to the S1_BG1 Switch Console
 
 ```bash
 telnet localhost 9031
@@ -266,19 +266,19 @@ Do you want to enforce secure password standard (yes/no) [y]: no
 
 
 User Access Verification
-BG1 login: admin
+S1_BG1 login: admin
 Password: 
 # skipping copyright, etc...
-BG1#
+S1_BG1#
 ```
 
 To exit the console, use `Ctrl+]` (`control + ]` on a Mac) and then type `close` at the `telnet` prompt.
 
 ```bash
-BG1#
+S1_BG1#
 telnet> close
 Connection closed.
 (n9kv-kvm) arobel@glide:~/repos/n9kv-kvm/config/nexus9000v$
 ```
 
-Repeat the above for the other switches (BG2, SP1, SP2, LE1, LE2).
+Repeat the above for the other switches (S2_BG1, S1_SP1, S2_SP1, S1_LE1, S2_LE1).

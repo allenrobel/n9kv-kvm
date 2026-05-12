@@ -66,10 +66,10 @@ meets the [Hardware Requirements](#hardware-requirements) and on which
   - chrony/noble-updates,now 4.5-1ubuntu4.2
   - [Installation](#chrony-installation-and-configuration)
 - [debootstrap](https://launchpad.net/ubuntu/noble/amd64/debootstrap)
-  - Create LXC host containers for end-to-end network testing hosts (H1 and H2 in the topology shown further below)
+  - Create LXC host containers for end-to-end network testing hosts (`S1_H1` and `S2_H1` in the topology shown further below)
   - 1.0.134ubuntu1
 - `libvirt-daemon-driver-lxc`
-  - LXC support for libvirt for H1 and H2 network testing endpoint hosts
+  - LXC support for libvirt for `S1_H1` and `S2_H1` network testing endpoint hosts
   - 10.0.0-2ubuntu8.8
 
 ## Install and Setup
@@ -223,43 +223,43 @@ Follow the link below to install this extension.
   - MSD (Multi Site Domain)
     - Contains both SITE1 and SITE2 fabrics
   - SITE1 (VxLAN)
-    - 1x Border Gateway (BG1)
-    - 1x Leaf (LE1)
-    - 1x Host (HO1)
+    - 1x Border Gateway (S1_BG1)
+    - 1x Leaf (S1_LE1)
+    - 1x Host (S1_H1)
   - SITE2 (VxLAN)
-    - 1x Border Gateway (BG2)
-    - 1x Leaf (LE2)
-    - 1x Host (HO2)
+    - 1x Border Gateway (S2_BG1)
+    - 1x Leaf (S2_LE1)
+    - 1x Host (S2_H1)
 
 ```mermaid
 graph TD
     subgraph MSD["MSD Fabric (Multi-site Domain)"]
         subgraph SITE2["SITE2 - VXLAN Fabric"]
-            BG2[Border Gateway - BG2]
-            SP2[Spine Switch - SP2]
-            LE2[Leaf Switch - LE2]
-            HO2[Host Container - HO2]
+            S2_BG1[Border Gateway - S2_BG1]
+            S2_SP1[Spine Switch - S2_SP1]
+            S2_LE1[Leaf Switch - S2_LE1]
+            S2_H1[Host Container - S2_H1]
             
             %% SITE2 fabric connections (top-down)
-            BG2 --- SP2
-            SP2 --- LE2
-            LE2 --- HO2
+            S2_BG1 --- S2_SP1
+            S2_SP1 --- S2_LE1
+            S2_LE1 --- S2_H1
         end
 
         subgraph SITE1["SITE1 - VXLAN Fabric"]
-            BG1[Border Gateway - BG1]
-            SP1[Spine Switch - SP1]
-            LE1[Leaf Switch - LE1]
-            HO1[Host Container - HO1]
+            S1_BG1[Border Gateway - S1_BG1]
+            S1_SP1[Spine Switch - S1_SP1]
+            S1_LE1[Leaf Switch - S1_LE1]
+            S1_H1[Host Container - S1_H1]
             
             %% SITE1 fabric connections (top-down)
-            BG1 --- SP1
-            SP1 --- LE1
-            LE1 --- HO1
+            S1_BG1 --- S1_SP1
+            S1_SP1 --- S1_LE1
+            S1_LE1 --- S1_H1
         end
 
         %% Inter-fabric connection (MSD backbone)
-        BG1 --- BG2
+        S1_BG1 --- S2_BG1
     end
 
     %% Styling
@@ -270,10 +270,10 @@ graph TD
     classDef leaf fill:#a8f3c8,stroke:#2e7d32,stroke-width:2px,color:#000000
     classDef host fill:#e8f2a0,stroke:#558b2f,stroke-width:2px,color:#000000
 
-    class BG1,BG2 borderGateway
-    class SP1,SP2 spine
-    class LE1,LE2 leaf
-    class HO1,HO2 host
+    class S1_BG1,S2_BG1 borderGateway
+    class S1_SP1,S2_SP1 spine
+    class S1_LE1,S2_LE1 leaf
+    class S1_H1,S2_H1 host
 ```
 
 ## Project Structure
@@ -335,15 +335,15 @@ graph TD
 │   │   ├── vrfs_site1.yaml
 │   │   └── vrfs_site2.yaml
 │   ├── bridges
-│   │   ├── 99-bridges.yaml
-│   │   ├── add_vlans_BR_L1_H1.sh
-│   │   ├── add_vlans_BR_L2_H2.sh
+│   │   ├── 9912-bridges.yaml
+│   │   ├── add_vlans_BR_S1_LE1_H1_1.sh
+│   │   ├── add_vlans_BR_S2_LE1_H1_1.sh
 │   │   ├── bridge.conf
 │   │   ├── bridges_config.sh
 │   │   ├── bridges_down.sh
 │   │   ├── bridges_monitor.sh
-│   │   ├── vlans_del_BR_L1_H1.sh
-│   │   └── vlans_del_BR_L2_H2.sh
+│   │   ├── vlans_del_BR_S1_LE1_H1_1.sh
+│   │   └── vlans_del_BR_S2_LE1_H1_1.sh
 │   ├── containers
 │   │   ├── __pycache__
 │   │   │   ├── bridge.cpython-313.pyc
@@ -382,17 +382,17 @@ graph TD
 │   │   ├── nd_321e.sh
 │   │   └── nd_411g.sh
 │   └── nexus9000v
-│       ├── BG1.yaml
-│       ├── BG2.yaml
+│       ├── S1_BG1.yaml
+│       ├── S2_BG1.yaml
 │       ├── CR1.yaml
 │       ├── ER1.yaml
 │       ├── global_config.yaml
-│       ├── LE1.yaml
-│       ├── LE2.yaml
+│       ├── S1_LE1.yaml
+│       ├── S2_LE1.yaml
 │       ├── nexus9000v.py
 │       ├── README.md
-│       ├── SP1.yaml
-│       └── SP2.yaml
+│       ├── S1_SP1.yaml
+│       └── S2_SP1.yaml
 ├── docs
 │   ├── bridges.md
 │   ├── chrony.md

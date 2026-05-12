@@ -1,4 +1,4 @@
-export BRIDGES="BR_BG1_BG2 BR_BG1_SP1 BR_BG2_SP2 BR_SP1_LE1 BR_SP2_LE2 BR_LE1_HO1 BR_LE2_HO2"
+export BRIDGES="BR_ISN_S1BG1_S2BG1_1 BR_S1_BG1_SP1_1 BR_S2_BG1_SP1_1 BR_S1_SP1_LE1_1 BR_S2_SP1_LE1_1 BR_S1_LE1_H1_1 BR_S2_LE1_H1_1"
 
 # Show bridge info
 for bridge in $BRIDGES; do echo "$bridge:"; ip link show $bridge; done

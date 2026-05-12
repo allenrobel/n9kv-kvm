@@ -1,6 +1,6 @@
-# Remove vlans 2 and 3 from BR_L2_H2 and associated interfaces
+# Remove vlans 2 and 3 from BR_S1_LE1_H1_1 and associated interfaces
 VLANS=(2 3)
-BRIDGE="BR_L2_H2"
+BRIDGE="BR_S1_LE1_H1_1"
 TAPS=$(bridge link show | grep -E $BRIDGE | grep tap | cut -d: -f2 | cut -d' ' -f2)
 VNETS=$(bridge link show | grep -E $BRIDGE | grep vnet | cut -d: -f2 | cut -d' ' -f2 | cut -d'@' -f1)
 
@@ -10,7 +10,7 @@ if ! ip link show $BRIDGE >/dev/null 2>&1; then
     exit 1
 fi
 
-# Remove vlans from bridge
+# Remove vlans to bridge
 for vlan in "${VLANS[@]}"; do
     echo "Removing VLAN $vlan from $BRIDGE..."
     echo "sudo bridge vlan del vid $vlan dev $BRIDGE self"

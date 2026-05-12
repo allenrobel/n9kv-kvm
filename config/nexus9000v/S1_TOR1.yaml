@@ -1,0 +1,13 @@
+---
+# SITE1
+# S1_TOR1.yaml - Top-of-Rack Switch 1 in SITE1 (dual-homed to VPC pair S1_LE1/S1_LE2)
+name: S1_TOR1
+role: Top-of-Rack Switch
+sid: 61
+mgmt_bridge: BR_ND_DATA_12
+neighbors:
+  - S1_LE1
+  - S1_LE2
+isl_bridges:
+  - BR_S1_LE1_TOR1_1
+  - BR_S1_LE2_TOR1_1

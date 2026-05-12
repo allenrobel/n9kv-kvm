@@ -1,18 +1,18 @@
 containers:
-  H1:
-    name: "H1"
+  S1_H1:
+    name: "S1_H1"
     management_interface:
       name: "eth0"
       ip_address: "192.168.12.161"
       netmask: "24"
-      bridge: "BR_ND_DATA"
+      bridge: "BR_ND_DATA_12"
       mac_address: "00:00:61:00:00:01"
       description: "Management Interface"
     test_interface:
       name: "eth1"
       ip_address: "192.0.1.161"
       netmask: "24"
-      bridge: "BR_LE1_HO1"
+      bridge: "BR_S1_LE1_H1_1"
       mac_address: "00:00:61:00:00:02"
       description: "Test Interface"
     vlans: []
@@ -20,20 +20,20 @@ containers:
     memory_kb: 1048576
     vcpus: 2
 
-  H2:
-    name: "H2"
+  S2_H1:
+    name: "S2_H1"
     management_interface:
       name: "eth0"
       ip_address: "192.168.12.162"
       netmask: "24"
-      bridge: "BR_ND_DATA"
+      bridge: "BR_ND_DATA_12"
       mac_address: "00:00:62:00:00:01"
       description: "Management Interface"
     test_interface:
       name: "eth1"
       ip_address: "192.0.1.162"
       netmask: "24"
-      bridge: "BR_LE2_HO2"
+      bridge: "BR_S2_LE1_H1_1"
       mac_address: "00:00:62:00:00:02"
       description: "Test Interface"
     vlans: []

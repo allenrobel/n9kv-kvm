@@ -36,7 +36,7 @@ Inspect and edit the following file to ensure it will work
 for you.
 
 ```bash
-$HOME/repos/n9kv-kvm/config/bridges/99-bridges.yaml
+$HOME/repos/n9kv-kvm/config/bridges/9912-bridges.yaml
 ```
 
 In particular, verify that:
@@ -45,9 +45,9 @@ In particular, verify that:
   the interface name (`enp34s0f0` below) to match your host
   (see the `link` parameter for `Vlan11` and `Vlan12` below).
   To check your interfaces e.g. `ip link show`.
-- Vlans 11 and 12 are not already associated with your
-  interface (the `id` parameter for `Vlan11` and `Vlan12` below).
-- The bridge names (e.g. `BR_ND_MGMT`, `BR_ER_S1`, etc) don't conflict
+- Vlan 12 is not already associated with your interface
+  (the `id` parameter for `Vlan12` below).
+- The bridge names (e.g. `BR_ND_DATA_12`, `BR_S1_BG1_SP1_1`, etc) don't conflict
   with existing bridges on your host.
 - The ip addresses (`192.168.11.1/24` and `192.168.12.1/24`) don't
   conflict with other addresses on your host, or with addresses in
@@ -69,8 +69,8 @@ In particular, verify that:
 
 ```bash
 cd $HOME/repos/n9kv-kvm/config/bridges
-sudo cp ./99-bridges.yaml /etc/netplan
-sudo chmod 600 /etc/netplan/99-bridges.yaml
+sudo cp ./9912-bridges.yaml /etc/netplan
+sudo chmod 600 /etc/netplan/9912-bridges.yaml
 ```
 
 ## Apply the bridges configuration
@@ -98,7 +98,7 @@ If the above commands result in messages like the following, you can ignore them
 
 ```bash
 (.venv) arobel@cvd-3:~/repos/n9kv-kvm/config/bridges$ sudo netplan try
-BR_ER_S1: reverting custom parameters for bridges and bonds is not supported
+BR_S1_BG1_SP1_1: reverting custom parameters for bridges and bonds is not supported
 # etc...
 Please carefully review the configuration and use 'netplan apply' directly.
 ```
@@ -107,18 +107,18 @@ Please carefully review the configuration and use 'netplan apply' directly.
 
 - ip link show type bridge | grep BR_
 
-Some bridges (e.g. `BR_ER_S1`) will show `state DOWN`. This is expected until we bringup,
+Some bridges (e.g. `BR_S1_BG1_SP1_1`) will show `state DOWN`. This is expected until we bringup,
 the nexus9000v switches.
 
 ```bash
 root@cvd-1:/home/arobel/repos/n9kv-kvm/config/bridges# ip link show type bridge | grep BR_
-6: BR_ER_S1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
-7: BR_ER_S2: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
-8: BR_ND_DATA: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default qlen 1000
+6: BR_S1_BG1_SP1_1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
+7: BR_S2_BG1_SP1_1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
+8: BR_ND_DATA_12: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default qlen 1000
 9: BR_ND_MGMT: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default qlen 1000
-10: BR_S1_L1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
-41: BR_L1_H1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
-42: BR_L2_H2: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
-43: BR_S2_L2: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
+10: BR_S1_SP1_LE1_1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
+41: BR_S1_LE1_H1_1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
+42: BR_S2_LE1_H1_1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
+43: BR_S2_SP1_LE1_1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
 root@cvd-1:/home/arobel/repos/n9kv-kvm/config/bridges# 
 ```

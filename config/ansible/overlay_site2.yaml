@@ -16,10 +16,10 @@
           vlan_id: 2002
           service_vrf_template: null
           attach:
-          - ip_address: "{{ LE2_IP4 }}"
-          - ip_address: "{{ SP2_IP4 }}"
+          - ip_address: "{{ S2_LE1_IP4 }}"
+          - ip_address: "{{ S2_SP1_IP4 }}"
             vrf_lite:
-              - interface: "{{ SP2_INTERFACE_1 }}"
+              - interface: "{{ S2_SP1_INTERFACE_1 }}"
         - vrf_name: v3
           vrf_id: 9000003
           vrf_template: Default_VRF_Universal
@@ -27,10 +27,10 @@
           vlan_id: 2003
           service_vrf_template: null
           attach:
-          - ip_address: "{{ LE2_IP4 }}"
-          - ip_address: "{{ SP2_IP4 }}"
+          - ip_address: "{{ S2_LE1_IP4 }}"
+          - ip_address: "{{ S2_SP1_IP4 }}"
             vrf_lite:
-              - interface: "{{ SP2_INTERFACE_1 }}"
+              - interface: "{{ S2_SP1_INTERFACE_1 }}"
     - name: Networks SITE2
       cisco.dcnm.dcnm_network:
         fabric: SITE2
@@ -44,10 +44,10 @@
           vlan_id: 2
           gw_ip_subnet: '11.2.1.1/24'
           attach:
-          - ip_address: "{{ LE2_IP4 }}"
-            ports: ["{{ LE2_INTERFACE_2 }}"]
+          - ip_address: "{{ S2_LE1_IP4 }}"
+            ports: ["{{ S2_LE1_INTERFACE_2 }}"]
             deploy: true
-          - ip_address: "{{ SP2_IP4 }}"
+          - ip_address: "{{ S2_SP1_IP4 }}"
             ports: []
             deploy: true
         - net_name: v3n1
@@ -58,9 +58,9 @@
           vlan_id: 3
           gw_ip_subnet: '11.3.1.1/24'
           attach:
-          - ip_address: "{{ LE2_IP4 }}"
-            ports: ["{{ LE2_INTERFACE_2 }}"]
+          - ip_address: "{{ S2_LE1_IP4 }}"
+            ports: ["{{ S2_LE1_INTERFACE_2 }}"]
             deploy: true
-          - ip_address: "{{ SP2_IP4 }}"
+          - ip_address: "{{ S2_SP1_IP4 }}"
             ports: []
             deploy: true

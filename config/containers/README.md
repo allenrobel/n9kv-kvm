@@ -59,36 +59,36 @@ python3 main.py --check
 ### 3. Create Containers
 
 ```bash
-# Create H1 container
-sudo python3 main.py --config $HOME/repos/n9kv-kvm/config/containers/container_configs_access_mode.yaml H1
+# Create S1_H1 container
+sudo python3 main.py --config $HOME/repos/n9kv-kvm/config/containers/container_configs_access_mode.yaml S1_H1
 
-# Create H2 container  
-sudo python3 main.py --config $HOME/repos/n9kv-kvm/config/containers/container_configs_access_mode.yaml H1
+# Create S2_H1 container
+sudo python3 main.py --config $HOME/repos/n9kv-kvm/config/containers/container_configs_access_mode.yaml S2_H1
 ```
 
 ## Container Specifications
 
-### H1 Container (access mode interfaces)
+### S1_H1 Container (access mode interfaces, SITE1)
 
-- eth0: 192.168.12.161/24 on BR_ND_DATA
-- eth1: 192.0.1.161/24 on BR_L1_H1
+- eth0: 192.168.12.161/24 on BR_ND_DATA_12
+- eth1: 192.0.1.161/24 on BR_S1_LE1_H1_1
 
-### H2 Container (access mode interfaces)
+### S2_H1 Container (access mode interfaces, SITE2)
 
-- eth0: 192.168.12.162/24 on BR_ND_DATA
-- eth1: 192.0.1.162/24 on BR_L1_H1
+- eth0: 192.168.12.162/24 on BR_ND_DATA_12
+- eth1: 192.0.1.162/24 on BR_S1_LE1_H1_1
 
-### H1 Container (trunk mode interfaces)
+### S1_H1 Container (trunk mode interfaces, SITE1)
 
-- eth0: 192.168.12.161/24 on BR_ND_DATA
-- eth1.2: 192.0.1.161/24 on BR_L1_H1
-- eth1.3: 11.1.3.161/30 on BR_L1_H1
+- eth0: 192.168.12.161/24 on BR_ND_DATA_12
+- eth1.2: 192.0.1.161/24 on BR_S1_LE1_H1_1
+- eth1.3: 11.1.3.161/30 on BR_S1_LE1_H1_1
 
-### H2 Container (trunk mode interfaces)
+### S2_H1 Container (trunk mode interfaces, SITE2)
 
-- eth0: 192.168.12.162/24 on BR_ND_DATA
-- eth1.2: 192.0.1.162/24 on BR_L1_H1
-- eth1.3: 11.1.3.162/30 on BR_L1_H1
+- eth0: 192.168.12.162/24 on BR_ND_DATA_12
+- eth1.2: 192.0.1.162/24 on BR_S1_LE1_H1_1
+- eth1.3: 11.1.3.162/30 on BR_S1_LE1_H1_1
 
 ## Usage Examples
 
@@ -96,16 +96,16 @@ sudo python3 main.py --config $HOME/repos/n9kv-kvm/config/containers/container_c
 
 ```bash
 # Start container
-sudo virsh -c lxc:/// start H1
+sudo virsh -c lxc:/// start S1_H1
 
 # Connect to console (use Ctrl+] to disconnect)
-sudo virsh -c lxc:/// console H1
+sudo virsh -c lxc:/// console S1_H1
 
 # Check status
 sudo virsh -c lxc:/// list
 
 # Stop container
-sudo virsh -c lxc:/// shutdown H1
+sudo virsh -c lxc:/// shutdown S1_H1
 ```
 
 ### Network Testing (Inside Container)
@@ -118,8 +118,8 @@ network-test show-config
 network-test mgmt-ping 192.168.12.1
 
 # Test VLAN connectivity applicable only if dot1q enabled
-network-test vlan2-ping 192.0.1.162    # Ping H2 on VLAN 2
-network-test vlan3-ping 192.0.2.162    # Ping H2 on VLAN 3
+network-test vlan2-ping 192.0.1.162    # Ping S2_H1 on VLAN 2
+network-test vlan3-ping 192.0.2.162    # Ping S2_H1 on VLAN 3
 
 # Show VLAN interfaces
 network-test show-vlans
@@ -128,8 +128,8 @@ network-test show-vlans
 network-test zebra-cli
 
 # Traffic generation
-network-test iperf-server              # Start server on H1
-network-test iperf-client 192.0.1.161  # Connect to H2 from H2
+network-test iperf-server              # Start server on S1_H1
+network-test iperf-client 192.0.1.161  # Connect to S2_H1 from S1_H1
 ```
 
 ### Bridge VLAN Verification
@@ -137,7 +137,7 @@ network-test iperf-client 192.0.1.161  # Connect to H2 from H2
 ```bash
 # Check bridge VLAN configuration
 # NOTE: bridge may or may not be configured for VLAN based on container configurations
-bridge vlan show dev BR_L1_H1
+bridge vlan show dev BR_S1_LE1_H1_1
 
 # Should show VLANs 2 and 3 configured
 ```
@@ -223,10 +223,10 @@ sudo usermod -aG libvirt $USER
 
 ```bash
 # Create required bridges manually if they don't exist
-sudo ip link add name BR_ND_DATA type bridge
-sudo ip link add name BR_L1_H1 type bridge
-sudo ip link set BR_ND_DATA up
-sudo ip link set BR_L1_H1 up
+sudo ip link add name BR_ND_DATA_12 type bridge
+sudo ip link add name BR_S1_LE1_H1_1 type bridge
+sudo ip link set BR_ND_DATA_12 up
+sudo ip link set BR_S1_LE1_H1_1 up
 ```
 
 #### 3. VLAN Filtering Issues
@@ -236,7 +236,7 @@ sudo ip link set BR_L1_H1 up
 bridge vlan show
 
 # Manually enable if needed
-sudo ip link set BR_L1_H1 type bridge vlan_filtering 1
+sudo ip link set BR_S1_LE1_H1_1 type bridge vlan_filtering 1
 ```
 
 #### 4. Container Won't Start
@@ -246,7 +246,7 @@ sudo ip link set BR_L1_H1 type bridge vlan_filtering 1
 sudo journalctl -u libvirtd -f
 
 # Verify container definition
-sudo virsh -c lxc:/// dumpxml H1
+sudo virsh -c lxc:/// dumpxml S1_H1
 ```
 
 #### 5. Network Connectivity Issues

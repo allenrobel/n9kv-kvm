@@ -1,0 +1,15 @@
+---
+# SITE1
+# S1_SP1.yaml - Spine Switch 1 in SITE1
+name: S1_SP1
+role: Spine Switch
+sid: 41
+mgmt_bridge: BR_ND_DATA_12
+neighbors:
+  - S1_BG1
+  - S1_LE1
+  - S1_LE2
+isl_bridges:
+  - BR_S1_BG1_SP1_1
+  - BR_S1_SP1_LE1_1
+  - BR_S1_SP1_LE2_1

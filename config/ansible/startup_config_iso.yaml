@@ -55,106 +55,121 @@
 
     # List of SITE1 / SITE2 switches to create configs for
     switches_site12:
-      - hostname: "{{ BG1_HOSTNAME }}"
-        mgmt_ip: "{{ BG1_IP4 }}"
-        config_file: "{{ BG1_HOSTNAME }}.cfg"
-        iso_file: "{{ BG1_HOSTNAME }}.iso"
-        interface_1: "{{ BG1_INTERFACE_1 }}"
-        interface_2: "{{ BG1_INTERFACE_2 }}"
+      - hostname: "{{ S1_BG1_HOSTNAME }}"
+        mgmt_ip: "{{ S1_BG1_IP4 }}"
+        config_file: "{{ S1_BG1_HOSTNAME }}.cfg"
+        iso_file: "{{ S1_BG1_HOSTNAME }}.iso"
+        interface_1: "{{ S1_BG1_INTERFACE_1 }}"
+        interface_2: "{{ S1_BG1_INTERFACE_2 }}"
 
-      - hostname: "{{ BG2_HOSTNAME }}"
-        mgmt_ip: "{{ BG2_IP4 }}"
-        config_file: "{{ BG2_HOSTNAME }}.cfg"
-        iso_file: "{{ BG2_HOSTNAME }}.iso"
-        interface_1: "{{ BG2_INTERFACE_1 }}"
-        interface_2: "{{ BG2_INTERFACE_2 }}"
+      - hostname: "{{ S2_BG1_HOSTNAME }}"
+        mgmt_ip: "{{ S2_BG1_IP4 }}"
+        config_file: "{{ S2_BG1_HOSTNAME }}.cfg"
+        iso_file: "{{ S2_BG1_HOSTNAME }}.iso"
+        interface_1: "{{ S2_BG1_INTERFACE_1 }}"
+        interface_2: "{{ S2_BG1_INTERFACE_2 }}"
 
-      - hostname: "{{ SP1_HOSTNAME }}"
-        mgmt_ip: "{{ SP1_IP4 }}"
-        config_file: "{{ SP1_HOSTNAME }}.cfg"
-        iso_file: "{{ SP1_HOSTNAME }}.iso"
-        interface_1: "{{ SP1_INTERFACE_1 }}"
-        interface_2: "{{ SP1_INTERFACE_2 }}"
+      - hostname: "{{ S1_SP1_HOSTNAME }}"
+        mgmt_ip: "{{ S1_SP1_IP4 }}"
+        config_file: "{{ S1_SP1_HOSTNAME }}.cfg"
+        iso_file: "{{ S1_SP1_HOSTNAME }}.iso"
+        interface_1: "{{ S1_SP1_INTERFACE_1 }}"
+        interface_2: "{{ S1_SP1_INTERFACE_2 }}"
 
-      - hostname: "{{ SP2_HOSTNAME }}"
-        mgmt_ip: "{{ SP2_IP4 }}"
-        config_file: "{{ SP2_HOSTNAME }}.cfg"
-        iso_file: "{{ SP2_HOSTNAME }}.iso"
-        interface_1: "{{ SP2_INTERFACE_1 }}"
-        interface_2: "{{ SP2_INTERFACE_2 }}"
+      - hostname: "{{ S2_SP1_HOSTNAME }}"
+        mgmt_ip: "{{ S2_SP1_IP4 }}"
+        config_file: "{{ S2_SP1_HOSTNAME }}.cfg"
+        iso_file: "{{ S2_SP1_HOSTNAME }}.iso"
+        interface_1: "{{ S2_SP1_INTERFACE_1 }}"
+        interface_2: "{{ S2_SP1_INTERFACE_2 }}"
 
-      - hostname: "{{ LE1_HOSTNAME }}"
-        mgmt_ip: "{{ LE1_IP4 }}"
-        config_file: "{{ LE1_HOSTNAME }}.cfg"
-        iso_file: "{{ LE1_HOSTNAME }}.iso"
-        interface_1: "{{ LE1_INTERFACE_1 }}"
-        interface_2: "{{ LE1_INTERFACE_2 }}"
+      - hostname: "{{ S1_LE1_HOSTNAME }}"
+        mgmt_ip: "{{ S1_LE1_IP4 }}"
+        config_file: "{{ S1_LE1_HOSTNAME }}.cfg"
+        iso_file: "{{ S1_LE1_HOSTNAME }}.iso"
+        interface_1: "{{ S1_LE1_INTERFACE_1 }}"
+        interface_2: "{{ S1_LE1_INTERFACE_2 }}"
 
-      - hostname: "{{ LE2_HOSTNAME }}"
-        mgmt_ip: "{{ LE2_IP4 }}"
-        config_file: "{{ LE2_HOSTNAME }}.cfg"
-        iso_file: "{{ LE2_HOSTNAME }}.iso"
-        interface_1: "{{ LE2_INTERFACE_1 }}"
-        interface_2: "{{ LE2_INTERFACE_2 }}"
+      - hostname: "{{ S2_LE1_HOSTNAME }}"
+        mgmt_ip: "{{ S2_LE1_IP4 }}"
+        config_file: "{{ S2_LE1_HOSTNAME }}.cfg"
+        iso_file: "{{ S2_LE1_HOSTNAME }}.iso"
+        interface_1: "{{ S2_LE1_INTERFACE_1 }}"
+        interface_2: "{{ S2_LE1_INTERFACE_2 }}"
+
+      - hostname: "{{ S1_LE2_HOSTNAME }}"
+        mgmt_ip: "{{ S1_LE2_IP4 }}"
+        config_file: "{{ S1_LE2_HOSTNAME }}.cfg"
+        iso_file: "{{ S1_LE2_HOSTNAME }}.iso"
+        interface_1: "{{ S1_LE2_INTERFACE_1 }}"
+        interface_2: "{{ S1_LE2_INTERFACE_2 }}"
+        interface_3: "{{ S1_LE2_INTERFACE_3 }}"
+
+      - hostname: "{{ S1_TOR1_HOSTNAME }}"
+        mgmt_ip: "{{ S1_TOR1_IP4 }}"
+        config_file: "{{ S1_TOR1_HOSTNAME }}.cfg"
+        iso_file: "{{ S1_TOR1_HOSTNAME }}.iso"
+        interface_1: "{{ S1_TOR1_INTERFACE_1 }}"
+        interface_2: "{{ S1_TOR1_INTERFACE_2 }}"
 
     # List of SITE3 / SITE4 switches to create configs for
     switches_site34:
 
-      - hostname: "{{ BG3_HOSTNAME }}"
-        mgmt_ip: "{{ BG3_IP4 }}"
-        config_file: "{{ BG3_HOSTNAME }}.cfg"
-        iso_file: "{{ BG3_HOSTNAME }}.iso"
-        interface_1: "{{ BG3_INTERFACE_1 }}"
-        interface_2: "{{ BG3_INTERFACE_2 }}"
+      - hostname: "{{ S3_BG1_HOSTNAME }}"
+        mgmt_ip: "{{ S3_BG1_IP4 }}"
+        config_file: "{{ S3_BG1_HOSTNAME }}.cfg"
+        iso_file: "{{ S3_BG1_HOSTNAME }}.iso"
+        interface_1: "{{ S3_BG1_INTERFACE_1 }}"
+        interface_2: "{{ S3_BG1_INTERFACE_2 }}"
 
-      - hostname: "{{ BG4_HOSTNAME }}"
-        mgmt_ip: "{{ BG4_IP4 }}"
-        config_file: "{{ BG4_HOSTNAME }}.cfg"
-        iso_file: "{{ BG4_HOSTNAME }}.iso"
-        interface_1: "{{ BG4_INTERFACE_1 }}"
-        interface_2: "{{ BG4_INTERFACE_2 }}"
+      - hostname: "{{ S4_BG1_HOSTNAME }}"
+        mgmt_ip: "{{ S4_BG1_IP4 }}"
+        config_file: "{{ S4_BG1_HOSTNAME }}.cfg"
+        iso_file: "{{ S4_BG1_HOSTNAME }}.iso"
+        interface_1: "{{ S4_BG1_INTERFACE_1 }}"
+        interface_2: "{{ S4_BG1_INTERFACE_2 }}"
 
-      - hostname: "{{ SP3_HOSTNAME }}"
-        mgmt_ip: "{{ SP3_IP4 }}"
-        config_file: "{{ SP3_HOSTNAME }}.cfg"
-        iso_file: "{{ SP3_HOSTNAME }}.iso"
-        interface_1: "{{ SP3_INTERFACE_1 }}"
-        interface_2: "{{ SP3_INTERFACE_2 }}"
+      - hostname: "{{ S3_SP1_HOSTNAME }}"
+        mgmt_ip: "{{ S3_SP1_IP4 }}"
+        config_file: "{{ S3_SP1_HOSTNAME }}.cfg"
+        iso_file: "{{ S3_SP1_HOSTNAME }}.iso"
+        interface_1: "{{ S3_SP1_INTERFACE_1 }}"
+        interface_2: "{{ S3_SP1_INTERFACE_2 }}"
 
-      - hostname: "{{ SP4_HOSTNAME }}"
-        mgmt_ip: "{{ SP4_IP4 }}"
-        config_file: "{{ SP4_HOSTNAME }}.cfg"
-        iso_file: "{{ SP4_HOSTNAME }}.iso"
-        interface_1: "{{ SP4_INTERFACE_1 }}"
-        interface_2: "{{ SP4_INTERFACE_2 }}"
+      - hostname: "{{ S4_SP1_HOSTNAME }}"
+        mgmt_ip: "{{ S4_SP1_IP4 }}"
+        config_file: "{{ S4_SP1_HOSTNAME }}.cfg"
+        iso_file: "{{ S4_SP1_HOSTNAME }}.iso"
+        interface_1: "{{ S4_SP1_INTERFACE_1 }}"
+        interface_2: "{{ S4_SP1_INTERFACE_2 }}"
 
-      - hostname: "{{ LE3_HOSTNAME }}"
-        mgmt_ip: "{{ LE3_IP4 }}"
-        config_file: "{{ LE3_HOSTNAME }}.cfg"
-        iso_file: "{{ LE3_HOSTNAME }}.iso"
-        interface_1: "{{ LE3_INTERFACE_1 }}"
-        interface_2: "{{ LE3_INTERFACE_2 }}"
+      - hostname: "{{ S3_LE1_HOSTNAME }}"
+        mgmt_ip: "{{ S3_LE1_IP4 }}"
+        config_file: "{{ S3_LE1_HOSTNAME }}.cfg"
+        iso_file: "{{ S3_LE1_HOSTNAME }}.iso"
+        interface_1: "{{ S3_LE1_INTERFACE_1 }}"
+        interface_2: "{{ S3_LE1_INTERFACE_2 }}"
 
-      - hostname: "{{ LE4_HOSTNAME }}"
-        mgmt_ip: "{{ LE4_IP4 }}"
-        config_file: "{{ LE4_HOSTNAME }}.cfg"
-        iso_file: "{{ LE4_HOSTNAME }}.iso"
-        interface_1: "{{ LE4_INTERFACE_1 }}"
-        interface_2: "{{ LE4_INTERFACE_2 }}"
+      - hostname: "{{ S4_LE1_HOSTNAME }}"
+        mgmt_ip: "{{ S4_LE1_IP4 }}"
+        config_file: "{{ S4_LE1_HOSTNAME }}.cfg"
+        iso_file: "{{ S4_LE1_HOSTNAME }}.iso"
+        interface_1: "{{ S4_LE1_INTERFACE_1 }}"
+        interface_2: "{{ S4_LE1_INTERFACE_2 }}"
 
-      - hostname: "{{ VP3_HOSTNAME }}"
-        mgmt_ip: "{{ VP3_IP4 }}"
-        config_file: "{{ VP3_HOSTNAME }}.cfg"
-        iso_file: "{{ VP3_HOSTNAME }}.iso"
-        interface_1: "{{ VP3_INTERFACE_1 }}"
-        interface_2: "{{ VP3_INTERFACE_2 }}"
+      - hostname: "{{ S4_LE2_HOSTNAME }}"
+        mgmt_ip: "{{ S4_LE2_IP4 }}"
+        config_file: "{{ S4_LE2_HOSTNAME }}.cfg"
+        iso_file: "{{ S4_LE2_HOSTNAME }}.iso"
+        interface_1: "{{ S4_LE2_INTERFACE_1 }}"
+        interface_2: "{{ S4_LE2_INTERFACE_2 }}"
 
-      - hostname: "{{ VP4_HOSTNAME }}"
-        mgmt_ip: "{{ VP4_IP4 }}"
-        config_file: "{{ VP4_HOSTNAME }}.cfg"
-        iso_file: "{{ VP4_HOSTNAME }}.iso"
-        interface_1: "{{ VP4_INTERFACE_1 }}"
-        interface_2: "{{ VP4_INTERFACE_2 }}"
+      - hostname: "{{ S4_LE3_HOSTNAME }}"
+        mgmt_ip: "{{ S4_LE3_IP4 }}"
+        config_file: "{{ S4_LE3_HOSTNAME }}.cfg"
+        iso_file: "{{ S4_LE3_HOSTNAME }}.iso"
+        interface_1: "{{ S4_LE3_INTERFACE_1 }}"
+        interface_2: "{{ S4_LE3_INTERFACE_2 }}"
 
   tasks:
     - name: Create output directory
@@ -219,7 +234,7 @@
         name: genisoimage
         state: present
       become: true
-      when: 
+      when:
         - mkisofs_check.rc != 0
         - genisoimage_check.rc != 0 or genisoimage_check is skipped
         - ansible_os_family == "Debian"
@@ -229,7 +244,7 @@
         name: genisoimage
         state: present
       become: true
-      when: 
+      when:
         - mkisofs_check.rc != 0
         - genisoimage_check.rc != 0 or genisoimage_check is skipped
         - ansible_os_family == "RedHat"
@@ -249,13 +264,13 @@
       shell: |
         # Copy the specific config file to nxos_config.txt
         cp {{ output_dir }}/{{ item.config_file }} {{ output_dir }}/nxos_config.txt
-        
+
         # Create ISO with nxos_config.txt
         {{ iso_command }} -o {{ output_dir }}/{{ item.iso_file }} \
           -l --iso-level 2 \
           -V "{{ item.hostname }}_CONFIG" \
           {{ output_dir }}/nxos_config.txt
-        
+
         # Clean up the temporary file
         rm {{ output_dir }}/nxos_config.txt
       loop: "{{ switches_site12 + switches_site34 }}"
@@ -270,7 +285,7 @@
           - Config: {{ output_dir }}/{{ switch.config_file }}
           - ISO: {{ output_dir }}/{{ switch.iso_file }} (contains nxos_config.txt)
           {% endfor %}
-          
+
           Note: Each ISO file contains the config as 'nxos_config.txt' which NX-OS will automatically load.
 
     - name: Verify ISO files were created

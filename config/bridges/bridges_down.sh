@@ -1,68 +1,40 @@
 #!/bin/bash
 
-# Bring down all TAP interfaces
-ip link set tap_ER_E1_1 down
-ip link set tap_ER_E1_2 down
-ip link set tap_S1_E1_1 down
-ip link set tap_S1_E1_2 down
-ip link set tap_S2_E1_1 down
-ip link set tap_S2_E1_2 down
-ip link set tap_L1_E1_1 down
-ip link set tap_L1_E1_2 down
+# Tear down SITE1/SITE2 bridges and any associated TAP/VNET interfaces.
 
-ip link set tap_ER_MGMT down
-ip link set tap_S1_MGMT down
-ip link set tap_S2_MGMT down
-ip link set tap_L1_MGMT down
+BRIDGES=(
+    BR_ISN_S1BG1_S2BG1_1
+    BR_S1_BG1_SP1_1
+    BR_S2_BG1_SP1_1
+    BR_S1_SP1_LE1_1
+    BR_S1_SP1_LE2_1
+    BR_S2_SP1_LE1_1
+    BR_S1_LE1_LE2_1
+    BR_S1_LE1_H1_1
+    BR_S1_LE1_TOR1_1
+    BR_S1_LE2_TOR1_1
+    BR_S2_LE1_H1_1
+)
 
-# Remove TAP interfaces from bridges
-# ER connections
-ip link set tap_ER_E1_1 nomaster
-ip link set tap_ER_E1_2 nomaster
-ip link set tap_S1_E1_1 nomaster
-ip link set tap_S2_E1_1 nomaster
+# Detach any tap/vnet interfaces still bound to these bridges, then bring the
+# bridge down and delete it.
+for bridge in "${BRIDGES[@]}"; do
+    if ! ip link show "$bridge" >/dev/null 2>&1; then
+        echo "Bridge $bridge does not exist, skipping."
+        continue
+    fi
 
-# Spine-Leaf connections
-ip link set tap_S1_E1_2 nomaster
-ip link set tap_S2_E1_2 nomaster
-ip link set tap_L1_E1_1 nomaster
-ip link set tap_L1_E1_2 nomaster
+    SLAVES=$(bridge link show | grep -E "master $bridge\b" | cut -d: -f2 | cut -d' ' -f2 | cut -d'@' -f1)
+    for slave in $SLAVES; do
+        echo "Detaching $slave from $bridge..."
+        ip link set "$slave" nomaster
+        ip link set "$slave" down
+    done
 
-# Remove management interfaces from BR_ND_DATA bridge
-ip link set tap_ER_MGMT nomaster
-ip link set tap_S1_MGMT nomaster
-ip link set tap_S2_MGMT nomaster
-ip link set tap_L1_MGMT nomaster
+    echo "Bringing down bridge $bridge..."
+    ip link set "$bridge" down
+    echo "Deleting bridge $bridge..."
+    ip link delete "$bridge"
+done
 
-# Bring down all bridges
-ip link set BR_ER_S1 down
-ip link set BR_ER_S2 down
-ip link set BR_S1_L1 down
-ip link set BR_S2_L1 down
-ip link set BR_L1_H1 down
-ip link set BR_L2_H2 down
-
-# Delete all bridges
-ip link delete BR_ER_S1
-ip link delete BR_ER_S2
-ip link delete BR_S1_L1
-ip link delete BR_S2_L1
-ip link delete BR_L1_H1
-ip link delete BR_L2_H2
-
-# Delete all TAP interfaces
-ip link delete tap_ER_MGMT
-ip link delete tap_S1_MGMT
-ip link delete tap_S2_MGMT
-ip link delete tap_L1_MGMT
-
-ip link delete tap_ER_E1_1
-ip link delete tap_ER_E1_2
-ip link delete tap_S1_E1_1
-ip link delete tap_S1_E1_2
-ip link delete tap_S2_E1_1
-ip link delete tap_S2_E1_2
-ip link delete tap_L1_E1_1
-ip link delete tap_L1_E1_2
-
-echo "All network interfaces torn down successfully"
+echo "All SITE1/SITE2 bridges torn down successfully"

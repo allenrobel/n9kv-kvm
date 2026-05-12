@@ -13,17 +13,19 @@
 # Bridge names are outlined below, along with the interfaces they connect.
 #
 # DATA Network: BR_ND_DATA_15 -> Vlan15
-# 
-# Src Interface      Dst Interface      Bridge       Site
-# BG5_INTERFACE_1    BG6_INTERFACE_1    BR_BG5_BG6   MSD inter-site
-# BG5_INTERFACE_2    SP5_INTERFACE_1    BR_BG5_SP5   SITE5
-# BG6_INTERFACE_2    SP6_INTERFACE_1    BR_BG6_SP6   SITE6
-# SP5_INTERFACE_2    LE5_INTERFACE_1    BR_SP5_LE5   SITE5
-# SP6_INTERFACE_2    LE6_INTERFACE_1    BR_SP6_LE6   SITE6
-# LE5_INTERFACE_2    HO5_INTERFACE_1    BR_LE5_HO5   SITE5
-# LE6_INTERFACE_2    HO6_INTERFACE_1    BR_LE6_HO6   SITE6
-# VP5_INTERFACE_2    HO7_INTERFACE_1    BR_VP5_HO7   SITE5
-# VP6_INTERFACE_2    HO7_INTERFACE_2    BR_VP6_HO7   SITE6
+#
+# Src Interface           Dst Interface           Bridge                       Site
+# S5_BG1_INTERFACE_1      S6_BG1_INTERFACE_1      BR_ISN_S5BG1_S6BG1_1         MSD inter-site
+# S5_BG1_INTERFACE_2      S5_SP1_INTERFACE_1      BR_S5_BG1_SP1_1              SITE5
+# S6_BG1_INTERFACE_2      S6_SP1_INTERFACE_1      BR_S6_BG1_SP1_1              SITE6
+# S5_SP1_INTERFACE_2      S5_LE1_INTERFACE_1      BR_S5_SP1_LE1_1              SITE5
+# S6_SP1_INTERFACE_2      S6_LE1_INTERFACE_1      BR_S6_SP1_LE1_1              SITE6
+# S5_LE1_INTERFACE_2      S5_H1_INTERFACE_1       BR_S5_LE1_H1_1               SITE5
+# S6_LE1_INTERFACE_2      S6_H1_INTERFACE_1       BR_S6_LE1_H1_1               SITE6
+# S5_LE2_INTERFACE_1      S5_SP1_INTERFACE_3      BR_S5_SP1_LE2_1              SITE5
+# S6_LE2_INTERFACE_1      S6_SP1_INTERFACE_3      BR_S6_SP1_LE2_1              SITE6
+# S5_LE2_INTERFACE_2      S5_H2_INTERFACE_1       BR_S5_LE2_H2_1               SITE5
+# S6_LE2_INTERFACE_2      S6_H2_INTERFACE_1       BR_S6_LE2_H2_1               SITE6
 
 network:
   version: 2
@@ -35,7 +37,7 @@ network:
       optional: true
   bridges:
 
-    BR_BG5_BG6:
+    BR_ISN_S5BG1_S6BG1_1:
       dhcp4: false
       dhcp6: false
       mtu: 9216
@@ -44,7 +46,7 @@ network:
         stp: false
       interfaces: []
 
-    BR_BG5_SP5:
+    BR_S5_BG1_SP1_1:
       dhcp4: false
       dhcp6: false
       mtu: 9216
@@ -53,7 +55,7 @@ network:
         stp: false
       interfaces: []
 
-    BR_BG6_SP6:
+    BR_S6_BG1_SP1_1:
       dhcp4: false
       dhcp6: false
       mtu: 9216
@@ -62,7 +64,7 @@ network:
         stp: false
       interfaces: []
 
-    BR_SP5_LE5:
+    BR_S5_SP1_LE1_1:
       dhcp4: false
       dhcp6: false
       mtu: 9216
@@ -71,7 +73,7 @@ network:
         stp: false
       interfaces: []
 
-    BR_SP6_LE6:
+    BR_S6_SP1_LE1_1:
       dhcp4: false
       dhcp6: false
       mtu: 9216
@@ -80,7 +82,7 @@ network:
         stp: false
       interfaces: []
 
-    BR_SP6_VP5:
+    BR_S5_SP1_LE2_1:
       dhcp4: false
       dhcp6: false
       mtu: 9216
@@ -89,7 +91,7 @@ network:
         stp: false
       interfaces: []
 
-    BR_SP6_VP6:
+    BR_S6_SP1_LE2_1:
       dhcp4: false
       dhcp6: false
       mtu: 9216
@@ -98,7 +100,7 @@ network:
         stp: false
       interfaces: []
 
-    BR_LE5_HO5:
+    BR_S5_LE1_H1_1:
       dhcp4: false
       dhcp6: false
       mtu: 9216
@@ -107,7 +109,7 @@ network:
         stp: false
       interfaces: []
 
-    BR_LE6_HO6:
+    BR_S6_LE1_H1_1:
       dhcp4: false
       dhcp6: false
       mtu: 9216
@@ -116,7 +118,7 @@ network:
         stp: false
       interfaces: []
 
-    BR_VP5_HO7:
+    BR_S5_LE2_H2_1:
       dhcp4: false
       dhcp6: false
       mtu: 9216
@@ -125,7 +127,7 @@ network:
         stp: false
       interfaces: []
 
-    BR_VP6_HO7:
+    BR_S6_LE2_H2_1:
       dhcp4: false
       dhcp6: false
       mtu: 9216

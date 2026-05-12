@@ -3,7 +3,7 @@
 name: SP1
 role: Spine Switch
 sid: 41
-mgmt_bridge: BR_ND_DATA
+mgmt_bridge: BR_ND_DATA_12
 neighbors:
   - BG1
   - LE1

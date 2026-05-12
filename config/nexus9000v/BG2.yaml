@@ -4,7 +4,7 @@
 name: BG2
 role: Border Gateway
 sid: 32
-mgmt_bridge: BR_ND_DATA
+mgmt_bridge: BR_ND_DATA_12
 neighbors:
   - BG1
   - SP2

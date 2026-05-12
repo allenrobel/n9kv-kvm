@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 #
 # Install a Nexus Dashboard (ND) instance using QEMU/KVM
-ND_SOURCE_DIR=/iso1/nd/411g
-ND_IMAGE=nd-dk9.4.1.1g.qcow2
-ND_INSTALL_DIR=/iso2/nd/411g
+ND_SOURCE_DIR=/iso1/nd/322m
+ND_IMAGE=nd-dk9.3.2.2m.qcow2
+ND_INSTALL_DIR=/iso3/nd/322m_test
 ND_MGMT_NET=outside
-ND_DATA_NET=BR_ND_DATA_12
-ND_NAME=nd411g
+ND_DATA_NET=BR_ND_DATA_14
+ND_NAME=nd322m_test
 mkdir $ND_INSTALL_DIR
 qemu-img create -f qcow2 -F qcow2 -b $ND_SOURCE_DIR/$ND_IMAGE $ND_INSTALL_DIR/nd-node1-disk1.qcow2
 qemu-img create -f qcow2 $ND_INSTALL_DIR/nd-node1-disk2.qcow2 500G

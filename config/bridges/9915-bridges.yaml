@@ -1,0 +1,144 @@
+# This provides the bridge configurations used for SITE5/SITE6
+# in this repository.  This is needed ONLY if you want a third
+# virtual testbed on the same host.  For example, you could
+# use a third testbed to create a Nexus Dashboard cluster with
+# the first or second testbed.
+#
+# Copy it to /etc/netplan/9915-bridges.yaml on the target system.
+# sudo cp 9915-bridges.yaml /etc/netplan/9915-bridges.yaml
+# sudo chmod 600 /etc/netplan/9915-bridges.yaml
+# sudo netplan try
+# sudo netplan apply
+
+# Bridge names are outlined below, along with the interfaces they connect.
+#
+# DATA Network: BR_ND_DATA_15 -> Vlan15
+# 
+# Src Interface      Dst Interface      Bridge       Site
+# BG5_INTERFACE_1    BG6_INTERFACE_1    BR_BG5_BG6   MSD inter-site
+# BG5_INTERFACE_2    SP5_INTERFACE_1    BR_BG5_SP5   SITE5
+# BG6_INTERFACE_2    SP6_INTERFACE_1    BR_BG6_SP6   SITE6
+# SP5_INTERFACE_2    LE5_INTERFACE_1    BR_SP5_LE5   SITE5
+# SP6_INTERFACE_2    LE6_INTERFACE_1    BR_SP6_LE6   SITE6
+# LE5_INTERFACE_2    HO5_INTERFACE_1    BR_LE5_HO5   SITE5
+# LE6_INTERFACE_2    HO6_INTERFACE_1    BR_LE6_HO6   SITE6
+# VP5_INTERFACE_2    HO7_INTERFACE_1    BR_VP5_HO7   SITE5
+# VP6_INTERFACE_2    HO7_INTERFACE_2    BR_VP6_HO7   SITE6
+
+network:
+  version: 2
+  renderer: networkd
+  vlans:
+    Vlan15:
+      id: 15
+      link: eno6
+      optional: true
+  bridges:
+
+    BR_BG5_BG6:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_BG5_SP5:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_BG6_SP6:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_SP5_LE5:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_SP6_LE6:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_SP6_VP5:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_SP6_VP6:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_LE5_HO5:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_LE6_HO6:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_VP5_HO7:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_VP6_HO7:
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_ND_DATA_15:
+      interfaces:
+      - Vlan15
+      addresses:
+      - 192.168.15.2/24
+      - 2000:192:168:15::2/24
+      parameters:
+        stp: false

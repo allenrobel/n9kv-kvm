@@ -1,0 +1,12 @@
+# Bridge RX/TX statistics
+#
+# To display one-time states
+# ./show_bridges_stats
+#
+# Also useful when run with watch
+# watch --color --differences ./show_bridges_stats
+#
+export BRIDGES="BR_BG3_BG4 BR_BG3_SP3 BR_BG4_SP4 BR_SP3_LE3 BR_SP4_LE4 BR_LE3_HO3 BR_LE4_HO4"
+
+# Show bridge RX/TX statistics
+for bridge in $BRIDGES; do echo "$bridge:"; ip -s link show $bridge; done

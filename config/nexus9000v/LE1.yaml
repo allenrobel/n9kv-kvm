@@ -4,7 +4,7 @@
 name: LE1
 role: Leaf Switch
 sid: 51
-mgmt_bridge: BR_ND_DATA
+mgmt_bridge: BR_ND_DATA_12
 neighbors:
   - SP1
   - HO1

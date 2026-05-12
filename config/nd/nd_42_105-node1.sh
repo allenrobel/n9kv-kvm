@@ -6,7 +6,7 @@ ND_IMAGE=nd-dk9.4.2.0.105.qcow2
 ND_NAME=nd42.105
 ND_INSTALL_DIR=/iso2/nd/$ND_NAME
 ND_MGMT_NET=outside
-ND_DATA_NET=BR_ND_DATA
+ND_DATA_NET=BR_ND_DATA_12
 mkdir $ND_INSTALL_DIR
 qemu-img create -f qcow2 -F qcow2 -b $ND_SOURCE_DIR/$ND_IMAGE $ND_INSTALL_DIR/nd-node1-disk1.qcow2
 qemu-img create -f qcow2 $ND_INSTALL_DIR/nd-node1-disk2.qcow2 500G

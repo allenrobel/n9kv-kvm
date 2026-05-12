@@ -1,6 +1,6 @@
-# Add vlans 2 and 3 to BR_L2_H2 and associated interfaces
+# Add vlans 2 and 3 to BR_S2_LE1_H1_1 and associated interfaces
 VLANS=(2 3)
-BRIDGE="BR_L2_H2"
+BRIDGE="BR_S2_LE1_H1_1"
 TAPS=$(bridge link show | grep -E $BRIDGE | grep tap | cut -d: -f2 | cut -d' ' -f2)
 VNETS=$(bridge link show | grep -E $BRIDGE | grep vnet | cut -d: -f2 | cut -d' ' -f2 | cut -d'@' -f1)
 

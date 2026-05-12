@@ -41,7 +41,7 @@ NOTE: This section is out of date!
 
 ## 14. Discovery Results Screen
 
-- Select switches (BG1, SP1, LE1)
+- Select switches (S1_BG1, S1_SP1, S1_LE1)
 - Click `Add Switches`
 
 ![Discovery Results](./images/nd3/add_switches/13_discovery_results.png)
@@ -96,7 +96,7 @@ The switches will be rebooted.
 
 ## 21. Discovery Results Screen (SITE2 switches)
 
-- Select switches (BG2, SP2, LE2)
+- Select switches (S2_BG1, S2_SP1, S2_LE1)
 - Click `Add Switches`
 
 ![Discovery Results](./images/nd3/add_switches/21_discovery_results.png)
@@ -124,16 +124,16 @@ Once all switches display OK, we can continue.
 
 We'll now change the roles of the switches.
 
-- BG1 (Border Gateway)
-- BG2 (Border Gateway)
-- SP1 (Spine)
-- SP2 (Spine)
-- LE1 (Leaf)
-- LE2 (Leaf)
+- S1_BG1 (Border Gateway)
+- S2_BG1 (Border Gateway)
+- S1_SP1 (Spine)
+- S2_SP1 (Spine)
+- S1_LE1 (Leaf)
+- S2_LE1 (Leaf)
 
 ## 24. Border Gateway Switch Role
 
-- Select the BG1 and BG2 switches
+- Select the S1_BG1 and S2_BG1 switches
 - Click Actions -> Set Role
 
 ## 25. Select Role Dialog (Border Gateway Switches)
@@ -143,7 +143,7 @@ We'll now change the roles of the switches.
 
 ## 26. Border Spine Switch Role
 
-- Select the SP1 and SP2 switches
+- Select the S1_SP1 and S2_SP1 switches
 - Click Actions -> Set Role
 
 ## 27 Select Role Dialog (Spine Switches)
@@ -160,7 +160,7 @@ We'll now change the roles of the switches.
 
 ## 29. Leaf Switch Role
 
-- Select the LE1, LE2 switches
+- Select the S1_LE1, S2_LE1 switches
 - Click Actions -> Set Role
 
 ![Set Role](./images/nd3/add_switches/31_set_role.png)
@@ -183,7 +183,7 @@ We'll now change the roles of the switches.
 
 Wait for all switches to become reachable (Discovery Status column will display `OK`).
 
-This will take time (15-30 minutes) as the BG1, BG2, SP1, SP2, LE1, LE2 switches reboot.
+This will take time (15-30 minutes) as the S1_BG1, S2_BG1, S1_SP1, S2_SP1, S1_LE1, S2_LE1 switches reboot.
 
 Click `Refresh` occasionally to avoid being logged out due to inactivity...
 
@@ -255,12 +255,12 @@ Perform a Recalculate and Deploy in the fabrics in the following order.
 
 - SITE1
   - This establishes BGP peering between
-    - BG1 and SP1
-    - SP1 and LE1
+    - S1_BG1 and S1_SP1
+    - S1_SP1 and S1_LE1
 - SITE2
   - This establishes BGP peering between
-    - BG2 and SP2
-    - SP2 and LE2
+    - S2_BG1 and S2_SP1
+    - S2_SP1 and S2_LE1
 - MSD
   - This establishes BGP peering between
-    - BG1 and BG2
+    - S1_BG1 and S2_BG1

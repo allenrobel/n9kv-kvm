@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
 # Summary
-Dynamic inventory for n9kv testbed SITE3 / SITE4. Inventory is built from
-environment variables.
+Dynamic inventory variant for n9kv testbed SITE3 / SITE4. Inventory is built
+from environment variables.
 
 ## Usage Example
 
 ```bash
 ansible-playbook \
-    $HOME/repos/n9kv-kvm/config/ansible/interface_mac_addresses_ER.yaml \
-    -i $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py
+    $HOME/repos/n9kv-kvm/config/ansible/some_playbook.yaml \
+    -i $HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory_site3_site4.py
 ```
 
 ### Environment Variables
@@ -20,6 +20,11 @@ to define the testbed configuration.
 It first tries to read the variables from the environment, and if not set,
 it uses the defaults defined in this script.
 
+### Naming convention
+
+Hostnames and env var prefixes follow `S<site>_<role><idx>` (per-site
+renumbering from 1).
+
 """
 import json
 from os import environ
@@ -29,27 +34,26 @@ from os import environ
 # Device IP addresses
 
 ND_IP4 = environ.get("ND_IP4", "192.168.7.7")
+
 # SITE1 / SITE2
-BG1_IP4 = environ.get("BG1_IP4", "192.168.12.131")
-BG2_IP4 = environ.get("BG2_IP4", "192.168.12.132")
-SP1_IP4 = environ.get("SP1_IP4", "192.168.12.141")
-SP2_IP4 = environ.get("SP2_IP4", "192.168.12.142")
-LE1_IP4 = environ.get("LE1_IP4", "192.168.12.151")
-LE2_IP4 = environ.get("LE2_IP4", "192.168.12.152")
-VP3_IP4 = environ.get("VP3_IP4", "192.168.12.163")
-VP4_IP4 = environ.get("VP4_IP4", "192.168.12.164")
-LE1_IP4_INTERFACE_2 = environ.get("LE1_IP4_INTERFACE_2", "192.168.0.151")
-LE2_IP4_INTERFACE_2 = environ.get("LE2_IP4_INTERFACE_2", "192.168.0.152")
+S1_BG1_IP4 = environ.get("S1_BG1_IP4", "192.168.12.131")
+S2_BG1_IP4 = environ.get("S2_BG1_IP4", "192.168.12.132")
+S1_SP1_IP4 = environ.get("S1_SP1_IP4", "192.168.12.141")
+S2_SP1_IP4 = environ.get("S2_SP1_IP4", "192.168.12.142")
+S1_LE1_IP4 = environ.get("S1_LE1_IP4", "192.168.12.151")
+S2_LE1_IP4 = environ.get("S2_LE1_IP4", "192.168.12.152")
+S1_LE1_IP4_INTERFACE_2 = environ.get("S1_LE1_IP4_INTERFACE_2", "192.168.0.151")
+S2_LE1_IP4_INTERFACE_2 = environ.get("S2_LE1_IP4_INTERFACE_2", "192.168.0.152")
 
 # SITE3 / SITE4
-BG3_IP4 = environ.get("BG3_IP4", "192.168.14.131")
-BG4_IP4 = environ.get("BG4_IP4", "192.168.14.132")
-SP3_IP4 = environ.get("SP3_IP4", "192.168.14.141")
-SP4_IP4 = environ.get("SP4_IP4", "192.168.14.142")
-LE3_IP4 = environ.get("LE3_IP4", "192.168.14.151")
-LE4_IP4 = environ.get("LE4_IP4", "192.168.14.152")
-LE3_IP4_INTERFACE_2 = environ.get("LE3_IP4_INTERFACE_2", "192.168.0.151")
-LE4_IP4_INTERFACE_2 = environ.get("LE4_IP4_INTERFACE_2", "192.168.0.152")
+S3_BG1_IP4 = environ.get("S3_BG1_IP4", "192.168.14.131")
+S4_BG1_IP4 = environ.get("S4_BG1_IP4", "192.168.14.132")
+S3_SP1_IP4 = environ.get("S3_SP1_IP4", "192.168.14.141")
+S4_SP1_IP4 = environ.get("S4_SP1_IP4", "192.168.14.142")
+S3_LE1_IP4 = environ.get("S3_LE1_IP4", "192.168.14.151")
+S4_LE1_IP4 = environ.get("S4_LE1_IP4", "192.168.14.152")
+S3_LE1_IP4_INTERFACE_2 = environ.get("S3_LE1_IP4_INTERFACE_2", "192.168.0.151")
+S4_LE1_IP4_INTERFACE_2 = environ.get("S4_LE1_IP4_INTERFACE_2", "192.168.0.152")
 
 # Fabric types
 SITE1_FABRIC = environ.get("ND_SITE1_FABRIC", "SITE1")
@@ -64,84 +68,64 @@ NXOS_PASSWORD = environ.get("NXOS_PASSWORD", "SuperSecretPassword")
 NXOS_USERNAME = environ.get("NXOS_USERNAME", "admin")
 
 # Switch hostnames
-# CR = Core Router (route server)
-# ER = Edge Router
-# BG = Border Gateway
-# SP = Spine
-# LE = Leaf
 
 # SITE1 / SITE2
-BG1_HOSTNAME = environ.get("BG1_HOSTNAME", "BG1")
-BG2_HOSTNAME = environ.get("BG2_HOSTNAME", "BG2")
-SP1_HOSTNAME = environ.get("SP1_HOSTNAME", "SP1")
-SP2_HOSTNAME = environ.get("SP2_HOSTNAME", "SP2")
-LE1_HOSTNAME = environ.get("LE1_HOSTNAME", "LE1")
-LE2_HOSTNAME = environ.get("LE2_HOSTNAME", "LE2")
-
-# SITE / SITE2
-BG1_HOSTNAME = environ.get("BG1_HOSTNAME", "BG1")
-BG2_HOSTNAME = environ.get("BG2_HOSTNAME", "BG2")
-SP1_HOSTNAME = environ.get("SP1_HOSTNAME", "SP1")
-SP2_HOSTNAME = environ.get("SP2_HOSTNAME", "SP2")
-LE1_HOSTNAME = environ.get("LE1_HOSTNAME", "LE1")
-LE2_HOSTNAME = environ.get("LE2_HOSTNAME", "LE2")
+S1_BG1_HOSTNAME = environ.get("S1_BG1_HOSTNAME", "S1_BG1")
+S2_BG1_HOSTNAME = environ.get("S2_BG1_HOSTNAME", "S2_BG1")
+S1_SP1_HOSTNAME = environ.get("S1_SP1_HOSTNAME", "S1_SP1")
+S2_SP1_HOSTNAME = environ.get("S2_SP1_HOSTNAME", "S2_SP1")
+S1_LE1_HOSTNAME = environ.get("S1_LE1_HOSTNAME", "S1_LE1")
+S2_LE1_HOSTNAME = environ.get("S2_LE1_HOSTNAME", "S2_LE1")
 
 # Links
-# Source             Destination        Bridge
-# BG1_INTERFACE_2    SP1_INTERFACE_1    BR_BG1_SP1
-# BG2_INTERFACE_2    SP2_INTERFACE_1    BR_BG2_SP2
-# SP1_INTERFACE_2    LE1_INTERFACE_1    BR_SP1_LE1
-# SP2_INTERFACE_2    LE2_INTERFACE_1    BR_SP2_LE2
-# LE1_INTERFACE_2    HO1_INTERFACE_1    BR_LE1_HO1
-# LE2_INTERFACE_2    HO2_INTERFACE_1    BR_LE2_HO2
+# Source                  Destination             Bridge
+# S1_BG1_INTERFACE_2      S1_SP1_INTERFACE_1      BR_S1_BG1_SP1_1
+# S2_BG1_INTERFACE_2      S2_SP1_INTERFACE_1      BR_S2_BG1_SP1_1
+# S1_SP1_INTERFACE_2      S1_LE1_INTERFACE_1      BR_S1_SP1_LE1_1
+# S2_SP1_INTERFACE_2      S2_LE1_INTERFACE_1      BR_S2_SP1_LE1_1
+# S1_LE1_INTERFACE_2      S1_H1_INTERFACE_1       BR_S1_LE1_H1_1
+# S2_LE1_INTERFACE_2      S2_H1_INTERFACE_1       BR_S2_LE1_H1_1
 
 # Base set of interfaces
-# SITE1 / SITE2
-BG1_INTERFACE_1 = environ.get("BG1_INTERFACE_1", "Ethernet1/1")
-BG1_INTERFACE_2 = environ.get("BG1_INTERFACE_2", "Ethernet1/2")
+S1_BG1_INTERFACE_1 = environ.get("S1_BG1_INTERFACE_1", "Ethernet1/1")
+S1_BG1_INTERFACE_2 = environ.get("S1_BG1_INTERFACE_2", "Ethernet1/2")
 
-BG2_INTERFACE_1 = environ.get("BG2_INTERFACE_1", "Ethernet1/1")
-BG2_INTERFACE_2 = environ.get("BG2_INTERFACE_2", "Ethernet1/2")
+S2_BG1_INTERFACE_1 = environ.get("S2_BG1_INTERFACE_1", "Ethernet1/1")
+S2_BG1_INTERFACE_2 = environ.get("S2_BG1_INTERFACE_2", "Ethernet1/2")
 
-SP1_INTERFACE_1 = environ.get("SP1_INTERFACE_1", "Ethernet1/1")
-SP1_INTERFACE_2 = environ.get("SP1_INTERFACE_2", "Ethernet1/2")
+S1_SP1_INTERFACE_1 = environ.get("S1_SP1_INTERFACE_1", "Ethernet1/1")
+S1_SP1_INTERFACE_2 = environ.get("S1_SP1_INTERFACE_2", "Ethernet1/2")
 
-SP2_INTERFACE_1 = environ.get("SP2_INTERFACE_1", "Ethernet1/1")
-SP2_INTERFACE_2 = environ.get("SP2_INTERFACE_2", "Ethernet1/2")
+S2_SP1_INTERFACE_1 = environ.get("S2_SP1_INTERFACE_1", "Ethernet1/1")
+S2_SP1_INTERFACE_2 = environ.get("S2_SP1_INTERFACE_2", "Ethernet1/2")
 
-LE1_INTERFACE_1 = environ.get("LE1_INTERFACE_1", "Ethernet1/1")
-LE1_INTERFACE_2 = environ.get("LE1_INTERFACE_2", "Ethernet1/2")
+S1_LE1_INTERFACE_1 = environ.get("S1_LE1_INTERFACE_1", "Ethernet1/1")
+S1_LE1_INTERFACE_2 = environ.get("S1_LE1_INTERFACE_2", "Ethernet1/2")
 
-LE2_INTERFACE_1 = environ.get("LE2_INTERFACE_1", "Ethernet1/1")
-LE2_INTERFACE_2 = environ.get("LE2_INTERFACE_2", "Ethernet1/2")
+S2_LE1_INTERFACE_1 = environ.get("S2_LE1_INTERFACE_1", "Ethernet1/1")
+S2_LE1_INTERFACE_2 = environ.get("S2_LE1_INTERFACE_2", "Ethernet1/2")
 
 # Unique mac addresses for the above interfaces.
-CR1_MAC_1 = environ.get("CR1_MAC_1", "0000.0011.0001")
+S1_BG1_MAC_1 = environ.get("S1_BG1_MAC_1", "0000.0031.0001")
+S1_BG1_MAC_2 = environ.get("S1_BG1_MAC_2", "0000.0031.0002")
 
-ER1_MAC_1 = environ.get("ER1_MAC_1", "0000.0021.0001")
-ER1_MAC_2 = environ.get("ER1_MAC_2", "0000.0021.0002")
+S2_BG1_MAC_1 = environ.get("S2_BG1_MAC_1", "0000.0032.0001")
+S2_BG1_MAC_2 = environ.get("S2_BG1_MAC_2", "0000.0032.0002")
 
-BG1_MAC_1 = environ.get("BG1_MAC_1", "0000.0031.0001")
-BG1_MAC_2 = environ.get("BG1_MAC_2", "0000.0031.0002")
+S1_SP1_MAC_1 = environ.get("S1_SP1_MAC_1", "0000.0041.0001")
+S1_SP1_MAC_2 = environ.get("S1_SP1_MAC_2", "0000.0041.0002")
 
-BG2_MAC_1 = environ.get("BG2_MAC_1", "0000.0032.0001")
-BG2_MAC_2 = environ.get("BG2_MAC_2", "0000.0032.0002")
+S2_SP1_MAC_1 = environ.get("S2_SP1_MAC_1", "0000.0042.0001")
+S2_SP1_MAC_2 = environ.get("S2_SP1_MAC_2", "0000.0042.0002")
 
-SP1_MAC_1 = environ.get("SP1_MAC_1", "0000.0041.0001")
-SP1_MAC_2 = environ.get("SP1_MAC_2", "0000.0041.0002")
+S1_LE1_MAC_1 = environ.get("S1_LE1_MAC_1", "0000.0051.0001")
+S1_LE1_MAC_2 = environ.get("S1_LE1_MAC_2", "0000.0051.0002")
 
-SP2_MAC_1 = environ.get("SP2_MAC_1", "0000.0042.0001")
-SP2_MAC_2 = environ.get("SP2_MAC_2", "0000.0042.0002")
-
-LE1_MAC_1 = environ.get("LE1_MAC_1", "0000.0051.0001")
-LE1_MAC_2 = environ.get("LE1_MAC_2", "0000.0051.0002")
-
-LE2_MAC_1 = environ.get("LE2_MAC_1", "0000.0052.0001")
-LE2_MAC_2 = environ.get("LE2_MAC_2", "0000.0052.0002")
+S2_LE1_MAC_1 = environ.get("S2_LE1_MAC_1", "0000.0052.0001")
+S2_LE1_MAC_2 = environ.get("S2_LE1_MAC_2", "0000.0052.0002")
 
 # output is printed to STDOUT, where ansible-playbook -i reads it.
 # If you change any vars above, be sure to add them below.
-# We'll clean this up as the integration test vars are standardized.
 
 output = {
     "_meta": {"hostvars": {}},
@@ -157,47 +141,44 @@ output = {
             "SITE2_FABRIC": SITE2_FABRIC,
             "ISN_FABRIC": ISN_FABRIC,
             "ND_IP4": ND_IP4,
-            "BG1_IP4": BG1_IP4,
-            "BG2_IP4": BG2_IP4,
-            "SP1_IP4": SP1_IP4,
-            "SP2_IP4": SP2_IP4,
-            "LE1_IP4": LE1_IP4,
-            "LE2_IP4": LE2_IP4,
-            "BG1_HOSTNAME": BG1_HOSTNAME,
-            "BG2_HOSTNAME": BG2_HOSTNAME,
-            "SP1_HOSTNAME": SP1_HOSTNAME,
-            "SP2_HOSTNAME": SP2_HOSTNAME,
-            "LE1_HOSTNAME": LE1_HOSTNAME,
-            "LE2_HOSTNAME": LE2_HOSTNAME,
-            "CR1_MAC_1": CR1_MAC_1,
-            "ER1_MAC_1": ER1_MAC_1,
-            "ER1_MAC_2": ER1_MAC_2,
-            "BG1_MAC_1": BG1_MAC_1,
-            "BG1_MAC_2": BG1_MAC_2,
-            "BG2_MAC_1": BG2_MAC_1,
-            "BG2_MAC_2": BG2_MAC_2,
-            "SP1_MAC_1": SP1_MAC_1,
-            "SP1_MAC_2": SP1_MAC_2,
-            "SP2_MAC_1": SP2_MAC_1,
-            "SP2_MAC_2": SP2_MAC_2,
-            "LE1_MAC_1": LE1_MAC_1,
-            "LE1_MAC_2": LE1_MAC_2,
-            "LE2_MAC_1": LE2_MAC_1,
-            "LE2_MAC_2": LE2_MAC_2,
-            "BG1_INTERFACE_1": BG1_INTERFACE_1,
-            "BG1_INTERFACE_2": BG1_INTERFACE_2,
-            "BG2_INTERFACE_1": BG2_INTERFACE_1,
-            "BG2_INTERFACE_2": BG2_INTERFACE_2,
-            "SP1_INTERFACE_1": SP1_INTERFACE_1,
-            "SP1_INTERFACE_2": SP1_INTERFACE_2,
-            "SP2_INTERFACE_1": SP2_INTERFACE_1,
-            "SP2_INTERFACE_2": SP2_INTERFACE_2,
-            "LE1_INTERFACE_1": LE1_INTERFACE_1,
-            "LE1_INTERFACE_2": LE1_INTERFACE_2,
-            "LE2_INTERFACE_1": LE2_INTERFACE_1,
-            "LE2_INTERFACE_2": LE2_INTERFACE_2,
-            "LE1_IP4_INTERFACE_2": LE1_IP4_INTERFACE_2,
-            "LE2_IP4_INTERFACE_2": LE2_IP4_INTERFACE_2,
+            "S1_BG1_IP4": S1_BG1_IP4,
+            "S2_BG1_IP4": S2_BG1_IP4,
+            "S1_SP1_IP4": S1_SP1_IP4,
+            "S2_SP1_IP4": S2_SP1_IP4,
+            "S1_LE1_IP4": S1_LE1_IP4,
+            "S2_LE1_IP4": S2_LE1_IP4,
+            "S1_BG1_HOSTNAME": S1_BG1_HOSTNAME,
+            "S2_BG1_HOSTNAME": S2_BG1_HOSTNAME,
+            "S1_SP1_HOSTNAME": S1_SP1_HOSTNAME,
+            "S2_SP1_HOSTNAME": S2_SP1_HOSTNAME,
+            "S1_LE1_HOSTNAME": S1_LE1_HOSTNAME,
+            "S2_LE1_HOSTNAME": S2_LE1_HOSTNAME,
+            "S1_BG1_MAC_1": S1_BG1_MAC_1,
+            "S1_BG1_MAC_2": S1_BG1_MAC_2,
+            "S2_BG1_MAC_1": S2_BG1_MAC_1,
+            "S2_BG1_MAC_2": S2_BG1_MAC_2,
+            "S1_SP1_MAC_1": S1_SP1_MAC_1,
+            "S1_SP1_MAC_2": S1_SP1_MAC_2,
+            "S2_SP1_MAC_1": S2_SP1_MAC_1,
+            "S2_SP1_MAC_2": S2_SP1_MAC_2,
+            "S1_LE1_MAC_1": S1_LE1_MAC_1,
+            "S1_LE1_MAC_2": S1_LE1_MAC_2,
+            "S2_LE1_MAC_1": S2_LE1_MAC_1,
+            "S2_LE1_MAC_2": S2_LE1_MAC_2,
+            "S1_BG1_INTERFACE_1": S1_BG1_INTERFACE_1,
+            "S1_BG1_INTERFACE_2": S1_BG1_INTERFACE_2,
+            "S2_BG1_INTERFACE_1": S2_BG1_INTERFACE_1,
+            "S2_BG1_INTERFACE_2": S2_BG1_INTERFACE_2,
+            "S1_SP1_INTERFACE_1": S1_SP1_INTERFACE_1,
+            "S1_SP1_INTERFACE_2": S1_SP1_INTERFACE_2,
+            "S2_SP1_INTERFACE_1": S2_SP1_INTERFACE_1,
+            "S2_SP1_INTERFACE_2": S2_SP1_INTERFACE_2,
+            "S1_LE1_INTERFACE_1": S1_LE1_INTERFACE_1,
+            "S1_LE1_INTERFACE_2": S1_LE1_INTERFACE_2,
+            "S2_LE1_INTERFACE_1": S2_LE1_INTERFACE_1,
+            "S2_LE1_INTERFACE_2": S2_LE1_INTERFACE_2,
+            "S1_LE1_IP4_INTERFACE_2": S1_LE1_IP4_INTERFACE_2,
+            "S2_LE1_IP4_INTERFACE_2": S2_LE1_IP4_INTERFACE_2,
             "ND_PASSWORD": ND_PASSWORD,
             "ND_USERNAME": ND_USERNAME,
             "NXOS_USERNAME": NXOS_USERNAME,
@@ -215,12 +196,12 @@ output = {
     },
     "nxos": {
         "children": [
-            "BG1",
-            "BG2",
-            "SP1",
-            "SP2",
-            "LE1",
-            "LE2",
+            "S1_BG1",
+            "S2_BG1",
+            "S1_SP1",
+            "S2_SP1",
+            "S1_LE1",
+            "S2_LE1",
         ],
         "vars": {
             "ansible_become": "true",

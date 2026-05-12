@@ -1,14 +1,28 @@
 #!/bin/bash
 
 # This script sets up the necessary bridges and TAP interfaces for the Nexus Dashboard environment.
-# If you created the bridges with netplan (see 99-bridges.yaml), you still need to run this
+# If you created the bridges with netplan (see 9912-bridges.yaml), you still need to run this
 # script to ensure the TAP interfaces that are dynamically created for the nexus9000v
 # are configured correctly.
 
 # This script should be run with root privileges.
 # Usage: sudo ./bridges_config.sh
 
-BRIDGES=(BR_ER_S1 BR_ER_S2 BR_S1_L1 BR_S2_L1 BR_L1_H1 BR_L2_H2 BR_ND_MGMT BR_ND_DATA)
+# SITE1/SITE2 bridges (canonical, from 9912-bridges.yaml).
+BRIDGES=(
+    BR_ND_DATA_12
+    BR_ISN_S1BG1_S2BG1_1
+    BR_S1_BG1_SP1_1
+    BR_S2_BG1_SP1_1
+    BR_S1_SP1_LE1_1
+    BR_S1_SP1_LE2_1
+    BR_S2_SP1_LE1_1
+    BR_S1_LE1_LE2_1
+    BR_S1_LE1_H1_1
+    BR_S1_LE1_TOR1_1
+    BR_S1_LE2_TOR1_1
+    BR_S2_LE1_H1_1
+)
 
 for bridge in "${BRIDGES[@]}"; do
     if ! ip link show $bridge >/dev/null 2>&1; then

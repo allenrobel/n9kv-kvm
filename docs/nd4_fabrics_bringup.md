@@ -36,7 +36,7 @@ breadcrumbs to make it through this step.
 
 ### General Guidelines
 
-To enable VRF Lite peering between the BG1 and BG2 Border Gatewats in fabrics SITE1
+To enable VRF Lite peering between the S1_BG1 and S2_BG1 Border Gatewats in fabrics SITE1
 and SITE2, it's imperitive that you enable `back2back&ToExternal` and its relevant
 suboptions (suboptions depend on your goals but, for now, enable them all). 
 Without doing so, ND will not automatically configure this peering when you invoke

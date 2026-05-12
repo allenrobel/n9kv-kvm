@@ -17,8 +17,8 @@
           gw_ip_subnet: 192.0.1.1/24
           deploy: true
           attach:
-          - ip_address: "{{ SP1_IP4 }}"
-          - ip_address: "{{ LE1_IP4 }}"
+          - ip_address: "{{ S1_SP1_IP4 }}"
+          - ip_address: "{{ S1_LE1_IP4 }}"
         - net_name: v3n1
           vrf_name: v3
           net_id: 3
@@ -28,5 +28,5 @@
           gw_ip_subnet: 192.0.2.1/24
           deploy: true
           attach:
-          - ip_address: "{{ SP1_IP4 }}"
-          - ip_address: "{{ LE1_IP4 }}"
+          - ip_address: "{{ S1_SP1_IP4 }}"
+          - ip_address: "{{ S1_LE1_IP4 }}"

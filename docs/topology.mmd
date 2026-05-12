@@ -2,31 +2,31 @@
 graph TD
     subgraph MSD["MSD Fabric (Multi-site Domain)"]
         subgraph SITE2["SITE2 - VXLAN Fabric"]
-            BG2[Border Gateway - BG2]
-            SP2[Spine Switch - SP2]
-            LE2[Leaf Switch - LE2]
-            HO2[Host Container - HO2]
+            S2_BG1[Border Gateway - S2_BG1]
+            S2_SP1[Spine Switch - S2_SP1]
+            S2_LE1[Leaf Switch - S2_LE1]
+            S2_H1[Host Container - S2_H1]
             
             %% SITE2 fabric connections (top-down)
-            BG2 --- SP2
-            SP2 --- LE2
-            LE2 --- HO2
+            S2_BG1 --- S2_SP1
+            S2_SP1 --- S2_LE1
+            S2_LE1 --- S2_H1
         end
 
         subgraph SITE1["SITE1 - VXLAN Fabric"]
-            BG1[Border Gateway - BG1]
-            SP1[Spine Switch - SP1]
-            LE1[Leaf Switch - LE1]
-            HO1[Host Container - HO1]
+            S1_BG1[Border Gateway - S1_BG1]
+            S1_SP1[Spine Switch - S1_SP1]
+            S1_LE1[Leaf Switch - S1_LE1]
+            S1_H1[Host Container - S1_H1]
             
             %% SITE1 fabric connections (top-down)
-            BG1 --- SP1
-            SP1 --- LE1
-            LE1 --- HO1
+            S1_BG1 --- S1_SP1
+            S1_SP1 --- S1_LE1
+            S1_LE1 --- S1_H1
         end
 
         %% Inter-fabric connection (MSD backbone)
-        BG1 --- BG2
+        S1_BG1 --- S2_BG1
     end
 
     %% Styling
@@ -37,8 +37,8 @@ graph TD
     classDef leaf fill:#a8f3c8,stroke:#2e7d32,stroke-width:2px,color:#000000
     classDef host fill:#e8f2a0,stroke:#558b2f,stroke-width:2px,color:#000000
 
-    class BG1,BG2 borderGateway
-    class SP1,SP2 spine
-    class LE1,LE2 leaf
-    class HO1,HO2 host
+    class S1_BG1,S2_BG1 borderGateway
+    class S1_SP1,S2_SP1 spine
+    class S1_LE1,S2_LE1 leaf
+    class S1_H1,S2_H1 host
 ```

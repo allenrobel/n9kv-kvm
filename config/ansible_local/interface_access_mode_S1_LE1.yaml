@@ -8,10 +8,10 @@
       fabric: "{{ SITE1_FABRIC }}"
       state: merged
       config:
-      - name: "{{ L1_INTERFACE_2 }}"
+      - name: "{{ S1_LE1_INTERFACE_2 }}"
         type: eth
         switch:
-        - "{{ L1_IP4 }}"
+        - "{{ S1_LE1_IP4 }}"
         deploy: true
         profile:
           admin_state: true

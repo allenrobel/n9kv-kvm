@@ -1,0 +1,13 @@
+---
+# SITE4
+# S4_BG1.yaml - Border Gateway 1 in SITE4
+name: S4_BG1
+role: Border Gateway
+sid: 34
+mgmt_bridge: BR_ND_DATA_14
+neighbors:
+  - S3_BG1
+  - S4_SP1
+isl_bridges:
+  - BR_ISN_S3BG1_S4BG1_1
+  - BR_S4_BG1_SP1_1

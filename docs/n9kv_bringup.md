@@ -145,7 +145,7 @@ total 46117076
 Review the contents of the following YAML configuration file:
 
 ```bash
-cat $HOME/repos/n9kv/config/nexus9000v/global_config.yaml
+cat $HOME/repos/n9kv-kvm/config/nexus9000v/global_config.yaml
 ```
 
 ```yaml

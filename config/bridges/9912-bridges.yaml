@@ -37,7 +37,7 @@ network:
     BR_ISN_S1BG1_S2BG1_1:
       dhcp4: false
       dhcp6: false
-      mtu: 1500
+      mtu: 9216
       accept-ra: false
       parameters:
         stp: false
@@ -46,7 +46,7 @@ network:
     BR_S1_BG1_SP1_1:
       dhcp4: false
       dhcp6: false
-      mtu: 1500
+      mtu: 9216
       accept-ra: false
       parameters:
         stp: false
@@ -55,7 +55,7 @@ network:
     BR_S2_BG1_SP1_1:
       dhcp4: false
       dhcp6: false
-      mtu: 1500
+      mtu: 9216
       accept-ra: false
       parameters:
         stp: false
@@ -64,7 +64,7 @@ network:
     BR_S1_SP1_LE1_1:
       dhcp4: false
       dhcp6: false
-      mtu: 1500
+      mtu: 9216
       accept-ra: false
       parameters:
         stp: false
@@ -73,7 +73,7 @@ network:
     BR_S2_SP1_LE1_1:
       dhcp4: false
       dhcp6: false
-      mtu: 1500
+      mtu: 9216
       accept-ra: false
       parameters:
         stp: false
@@ -82,7 +82,7 @@ network:
     BR_S1_LE1_H1_1:
       dhcp4: false
       dhcp6: false
-      mtu: 1500
+      mtu: 9216
       accept-ra: false
       parameters:
         stp: false
@@ -91,7 +91,7 @@ network:
     BR_S2_LE1_H1_1:
       dhcp4: false
       dhcp6: false
-      mtu: 1500
+      mtu: 9216
       accept-ra: false
       parameters:
         stp: false
@@ -100,7 +100,7 @@ network:
     BR_S1_SP1_LE2_1:
       dhcp4: false
       dhcp6: false
-      mtu: 1500
+      mtu: 9216
       accept-ra: false
       parameters:
         stp: false
@@ -109,7 +109,7 @@ network:
     BR_S1_LE1_LE2_1:
       dhcp4: false
       dhcp6: false
-      mtu: 1500
+      mtu: 9216
       accept-ra: false
       parameters:
         stp: false
@@ -118,7 +118,7 @@ network:
     BR_S1_LE1_TOR1_1:
       dhcp4: false
       dhcp6: false
-      mtu: 1500
+      mtu: 9216
       accept-ra: false
       parameters:
         stp: false
@@ -127,7 +127,7 @@ network:
     BR_S1_LE2_TOR1_1:
       dhcp4: false
       dhcp6: false
-      mtu: 1500
+      mtu: 9216
       accept-ra: false
       parameters:
         stp: false

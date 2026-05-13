@@ -91,6 +91,29 @@ contents of `$HOME/repos/n9kv-kvm/config/ansible/dynamic_inventory.py`
   - `nxos64-cs.10.3.8.M.bin`
 - `output_dir` - Set this to the location the n9kv startup config ISOs will be written to.
 
+## Set environment variables for your lab passwords
+
+The dynamic_inventory.py file tries to read the following from the environment, and falls back to the defaults shown below.
+
+```python
+ND_PASSWORD = environ.get("ND_PASSWORD", "SuperSecretPassword")
+ND_USERNAME = environ.get("ND_USERNAME", "admin")
+NXOS_PASSWORD = environ.get("NXOS_PASSWORD", "SuperSecretPassword")
+NXOS_USERNAME = environ.get("NXOS_USERNAME", "admin")
+```
+
+You'll most certainly want to change these passwords, so set these variables to your preferences:
+
+```bash
+export ND_PASSWORD=mypassword
+export NXOS_PASSWORD=mypassword
+```
+
+The switch IP addresses are likewise read from the environment, so worth
+having a look at dynamic_inventory.py and writing and sourcing a bash
+script to set these environment variables to match your preferences,
+or edit dynamic_inventory.py directly to change the IP addresses, etc.
+
 ## Run the startup_config_iso.yaml playbook
 
 If you want to store the ISO files in a location only writable by root, use the following.

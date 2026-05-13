@@ -195,6 +195,14 @@ Follow the link below to configure and bringup the nexus9000v VMs for this proje
 
 [Add nexus9000v Switches](./docs/nd_add_switches.md)
 
+## Manually configure VPC pair S1_LE1 + S1_LE2 and TOR1 (outside ND)
+
+Reference runbook for bringing up the SITE1 VPC pair and dual-homed TOR1
+by typing config directly into NX-OS — useful as a known-good baseline
+when developing the VPC pairing Ansible modules.
+
+[Manual VPC bringup for SITE1](./docs/manual_vpc_bringup_s1.md)
+
 ## Install libvert LXC Support
 
 We are using LXC-style containers, running under libvirt, for network testing endpoint hosts.

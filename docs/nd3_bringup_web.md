@@ -1,7 +1,7 @@
 # ND 3.2 Bringup Web Phase
 
 Once the CLI phase of the setup is complete, you will be asked to
-point your browser to https://192.168.11.2
+point your browser to <https://192.168.11.2>
 
 The below steps start with first browser login.
 
@@ -109,7 +109,7 @@ After about a minute, you'll see a progress page.
 
 ![ND 3.2 Progress](./images/nd3/10_progress.png)
 
-## Login
+## Login (after microservices start)
 
 Wait for a couple hours for Nexus Dashboard's micro-services to be created and started.
 
@@ -142,13 +142,13 @@ When ready, proceed to the
 
 The documentation is available on your ND instance.  Point your browser to:
 
-https://192.168.11.2/#/helpCenter
+<https://192.168.11.2/#/helpCenter>
 
 ## ND - Access the REST API documentation
 
 Likewise, the REST API documentation is available directly from ND:
 
-- https://192.168.11.2/apidocs/
+- <https://192.168.11.2/apidocs/>
 
 There are two sets of API documentation.
 

@@ -35,7 +35,8 @@ sudo chmod 600 /etc/qemu/bridge.conf
 Inspect and edit the following file to ensure it will work
 for you.
 
-```bash
+<!-- pyml disable-next-line commands-show-output -->
+```text
 $HOME/repos/n9kv-kvm/config/bridges/9912-bridges.yaml
 ```
 

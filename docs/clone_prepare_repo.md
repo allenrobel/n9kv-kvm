@@ -4,7 +4,8 @@ The scripts and environment vars in this repository assume it is cloned into
 the following location.  You can, of course, put it wherever you want, but
 will need to update everything to match your preferred location.
 
-```bash
+<!-- pyml disable-next-line commands-show-output -->
+```text
 $HOME/repos/n9kv-kvm
 ```
 

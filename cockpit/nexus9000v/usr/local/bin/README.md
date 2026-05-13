@@ -11,7 +11,7 @@ your_server with your server's IP or hostname...)
 If it's not installed, you can install it by following the steps at the Cockpit
 project site.
 
-https://cockpit-project.org/running.html#ubuntu
+<https://cockpit-project.org/running.html#ubuntu>
 
 ## 2. Copy the backend script into /usr/local/bin and make executable
 

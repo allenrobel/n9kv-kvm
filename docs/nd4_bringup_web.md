@@ -2,7 +2,7 @@
 
 ## CLI phase complete
 
-Once the CLI phase of the setup is complete, you will be asked to point your browser to https://192.168.11.2 and login.
+Once the CLI phase of the setup is complete, you will be asked to point your browser to <https://192.168.11.2> and login.
 
 ```bash
 Nexus Dashboard localhost ttyS0
@@ -164,10 +164,10 @@ Clicking on `What's new?` shows a summary of new features in ND 4.1
 
 The documentation is available on your ND instance.  Point your browser to:
 
-https://192.168.11.2/#/helpCenter
+<https://192.168.11.2/#/helpCenter>
 
 ### ND - Access the REST API documentation
 
 Likewise, the REST API documentation is available directly from ND:
 
-https://192.168.11.2/help-center/swagger
+<https://192.168.11.2/help-center/swagger>

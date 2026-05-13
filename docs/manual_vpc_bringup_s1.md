@@ -24,7 +24,7 @@ straight into each switch's NX-OS CLI over the console or SSH.
 
 ## Topology
 
-```
+```text
                               S1_SP1
                              /       \
                             /         \
@@ -81,7 +81,7 @@ avoid this, either:
 
 Reach the CLI via `con_s1_le1` (telnet to 9051) or `ssh_s1_le1`.
 
-```
+```text
 configure terminal
 
 ! Features
@@ -143,7 +143,7 @@ copy running-config startup-config
 
 Reach the CLI via `con_s1_le2` (telnet to 9055) or `ssh_s1_le2`.
 
-```
+```text
 configure terminal
 
 feature lacp
@@ -202,7 +202,7 @@ copy running-config startup-config
 
 Reach the CLI via `con_s1_tor1` (telnet to 9061) or `ssh_s1_tor1`.
 
-```
+```text
 configure terminal
 
 feature lacp
@@ -246,7 +246,7 @@ Run in sequence; each step should pass before the next.
 Before the peer-link comes up, the leaves must be able to ping each
 other in the management VRF. On S1_LE1:
 
-```
+```text
 ping 192.168.12.155 vrf management count 3
 ```
 
@@ -256,7 +256,7 @@ And the symmetric ping on S1_LE2. Both must succeed.
 
 On either leaf:
 
-```
+```text
 show vpc
 ```
 
@@ -272,7 +272,7 @@ Expect:
 
 On all three switches:
 
-```
+```text
 show port-channel summary
 ```
 
@@ -290,7 +290,7 @@ inconsistent VLAN allowed-list between the leaves.
 
 On S1_TOR1:
 
-```
+```text
 show lacp neighbor
 show lldp neighbors
 ```
@@ -306,7 +306,7 @@ the pair.
 For an actual L3 reachability test, give TOR1 an SVI in VLAN 2 and
 ping from somewhere on `S1_H1` or one of the leaves:
 
-```
+```text
 configure terminal
 interface vlan 2
   ip address 11.1.2.10/24

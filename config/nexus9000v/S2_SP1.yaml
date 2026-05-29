@@ -3,7 +3,7 @@
 # S2_SP1.yaml - Spine Switch 1 in SITE2
 name: S2_SP1
 role: Spine Switch
-sid: 42
+sid: 2401
 mgmt_bridge: BR_ND_DATA_12
 neighbors:
   - S2_BG1

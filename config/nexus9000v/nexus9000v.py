@@ -40,6 +40,7 @@ class GlobalConfig:  # pylint: disable=too-many-instance-attributes
     default_external_storage_size: str = "20G"  # Add this
     external_storage_enabled: bool = True  # Add this
 
+
 @dataclass
 class NetworkInterface:
     """Represents a network interface configuration."""
@@ -74,10 +75,20 @@ class SwitchConfig:  # pylint: disable=too-many-instance-attributes
 
     def __post_init__(self):
         """Validate configuration after initialization."""
-        if self.sid < 1 or self.sid > 255:
-            raise ValueError(f"SID must be between 1-255, got {self.sid}")
+        if self.sid < 1000 or self.sid > 9999:
+            raise ValueError(f"SID must be a 4-digit value between 1000-9999, got {self.sid}")
         if len(self.neighbors) != len(self.isl_bridges):
             raise ValueError("Number of neighbors must match number of ISL bridges")
+
+    @property
+    def telnet_port(self) -> int:
+        """Telnet console port derived from sid (10000 + sid)."""
+        return 10000 + self.sid
+
+    @property
+    def monitor_port(self) -> int:
+        """QEMU monitor port derived from sid (20000 + sid)."""
+        return 20000 + self.sid
 
 
 class MACAddressGenerator(Protocol):
@@ -117,12 +128,16 @@ class StandardMACGenerator:
     def generate_mgmt_mac(self, sid: int, base_mac: str) -> str:
         """Generate management interface MAC."""
         base_mac = self._validate_base_mac(base_mac)
-        return f"{base_mac}:{sid:02x}:00:01"
+        # split the 4-digit decimal sid into two 2-digit halves: octet4=sid_hi, octet6=sid_lo
+        sid_hi, sid_lo = divmod(sid, 100)
+        return f"{base_mac}:{sid_hi:02x}:00:{sid_lo:02x}"
 
     def generate_ethernet_mac(self, sid: int, port: int, base_mac: str) -> str:
         """Generate ethernet interface MAC."""
         base_mac = self._validate_base_mac(base_mac)
-        return f"{base_mac}:{sid:02x}:01:{port:02x}"
+        # split the 4-digit decimal sid into two 2-digit halves: octet4=sid_hi, octet6=sid_lo
+        sid_hi, sid_lo = divmod(sid, 100)
+        return f"{base_mac}:{sid_hi:02x}:{port:02x}:{sid_lo:02x}"
 
 
 class QEMUCommandBuilder(ABC):  # pylint: disable=too-few-public-methods
@@ -241,8 +256,8 @@ class NexusQEMUBuilder(QEMUCommandBuilder):  # pylint: disable=too-few-public-me
 
     def _build_misc_args(self, config: SwitchConfig, global_config: GlobalConfig) -> List[str]:
         """Build miscellaneous arguments."""
-        telnet_port = f"90{config.sid:02d}"
-        monitor_port = f"44{config.sid:02d}"
+        telnet_port = config.telnet_port
+        monitor_port = config.monitor_port
 
         return [
             "-rtc",
@@ -446,8 +461,8 @@ class SwitchVMManager:  # pylint: disable=too-few-public-methods
 
         return {
             "process_id": process.pid,
-            "telnet_port": f"90{config.sid:02d}",
-            "monitor_port": f"44{config.sid:02d}",
+            "telnet_port": config.telnet_port,
+            "monitor_port": config.monitor_port,
             "interfaces": interfaces,
             "config": config,
         }
@@ -534,8 +549,8 @@ class SwitchVMManager:  # pylint: disable=too-few-public-methods
                 bridge = config.isl_bridges[i]
                 print(f"{config.name} -> {neighbor}: {bridge}")
 
-            print(f"\nConsole access: telnet localhost 90{config.sid:02d}")
-            print(f"Monitor access: telnet localhost 44{config.sid:02d}")
+            print(f"\nConsole access: telnet localhost {config.telnet_port}")
+            print(f"Monitor access: telnet localhost {config.monitor_port}")
             print(f"Process ID: {process.pid}")
 
             if debug:
@@ -579,14 +594,42 @@ def create_sample_configs():
 
     # Switch configurations
     switches = [
-        {"name": "S1_BG1", "role": "Border Gateway", "sid": 31, "mgmt_bridge": "BR_ND_DATA_12", "neighbors": ["S2_BG1", "S1_SP1"], "isl_bridges": ["BR_ISN_S1_S2_1", "BR_S1_BG1_SP1_1"]},
-        {"name": "S2_BG1", "role": "Border Gateway", "sid": 32, "mgmt_bridge": "BR_ND_DATA_12", "neighbors": ["S1_BG1", "S2_SP1"], "isl_bridges": ["BR_ISN_S1_S2_1", "BR_S2_BG1_SP1_1"]},
-        {"name": "S1_SP1", "role": "Spine Switch", "sid": 41, "mgmt_bridge": "BR_ND_DATA_12", "neighbors": ["S1_BG1", "S1_LE1"], "isl_bridges": ["BR_S1_BG1_SP1_1", "BR_S1_SP1_LE1_1"]},
-        {"name": "S2_SP1", "role": "Spine Switch", "sid": 42, "mgmt_bridge": "BR_ND_DATA_12", "neighbors": ["S2_BG1", "S2_LE1"], "isl_bridges": ["BR_S2_BG1_SP1_1", "BR_S2_SP1_LE1_1"]},
+        {
+            "name": "S1_BG1",
+            "role": "Border Gateway",
+            "sid": 1301,
+            "mgmt_bridge": "BR_ND_DATA_12",
+            "neighbors": ["S2_BG1", "S1_SP1"],
+            "isl_bridges": ["BR_ISN_S1_S2_1", "BR_S1_BG1_SP1_1"],
+        },
+        {
+            "name": "S2_BG1",
+            "role": "Border Gateway",
+            "sid": 2301,
+            "mgmt_bridge": "BR_ND_DATA_12",
+            "neighbors": ["S1_BG1", "S2_SP1"],
+            "isl_bridges": ["BR_ISN_S1_S2_1", "BR_S2_BG1_SP1_1"],
+        },
+        {
+            "name": "S1_SP1",
+            "role": "Spine Switch",
+            "sid": 1401,
+            "mgmt_bridge": "BR_ND_DATA_12",
+            "neighbors": ["S1_BG1", "S1_LE1"],
+            "isl_bridges": ["BR_S1_BG1_SP1_1", "BR_S1_SP1_LE1_1"],
+        },
+        {
+            "name": "S2_SP1",
+            "role": "Spine Switch",
+            "sid": 2401,
+            "mgmt_bridge": "BR_ND_DATA_12",
+            "neighbors": ["S2_BG1", "S2_LE1"],
+            "isl_bridges": ["BR_S2_BG1_SP1_1", "BR_S2_SP1_LE1_1"],
+        },
         {
             "name": "S1_LE1",
             "role": "Leaf Switch",
-            "sid": 51,
+            "sid": 1501,
             "mgmt_bridge": "BR_ND_DATA_12",
             "neighbors": ["S1_SP1"],
             "isl_bridges": ["BR_S1_SP1_LE1_1"],
@@ -599,7 +642,7 @@ def create_sample_configs():
         {
             "name": "S2_LE1",
             "role": "Leaf Switch",
-            "sid": 52,
+            "sid": 2501,
             "mgmt_bridge": "BR_ND_DATA_12",
             "neighbors": ["S2_SP1"],
             "isl_bridges": ["BR_S2_SP1_LE1_1"],
@@ -666,8 +709,8 @@ def main():
             for iface in result["interfaces"]:
                 print(f"  {iface.name}: {iface.bridge} -> {iface.mac}")
             print("\nPorts:")
-            print(f"  Telnet: 90{switch_config.sid:02d}")
-            print(f"  Monitor: 44{switch_config.sid:02d}")
+            print(f"  Telnet: {switch_config.telnet_port}")
+            print(f"  Monitor: {switch_config.monitor_port}")
 
     except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Error: {e}")

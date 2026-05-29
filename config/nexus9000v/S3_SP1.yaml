@@ -3,7 +3,7 @@
 # S3_SP1.yaml - Spine Switch 1 in SITE3
 name: S3_SP1
 role: Spine Switch
-sid: 43
+sid: 3401
 mgmt_bridge: BR_ND_DATA_14
 neighbors:
   - S3_BG1

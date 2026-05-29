@@ -3,7 +3,7 @@
 # S1_LE2.yaml - Leaf Switch 2 in SITE1 (VPC pair member with S1_LE1; downstream of S1_TOR1)
 name: S1_LE2
 role: Leaf Switch
-sid: 52
+sid: 1502
 mgmt_bridge: BR_ND_DATA_12
 neighbors:
   - S1_SP1

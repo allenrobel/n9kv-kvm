@@ -3,7 +3,7 @@
 # S3_BG1.yaml - Border Gateway 1 in SITE3
 name: S3_BG1
 role: Border Gateway
-sid: 33
+sid: 3301
 mgmt_bridge: BR_ND_DATA_14
 neighbors:
   - S4_BG1

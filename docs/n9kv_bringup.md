@@ -221,7 +221,7 @@ Example for S1_BG1 switch.
 # S1_BG1.yaml - Border Gateway 1 configuration
 name: S1_BG1
 role: Border Gateway
-sid: 31
+sid: 1301
 mgmt_bridge: BR_ND_DATA
 neighbors:
   - S2_BG1
@@ -246,11 +246,11 @@ to connect to the switch console
 Image resized.
 S1_BG1 instance created.
 Role: Border Gateway
-SID: 31
+SID: 1301
 S1_BG1 -> S2_BG1: BR_ISN_S1_S2_1
 
-Console access: telnet localhost 9031
-Monitor access: telnet localhost 4431
+Console access: telnet localhost 11301
+Monitor access: telnet localhost 21301
 Process ID: 386740
 (n9kv-kvm) arobel@glide:~/repos/n9kv-kvm/config/nexus9000v$
 ```
@@ -258,7 +258,7 @@ Process ID: 386740
 ### Connect to the S1_BG1 Switch Console
 
 ```bash
-telnet localhost 9031
+telnet localhost 11301
 ```
 
 You'll notice the following, but you can ignore it.

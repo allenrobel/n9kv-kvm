@@ -74,18 +74,6 @@ S1_LE1_INTERFACE_2 = environ.get("S1_LE1_INTERFACE_2", "Ethernet1/2")
 S2_LE1_INTERFACE_1 = environ.get("S2_LE1_INTERFACE_1", "Ethernet1/1")
 S2_LE1_INTERFACE_2 = environ.get("S2_LE1_INTERFACE_2", "Ethernet1/2")
 
-# Unique mac addresses for the above interfaces.
-ER_MAC_1 = environ.get("ER_MAC_1", "0000.0011.0001")
-ER_MAC_2 = environ.get("ER_MAC_2", "0000.0011.0002")
-S1_SP1_MAC_1 = environ.get("S1_SP1_MAC_1", "0000.0021.0001")
-S1_SP1_MAC_2 = environ.get("S1_SP1_MAC_2", "0000.0021.0002")
-S2_SP1_MAC_1 = environ.get("S2_SP1_MAC_1", "0000.0022.0001")
-S2_SP1_MAC_2 = environ.get("S2_SP1_MAC_2", "0000.0022.0002")
-S1_LE1_MAC_1 = environ.get("S1_LE1_MAC_1", "0000.0031.0001")
-S1_LE1_MAC_2 = environ.get("S1_LE1_MAC_2", "0000.0031.0002")
-S2_LE1_MAC_1 = environ.get("S2_LE1_MAC_1", "0000.0032.0001")
-S2_LE1_MAC_2 = environ.get("S2_LE1_MAC_2", "0000.0032.0002")
-
 # output is printed to STDOUT, where ansible-playbook -i reads it.
 
 output = {
@@ -112,16 +100,6 @@ output = {
             "S2_SP1_HOSTNAME": S2_SP1_HOSTNAME,
             "S1_LE1_HOSTNAME": S1_LE1_HOSTNAME,
             "S2_LE1_HOSTNAME": S2_LE1_HOSTNAME,
-            "ER_MAC_1": ER_MAC_1,
-            "ER_MAC_2": ER_MAC_2,
-            "S1_SP1_MAC_1": S1_SP1_MAC_1,
-            "S1_SP1_MAC_2": S1_SP1_MAC_2,
-            "S2_SP1_MAC_1": S2_SP1_MAC_1,
-            "S2_SP1_MAC_2": S2_SP1_MAC_2,
-            "S1_LE1_MAC_1": S1_LE1_MAC_1,
-            "S1_LE1_MAC_2": S1_LE1_MAC_2,
-            "S2_LE1_MAC_1": S2_LE1_MAC_1,
-            "S2_LE1_MAC_2": S2_LE1_MAC_2,
             "ER_INTERFACE_1": ER_INTERFACE_1,
             "ER_INTERFACE_2": ER_INTERFACE_2,
             "S1_SP1_INTERFACE_1": S1_SP1_INTERFACE_1,

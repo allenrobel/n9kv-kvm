@@ -146,36 +146,6 @@ S1_TOR1_INTERFACE_1 = environ.get("S1_TOR1_INTERFACE_1", "Ethernet1/1")
 S1_TOR1_INTERFACE_2 = environ.get("S1_TOR1_INTERFACE_2", "Ethernet1/2")
 S1_SP1_INTERFACE_3 = environ.get("S1_SP1_INTERFACE_3", "Ethernet1/3")
 
-# Unique mac addresses for the above interfaces.
-# SITE1 / SITE2
-S1_BG1_MAC_1 = environ.get("S1_BG1_MAC_1", "0000.0031.0001")
-S1_BG1_MAC_2 = environ.get("S1_BG1_MAC_2", "0000.0031.0002")
-
-S2_BG1_MAC_1 = environ.get("S2_BG1_MAC_1", "0000.0032.0001")
-S2_BG1_MAC_2 = environ.get("S2_BG1_MAC_2", "0000.0032.0002")
-
-S1_SP1_MAC_1 = environ.get("S1_SP1_MAC_1", "0000.0041.0001")
-S1_SP1_MAC_2 = environ.get("S1_SP1_MAC_2", "0000.0041.0002")
-
-S2_SP1_MAC_1 = environ.get("S2_SP1_MAC_1", "0000.0042.0001")
-S2_SP1_MAC_2 = environ.get("S2_SP1_MAC_2", "0000.0042.0002")
-
-S1_LE1_MAC_1 = environ.get("S1_LE1_MAC_1", "0000.0051.0001")
-S1_LE1_MAC_2 = environ.get("S1_LE1_MAC_2", "0000.0051.0002")
-
-S2_LE1_MAC_1 = environ.get("S2_LE1_MAC_1", "0000.0052.0001")
-S2_LE1_MAC_2 = environ.get("S2_LE1_MAC_2", "0000.0052.0002")
-
-# MACs for the new SITE1 leaf and TOR (sid 55, sid 61).
-S1_LE1_MAC_3 = environ.get("S1_LE1_MAC_3", "0000.0051.0003")
-S1_LE1_MAC_4 = environ.get("S1_LE1_MAC_4", "0000.0051.0004")
-S1_LE2_MAC_1 = environ.get("S1_LE2_MAC_1", "0000.0055.0001")
-S1_LE2_MAC_2 = environ.get("S1_LE2_MAC_2", "0000.0055.0002")
-S1_LE2_MAC_3 = environ.get("S1_LE2_MAC_3", "0000.0055.0003")
-S1_TOR1_MAC_1 = environ.get("S1_TOR1_MAC_1", "0000.0061.0001")
-S1_TOR1_MAC_2 = environ.get("S1_TOR1_MAC_2", "0000.0061.0002")
-S1_SP1_MAC_3 = environ.get("S1_SP1_MAC_3", "0000.0041.0003")
-
 # SITE3 / SITE4
 S3_BG1_INTERFACE_1 = environ.get("S3_BG1_INTERFACE_1", "Ethernet1/1")
 S3_BG1_INTERFACE_2 = environ.get("S3_BG1_INTERFACE_2", "Ethernet1/2")
@@ -202,33 +172,6 @@ S4_LE2_INTERFACE_2 = environ.get("S4_LE2_INTERFACE_2", "Ethernet1/2")
 
 S4_LE3_INTERFACE_1 = environ.get("S4_LE3_INTERFACE_1", "Ethernet1/1")
 S4_LE3_INTERFACE_2 = environ.get("S4_LE3_INTERFACE_2", "Ethernet1/2")
-
-# SITE3 / SITE4
-S3_BG1_MAC_1 = environ.get("S3_BG1_MAC_1", "0000.0033.0001")
-S3_BG1_MAC_2 = environ.get("S3_BG1_MAC_2", "0000.0033.0002")
-
-S4_BG1_MAC_1 = environ.get("S4_BG1_MAC_1", "0000.0034.0001")
-S4_BG1_MAC_2 = environ.get("S4_BG1_MAC_2", "0000.0034.0002")
-
-S3_SP1_MAC_1 = environ.get("S3_SP1_MAC_1", "0000.0043.0001")
-S3_SP1_MAC_2 = environ.get("S3_SP1_MAC_2", "0000.0043.0002")
-
-S4_SP1_MAC_1 = environ.get("S4_SP1_MAC_1", "0000.0044.0001")
-S4_SP1_MAC_2 = environ.get("S4_SP1_MAC_2", "0000.0044.0002")
-S4_SP1_MAC_3 = environ.get("S4_SP1_MAC_3", "0000.0044.0003")
-S4_SP1_MAC_4 = environ.get("S4_SP1_MAC_4", "0000.0044.0004")
-
-S3_LE1_MAC_1 = environ.get("S3_LE1_MAC_1", "0000.0053.0001")
-S3_LE1_MAC_2 = environ.get("S3_LE1_MAC_2", "0000.0053.0002")
-
-S4_LE1_MAC_1 = environ.get("S4_LE1_MAC_1", "0000.0054.0001")
-S4_LE1_MAC_2 = environ.get("S4_LE1_MAC_2", "0000.0054.0002")
-
-S4_LE2_MAC_1 = environ.get("S4_LE2_MAC_1", "0000.0063.0001")
-S4_LE2_MAC_2 = environ.get("S4_LE2_MAC_2", "0000.0063.0002")
-
-S4_LE3_MAC_1 = environ.get("S4_LE3_MAC_1", "0000.0064.0001")
-S4_LE3_MAC_2 = environ.get("S4_LE3_MAC_2", "0000.0064.0002")
 
 # output is printed to STDOUT, where ansible-playbook -i reads it.
 # If you change any vars above, be sure to add them below.
@@ -281,44 +224,6 @@ output = {
             "S4_LE1_HOSTNAME": S4_LE1_HOSTNAME,
             "S4_LE2_HOSTNAME": S4_LE2_HOSTNAME,
             "S4_LE3_HOSTNAME": S4_LE3_HOSTNAME,
-            "S1_BG1_MAC_1": S1_BG1_MAC_1,
-            "S1_BG1_MAC_2": S1_BG1_MAC_2,
-            "S2_BG1_MAC_1": S2_BG1_MAC_1,
-            "S2_BG1_MAC_2": S2_BG1_MAC_2,
-            "S1_SP1_MAC_1": S1_SP1_MAC_1,
-            "S1_SP1_MAC_2": S1_SP1_MAC_2,
-            "S2_SP1_MAC_1": S2_SP1_MAC_1,
-            "S2_SP1_MAC_2": S2_SP1_MAC_2,
-            "S1_LE1_MAC_1": S1_LE1_MAC_1,
-            "S1_LE1_MAC_2": S1_LE1_MAC_2,
-            "S2_LE1_MAC_1": S2_LE1_MAC_1,
-            "S2_LE1_MAC_2": S2_LE1_MAC_2,
-            "S1_LE1_MAC_3": S1_LE1_MAC_3,
-            "S1_LE1_MAC_4": S1_LE1_MAC_4,
-            "S1_LE2_MAC_1": S1_LE2_MAC_1,
-            "S1_LE2_MAC_2": S1_LE2_MAC_2,
-            "S1_LE2_MAC_3": S1_LE2_MAC_3,
-            "S1_TOR1_MAC_1": S1_TOR1_MAC_1,
-            "S1_TOR1_MAC_2": S1_TOR1_MAC_2,
-            "S1_SP1_MAC_3": S1_SP1_MAC_3,
-            "S3_BG1_MAC_1": S3_BG1_MAC_1,
-            "S3_BG1_MAC_2": S3_BG1_MAC_2,
-            "S4_BG1_MAC_1": S4_BG1_MAC_1,
-            "S4_BG1_MAC_2": S4_BG1_MAC_2,
-            "S3_SP1_MAC_1": S3_SP1_MAC_1,
-            "S3_SP1_MAC_2": S3_SP1_MAC_2,
-            "S4_SP1_MAC_1": S4_SP1_MAC_1,
-            "S4_SP1_MAC_2": S4_SP1_MAC_2,
-            "S4_SP1_MAC_3": S4_SP1_MAC_3,
-            "S4_SP1_MAC_4": S4_SP1_MAC_4,
-            "S3_LE1_MAC_1": S3_LE1_MAC_1,
-            "S3_LE1_MAC_2": S3_LE1_MAC_2,
-            "S4_LE1_MAC_1": S4_LE1_MAC_1,
-            "S4_LE1_MAC_2": S4_LE1_MAC_2,
-            "S4_LE2_MAC_1": S4_LE2_MAC_1,
-            "S4_LE2_MAC_2": S4_LE2_MAC_2,
-            "S4_LE3_MAC_1": S4_LE3_MAC_1,
-            "S4_LE3_MAC_2": S4_LE3_MAC_2,
             "S1_BG1_INTERFACE_1": S1_BG1_INTERFACE_1,
             "S1_BG1_INTERFACE_2": S1_BG1_INTERFACE_2,
             "S2_BG1_INTERFACE_1": S2_BG1_INTERFACE_1,

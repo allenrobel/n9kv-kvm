@@ -3,7 +3,7 @@
 # S4_LE1.yaml - Leaf Switch 1 in SITE4
 name: S4_LE1
 role: Leaf Switch
-sid: 54
+sid: 57
 mgmt_bridge: BR_ND_DATA_14
 neighbors:
   - S4_SP1

@@ -3,7 +3,7 @@
 # S4_LE3.yaml - Leaf Switch 3 in SITE4 (was VP4; VPC pair member with S4_LE2 toward S4_H2)
 name: S4_LE3
 role: Leaf Switch
-sid: 64
+sid: 59
 mgmt_bridge: BR_ND_DATA_14
 neighbors:
   - S4_SP1

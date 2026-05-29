@@ -40,6 +40,7 @@ class GlobalConfig:  # pylint: disable=too-many-instance-attributes
     default_external_storage_size: str = "20G"  # Add this
     external_storage_enabled: bool = True  # Add this
 
+
 @dataclass
 class NetworkInterface:
     """Represents a network interface configuration."""

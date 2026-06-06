@@ -1,0 +1,30 @@
+network:
+  version: 2
+  ethernets:
+    eno5:
+      dhcp4: false
+      dhcp6: false
+      optional: true
+      accept-ra: false
+    eno6:
+      dhcp4: false
+      dhcp6: false
+      optional: true
+      accept-ra: false
+  bridges:
+    outside:
+      interfaces:
+        - eno5
+      addresses:
+        - 192.168.7.6/24 
+      routes:
+        - to: 0.0.0.0/0
+          via: 192.168.7.1
+        - to: "::/0"
+          via: fe80::262d:6cff:fe98:a614
+      optional: false
+      accept-ra: true
+      parameters:
+        stp: false
+        forward-delay: 0
+

@@ -1,0 +1,158 @@
+# This provides the bridge configurations used for SITE5/SITE6
+# in this repository.  This is needed ONLY if you want a third
+# virtual testbed on the same host.  For example, you could
+# use a third testbed to create a Nexus Dashboard cluster with
+# the first or second testbed.
+#
+# Copy it to /etc/netplan/9915-bridges.yaml on the target system.
+# sudo cp 9915-bridges.yaml /etc/netplan/9915-bridges.yaml
+# sudo chmod 600 /etc/netplan/9915-bridges.yaml
+# sudo netplan try
+# sudo netplan apply
+
+# Bridge names are outlined below, along with the interfaces they connect.
+#
+# DATA Network: BR_ND_DATA_15 -> Vlan15
+#
+# Src Interface           Dst Interface           Bridge                       Site
+# S5_BG1_INTERFACE_1      S6_BG1_INTERFACE_1      BR_ISN_S5_S6_1         MSD inter-site
+# S5_BG1_INTERFACE_2      S5_SP1_INTERFACE_1      BR_S5_BG1_SP1_1              SITE5
+# S6_BG1_INTERFACE_2      S6_SP1_INTERFACE_1      BR_S6_BG1_SP1_1              SITE6
+# S5_SP1_INTERFACE_2      S5_LE1_INTERFACE_1      BR_S5_SP1_LE1_1              SITE5
+# S6_SP1_INTERFACE_2      S6_LE1_INTERFACE_1      BR_S6_SP1_LE1_1              SITE6
+# S5_LE1_INTERFACE_2      S5_H1_INTERFACE_1       BR_S5_LE1_H1_1               SITE5
+# S6_LE1_INTERFACE_2      S6_H1_INTERFACE_1       BR_S6_LE1_H1_1               SITE6
+# S5_LE2_INTERFACE_1      S5_SP1_INTERFACE_3      BR_S5_SP1_LE2_1              SITE5
+# S6_LE2_INTERFACE_1      S6_SP1_INTERFACE_3      BR_S6_SP1_LE2_1              SITE6
+# S5_LE2_INTERFACE_2      S5_H2_INTERFACE_1       BR_S5_LE2_H2_1               SITE5
+# S6_LE2_INTERFACE_2      S6_H2_INTERFACE_1       BR_S6_LE2_H2_1               SITE6
+
+network:
+  version: 2
+  renderer: networkd
+  vlans:
+    Vlan15:
+      id: 15
+      link: eno6
+      optional: true
+  bridges:
+
+    BR_ISN_S5_S6_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_S5_BG1_SP1_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_S6_BG1_SP1_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_S5_SP1_LE1_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_S6_SP1_LE1_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_S5_SP1_LE2_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_S6_SP1_LE2_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_S5_LE1_H1_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_S6_LE1_H1_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_S5_LE2_H2_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_S6_LE2_H2_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_ND_DATA_15:
+      openvswitch: {}
+      interfaces:
+      - Vlan15
+      addresses:
+      - 192.168.15.2/24
+      - 2000:192:168:15::2/24
+      parameters:
+        stp: false

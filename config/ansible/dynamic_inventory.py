@@ -46,10 +46,10 @@ S2_BG1_IP4 = environ.get("S2_BG1_IP4", "192.168.12.132")
 S1_SP1_IP4 = environ.get("S1_SP1_IP4", "192.168.12.141")
 S2_SP1_IP4 = environ.get("S2_SP1_IP4", "192.168.12.142")
 S1_LE1_IP4 = environ.get("S1_LE1_IP4", "192.168.12.151")
-S2_LE1_IP4 = environ.get("S2_LE1_IP4", "192.168.12.152")
-S1_LE2_IP4 = environ.get("S1_LE2_IP4", "192.168.12.155")
+S1_LE2_IP4 = environ.get("S1_LE2_IP4", "192.168.12.152")
 S1_TOR1_IP4 = environ.get("S1_TOR1_IP4", "192.168.12.161")
 S1_LE1_IP4_INTERFACE_2 = environ.get("S1_LE1_IP4_INTERFACE_2", "192.168.0.1")
+S2_LE1_IP4 = environ.get("S2_LE1_IP4", "192.168.12.153")
 S2_LE1_IP4_INTERFACE_2 = environ.get("S2_LE1_IP4_INTERFACE_2", "192.168.0.2")
 
 # SITE3 / SITE4

@@ -36,11 +36,13 @@ from os import environ
 
 ND_IP4 = environ.get("ND_IP4", "192.168.11.2")
 ER_IP4 = environ.get("ER_IP4", "192.168.12.111")
-S1_SP1_IP4 = environ.get("S1_SP1_IP4", "192.168.12.121")
-S2_SP1_IP4 = environ.get("S2_SP1_IP4", "192.168.12.122")
-S1_LE1_IP4 = environ.get("S1_LE1_IP4", "192.168.12.131")
-S2_LE1_IP4 = environ.get("S2_LE1_IP4", "192.168.12.132")
+S1_SP1_IP4 = environ.get("S1_SP1_IP4", "192.168.12.141")
+S1_LE1_IP4 = environ.get("S1_LE1_IP4", "192.168.12.151")
+S1_LE2_IP4 = environ.get("S1_LE1_IP4", "192.168.12.152")
 S1_LE1_IP4_INTERFACE_2 = environ.get("S1_LE1_IP4_INTERFACE_2", "11.1.1.1")
+
+S2_SP1_IP4 = environ.get("S2_SP1_IP4", "192.168.12.143")
+S2_LE1_IP4 = environ.get("S2_LE1_IP4", "192.168.12.153")
 S2_LE1_IP4_INTERFACE_2 = environ.get("S2_LE1_IP4_INTERFACE_2", "22.1.1.1")
 
 # Fabric types

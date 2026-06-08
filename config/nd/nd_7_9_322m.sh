@@ -11,6 +11,7 @@ mkdir $ND_INSTALL_DIR
 qemu-img create -f qcow2 -F qcow2 -b $ND_SOURCE_DIR/$ND_IMAGE $ND_INSTALL_DIR/nd-node1-disk1.qcow2
 qemu-img create -f qcow2 $ND_INSTALL_DIR/nd-node1-disk2.qcow2 500G
 sudo virt-install --name $ND_NAME \
+    --graphics none \
     --vcpus 16 --ram 96000 --osinfo linux2020 \
     --disk path=$ND_INSTALL_DIR/nd-node1-disk1.qcow2 \
     --disk path=$ND_INSTALL_DIR/nd-node1-disk2.qcow2 \

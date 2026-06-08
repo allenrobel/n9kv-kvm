@@ -12,6 +12,7 @@ qemu-img create -f qcow2 -F qcow2 -b $ND_SOURCE_DIR/$ND_IMAGE $ND_INSTALL_DIR/nd
 qemu-img create -f qcow2 $ND_INSTALL_DIR/nd-node1-disk2.qcow2 500G
 sudo virt-install --name $ND_NAME \
     --vcpus 16 --ram 96000 --osinfo linux2020 \
+    --graphics none \
     --disk path=$ND_INSTALL_DIR/nd-node1-disk1.qcow2 \
     --disk path=$ND_INSTALL_DIR/nd-node1-disk2.qcow2 \
     --network bridge:$ND_MGMT_NET,model=virtio,address.type=pci,address.domain=0,address.bus=0,address.slot=3 \

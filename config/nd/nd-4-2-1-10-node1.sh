@@ -23,7 +23,7 @@ sudo virt-install --name $ND_NAME \
     --disk path=$ND_INSTALL_DIR/$ND_DISK1_IMAGE \
     --disk path=$ND_INSTALL_DIR/$ND_DISK2_IMAGE \
     --network bridge:$ND_MGMT_NET,model=virtio,address.type=pci,address.domain=0,address.bus=0,address.slot=3 \
-    --network bridge:$ND_DATA_NET,model=virtio,address.type=pci,address.domain=0,address.bus=0,address.slot=4 \
+    --network bridge=$ND_DATA_NET,virtualport_type=openvswitch,model=virtio,address.type=pci,address.domain=0,address.bus=0,address.slot=4 \
     --noautoconsole --import
 
 echo "Nexus Dashboard $ND_NAME installation started. Use 'virsh list' to check status."

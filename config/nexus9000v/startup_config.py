@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate NX-OS day-0 startup-config and boot ISO for Nexus9000v switches.
 
-Single source of truth: the per-switch YAML (S*.yaml) that nexus9000v-ovs.py
+Single source of truth: the per-switch YAML (S*.yaml) that nexus9000v.py
 already reads, plus global_config.yaml. Renders nxos_startup_config.j2 and wraps
 the result in a per-switch ISO (genisoimage), byte-compatible with the retired
 startup_config_iso.yaml playbook. The admin password is read from $NXOS_PASSWORD.

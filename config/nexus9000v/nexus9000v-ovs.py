@@ -681,7 +681,7 @@ def create_sample_configs():
         "image_path": "/iso1/nxos",
         "cdrom_path": "/iso2/nxos/config",
         "bios_file": "/usr/share/ovmf/OVMF.fd",
-        "default_image": "nexus9300v64.10.3.8.M.qcow2",
+        "default_image": "nexus9300v64.10.6.2.F.qcow2",
         "base_mac": "52:54:00",  # Explicitly quoted to prevent YAML time parsing
         "default_ram": 16384,
         "default_vcpus": 4,

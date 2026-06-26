@@ -69,6 +69,13 @@ class SwitchConfig:  # pylint: disable=too-many-instance-attributes
     neighbors: List[str] = field(default_factory=list)
     isl_bridges: List[str] = field(default_factory=list)
 
+    # Day-0 management config. Consumed by startup_config.py (which renders the
+    # NX-OS startup-config / boot ISO); accepted here so the launcher and the
+    # config generator share one per-switch YAML schema. The launcher itself
+    # derives mgmt wiring from mgmt_bridge and does not use these directly.
+    mgmt_ip: Optional[str] = None
+    mgmt_gw: Optional[str] = None
+
     # Optional VM settings (will use globals if not specified)
     ram: Optional[int] = None
     vcpus: Optional[int] = None
@@ -401,7 +408,6 @@ class DiskManager:
         try:
             # Copy source image
             subprocess.run(["cp", str(source_image), str(dest_disk)], check=True)
-
 
             # Resize disk
             subprocess.run(["qemu-img", "resize", str(dest_disk), size], check=True)
@@ -833,4 +839,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

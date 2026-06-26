@@ -329,17 +329,7 @@ graph TD
 │                       └── README.md
 ├── config
 │   ├── ansible
-│   │   ├── dynamic_inventory.py
-│   │   ├── interface_access_mode_LE1.yaml
-│   │   ├── interface_access_mode_LE2.yaml
-│   │   ├── networks_msd.yaml
-│   │   ├── networks_site1.yaml
-│   │   ├── networks_site2.yaml
-│   │   ├── overlay_site2.yaml
-│   │   ├── site1_access_layer.yaml
-│   │   ├── vrfs_msd.yaml
-│   │   ├── vrfs_site1.yaml
-│   │   └── vrfs_site2.yaml
+│   │   └── dynamic_inventory.py
 │   ├── bridges
 │   │   ├── 9912-bridges.yaml
 │   │   ├── add_vlans_BR_S1_LE1_H1_1.sh

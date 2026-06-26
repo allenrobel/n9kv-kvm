@@ -27,7 +27,7 @@ source env/env.sh        # or: source env_prod/env.sh
 Key variables these set (do not hardcode — read from env when possible):
 
 - `ND_IP4`, `ND_USERNAME`, `ND_PASSWORD`, `ND_FABRIC_*` — Nexus Dashboard target + fabric names
-- `ANSIBLE_COLLECTIONS_PATH` points at `$HOME/repos/ansible/collections` (the Cisco `cisco.dcnm` and `cisco.nd` collections are expected to be checked out there)
+- `ANSIBLE_COLLECTIONS_PATH` points at `$HOME/repos/ansible/collections` (the Cisco `cisco.nd` collection is expected to be checked out there)
 - `LIBVIRT_DEFAULT_URI=qemu:///system` — switch to `qemu:///session` only if virt-manager was started as non-root
 
 The `dynamic_inventory.py` files under `config/ansible/` and `config/ansible_local/` build their entire inventory from these env vars, falling back to
@@ -57,7 +57,7 @@ The repo is organized by **lab subsystem**, not by language. Each subdir is larg
 |------|--------------|
 | `config/nexus9000v/` | YAML per-switch configs (S1_BG1, S1_SP1, S1_LE1, …) + `nexus9000v.py` which reads `global_config.yaml` + a per-switch YAML and invoke `virt-install` / QEMU. `con_*` and `ssh_*` are one-liner helpers that telnet/ssh to each switch's serial console or mgmt IP. |
 | `config/nd/` | Shell scripts that run `virt-install` for each ND release/node combination (e.g. `nd-42-1-4-node1.sh`). One script == one ND VM. Versions in filenames are intentional; do not consolidate. |
-| `config/ansible/` and `config/ansible_local/` | Ansible playbooks that drive ND/NDFC via `cisco.dcnm` + `cisco.nd` collections. `ansible/` targets the larger SITE3/SITE4 topology; `ansible_local/` targets SITE1/SITE2. Each has its own `dynamic_inventory.py` — pass with `-i`. These `cisco.dcnm` playbooks are historical (fabric creation now happens through Nexus Dashboard from a separate `ansible-nd` repo) and are slated for removal. |
+| `config/ansible/` and `config/ansible_local/` | Each now contains only a `dynamic_inventory.py` (env-var-driven inventory; `ansible/` covers SITE1–SITE4, `ansible_local/` covers SITE1/SITE2 + the edge router). The former `cisco.dcnm` fabric playbooks were removed — fabric/overlay config now happens through Nexus Dashboard from a separate `ansible-nd` repo. The inventories are retained for ad-hoc use and as the canonical source of per-switch IPs/interfaces. |
 | `config/containers/` | A Python package (no `__init__.py`, run via `main.py`) implementing SOLID-style orchestration for creating libvirt-LXC "host" containers (e.g. `S1_H1`, `S2_H1`) used as endpoint hosts on the leaves. See `config/containers/README.md` for the module breakdown and usage. Entry point: `sudo python3 main.py --config <yaml> <CONTAINER_NAME>`. |
 | `config/bridges/` | Shell + netplan YAML that provisions the Linux bridges (`BR_ND_DATA_12`, `BR_S1_LE1_H1_1`, etc.) connecting all the VMs. `bridges_config.sh` (re)creates them; the `*-bridges.yaml` are netplan variants. MTU 9216 is intentional (VXLAN overhead). |
 | `monitor/` | Ad hoc operator scripts (`show_bridges`, `show_nd_interfaces`, …) for inspecting the lab from the host. |
@@ -74,8 +74,8 @@ The repo is organized by **lab subsystem**, not by language. Each subdir is larg
   output in a per-switch ISO via `genisoimage`. The n9kv VM mounts that ISO as a cdrom on first boot and NX-OS POAP/auto-config consumes it. Data-plane
   interfaces are derived as `Ethernet1/1..N` for `N = len(isl_bridges)`; the admin password comes from `$NXOS_PASSWORD`. So changing bootstrap behavior
   means editing the per-switch YAML or that Jinja template, not the launch script.
-- **`config/ansible/` vs `config/ansible_local/`** are not "remote vs local" — both run on localhost. They target different fabrics (SITE3/SITE4 vs
-  SITE1/SITE2). Don't merge them.
+- **`config/ansible/` vs `config/ansible_local/`** are not "remote vs local" — both are localhost env-var-driven inventories that target different fabrics
+  (`ansible/` covers SITE1–SITE4; `ansible_local/` covers SITE1/SITE2 + the edge router). Don't merge them.
 - **ND has multiple coexisting versions** (`nd_321e.sh`, `nd_411g.sh`, `nd-42-1-*-node*.sh`, …). Each is a distinct VM definition; the lab can run several
   ND clusters simultaneously on different bridges. The numeric suffixes (`.105`, `.119`, `.4`) are the management IP last octet, not version numbers.
 - **`n9kv-kvm/` subdirectory at the repo root** is a stray Python venv (note `pyvenv.cfg`, `bin/`, `lib/`), not source. The real venv is `.venv/`. Ignore

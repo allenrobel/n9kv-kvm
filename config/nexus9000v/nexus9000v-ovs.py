@@ -33,7 +33,7 @@ class GlobalConfig:  # pylint: disable=too-many-instance-attributes
     image_path: str = "/iso1/nxos"
     cdrom_path: str = "/iso2/nxos/config"
     bios_file: str = "/usr/share/ovmf/OVMF.fd"
-    default_image: str = "nexus9300v64.10.3.8.M.qcow2"
+    default_image: str = "nexus9300v64.10.6.2.F.qcow2"
     base_mac: str = "52:54:00"
 
     # Default VM settings

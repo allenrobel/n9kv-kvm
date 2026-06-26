@@ -43,7 +43,7 @@ hardcoded defaults. Changing IPs/credentials should be done via the env scripts,
 
 ```bash
 # Lint / type-check a module
-mypy config/nexus9000v/nexus9000v.py
+mypy config/nexus9000v/startup_config.py
 flake8 config/containers/
 black --check config/
 ```
@@ -55,7 +55,7 @@ The repo is organized by **lab subsystem**, not by language. Each subdir is larg
 <!-- pyml disable-num-lines 12 line-length -->
 | Path | What it does |
 |------|--------------|
-| `config/nexus9000v/` | YAML per-switch configs (S1_BG1, S1_SP1, S1_LE1, …) + `nexus9000v.py` which reads `global_config.yaml` + a per-switch YAML and invoke `virt-install` / QEMU. `con_*` and `ssh_*` are one-liner helpers that telnet/ssh to each switch's serial console or mgmt IP. |
+| `config/nexus9000v/` | YAML per-switch configs (`S1_BG1.yaml`, `S1_SP1.yaml`, …) + `global_config.yaml`. `nexus9000v-ovs.py` / `nexus9000v-linux-bridge.py` read those YAMLs and launch each switch as a raw `qemu-system-x86_64` process. `startup_config.py` renders the per-switch NX-OS day-0 startup-config and builds its boot ISO from the same YAML (the single source of truth). `con_*` / `ssh_*` are one-liner helpers that telnet/ssh to each switch's serial console or mgmt IP. |
 | `config/nd/` | Shell scripts that run `virt-install` for each ND release/node combination (e.g. `nd-42-1-4-node1.sh`). One script == one ND VM. Versions in filenames are intentional; do not consolidate. |
 | `config/ansible/` and `config/ansible_local/` | Each now contains only a `dynamic_inventory.py` (env-var-driven inventory; `ansible/` covers SITE1–SITE4, `ansible_local/` covers SITE1/SITE2 + the edge router). The former `cisco.dcnm` fabric playbooks were removed — fabric/overlay config now happens through Nexus Dashboard from a separate `ansible-nd` repo. The inventories are retained for ad-hoc use and as the canonical source of per-switch IPs/interfaces. |
 | `config/containers/` | A Python package (no `__init__.py`, run via `main.py`) implementing SOLID-style orchestration for creating libvirt-LXC "host" containers (e.g. `S1_H1`, `S2_H1`) used as endpoint hosts on the leaves. See `config/containers/README.md` for the module breakdown and usage. Entry point: `sudo python3 main.py --config <yaml> <CONTAINER_NAME>`. |
@@ -66,12 +66,14 @@ The repo is organized by **lab subsystem**, not by language. Each subdir is larg
 
 ## Architectural Notes That Aren't Obvious From Browsing
 
-- **Switch identity is encoded in YAML `sid` + `base_mac`.** `nexus9000v.py` derives per-interface MAC addresses deterministically from `sid` (1–255) and the
+- **Switch identity is encoded in YAML `sid` + `base_mac`.** `nexus9000v-ovs.py` derives per-interface MAC addresses deterministically from `sid` (1–255) and the
   `52:54:00` OUI; bridges named in `mgmt_bridge` / `isl_bridges` must already exist on the host (see `config/bridges/`). The constraint
   `len(neighbors) == len(isl_bridges)` is enforced — these are paired lists, not independent.
-- **The startup-config flow is Python, sourced from the per-switch YAML.** `config/nexus9000v/startup_config.py` reads `global_config.yaml`
-  (`nxos_boot_image`) + a per-switch `S*.yaml` (`mgmt_ip`, `mgmt_gw`, `isl_bridges`), renders `config/nexus9000v/nxos_startup_config.j2`, and wraps the
-  output in a per-switch ISO via `genisoimage`. The n9kv VM mounts that ISO as a cdrom on first boot and NX-OS POAP/auto-config consumes it. Data-plane
+- **The startup-config flow is Python, sourced from the per-switch YAML.** The former Ansible flow (`startup_config_iso.yaml` + `nxos_startup_config.j2`)
+  and the `cisco.dcnm` fabric playbooks have been fully removed — fabric config now lives in the separate `ansible-nd` repo. `config/nexus9000v/startup_config.py`
+  reads `global_config.yaml` (`nxos_boot_image`) + a per-switch `S*.yaml` (`mgmt_ip`, `mgmt_gw`, `isl_bridges`), renders
+  `config/nexus9000v/nxos_startup_config.j2`, and wraps the output in a per-switch ISO via `genisoimage`. The n9kv VM mounts that ISO as a cdrom on first
+  boot and NX-OS POAP/auto-config consumes it. Data-plane
   interfaces are derived as `Ethernet1/1..N` for `N = len(isl_bridges)`; the admin password comes from `$NXOS_PASSWORD`. So changing bootstrap behavior
   means editing the per-switch YAML or that Jinja template, not the launch script.
 - **`config/ansible/` vs `config/ansible_local/`** are not "remote vs local" — both are localhost env-var-driven inventories that target different fabrics

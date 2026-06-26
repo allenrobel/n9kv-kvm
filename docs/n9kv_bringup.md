@@ -18,9 +18,6 @@ the boot ISO that each n9kv VM mounts as cdrom on first boot.
 
 - `config/nexus9000v/startup_config.py`
 
-The Ansible `startup_config_iso.yaml` playbook remains in the repo as a fallback
-and will be retired in a later PR.
-
 ## Jinja2 Template
 
 The Python tool renders this Jinja2 template to produce each switch's startup-config:

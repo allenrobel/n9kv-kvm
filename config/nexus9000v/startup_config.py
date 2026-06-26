@@ -56,7 +56,8 @@ def render_config(switch: dict, boot_image: str, password: str, env: Environment
         "mgmt_gw": switch["mgmt_gw"],
         "interfaces": derive_interfaces(switch),
     }
-    return env.get_template(TEMPLATE).render(**context)
+    rendered = env.get_template(TEMPLATE).render(**context)
+    return rendered.rstrip("\n") + "\n"
 
 
 def _iso_tool() -> str:

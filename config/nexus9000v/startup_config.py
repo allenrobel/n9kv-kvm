@@ -48,11 +48,14 @@ def derive_interfaces(switch: dict) -> list:
 
 def render_config(switch: dict, boot_image: str, password: str, env: Environment) -> str:
     """Render the NX-OS startup-config text for one switch."""
+    mgmt_ip = switch["mgmt_ip"]
+    if "/" not in mgmt_ip:
+        raise ValueError(f"{switch['name']}: mgmt_ip must include a prefix (e.g. /24), got {mgmt_ip!r}")
     context = {
         "hostname": switch["name"],
         "admin_password": password,
         "boot_image": boot_image,
-        "mgmt_ip": switch["mgmt_ip"],
+        "mgmt_ip": mgmt_ip,
         "mgmt_gw": switch["mgmt_gw"],
         "interfaces": derive_interfaces(switch),
     }
@@ -116,15 +119,20 @@ def main() -> int:
     else:
         parser.error("provide a switch YAML or --all")
 
+    failed = False
     for path in targets:
-        switch = load_switch(path)
-        text = render_config(switch, boot_image, password, env)
-        if args.print_only:
-            print(text)
-            continue
-        iso = build_iso(text, switch["name"], out_dir)
-        print(f"Built {iso}")
-    return 0
+        try:
+            switch = load_switch(path)
+            text = render_config(switch, boot_image, password, env)
+            if args.print_only:
+                print(text)
+                continue
+            iso = build_iso(text, switch["name"], out_dir)
+            print(f"Built {iso}")
+        except (KeyError, ValueError, OSError, subprocess.CalledProcessError) as exc:
+            print(f"{path.name}: {exc}", file=sys.stderr)
+            failed = True
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

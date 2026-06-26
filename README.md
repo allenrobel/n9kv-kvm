@@ -44,8 +44,6 @@ meets the [Hardware Requirements](#hardware-requirements) and on which
 - [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#installing-and-upgrading-ansible-with-pip)
   - 2.18.7
   - [Installation](./docs/clone_prepare_repo.md)
-- NDFC Ansible Collection
-  - [Installation](./docs/install_ansible_collection.md)
 - [QEMU](https://www.qemu.org)
   - qemu-system-x86_64 version 8.2.2
   - [Installation](#install-qemu-and-libvirt-virtualization-stack)
@@ -145,13 +143,6 @@ sudo apt install ovmf
 Follow the link below to clone this project's repository.
 
 [Clone and Prepare Repository](./docs/clone_prepare_repo.md)
-
-## Install the NDFC Ansible Collection
-
-We'll need this collection to run playbooks later.
-
-Follow the steps outlined in
-[Install NDFC Ansible Collection](./docs/install_ansible_collection.md)
 
 ## Setup Bridges
 
@@ -480,7 +471,6 @@ graph TD
 │   │       ├── 11_lan_credentials_management.png
 │   │       ├── 12_set_credentials.png
 │   │       └── 13_success.png
-│   ├── install_ansible_collection.md
 │   ├── install_libvirt_lxc_driver.md
 │   ├── n9kv_bringup.md
 │   ├── nd_add_switches.md

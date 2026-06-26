@@ -13,6 +13,7 @@ Usage (ISO build writes to global_config.yaml cdrom_path, usually needs sudo):
 """
 import argparse
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -60,7 +61,7 @@ def render_config(switch: dict, boot_image: str, password: str, env: Environment
 
 def _iso_tool() -> str:
     for tool in ("genisoimage", "mkisofs"):
-        if subprocess.run(["which", tool], capture_output=True, check=False).returncode == 0:
+        if shutil.which(tool):
             return tool
     raise FileNotFoundError("Neither genisoimage nor mkisofs found; install genisoimage")
 
@@ -76,7 +77,6 @@ def build_iso(config_text: str, hostname: str, out_dir: Path) -> Path:
         subprocess.run(
             [tool, "-o", str(iso_path), "-l", "--iso-level", "2", "-V", f"{hostname}_CONFIG", str(cfg)],
             check=True,
-            capture_output=True,
         )
     return iso_path
 
@@ -91,6 +91,9 @@ def main() -> int:
     parser.add_argument("--all", action="store_true", help="Build ISOs for every S*.yaml in this dir")
     parser.add_argument("--print", dest="print_only", action="store_true", help="Render to STDOUT; build nothing")
     args = parser.parse_args()
+
+    if args.all and args.yaml:
+        parser.error("pass either a switch YAML or --all, not both")
 
     gcfg = load_global()
     boot_image = gcfg["nxos_boot_image"]

@@ -5,6 +5,8 @@ name: S2_BG1
 role: Border Gateway
 sid: 2301
 mgmt_bridge: BR_ND_DATA_12
+mgmt_ip: 192.168.12.132/24
+mgmt_gw: 192.168.12.1
 neighbors:
   - S1_BG1
   - S2_SP1

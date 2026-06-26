@@ -5,6 +5,8 @@ name: S3_LE1
 role: Leaf Switch
 sid: 3501
 mgmt_bridge: BR_ND_DATA_14
+mgmt_ip: 192.168.14.151/24
+mgmt_gw: 192.168.14.1
 neighbors:
   - S3_SP1
   - S3_H1

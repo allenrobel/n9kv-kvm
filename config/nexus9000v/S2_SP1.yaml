@@ -5,6 +5,8 @@ name: S2_SP1
 role: Spine Switch
 sid: 2401
 mgmt_bridge: BR_ND_DATA_12
+mgmt_ip: 192.168.12.142/24
+mgmt_gw: 192.168.12.1
 neighbors:
   - S2_BG1
   - S2_LE1

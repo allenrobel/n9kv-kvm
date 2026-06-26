@@ -5,6 +5,8 @@ name: S1_TOR1
 role: Top-of-Rack Switch
 sid: 1601
 mgmt_bridge: BR_ND_DATA_12
+mgmt_ip: 192.168.12.161/24
+mgmt_gw: 192.168.12.1
 neighbors:
   - S1_LE1
   - S1_LE2

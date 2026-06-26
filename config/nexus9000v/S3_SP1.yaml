@@ -5,6 +5,8 @@ name: S3_SP1
 role: Spine Switch
 sid: 3401
 mgmt_bridge: BR_ND_DATA_14
+mgmt_ip: 192.168.14.141/24
+mgmt_gw: 192.168.14.1
 neighbors:
   - S3_BG1
   - S3_LE1

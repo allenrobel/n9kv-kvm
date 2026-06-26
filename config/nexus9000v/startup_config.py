@@ -82,7 +82,13 @@ def build_iso(config_text: str, hostname: str, out_dir: Path) -> Path:
 
 
 def _env() -> Environment:
-    return Environment(loader=FileSystemLoader(str(HERE)), undefined=StrictUndefined, keep_trailing_newline=True)
+    return Environment(
+        loader=FileSystemLoader(str(HERE)),
+        undefined=StrictUndefined,
+        keep_trailing_newline=True,
+        trim_blocks=True,
+        lstrip_blocks=True,
+    )
 
 
 def main() -> int:

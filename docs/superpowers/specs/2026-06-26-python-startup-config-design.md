@@ -121,6 +121,13 @@ form for all switches, so SITE1/SITE2 switches previously built via
 intended (ND reachability is more robust with the route) and must be confirmed
 during the parity check.
 
+**Second deliberate difference:** the playbook hardcoded only 2–3 `no shutdown`
+interfaces per switch, but some have more ISL links (`S1_LE1` and `S1_SP1` have
+3 `isl_bridges`, `S4_SP1` has 4). Deriving the data-plane interfaces from
+`isl_bridges` brings up **all** ISL interfaces, correcting that latent
+under-configuration. The parity diff will show extra `interface Ethernet1/N` /
+`no shutdown` stanzas for those switches; this is expected and correct.
+
 ### 3. Optional launcher hook (kept minimal)
 
 `nexus9000v-ovs.py` already errors if the ISO is missing. PR1 leaves the build

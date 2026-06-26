@@ -5,6 +5,8 @@ cdrom_path: /iso2/nxos/config
 default_disk_size: 32G
 # default_image: nexus9300v64.10.3.8.M.qcow2
 default_image: nexus9300v64.10.6.2.F.qcow2
+# NX-OS boot image written into each switch's startup-config (bootflash:/)
+nxos_boot_image: nxos64-cs.10.6.2.F.bin
 default_interface_type: e1000
 default_ram: 16384
 default_vcpus: 4

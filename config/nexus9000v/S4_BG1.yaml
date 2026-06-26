@@ -5,6 +5,8 @@ name: S4_BG1
 role: Border Gateway
 sid: 4301
 mgmt_bridge: BR_ND_DATA_14
+mgmt_ip: 192.168.14.132/24
+mgmt_gw: 192.168.14.1
 neighbors:
   - S3_BG1
   - S4_SP1

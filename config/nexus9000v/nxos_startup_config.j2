@@ -1,0 +1,22 @@
+!Time: Fri Jul 25 10:00:00 2025
+!Startup config saved at: Fri Jul 25 10:00:00 2025
+configure terminal
+hostname {{ hostname }}
+no password strength-check
+username admin password 0 {{ admin_password }} role network-admin
+boot nxos bootflash:/{{ boot_image }}
+
+vrf context management
+  ip route 0.0.0.0/0 {{ mgmt_gw }}
+
+interface mgmt0
+  no cdp enable
+  vrf member management
+  ip address {{ mgmt_ip }}
+  no shutdown
+
+{% for intf in interfaces %}
+interface {{ intf }}
+    no shutdown
+
+{% endfor %}

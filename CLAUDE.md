@@ -57,7 +57,7 @@ The repo is organized by **lab subsystem**, not by language. Each subdir is larg
 |------|--------------|
 | `config/nexus9000v/` | YAML per-switch configs (S1_BG1, S1_SP1, S1_LE1, …) + `nexus9000v.py` which reads `global_config.yaml` + a per-switch YAML and invoke `virt-install` / QEMU. `con_*` and `ssh_*` are one-liner helpers that telnet/ssh to each switch's serial console or mgmt IP. |
 | `config/nd/` | Shell scripts that run `virt-install` for each ND release/node combination (e.g. `nd-42-1-4-node1.sh`). One script == one ND VM. Versions in filenames are intentional; do not consolidate. |
-| `config/ansible/` and `config/ansible_local/` | Ansible playbooks that drive ND/NDFC via `cisco.dcnm` + `cisco.nd` collections. `ansible/` targets the larger SITE3/SITE4 topology; `ansible_local/` targets SITE1/SITE2. Each has its own `dynamic_inventory.py` — pass with `-i`. The `startup_config_iso.yaml` playbook + `nxos_startup_config.j2` template generate per-switch NX-OS bootstrap configs and pack them into ISOs that the n9kv VMs mount as cdrom. |
+| `config/ansible/` and `config/ansible_local/` | Ansible playbooks that drive ND/NDFC via `cisco.dcnm` + `cisco.nd` collections. `ansible/` targets the larger SITE3/SITE4 topology; `ansible_local/` targets SITE1/SITE2. Each has its own `dynamic_inventory.py` — pass with `-i`. These `cisco.dcnm` playbooks are historical (fabric creation now happens through Nexus Dashboard from a separate `ansible-nd` repo) and are slated for removal. |
 | `config/containers/` | A Python package (no `__init__.py`, run via `main.py`) implementing SOLID-style orchestration for creating libvirt-LXC "host" containers (e.g. `S1_H1`, `S2_H1`) used as endpoint hosts on the leaves. See `config/containers/README.md` for the module breakdown and usage. Entry point: `sudo python3 main.py --config <yaml> <CONTAINER_NAME>`. |
 | `config/bridges/` | Shell + netplan YAML that provisions the Linux bridges (`BR_ND_DATA_12`, `BR_S1_LE1_H1_1`, etc.) connecting all the VMs. `bridges_config.sh` (re)creates them; the `*-bridges.yaml` are netplan variants. MTU 9216 is intentional (VXLAN overhead). |
 | `monitor/` | Ad hoc operator scripts (`show_bridges`, `show_nd_interfaces`, …) for inspecting the lab from the host. |
@@ -69,9 +69,11 @@ The repo is organized by **lab subsystem**, not by language. Each subdir is larg
 - **Switch identity is encoded in YAML `sid` + `base_mac`.** `nexus9000v.py` derives per-interface MAC addresses deterministically from `sid` (1–255) and the
   `52:54:00` OUI; bridges named in `mgmt_bridge` / `isl_bridges` must already exist on the host (see `config/bridges/`). The constraint
   `len(neighbors) == len(isl_bridges)` is enforced — these are paired lists, not independent.
-- **The startup-config flow is two-stage.** Ansible (`startup_config_iso.yaml`) renders `nxos_startup_config.j2` per switch and wraps each output in an ISO.
-  The n9kv libvirt domain mounts that ISO as a cdrom on first boot, and NX-OS POAP/auto-config consumes it. So changing bootstrap behavior usually means
-  editing the Jinja template, not the launch script.
+- **The startup-config flow is Python, sourced from the per-switch YAML.** `config/nexus9000v/startup_config.py` reads `global_config.yaml`
+  (`nxos_boot_image`) + a per-switch `S*.yaml` (`mgmt_ip`, `mgmt_gw`, `isl_bridges`), renders `config/nexus9000v/nxos_startup_config.j2`, and wraps the
+  output in a per-switch ISO via `genisoimage`. The n9kv VM mounts that ISO as a cdrom on first boot and NX-OS POAP/auto-config consumes it. Data-plane
+  interfaces are derived as `Ethernet1/1..N` for `N = len(isl_bridges)`; the admin password comes from `$NXOS_PASSWORD`. So changing bootstrap behavior
+  means editing the per-switch YAML or that Jinja template, not the launch script.
 - **`config/ansible/` vs `config/ansible_local/`** are not "remote vs local" — both run on localhost. They target different fabrics (SITE3/SITE4 vs
   SITE1/SITE2). Don't merge them.
 - **ND has multiple coexisting versions** (`nd_321e.sh`, `nd_411g.sh`, `nd-42-1-*-node*.sh`, …). Each is a distinct VM definition; the lab can run several

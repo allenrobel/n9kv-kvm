@@ -284,14 +284,14 @@ output = {
         "hosts": [ND_IP4],
         "vars": {
             "ansible_connection": "ansible.netcommon.httpapi",
-            "ansible_network_os": "cisco.dcnm.dcnm",
+            "ansible_network_os": "cisco.nd.nd",
         },
     },
     "nd2": {
         "hosts": [ND_IP4_2],
         "vars": {
             "ansible_connection": "ansible.netcommon.httpapi",
-            "ansible_network_os": "cisco.dcnm.dcnm",
+            "ansible_network_os": "cisco.nd.nd",
         },
     },
     "nxos": {

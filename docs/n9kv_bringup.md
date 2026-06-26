@@ -54,7 +54,12 @@ later if it's found these can be removed.)
 !Startup config saved at: Fri Jul 25 10:00:00 2025
 configure terminal
 hostname S1_BG1
-boot nxos bootflash:/nxos64-cs.10.5.3.F.bin
+no password strength-check
+username admin password 0 <your-password> role network-admin
+boot nxos bootflash:/nxos64-cs.10.6.2.F.bin
+
+vrf context management
+  ip route 0.0.0.0/0 192.168.12.1
 
 interface mgmt0
   no cdp enable
@@ -72,7 +77,8 @@ interface Ethernet1/2
 Several items above are derived from variables in two places:
 
 - `S1_BG1` : `config/nexus9000v/S1_BG1.yaml` (`name`)
-- `nxos64-cs.10.5.3.F.bin` : `config/nexus9000v/global_config.yaml` (`nxos_boot_image`)
+- `nxos64-cs.10.6.2.F.bin` : `config/nexus9000v/global_config.yaml` (`nxos_boot_image`)
+- `192.168.12.1` : `config/nexus9000v/S1_BG1.yaml` (`mgmt_gw` — management default-route next hop)
 - `192.168.12.131/24` : `config/nexus9000v/S1_BG1.yaml` (`mgmt_ip`)
 - `Ethernet1/1`, `Ethernet1/2` : derived automatically from `isl_bridges` in the per-switch YAML
 
@@ -141,15 +147,17 @@ cd $HOME/repos/n9kv-kvm/config/nexus9000v
 sudo NXOS_PASSWORD="$NXOS_PASSWORD" python3 startup_config.py --all
 ```
 
-To build a single switch ISO:
+To build a single switch ISO (from the same directory):
 
 ```bash
+cd $HOME/repos/n9kv-kvm/config/nexus9000v
 sudo NXOS_PASSWORD="$NXOS_PASSWORD" python3 startup_config.py S1_BG1.yaml
 ```
 
 To view a rendered config without writing any files (useful for verification):
 
 ```bash
+cd $HOME/repos/n9kv-kvm/config/nexus9000v
 python3 startup_config.py --print S1_BG1.yaml
 ```
 

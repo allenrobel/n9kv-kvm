@@ -3,7 +3,7 @@
 # Kill all running nexus9000v VMs.
 #
 # NOTE: these VMs are launched as raw qemu-system-x86_64 processes (see
-# nexus9000v-ovs.py / nexus9000v-linux-bridge.py), NOT as libvirt domains,
+# nexus9000v.py), NOT as libvirt domains,
 # so "virsh destroy" does not apply -- they don't appear in "virsh list".
 # We therefore match the QEMU processes the same way list_n9kv.sh does and
 # kill them by PID.

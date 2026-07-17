@@ -592,23 +592,36 @@ class RouterVMManager:
             raise RuntimeError(f"Failed to start VM: {e}") from e
 
 
-def create_sample_configs():
-    """Create sample configuration files in the current directory."""
+def _write_sample(path: Path, data: dict, force: bool) -> None:
+    """Write one sample YAML to path, skipping it if it already exists unless force."""
+    if path.exists() and not force:
+        print(f"Skipping existing {path} (use --force to overwrite)")
+        return
+    with open(path, "w", encoding="utf-8") as f:
+        yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
+    print(f"Created {path}")
+
+
+def create_sample_configs(force: bool = False):
+    """Create sample configuration files under ./samples/ (never the working dir).
+
+    Existing files are skipped unless force is True. Writing into a samples/
+    subdirectory keeps a stray run from clobbering the real per-router YAMLs.
+    """
+    out_dir = Path("samples")
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     global_config = {
         "image_path": "/iso1/iosxe",
         "cdrom_path": "/iso2/iosxe/config",
         "bios_file": "/usr/share/ovmf/OVMF.fd",
         "default_image": "c8000v-universalk9_16G_serial_efi.17.15.05.qcow2",
-        "base_mac": "52:54:00",  # Explicitly quoted to prevent YAML time parsing
+        "base_mac": "52:54:00",  # yaml.dump quotes this so it round-trips as a string
         "default_ram": 8192,
         "default_vcpus": 4,
         "default_interface_type": "virtio-net-pci",
     }
-
-    with open("global_config.yaml", "w", encoding="utf-8") as f:
-        yaml.dump(global_config, f, default_flow_style=False, allow_unicode=True)
-    print("Created global_config.yaml")
+    _write_sample(out_dir / "global_config.yaml", global_config, force)
 
     routers = [
         {
@@ -624,10 +637,7 @@ def create_sample_configs():
     ]
 
     for router in routers:
-        filename = f"{router['name']}.yaml"
-        with open(filename, "w", encoding="utf-8") as f:
-            yaml.dump(router, f, default_flow_style=False, allow_unicode=True)
-        print(f"Created {filename}")
+        _write_sample(out_dir / f"{router['name']}.yaml", router, force)
 
 
 def main():
@@ -640,13 +650,14 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Show command without executing")
     parser.add_argument("--teardown", action="store_true", help="Remove the router's TAP interfaces and exit")
     parser.add_argument("--create-samples", action="store_true", help="Create sample config files")
+    parser.add_argument("--force", action="store_true", help="Overwrite existing sample files (used with --create-samples)")
     parser.add_argument("--list-routers", action="store_true", help="List all router config files in current directory")
     parser.add_argument("--debug", action="store_true", help="Enable debug output and show QEMU command/output")
 
     args = parser.parse_args()
 
     if args.create_samples:
-        create_sample_configs()
+        create_sample_configs(force=args.force)
         return
 
     if args.list_routers:

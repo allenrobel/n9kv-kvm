@@ -42,7 +42,8 @@ sudo python3 8000v.py --config WAN1.yaml
 python3 8000v.py --config WAN1.yaml --dry-run   # inspect the QEMU command
 python3 8000v.py --config WAN1.yaml --debug     # launch with QEMU output + status checks
 python3 8000v.py --list-routers                 # list router YAMLs
-python3 8000v.py --create-samples               # write sample global_config.yaml + WAN1.yaml
+python3 8000v.py --create-samples               # write samples to ./samples/ (skip existing)
+python3 8000v.py --create-samples --force        # overwrite existing samples
 sudo python3 8000v.py --config WAN1.yaml --teardown  # remove TAPs after stopping the VM
 python3 startup_config.py --print WAN1.yaml     # render day-0 config to STDOUT
 sudo -E python3 startup_config.py --all         # build day-0 ISOs for every router YAML

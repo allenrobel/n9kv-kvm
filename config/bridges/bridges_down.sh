@@ -14,6 +14,8 @@ BRIDGES=(
     BR_S1_LE1_T1_1
     BR_S1_LE2_T1_1
     BR_S2_LE1_H1_1
+    BR_ISN_WAN_S1_1
+    BR_ISN_WAN_S2_1
 )
 
 # Detach any tap/vnet interfaces still bound to these bridges, then bring the

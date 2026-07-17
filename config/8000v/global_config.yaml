@@ -1,0 +1,10 @@
+# global_config.yaml - Global settings for all Catalyst 8000V routers
+base_mac: "52:54:00"  # quoted to prevent YAML time parsing
+bios_file: /usr/share/ovmf/OVMF.fd
+cdrom_path: /iso2/iosxe/config
+# Serial + EFI image variant: console on serial port, boots via OVMF
+default_image: c8000v-universalk9_16G_serial_efi.17.15.05.qcow2
+default_interface_type: virtio-net-pci
+default_ram: 8192
+default_vcpus: 4
+image_path: /iso1/iosxe

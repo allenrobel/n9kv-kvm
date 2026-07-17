@@ -11,7 +11,6 @@ A Python-based system for creating and managing libvirt LXC containers with VLAN
 ├── interfaces.py          # Protocols and abstract base classes
 ├── executor.py            # Command execution implementation
 ├── filesystem.py          # File system operations
-├── bridge.py              # Bridge VLAN management
 ├── rootfs.py              # Container rootfs creation
 ├── packages.py            # Package installation
 ├── config_generators.py   # Configuration file generators
@@ -29,8 +28,8 @@ A Python-based system for creating and managing libvirt LXC containers with VLAN
 ### 🌐 **Network Configuration**
 
 - **Dual-homed containers**: Management + test interfaces
-- **VLAN support**: Optional 802.1Q tagging with bridge filtering
-- **Automatic bridge configuration**: VLAN filtering enabled/disabled based on container configuration
+- **VLAN support**: Optional 802.1Q tagging done inside the container (`eth1.<id>` subinterfaces)
+- **OVS attachment**: Container NICs attach to OVS bridges via libvirt virtualport; tagged frames pass trunk-all with no host-side VLAN config
 - **Per-VLAN IP addressing**: Clean separation of traffic
 
 ### 🔧 **Container Capabilities**
@@ -132,14 +131,16 @@ network-test iperf-server              # Start server on S1_H1
 network-test iperf-client 192.0.1.161  # Connect to S2_H1 from S1_H1
 ```
 
-### Bridge VLAN Verification
+### Bridge Attachment Verification
 
 ```bash
-# Check bridge VLAN configuration
-# NOTE: bridge may or may not be configured for VLAN based on container configurations
-bridge vlan show dev BR_S1_LE1_H1_1
+# VLANs are tagged inside the container and passed trunk-all by OVS, so there
+# is no host-side VLAN config to check. Confirm the container's vnet attached
+# to the OVS test bridge:
+sudo ovs-vsctl list-ports BR_S1_LE1_H1_1
 
-# Should show VLANs 2 and 3 configured
+# Check the container's own VLAN subinterfaces from inside the container:
+# ip -d link show eth1.2
 ```
 
 ## Extension Guide
@@ -221,22 +222,27 @@ sudo usermod -aG libvirt $USER
 
 #### 2. Bridge Not Found
 
+The container bridges are OVS bridges, created by `config/bridges/bridges_config_ovs.sh`.
+Verify they exist and (re)create them there — do not create them as Linux bridges:
+
 ```bash
-# Create required bridges manually if they don't exist
-sudo ip link add name BR_ND_DATA_12 type bridge
-sudo ip link add name BR_S1_LE1_H1_1 type bridge
-sudo ip link set BR_ND_DATA_12 up
-sudo ip link set BR_S1_LE1_H1_1 up
+# List OVS bridges
+sudo ovs-vsctl list-br
+
+# (Re)create the SITE1/SITE2 set if any are missing
+sudo config/bridges/bridges_config_ovs.sh
 ```
 
-#### 3. VLAN Filtering Issues
+#### 3. Container Port Not on the Bridge
+
+VLANs are tagged inside the container and passed trunk-all by OVS, so there is no
+host-side VLAN configuration to check. Confirm libvirt attached the container's
+vnet to the OVS bridge:
 
 ```bash
-# Check if VLAN filtering is enabled
-bridge vlan show
-
-# Manually enable if needed
-sudo ip link set BR_S1_LE1_H1_1 type bridge vlan_filtering 1
+# The container's vnet should appear under its bridge
+sudo ovs-vsctl show
+sudo ovs-vsctl list-ports BR_S1_LE1_H1_1
 ```
 
 #### 4. Container Won't Start
@@ -251,7 +257,7 @@ sudo virsh -c lxc:/// dumpxml S1_H1
 
 #### 5. Network Connectivity Issues
 
-- Verify bridge configuration: `brctl show`
+- Verify bridge configuration: `sudo ovs-vsctl show`
 - Check VLAN interfaces inside container: `ip addr show`
 - Verify routing table: `ip route show`
 

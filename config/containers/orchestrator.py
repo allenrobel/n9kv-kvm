@@ -7,7 +7,6 @@ import logging
 from pathlib import Path
 from typing import List
 
-from bridge import BridgeVLANManager
 from filesystem import FileSystemManager
 from interfaces import CommandExecutor, ConfigurationGenerator
 from libvirt_manager import LibvirtDomainManager, LibvirtXMLGenerator
@@ -25,7 +24,6 @@ class ContainerOrchestrator:
         self,
         executor: CommandExecutor,
         fs_manager: FileSystemManager,
-        bridge_manager: BridgeVLANManager,
         rootfs_builder: RootfsBuilder,
         package_installer: PackageInstaller,
         config_generators: List[ConfigurationGenerator],
@@ -34,7 +32,6 @@ class ContainerOrchestrator:
     ) -> None:
         self.executor: CommandExecutor = executor
         self.fs_manager: FileSystemManager = fs_manager
-        self.bridge_manager: BridgeVLANManager = bridge_manager
         self.rootfs_builder: RootfsBuilder = rootfs_builder
         self.package_installer: PackageInstaller = package_installer
         self.config_generators: List[ConfigurationGenerator] = config_generators
@@ -46,9 +43,6 @@ class ContainerOrchestrator:
         logger.info(f"Creating container: {spec.name}")
 
         try:
-            # Setup bridge VLANs
-            self._setup_bridge_vlans(spec)
-
             # Create filesystem structure
             self.fs_manager.create_container_directories(spec.name)
 
@@ -70,11 +64,6 @@ class ContainerOrchestrator:
         except Exception as e:
             logger.error(f"Failed to create container {spec.name}: {e}")
             raise
-
-    def _setup_bridge_vlans(self, spec: ContainerSpec) -> None:
-        """Setup bridge VLAN configuration"""
-        vlan_ids: List[int] = [vlan.vlan_id for vlan in spec.vlans]
-        self.bridge_manager.configure_bridge_vlans(spec.test_interface.bridge, vlan_ids)
 
     def _generate_configurations(self, spec: ContainerSpec) -> None:
         """Generate all configuration files"""
@@ -107,14 +96,13 @@ class ContainerOrchestrator:
                 test = spec.test_interface
                 print(f"  {test.name}.{vlan.vlan_id}: {vlan.ip_address}/{vlan.netmask} -> {test.bridge} (VLAN {vlan.vlan_id})")
 
-            print(f"\nBridge VLAN Configuration:")
             vlan_ids = [v.vlan_id for v in spec.vlans]
-            print(f"  Bridge {spec.test_interface.bridge} configured with VLANs: {vlan_ids}")
+            print("\nVLAN Handling:")
+            print(f"  VLANs {vlan_ids} are tagged inside the container and passed")
+            print(f"  trunk-all by OVS bridge {spec.test_interface.bridge} (no host-side config).")
         else:
             test = spec.test_interface
             print(f"  {test.name}: {test.ip_address}/{test.netmask} -> {test.bridge} (Direct)")
-            print(f"\nBridge Configuration:")
-            print(f"  Bridge {test.bridge} configured without VLANs")
 
         print(f"\nContainer Management:")
         print(f"  Start:   sudo virsh -c lxc:/// start {spec.name}")

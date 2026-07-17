@@ -48,11 +48,13 @@ class LibvirtXMLGenerator:
     </filesystem>
     <interface type='bridge'>
       <source bridge='{{ spec.management_interface.bridge }}'/>
+      <virtualport type='openvswitch'/>
       <model type='virtio'/>
       <mac address='{{ spec.management_interface.mac_address }}'/>
     </interface>
     <interface type='bridge'>
       <source bridge='{{ spec.test_interface.bridge }}'/>
+      <virtualport type='openvswitch'/>
       <model type='virtio'/>
       <mac address='{{ spec.test_interface.mac_address }}'/>
     </interface>

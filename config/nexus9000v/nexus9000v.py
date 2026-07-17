@@ -679,94 +679,99 @@ class SwitchVMManager:  # pylint: disable=too-few-public-methods
             raise RuntimeError(f"Failed to start VM: {e}") from e
 
 
-def create_sample_configs():
-    """Create sample configuration files."""
+def _write_sample(path: Path, data: dict, force: bool) -> None:
+    """Write one sample YAML to path, skipping it if it already exists unless force."""
+    if path.exists() and not force:
+        print(f"Skipping existing {path} (use --force to overwrite)")
+        return
+    with open(path, "w", encoding="utf-8") as f:
+        yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
+    print(f"Created {path}")
 
-    # Global configuration
+
+def create_sample_configs(force: bool = False):
+    """Create sample configuration files under ./samples/ (never the working dir).
+
+    Existing files are skipped unless force is True. Writing into a samples/
+    subdirectory keeps a stray run from clobbering the real per-switch YAMLs.
+    """
+    out_dir = Path("samples")
+    out_dir.mkdir(parents=True, exist_ok=True)
+
     global_config = {
         "image_path": "/iso1/nxos",
         "cdrom_path": "/iso2/nxos/config",
         "bios_file": "/usr/share/ovmf/OVMF.fd",
         "default_image": "nexus9300v64.10.6.2.F.qcow2",
-        "base_mac": "52:54:00",  # Explicitly quoted to prevent YAML time parsing
+        "nxos_boot_image": "nxos64-cs.10.6.2.F.bin",
+        "base_mac": "52:54:00",  # yaml.dump quotes this so it round-trips as a string
         "default_ram": 16384,
         "default_vcpus": 4,
         "default_disk_size": "32G",
         "default_interface_type": "e1000",
-        "default_external_storage_size": "20G",  # Add this
-        "external_storage_enabled": True,  # Add this
+        "default_external_storage_size": "20G",
+        "external_storage_enabled": True,
     }
+    _write_sample(out_dir / "global_config.yaml", global_config, force)
 
-    with open("global_config.yaml", "w", encoding="utf-8") as f:
-        # Use default_flow_style=False and allow_unicode=True for better formatting
-        yaml.dump(global_config, f, default_flow_style=False, allow_unicode=True)
-    print("Created global_config.yaml")
-
-    # Switch configurations
+    # A self-contained single-site topology: Border Gateway -> Spine ->
+    # vPC leaf pair (S1_LE1 + S1_LE2, peer-linked) -> dual-homed TOR. Every
+    # isl_bridge is a point-to-point link within this set.
     switches = [
         {
             "name": "S1_BG1",
             "role": "Border Gateway",
             "sid": 1301,
             "mgmt_bridge": "BR_ND_DATA_12",
-            "neighbors": ["S2_BG1", "S1_SP1"],
-            "isl_bridges": ["BR_ISN_S1_S2_1", "BR_S1_BG1_SP1_1"],
-        },
-        {
-            "name": "S2_BG1",
-            "role": "Border Gateway",
-            "sid": 2301,
-            "mgmt_bridge": "BR_ND_DATA_12",
-            "neighbors": ["S1_BG1", "S2_SP1"],
-            "isl_bridges": ["BR_ISN_S1_S2_1", "BR_S2_BG1_SP1_1"],
+            "mgmt_ip": "192.168.12.131/24",
+            "mgmt_gw": "192.168.12.1",
+            "neighbors": ["S1_SP1"],
+            "isl_bridges": ["BR_S1_BG1_SP1_1"],
         },
         {
             "name": "S1_SP1",
             "role": "Spine Switch",
             "sid": 1401,
             "mgmt_bridge": "BR_ND_DATA_12",
-            "neighbors": ["S1_BG1", "S1_LE1"],
-            "isl_bridges": ["BR_S1_BG1_SP1_1", "BR_S1_SP1_LE1_1"],
-        },
-        {
-            "name": "S2_SP1",
-            "role": "Spine Switch",
-            "sid": 2401,
-            "mgmt_bridge": "BR_ND_DATA_12",
-            "neighbors": ["S2_BG1", "S2_LE1"],
-            "isl_bridges": ["BR_S2_BG1_SP1_1", "BR_S2_SP1_LE1_1"],
+            "mgmt_ip": "192.168.12.141/24",
+            "mgmt_gw": "192.168.12.1",
+            "neighbors": ["S1_BG1", "S1_LE1", "S1_LE2"],
+            "isl_bridges": ["BR_S1_BG1_SP1_1", "BR_S1_SP1_LE1_1", "BR_S1_SP1_LE2_1"],
         },
         {
             "name": "S1_LE1",
             "role": "Leaf Switch",
             "sid": 1501,
             "mgmt_bridge": "BR_ND_DATA_12",
-            "neighbors": ["S1_SP1"],
-            "isl_bridges": ["BR_S1_SP1_LE1_1"],
-            # Example of switch-specific overrides
-            "ram": 8192,
-            "vcpus": 2,
-            "external_storage_size": "25G",
-            "enable_external_storage": True
+            "mgmt_ip": "192.168.12.151/24",
+            "mgmt_gw": "192.168.12.1",
+            "neighbors": ["S1_SP1", "S1_LE2", "S1_TOR1"],
+            "isl_bridges": ["BR_S1_SP1_LE1_1", "BR_S1_LE1_LE2_1", "BR_S1_LE1_T1_1"],
         },
         {
-            "name": "S2_LE1",
+            "name": "S1_LE2",
             "role": "Leaf Switch",
-            "sid": 2501,
+            "sid": 1502,
             "mgmt_bridge": "BR_ND_DATA_12",
-            "neighbors": ["S2_SP1"],
-            "isl_bridges": ["BR_S2_SP1_LE1_1"],
-            # Example of switch-specific overrides
-            "ram": 8192,
-            "vcpus": 2,
+            "mgmt_ip": "192.168.12.152/24",
+            "mgmt_gw": "192.168.12.1",
+            "neighbors": ["S1_SP1", "S1_LE1", "S1_TOR1"],
+            "isl_bridges": ["BR_S1_SP1_LE2_1", "BR_S1_LE1_LE2_1", "BR_S1_LE2_T1_1"],
+        },
+        {
+            "name": "S1_TOR1",
+            "role": "Top-of-Rack Switch",
+            "sid": 1601,
+            "mgmt_bridge": "BR_ND_DATA_12",
+            "mgmt_ip": "192.168.12.161/24",
+            "mgmt_gw": "192.168.12.1",
+            "neighbors": ["S1_LE1", "S1_LE2"],
+            "isl_bridges": ["BR_S1_LE1_T1_1", "BR_S1_LE2_T1_1"],
         },
     ]
 
     for switch in switches:
-        filename = f"{switch['name']}.yaml"
-        with open(filename, "w", encoding="utf-8") as f:
-            yaml.dump(switch, f, default_flow_style=False, allow_unicode=True)
-        print(f"Created {filename}")
+        _write_sample(out_dir / f"{switch['name']}.yaml", switch, force)
 
 
 def main():
@@ -779,13 +784,14 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Show command without executing")
     parser.add_argument("--teardown", action="store_true", help="Remove the switch's TAP interfaces and exit")
     parser.add_argument("--create-samples", action="store_true", help="Create sample config files")
+    parser.add_argument("--force", action="store_true", help="Overwrite existing sample files (used with --create-samples)")
     parser.add_argument("--list-switches", action="store_true", help="List all switch config files in current directory")
     parser.add_argument("--debug", action="store_true", help="Enable debug output and show QEMU command/output")
 
     args = parser.parse_args()
 
     if args.create_samples:
-        create_sample_configs()
+        create_sample_configs(force=args.force)
         return
 
     if args.list_switches:

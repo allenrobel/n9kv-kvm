@@ -15,10 +15,16 @@ Switch-specific settings override global defaults
 
 ## CLI Interface
 
-### Display sample configs
+### Create sample configs
+
+Writes a sample `global_config.yaml` and a small example topology (a
+single-site Border Gateway → Spine → vPC leaf pair → TOR) into a `samples/`
+subdirectory — never the working directory. Existing files are skipped unless
+`--force` is given.
 
 ```bash
-python3 nexus9000v.py --create-samples
+python3 nexus9000v.py --create-samples          # write to ./samples/, skip existing
+python3 nexus9000v.py --create-samples --force  # overwrite existing samples
 ```
 
 ### List available switch configs

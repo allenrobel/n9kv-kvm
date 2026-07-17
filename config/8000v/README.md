@@ -40,15 +40,22 @@ sudo python3 8000v.py --config WAN1.yaml
 
 ```bash
 python3 8000v.py --config WAN1.yaml --dry-run   # inspect the QEMU command
+python3 8000v.py --config WAN1.yaml --debug     # launch with QEMU output + status checks
 python3 8000v.py --list-routers                 # list router YAMLs
+python3 8000v.py --create-samples               # write sample global_config.yaml + WAN1.yaml
 sudo python3 8000v.py --config WAN1.yaml --teardown  # remove TAPs after stopping the VM
 python3 startup_config.py --print WAN1.yaml     # render day-0 config to STDOUT
+sudo -E python3 startup_config.py --all         # build day-0 ISOs for every router YAML
 ```
+
+`8000v.py` also accepts `--global-config <file>` to override the default
+`global_config.yaml`.
 
 ## Day-0 behavior
 
-`startup_config.py` renders `iosxe_config.txt` from the per-router YAML and
-wraps it in `<cdrom_path>/<name>.iso`; the C8000V consumes it from the cdrom
+`startup_config.py` renders the `iosxe_startup_config.j2` template into an
+`iosxe_config.txt` file and wraps it in `<cdrom_path>/<name>.iso`; the C8000V
+consumes it from the cdrom
 on first boot. The rendered config puts `GigabitEthernet1` in vrf `MGMT` with
 a vrf default route (the global table stays clean for WAN/ISN routing),
 creates the `admin` user, enables SSH, and installs a one-shot EEM applet

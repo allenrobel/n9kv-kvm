@@ -10,6 +10,8 @@ mgmt_gw: 192.168.12.1
 neighbors:
   - S1_BG1
   - S2_SP1
+  - WAN1
 isl_bridges:
   - BR_ISN_S1_S2_1
   - BR_S2_BG1_SP1_1
+  - BR_ISN_WAN_S2_1

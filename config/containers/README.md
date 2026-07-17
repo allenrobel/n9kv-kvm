@@ -131,14 +131,16 @@ network-test iperf-server              # Start server on S1_H1
 network-test iperf-client 192.0.1.161  # Connect to S2_H1 from S1_H1
 ```
 
-### Bridge VLAN Verification
+### Bridge Attachment Verification
 
 ```bash
-# Check bridge VLAN configuration
-# NOTE: bridge may or may not be configured for VLAN based on container configurations
-bridge vlan show dev BR_S1_LE1_H1_1
+# VLANs are tagged inside the container and passed trunk-all by OVS, so there
+# is no host-side VLAN config to check. Confirm the container's vnet attached
+# to the OVS test bridge:
+sudo ovs-vsctl list-ports BR_S1_LE1_H1_1
 
-# Should show VLANs 2 and 3 configured
+# Check the container's own VLAN subinterfaces from inside the container:
+# ip -d link show eth1.2
 ```
 
 ## Extension Guide
@@ -255,7 +257,7 @@ sudo virsh -c lxc:/// dumpxml S1_H1
 
 #### 5. Network Connectivity Issues
 
-- Verify bridge configuration: `brctl show`
+- Verify bridge configuration: `sudo ovs-vsctl show`
 - Check VLAN interfaces inside container: `ip addr show`
 - Verify routing table: `ip route show`
 

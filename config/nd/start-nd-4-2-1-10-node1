@@ -1,0 +1,1 @@
+virsh -c qemu:///system start nd.4.2.1.10.node1

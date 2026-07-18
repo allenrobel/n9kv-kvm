@@ -7,4 +7,4 @@ default_image: c8000v-universalk9_16G_serial_efi.17.15.05.qcow2
 default_interface_type: virtio-net-pci
 default_ram: 8192
 default_vcpus: 4
-image_path: /iso1/iosxe
+image_path: /iso1/iosxe/qcow2

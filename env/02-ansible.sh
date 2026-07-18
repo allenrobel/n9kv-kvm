@@ -13,4 +13,6 @@ export ND_FABRIC_SITE1=SITE1
 export ND_FABRIC_SITE2=SITE2
 export ND_IP4=192.168.7.7
 export ND_PASSWORD=SecretPassword
+export NXOS_PASSWORD=SecretPassword
+export IOSXE_PASSWORD=SecretPassword
 export ND_USERNAME=admin

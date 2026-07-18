@@ -16,8 +16,8 @@ straight into each switch's NX-OS CLI over the console or SSH.
 - Each switch's admin password has been set (the bootstrap config
   intentionally omits the password — set it on first console login).
 - The four SITE1 data bridges exist on the lab host and are MTU 9216
-  (created by `config/bridges/bridges_config.sh` and applied via
-  `config/bridges/9912-bridges.yaml`):
+  (created by netplan from `config/bridges/netplan/9912-bridges.yaml` and
+  configured by `config/bridges/bridges_config_ovs.sh`):
   - `BR_S1_LE1_LE2_1` (peer-link)
   - `BR_S1_LE1_T1_1`  (S1_LE1 → S1_TOR1)
   - `BR_S1_LE2_T1_1`  (S1_LE2 → S1_TOR1)
@@ -62,7 +62,7 @@ straight into each switch's NX-OS CLI over the console or SSH.
   ordinary LACP partner — TOR1 doesn't know VPC exists.
 - **LACP** mode `active` on both sides of every channel.
 - **Trunk VLANs**: `2-3` on the peer-link and TOR-facing channel.
-  Matches `config/bridges/add_vlans_BR_S1_LE1_H1_1.sh`. Easy to widen.
+  These VLANs carry the host container's test traffic. Easy to widen.
 - **VPC best practices**: `peer-switch`, `peer-gateway`, `delay restore
   150`, `auto-recovery`, `ip arp synchronize`, `ipv6 nd synchronize`,
   and `spanning-tree port type network` on the peer-link.
@@ -89,7 +89,7 @@ feature lacp
 feature vpc
 feature lldp
 
-! VLANs for test traffic (matches add_vlans_BR_S1_LE1_H1_1.sh)
+! VLANs for test traffic (tagged by the host container)
 vlan 2-3
 
 ! VPC domain

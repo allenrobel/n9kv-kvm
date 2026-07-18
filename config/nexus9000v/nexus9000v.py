@@ -380,7 +380,7 @@ class OVSPortManager:
         if not cls.bridge_exists(iface.bridge):
             raise RuntimeError(
                 f"OVS bridge '{iface.bridge}' not found. "
-                f"Create it first via netplan / bridges_config.sh."
+                f"Create it first via netplan / bridges_config_ovs.sh."
             )
         cls.teardown_port(iface)  # clear stale state from a prior run
         cls._run(["ip", "tuntap", "add", "dev", iface.tap, "mode", "tap"])

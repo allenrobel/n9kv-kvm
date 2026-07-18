@@ -59,7 +59,7 @@ The repo is organized by **lab subsystem**, not by language. Each subdir is larg
 | `config/nd/` | Shell scripts that run `virt-install` for each ND release/node combination (e.g. `nd-42-1-4-node1.sh`). One script == one ND VM. Versions in filenames are intentional; do not consolidate. |
 | `config/ansible/` and `config/ansible_local/` | Each now contains only a `dynamic_inventory.py` (env-var-driven inventory; `ansible/` covers SITE1–SITE4, `ansible_local/` covers SITE1/SITE2 + the edge router). The former `cisco.dcnm` fabric playbooks were removed — fabric/overlay config now happens through Nexus Dashboard from a separate `ansible-nd` repo. The inventories are retained for ad-hoc use and as the canonical source of per-switch IPs/interfaces. |
 | `config/containers/` | A Python package (no `__init__.py`, run via `main.py`) implementing SOLID-style orchestration for creating libvirt-LXC "host" containers (e.g. `S1_H1`, `S2_H1`) used as endpoint hosts on the leaves. See `config/containers/README.md` for the module breakdown and usage. Entry point: `sudo python3 main.py --config <yaml> <CONTAINER_NAME>`. |
-| `config/bridges/` | Shell + netplan YAML that provisions the Linux bridges (`BR_ND_DATA_12`, `BR_S1_LE1_H1_1`, etc.) connecting all the VMs. `bridges_config.sh` (re)creates them; the `*-bridges.yaml` are netplan variants. MTU 9216 is intentional (VXLAN overhead). |
+| `config/bridges/` | Shell + netplan YAML that provisions the Linux bridges (`BR_ND_DATA_12`, `BR_S1_LE1_H1_1`, etc.) connecting all the VMs. `bridges_config_ovs.sh` (re)creates them; the `*-bridges.yaml` are netplan variants. MTU 9216 is intentional (VXLAN overhead). |
 | `monitor/` | Ad hoc operator scripts (`show_bridges`, `show_nd_interfaces`, …) for inspecting the lab from the host. |
 | `cockpit/` | Two optional Cockpit extensions (bridge monitor, n9kv monitor) installed onto the lab host. Each has its own README. |
 | `docs/` | The authoritative step-by-step bringup guide; `README.md` is essentially an index into `docs/`. |
@@ -94,5 +94,5 @@ The repo is organized by **lab subsystem**, not by language. Each subdir is larg
   link-index suffix `_<n>` is always present. Same-tier peer bridges sort endpoints alphabetically/numerically. Cross-site (ISN) bridges use
   `BR_ISN_S<a>_S<b>_<n>` (the per-side BG identifier is omitted; each site is assumed to have one BG today). Shared management bridges (`BR_ND_DATA_12`,
   `BR_ND_DATA_14`, `BR_ND_MGMT`) are not site-prefixed.
-- Shell scripts assume `sudo` where needed; don't `sudo` inside the script unless it's already the pattern there (`bridges_config.sh` expects to be invoked
+- Shell scripts assume `sudo` where needed; don't `sudo` inside the script unless it's already the pattern there (`bridges_config_ovs.sh` expects to be invoked
   with sudo; the `config/nd/*.sh` scripts invoke `sudo virt-install` internally).

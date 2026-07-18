@@ -3,7 +3,7 @@
 #
 # Copy to /etc/netplan/9912-bridges.yaml on the target system.
 #
-# sudo cp $HOME/repos/n9kv-kvm/config/bridges/9912-bridges.yaml /etc/netplan/9912-bridges.yaml
+# sudo cp $HOME/repos/n9kv-kvm/config/bridges/netplan/9912-bridges.yaml /etc/netplan/9912-bridges.yaml
 # sudo chmod 600 /etc/netplan/9912-bridges.yaml
 # sudo netplan try
 # sudo netplan apply

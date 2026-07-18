@@ -322,15 +322,14 @@ graph TD
 │   ├── ansible
 │   │   └── dynamic_inventory.py
 │   ├── bridges
-│   │   ├── 9912-bridges.yaml
-│   │   ├── add_vlans_BR_S1_LE1_H1_1.sh
-│   │   ├── add_vlans_BR_S2_LE1_H1_1.sh
-│   │   ├── bridge.conf
-│   │   ├── bridges_config.sh
-│   │   ├── bridges_down.sh
-│   │   ├── bridges_monitor.sh
-│   │   ├── vlans_del_BR_S1_LE1_H1_1.sh
-│   │   └── vlans_del_BR_S2_LE1_H1_1.sh
+│   │   ├── bridges_config_ovs.sh
+│   │   ├── bridges_down.sh
+│   │   ├── bridges_monitor.sh
+│   │   └── netplan
+│   │       ├── 50-cloud-init.yaml
+│   │       ├── 9912-bridges.yaml
+│   │       ├── 9914-bridges.yaml
+│   │       └── 9915-bridges.yaml
 │   ├── containers
 │   │   ├── __pycache__
 │   │   │   ├── bridge.cpython-313.pyc

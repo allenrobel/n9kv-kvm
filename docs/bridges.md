@@ -1,75 +1,43 @@
 # Setup Bridges
 
-## Configure qemu to allow the bridges used in this project
+The lab's data-plane bridges are Open vSwitch (OVS) bridges. The VM launchers
+(`config/nexus9000v/nexus9000v.py` and `config/8000v/8000v.py`) attach each
+VM's TAP interfaces to these bridges with `ovs-vsctl`, so the bridges must be
+OVS bridges, not Linux bridges.
 
-You may have to create the `/etc/qemu` directory first.
+Two layers create and configure them:
 
-```bash
-# Check if the directory exists
-ls -ld /etc/qemu
-# If it doesn't exist, create it.
-sudo mkdir /etc/qemu
-```
-
-If `/etc/qemu/bridge.conf` already exists on your host, then append
-the contents of `./config/bridges/bridge.conf` to your existing file.
-
-```bash
-# Check if /etc/qemu/bridge.conf exists
-sudo cat /etc/qemu/bridge.conf
-# If it does exist, append to it, rather than overwrite it.
-sudo cat $HOME/repos/n9kv-kvm/config/bridges/bridge.conf >> /etc/qemu/bridge.conf
-# Verify things look OK
-sudo cat /etc/qemu/bridge.conf
-```
-
-If `/etc/qemu/bridge.conf` doesn't exist, create it.
-
-```bash
-sudo cp $HOME/repos/n9kv-kvm/config/bridges/bridge.conf /etc/qemu/bridge.conf
-sudo chmod 600 /etc/qemu/bridge.conf
-```
+- **netplan** (`config/bridges/netplan/9912-bridges.yaml`) creates the bridges
+  declaratively and persists them across reboot (MTU 9216, `stp: false`).
+- **`bridges_config_ovs.sh`** asserts the OVS settings netplan does not set —
+  notably `other-config:forward-bpdu=true`, which LACP / vPC peer-links need,
+  plus the jumbo `mtu_request` — and creates any bridge that is missing.
 
 ## Configure netplan
 
-Inspect and edit the following file to ensure it will work
-for you.
+Inspect and edit the OVS bridge definitions to match your host:
 
 <!-- pyml disable-next-line commands-show-output -->
 ```text
-$HOME/repos/n9kv-kvm/config/bridges/9912-bridges.yaml
+$HOME/repos/n9kv-kvm/config/bridges/netplan/9912-bridges.yaml
 ```
 
 In particular, verify that:
 
-- The physical interface exists. You'll likely need to change
-  the interface name (`enp34s0f0` below) to match your host
-  (see the `link` parameter for `Vlan11` and `Vlan12` below).
-  To check your interfaces e.g. `ip link show`.
-- Vlan 12 is not already associated with your interface
-  (the `id` parameter for `Vlan12` below).
-- The bridge names (e.g. `BR_ND_DATA_12`, `BR_S1_BG1_SP1_1`, etc) don't conflict
-  with existing bridges on your host.
-- The ip addresses (`192.168.11.1/24` and `192.168.12.1/24`) don't
-  conflict with other addresses on your host, or with addresses in
-  your network that your host needs to reach.
-
-```yaml
-  vlans:
-    Vlan11:
-      id: 11
-      link: enp34s0f0
-      optional: true
-    Vlan12:
-      id: 12
-      link: enp34s0f0
-      optional: true
-```
+- The physical interface exists. Change the interface name (`eno6` in the file)
+  to match your host — see the `link` parameter for `Vlan12`. Check your
+  interfaces with `ip link show`.
+- Vlan 12 is not already associated with your interface (the `id` parameter for
+  `Vlan12`).
+- The bridge names (e.g. `BR_ND_DATA_12`, `BR_S1_BG1_SP1_1`) don't conflict with
+  existing bridges on your host.
+- The IP address (`192.168.12.2/24` on `BR_ND_DATA_12`) doesn't conflict with
+  other addresses on your host or network.
 
 ## Copy the bridges configuration into /etc/netplan
 
 ```bash
-cd $HOME/repos/n9kv-kvm/config/bridges
+cd $HOME/repos/n9kv-kvm/config/bridges/netplan
 sudo cp ./9912-bridges.yaml /etc/netplan
 sudo chmod 600 /etc/netplan/9912-bridges.yaml
 ```
@@ -81,45 +49,34 @@ sudo netplan try
 sudo netplan apply
 ```
 
-The above commands might result in a warning similar to below.
-
-```bash
-** (process:37526): WARNING **: 18:03:28.923: Permissions for /etc/netplan/00-installer-config.yaml are too open. Netplan configuration should NOT be accessible by others.
-```
-
-If so, modify the permissions of the files in `/etc/netplan` as follows
-and try to apply the bridges configuration again.
+`netplan try` may warn that reverting custom parameters for bridges is not
+supported; proceed with `netplan apply` directly. If netplan warns that
+`/etc/netplan/*` permissions are too open, tighten them and re-apply:
 
 ```bash
 sudo chown root /etc/netplan/*
 sudo chmod 600 /etc/netplan/*
 ```
 
-If the above commands result in messages like the following, you can ignore them.
+## Assert the OVS settings
+
+Run the OVS config script to set `forward-bpdu`, the jumbo MTU, and create any
+bridge netplan did not. It is idempotent, so it is safe to re-run.
 
 ```bash
-(.venv) arobel@cvd-3:~/repos/n9kv-kvm/config/bridges$ sudo netplan try
-BR_S1_BG1_SP1_1: reverting custom parameters for bridges and bonds is not supported
-# etc...
-Please carefully review the configuration and use 'netplan apply' directly.
+cd $HOME/repos/n9kv-kvm/config/bridges
+sudo ./bridges_config_ovs.sh
 ```
 
-## Verify netplan was applied correctly
-
-- ip link show type bridge | grep BR_
-
-Some bridges (e.g. `BR_S1_BG1_SP1_1`) will show `state DOWN`. This is expected until we bringup,
-the nexus9000v switches.
+## Verify
 
 ```bash
-root@cvd-1:/home/arobel/repos/n9kv-kvm/config/bridges# ip link show type bridge | grep BR_
-6: BR_S1_BG1_SP1_1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
-7: BR_S2_BG1_SP1_1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
-8: BR_ND_DATA_12: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default qlen 1000
-9: BR_ND_MGMT: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default qlen 1000
-10: BR_S1_SP1_LE1_1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
-41: BR_S1_LE1_H1_1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
-42: BR_S2_LE1_H1_1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
-43: BR_S2_SP1_LE1_1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 9216 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
-root@cvd-1:/home/arobel/repos/n9kv-kvm/config/bridges# 
+# List the OVS bridges
+sudo ovs-vsctl list-br | grep BR_
+
+# Full OVS state (bridges, ports, MTU)
+sudo ovs-vsctl show
 ```
+
+The bridges have no ports until you bring up the VMs; each launcher creates the
+VM's TAP interfaces and attaches them to their bridges at launch.

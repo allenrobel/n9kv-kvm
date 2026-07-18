@@ -12,7 +12,7 @@
 # attaches it to its bridge at VM launch (and re-asserts forward-bpdu then too).
 #
 # This script should be run with root privileges.
-# Usage: sudo ./bridges_config.sh
+# Usage: sudo ./bridges_config_ovs.sh
 
 set -euo pipefail
 

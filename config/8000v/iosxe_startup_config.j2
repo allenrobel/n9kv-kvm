@@ -9,6 +9,8 @@ username admin privilege 15 secret 0 {{ admin_password }}
 ip domain name lab.local
 ip ssh version 2
 !
+cdp run
+!
 interface GigabitEthernet1
  vrf forwarding MGMT
  ip address {{ mgmt_ip_addr }} {{ mgmt_netmask }}
@@ -16,6 +18,7 @@ interface GigabitEthernet1
 !
 {% for intf in interfaces %}
 interface {{ intf }}
+ cdp enable
  no shutdown
 !
 {% endfor %}

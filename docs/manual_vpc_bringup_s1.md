@@ -41,7 +41,7 @@ straight into each switch's NX-OS CLI over the console or SSH.
 |          |                  | Eth1/2    | S1_H1 (host)                | BR_S1_LE1_H1_1       |
 |          |                  | Eth1/3    | S1_LE2 (peer-link)          | BR_S1_LE1_LE2_1      |
 |          |                  | Eth1/4    | S1_TOR1                     | BR_S1_LE1_T1_1       |
-| S1_LE2   | 192.168.12.155   | Eth1/1    | S1_SP1                      | BR_S1_SP1_LE2_1      |
+| S1_LE2   | 192.168.12.152   | Eth1/1    | S1_SP1                      | BR_S1_SP1_LE2_1      |
 |          |                  | Eth1/2    | S1_LE1 (peer-link)          | BR_S1_LE1_LE2_1      |
 |          |                  | Eth1/3    | S1_TOR1                     | BR_S1_LE2_T1_1       |
 | S1_TOR1  | 192.168.12.161   | Eth1/1    | S1_LE1                      | BR_S1_LE1_T1_1       |
@@ -97,7 +97,7 @@ vpc domain 1
   role priority 100
   peer-switch
   peer-gateway
-  peer-keepalive destination 192.168.12.155 source 192.168.12.151 vrf management
+  peer-keepalive destination 192.168.12.152 source 192.168.12.151 vrf management
   delay restore 150
   auto-recovery
   ip arp synchronize
@@ -139,7 +139,7 @@ end
 copy running-config startup-config
 ```
 
-## S1_LE2 (VPC secondary, 192.168.12.155)
+## S1_LE2 (VPC secondary, 192.168.12.152)
 
 Reach the CLI via `con_s1_le2` (telnet to 9055) or `ssh_s1_le2`.
 
@@ -156,7 +156,7 @@ vpc domain 1
   role priority 200
   peer-switch
   peer-gateway
-  peer-keepalive destination 192.168.12.151 source 192.168.12.155 vrf management
+  peer-keepalive destination 192.168.12.151 source 192.168.12.152 vrf management
   delay restore 150
   auto-recovery
   ip arp synchronize
@@ -247,7 +247,7 @@ Before the peer-link comes up, the leaves must be able to ping each
 other in the management VRF. On S1_LE1:
 
 ```text
-ping 192.168.12.155 vrf management count 3
+ping 192.168.12.152 vrf management count 3
 ```
 
 And the symmetric ping on S1_LE2. Both must succeed.

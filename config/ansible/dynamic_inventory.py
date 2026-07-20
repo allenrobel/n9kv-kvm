@@ -52,6 +52,8 @@ S2_SP1_IP4 = environ.get("S2_SP1_IP4", "192.168.12.142")
 S1_LE1_IP4 = environ.get("S1_LE1_IP4", "192.168.12.151")
 S1_LE2_IP4 = environ.get("S1_LE2_IP4", "192.168.12.152")
 S1_TOR1_IP4 = environ.get("S1_TOR1_IP4", "192.168.12.161")
+S1_LE3_IP4 = environ.get("S1_LE3_IP4", "192.168.12.154")
+S1_LE4_IP4 = environ.get("S1_LE4_IP4", "192.168.12.155")
 S1_LE1_IP4_INTERFACE_2 = environ.get("S1_LE1_IP4_INTERFACE_2", "192.168.0.1")
 S2_LE1_IP4 = environ.get("S2_LE1_IP4", "192.168.12.153")
 S2_LE1_IP4_INTERFACE_2 = environ.get("S2_LE1_IP4_INTERFACE_2", "192.168.0.2")
@@ -99,6 +101,8 @@ S1_LE1_HOSTNAME = environ.get("S1_LE1_HOSTNAME", "S1_LE1")
 S2_LE1_HOSTNAME = environ.get("S2_LE1_HOSTNAME", "S2_LE1")
 S1_LE2_HOSTNAME = environ.get("S1_LE2_HOSTNAME", "S1_LE2")
 S1_TOR1_HOSTNAME = environ.get("S1_TOR1_HOSTNAME", "S1_TOR1")
+S1_LE3_HOSTNAME = environ.get("S1_LE3_HOSTNAME", "S1_LE3")
+S1_LE4_HOSTNAME = environ.get("S1_LE4_HOSTNAME", "S1_LE4")
 
 # SITE3 / SITE4
 S3_BG1_HOSTNAME = environ.get("S3_BG1_HOSTNAME", "S3_BG1")
@@ -118,6 +122,9 @@ S4_LE3_HOSTNAME = environ.get("S4_LE3_HOSTNAME", "S4_LE3")
 # S2_SP1_INTERFACE_2      S2_LE1_INTERFACE_1      BR_S2_SP1_LE1_1
 # S1_LE1_INTERFACE_2      S1_H1_INTERFACE_1       BR_S1_LE1_H1_1
 # S2_LE1_INTERFACE_2      S2_H1_INTERFACE_1       BR_S2_LE1_H1_1
+# S1_SP1_INTERFACE_4      S1_LE3_INTERFACE_1      BR_S1_SP1_LE3_1
+# S1_SP1_INTERFACE_5      S1_LE4_INTERFACE_1      BR_S1_SP1_LE4_1
+# S1_LE3_INTERFACE_2      S1_LE4_INTERFACE_2      BR_S1_LE3_LE4_1
 
 # Base set of interfaces
 # SITE1 / SITE2
@@ -149,6 +156,14 @@ S1_LE2_INTERFACE_3 = environ.get("S1_LE2_INTERFACE_3", "Ethernet1/3")
 S1_TOR1_INTERFACE_1 = environ.get("S1_TOR1_INTERFACE_1", "Ethernet1/1")
 S1_TOR1_INTERFACE_2 = environ.get("S1_TOR1_INTERFACE_2", "Ethernet1/2")
 S1_SP1_INTERFACE_3 = environ.get("S1_SP1_INTERFACE_3", "Ethernet1/3")
+S1_SP1_INTERFACE_4 = environ.get("S1_SP1_INTERFACE_4", "Ethernet1/4")
+S1_SP1_INTERFACE_5 = environ.get("S1_SP1_INTERFACE_5", "Ethernet1/5")
+
+# S1_LE3/S1_LE4 are a second VPC pair (spine uplink + peer-link).
+S1_LE3_INTERFACE_1 = environ.get("S1_LE3_INTERFACE_1", "Ethernet1/1")
+S1_LE3_INTERFACE_2 = environ.get("S1_LE3_INTERFACE_2", "Ethernet1/2")
+S1_LE4_INTERFACE_1 = environ.get("S1_LE4_INTERFACE_1", "Ethernet1/1")
+S1_LE4_INTERFACE_2 = environ.get("S1_LE4_INTERFACE_2", "Ethernet1/2")
 
 # SITE3 / SITE4
 S3_BG1_INTERFACE_1 = environ.get("S3_BG1_INTERFACE_1", "Ethernet1/1")
@@ -204,6 +219,8 @@ output = {
             "S2_LE1_IP4": S2_LE1_IP4,
             "S1_LE2_IP4": S1_LE2_IP4,
             "S1_TOR1_IP4": S1_TOR1_IP4,
+            "S1_LE3_IP4": S1_LE3_IP4,
+            "S1_LE4_IP4": S1_LE4_IP4,
             "S3_BG1_IP4": S3_BG1_IP4,
             "S4_BG1_IP4": S4_BG1_IP4,
             "S3_SP1_IP4": S3_SP1_IP4,
@@ -220,6 +237,8 @@ output = {
             "S2_LE1_HOSTNAME": S2_LE1_HOSTNAME,
             "S1_LE2_HOSTNAME": S1_LE2_HOSTNAME,
             "S1_TOR1_HOSTNAME": S1_TOR1_HOSTNAME,
+            "S1_LE3_HOSTNAME": S1_LE3_HOSTNAME,
+            "S1_LE4_HOSTNAME": S1_LE4_HOSTNAME,
             "S3_BG1_HOSTNAME": S3_BG1_HOSTNAME,
             "S4_BG1_HOSTNAME": S4_BG1_HOSTNAME,
             "S3_SP1_HOSTNAME": S3_SP1_HOSTNAME,
@@ -248,6 +267,12 @@ output = {
             "S1_TOR1_INTERFACE_1": S1_TOR1_INTERFACE_1,
             "S1_TOR1_INTERFACE_2": S1_TOR1_INTERFACE_2,
             "S1_SP1_INTERFACE_3": S1_SP1_INTERFACE_3,
+            "S1_SP1_INTERFACE_4": S1_SP1_INTERFACE_4,
+            "S1_SP1_INTERFACE_5": S1_SP1_INTERFACE_5,
+            "S1_LE3_INTERFACE_1": S1_LE3_INTERFACE_1,
+            "S1_LE3_INTERFACE_2": S1_LE3_INTERFACE_2,
+            "S1_LE4_INTERFACE_1": S1_LE4_INTERFACE_1,
+            "S1_LE4_INTERFACE_2": S1_LE4_INTERFACE_2,
             "S1_LE1_IP4_INTERFACE_2": S1_LE1_IP4_INTERFACE_2,
             "S2_LE1_IP4_INTERFACE_2": S2_LE1_IP4_INTERFACE_2,
             "S3_BG1_INTERFACE_1": S3_BG1_INTERFACE_1,
@@ -311,6 +336,8 @@ output = {
             "S4_LE2",
             "S4_LE3",
             "S1_LE2",
+            "S1_LE3",
+            "S1_LE4",
             "S1_TOR1",
         ],
         "vars": {

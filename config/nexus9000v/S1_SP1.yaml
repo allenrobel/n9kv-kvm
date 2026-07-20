@@ -11,7 +11,11 @@ neighbors:
   - S1_BG1
   - S1_LE1
   - S1_LE2
+  - S1_LE3
+  - S1_LE4
 isl_bridges:
   - BR_S1_BG1_SP1_1
   - BR_S1_SP1_LE1_1
   - BR_S1_SP1_LE2_1
+  - BR_S1_SP1_LE3_1
+  - BR_S1_SP1_LE4_1

@@ -441,7 +441,7 @@ python3 config/ansible/dynamic_inventory.py | grep -c "S1_LE3\|S1_LE4"
 flake8 config/ansible/dynamic_inventory.py
 ```
 
-Expected: `OK`; grep count ≥ 12; flake8 silent (line length 169 is configured in `.flake8`).
+Expected: `OK`; grep count `10` (8 all.vars lines + 2 nxos.children lines; the two `S1_SP1_INTERFACE_*` lines don't contain the pattern); flake8 silent (line length 169 is configured in `.flake8`).
 
 - [ ] **Step 6: Commit and open the PR**
 

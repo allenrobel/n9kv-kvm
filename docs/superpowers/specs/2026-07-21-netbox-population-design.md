@@ -25,7 +25,7 @@ Prints created/updated/unchanged summary; a second run must report zero changes.
 
 | Source | Yields |
 |---|---|
-| `config/nexus9000v/S*.yaml` (excl. `*.netplan.yaml`) | 19 n9kv switches: name, role, mgmt_ip, `neighbors[i]` + `isl_bridges[i]` → `Ethernet1/{i+1}` (launcher-verified) |
+| `config/nexus9000v/S*.yaml` (not `*.netplan.yaml`) | 18 n9kv switches: name, role, mgmt_ip, `neighbors[i]` + `isl_bridges[i]` → `Ethernet1/{i+1}` (launcher-verified) |
 | `config/8000v/WAN1.yaml` | WAN1 (IOS-XE): `GigabitEthernet1` = mgmt, `GigabitEthernet{i+1}` = `isl_bridges[i-1]` (launcher-verified) |
 | `config/containers/container_configs_access_mode.yaml` | S1_H1 / S2_H1: eth0 (mgmt) + eth1 (test) with IPs, bridges |
 | Static entries in script | ND node (mgmt on `outside` @ 192.168.7.7, data on `BR_ND_DATA_12`), glide (hypervisor) |
@@ -50,6 +50,8 @@ Prints created/updated/unchanged summary; a second run must report zero changes.
   `192.0.1.0/24` (container test net). All parsed IPs bound to interfaces; device primary IP = mgmt IP.
 - **Known conflict surfaced, not resolved**: S1_TOR1 and S1_H1 both claim `192.168.12.161` in the
   repo today. NetBox enforces uniqueness; the script reports the collision and continues.
+  *Resolved 2026-07-21*: host containers renumbered out of the TOR block — S1_H1 → `.171`,
+  S2_H1 → `.172` (mgmt, test IPs, and MACs all mirror the new octets).
 
 ## Verification
 

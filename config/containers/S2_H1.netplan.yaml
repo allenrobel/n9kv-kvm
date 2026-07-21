@@ -4,7 +4,7 @@ network:
   ethernets:
     eth0:
       addresses:
-        - 192.168.12.162/24
+        - 192.168.12.172/24
       dhcp4: false
       dhcp6: false
       accept-ra: true
@@ -15,7 +15,7 @@ network:
 
     eth1:
       addresses:
-        - 192.0.1.162/24
+        - 192.0.1.172/24
         - 2001:192:0:1:200:52ff:fe00:2/64
       dhcp4: false
       dhcp6: false

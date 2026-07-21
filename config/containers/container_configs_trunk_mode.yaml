@@ -3,25 +3,25 @@ containers:
     name: "S1_H1"
     management_interface:
       name: "eth0"
-      ip_address: "192.168.12.161"
+      ip_address: "192.168.12.171"
       netmask: "24"
       bridge: "BR_ND_DATA_12"
-      mac_address: "00:00:61:00:00:01"
+      mac_address: "00:00:71:00:00:01"
       description: "Management Interface"
     test_interface:
       name: "eth1"
       ip_address: ""
       netmask: ""
       bridge: "BR_S1_LE1_H1_1"
-      mac_address: "00:00:61:00:00:02"
+      mac_address: "00:00:71:00:00:02"
       description: "Test Interface"
     vlans:
       - vlan_id: 2
-        ip_address: "192.0.1.161"
+        ip_address: "192.0.1.171"
         netmask: "24"
         description: "VLAN 2 Test Interface"
       - vlan_id: 3
-        ip_address: "192.0.2.161"
+        ip_address: "192.0.2.171"
         netmask: "24"
         description: "VLAN 3 Test Interface"
     gateway_ip: "192.168.12.2"
@@ -32,25 +32,25 @@ containers:
     name: "S2_H1"
     management_interface:
       name: "eth0"
-      ip_address: "192.168.12.162"
+      ip_address: "192.168.12.172"
       netmask: "24"
       bridge: "BR_ND_DATA_12"
-      mac_address: "00:00:62:00:00:01"
+      mac_address: "00:00:72:00:00:01"
       description: "Management Interface"
     test_interface:
       name: "eth1"
       ip_address: ""
       netmask: ""
       bridge: "BR_S2_LE1_H1_1"
-      mac_address: "00:00:62:00:00:02"
+      mac_address: "00:00:72:00:00:02"
       description: "Test Interface"
     vlans:
       - vlan_id: 2
-        ip_address: "192.0.1.162"
+        ip_address: "192.0.1.172"
         netmask: "24"
         description: "VLAN 2 Test Interface"
       - vlan_id: 3
-        ip_address: "192.0.2.162"
+        ip_address: "192.0.2.172"
         netmask: "24"
         description: "VLAN 3 Test Interface"
     gateway_ip: "192.168.12.2"

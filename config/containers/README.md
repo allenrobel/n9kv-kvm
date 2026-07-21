@@ -69,25 +69,25 @@ sudo python3 main.py --config $HOME/repos/n9kv-kvm/config/containers/container_c
 
 ### S1_H1 Container (access mode interfaces, SITE1)
 
-- eth0: 192.168.12.161/24 on BR_ND_DATA_12
-- eth1: 192.0.1.161/24 on BR_S1_LE1_H1_1
+- eth0: 192.168.12.171/24 on BR_ND_DATA_12
+- eth1: 192.0.1.171/24 on BR_S1_LE1_H1_1
 
 ### S2_H1 Container (access mode interfaces, SITE2)
 
-- eth0: 192.168.12.162/24 on BR_ND_DATA_12
-- eth1: 192.0.1.162/24 on BR_S1_LE1_H1_1
+- eth0: 192.168.12.172/24 on BR_ND_DATA_12
+- eth1: 192.0.1.172/24 on BR_S2_LE1_H1_1
 
 ### S1_H1 Container (trunk mode interfaces, SITE1)
 
-- eth0: 192.168.12.161/24 on BR_ND_DATA_12
-- eth1.2: 192.0.1.161/24 on BR_S1_LE1_H1_1
-- eth1.3: 11.1.3.161/30 on BR_S1_LE1_H1_1
+- eth0: 192.168.12.171/24 on BR_ND_DATA_12
+- eth1.2: 192.0.1.171/24 on BR_S1_LE1_H1_1
+- eth1.3: 192.0.2.171/24 on BR_S1_LE1_H1_1
 
 ### S2_H1 Container (trunk mode interfaces, SITE2)
 
-- eth0: 192.168.12.162/24 on BR_ND_DATA_12
-- eth1.2: 192.0.1.162/24 on BR_S1_LE1_H1_1
-- eth1.3: 11.1.3.162/30 on BR_S1_LE1_H1_1
+- eth0: 192.168.12.172/24 on BR_ND_DATA_12
+- eth1.2: 192.0.1.172/24 on BR_S2_LE1_H1_1
+- eth1.3: 192.0.2.172/24 on BR_S2_LE1_H1_1
 
 ## Usage Examples
 
@@ -117,8 +117,8 @@ network-test show-config
 network-test mgmt-ping 192.168.12.1
 
 # Test VLAN connectivity applicable only if dot1q enabled
-network-test vlan2-ping 192.0.1.162    # Ping S2_H1 on VLAN 2
-network-test vlan3-ping 192.0.2.162    # Ping S2_H1 on VLAN 3
+network-test vlan2-ping 192.0.1.172    # Ping S2_H1 on VLAN 2
+network-test vlan3-ping 192.0.2.172    # Ping S2_H1 on VLAN 3
 
 # Show VLAN interfaces
 network-test show-vlans
@@ -128,7 +128,7 @@ network-test zebra-cli
 
 # Traffic generation
 network-test iperf-server              # Start server on S1_H1
-network-test iperf-client 192.0.1.161  # Connect to S2_H1 from S1_H1
+network-test iperf-client 192.0.1.171  # Connect to S1_H1's server (run from S2_H1)
 ```
 
 ### Bridge Attachment Verification

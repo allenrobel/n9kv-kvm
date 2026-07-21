@@ -346,6 +346,7 @@ dependencies = [
     { name = "mypy" },
     { name = "pylint" },
     { name = "pymarkdownlnt" },
+    { name = "pynetbox" },
     { name = "pyyaml" },
     { name = "requests" },
     { name = "types-pyyaml" },
@@ -360,6 +361,7 @@ requires-dist = [
     { name = "mypy", specifier = ">=1.17.1" },
     { name = "pylint", specifier = ">=3.3.8" },
     { name = "pymarkdownlnt", specifier = ">=0.9.37" },
+    { name = "pynetbox", specifier = ">=7.8.0" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "requests", specifier = ">=2.32.4" },
     { name = "types-pyyaml", specifier = ">=6.0.12.20250809" },
@@ -531,6 +533,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/27/b1/3cb62d33eaf59e95d3aab1d0ffb240a90c2d6b7acee12e02661d59a38efd/pymarkdownlnt-0.9.37.tar.gz", hash = "sha256:d0d7882ae08263a12130b159c1a27a728630b1b53bb75246f2f61f81b9289fd9", size = 442920, upload-time = "2026-05-04T04:00:05.757Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/05/30/3f234125f9385ed45dfdb77b20d4f42825f3317d89689883761dfa5f2fca/pymarkdownlnt-0.9.37-py3-none-any.whl", hash = "sha256:1dc7296f9bf96c26736571b3b73311e516dbaf8ec587c3539fdf63c8d30f66e6", size = 514924, upload-time = "2026-05-04T04:00:04.163Z" },
+]
+
+[[package]]
+name = "pynetbox"
+version = "7.8.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "packaging" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0e/83/2fa04ce44f3b8b5f6090d9cfd6a4b0a8f6945aa304e2c69901cfe53a36d0/pynetbox-7.8.0.tar.gz", hash = "sha256:c359e9b9ed599d145a987c755dbe786da967caf236e3afe1e94a154cf5aeab5c", size = 138670, upload-time = "2026-06-18T16:35:33.983Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/96/ec/bf45fc25fa1e41840a1240cd90851cc4ae9c32bbeab74512582fa7394ac3/pynetbox-7.8.0-py3-none-any.whl", hash = "sha256:1dbcee4479d5aeefff42d5c115f6f7aae68ea61f905b68bde33fe0c543db773d", size = 54271, upload-time = "2026-06-18T16:35:32.848Z" },
 ]
 
 [[package]]

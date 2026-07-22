@@ -97,8 +97,11 @@ sudo python3 main.py --config $HOME/repos/n9kv-kvm/config/containers/container_c
 # Start container
 sudo virsh -c lxc:/// start S1_H1
 
-# Connect to console (use Ctrl+] to disconnect)
+# Connect to console (root shell, no login prompt; Ctrl+] to disconnect)
 sudo virsh -c lxc:/// console S1_H1
+
+# SSH as root (key-only; uses the keys injected at build time)
+ssh root@192.168.12.171
 
 # Check status
 sudo virsh -c lxc:/// list
@@ -288,18 +291,22 @@ logging.basicConfig(level=logging.DEBUG)
 ### Default Security
 
 - Containers run with default LXC security
-- SSH enabled with default credentials
+- No accounts or passwords are created — root's password stays locked, and the
+  console (`sudo virsh -c lxc:/// console <name>`) drops straight into a root
+  shell (the init script runs bash as PID 1, so there is no login prompt)
+- SSH is key-only: the build injects the invoking user's public keys into
+  `/root/.ssh/authorized_keys` (`$CONTAINER_SSH_KEYS` overrides the source
+  file; falls back to the sudo user's `~/.ssh/authorized_keys`, then
+  `~/.ssh/*.pub`). No key material lives in this repository. If no key is
+  found at build time, injection is skipped and only console access works.
 - No firewall rules configured
 
 ### Production Hardening
 
 ```bash
-# Change default passwords
-# Inside container:
-passwd root
-passwd admin
+# Review /root/.ssh/authorized_keys inside the container; remove any key
+# that shouldn't have access.
 
-# Configure SSH keys instead of passwords
 # Configure iptables rules
 # Enable AppArmor/SELinux profiles
 ```

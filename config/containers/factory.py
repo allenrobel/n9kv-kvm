@@ -5,7 +5,7 @@ Factory for creating container system components
 
 from typing import List
 
-from config_generators import ContainerInitScriptGenerator, FRRConfigGenerator, NetworkTestScriptGenerator
+from config_generators import ContainerInitScriptGenerator, FRRConfigGenerator, NetworkTestScriptGenerator, SSHAuthorizedKeysGenerator
 from executor import SystemCommandExecutor
 from filesystem import FileSystemManager
 from interfaces import ConfigurationGenerator
@@ -30,6 +30,7 @@ class ContainerSystemFactory:
             FRRConfigGenerator(executor),
             NetworkTestScriptGenerator(executor),
             ContainerInitScriptGenerator(executor),
+            SSHAuthorizedKeysGenerator(executor),
         ]
 
         xml_generator = LibvirtXMLGenerator(executor)

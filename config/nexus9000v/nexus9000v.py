@@ -765,8 +765,8 @@ def create_sample_configs(force: bool = False):
             "mgmt_bridge": "BR_ND_DATA_12",
             "mgmt_ip": "192.168.12.161/24",
             "mgmt_gw": "192.168.12.1",
-            "neighbors": ["S1_LE1", "S1_LE2"],
-            "isl_bridges": ["BR_S1_LE1_T1_1", "BR_S1_LE2_T1_1"],
+            "neighbors": ["S1_LE1", "S1_LE2", "S1_H1"],
+            "isl_bridges": ["BR_S1_LE1_T1_1", "BR_S1_LE2_T1_1", "BR_S1_T1_H1_1"],
         },
     ]
 

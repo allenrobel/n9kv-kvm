@@ -1,6 +1,6 @@
 ---
 # SITE1
-# S1_TOR1.yaml - Top-of-Rack Switch 1 in SITE1 (dual-homed to VPC pair S1_LE1/S1_LE2)
+# S1_TOR1.yaml - Top-of-Rack Switch 1 in SITE1 (dual-homed to VPC pair S1_LE1/S1_LE2; host S1_H1 on Eth1/3)
 name: S1_TOR1
 role: Top-of-Rack Switch
 sid: 1601
@@ -10,6 +10,8 @@ mgmt_gw: 192.168.12.1
 neighbors:
   - S1_LE1
   - S1_LE2
+  - S1_H1
 isl_bridges:
   - BR_S1_LE1_T1_1
   - BR_S1_LE2_T1_1
+  - BR_S1_T1_H1_1

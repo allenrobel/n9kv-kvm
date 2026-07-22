@@ -57,7 +57,7 @@ The bridge monitor can also be used from the command line:
 /usr/local/bin/bridge_monitor.py --table
 
 # Show specific bridge
-/usr/local/bin/bridge_monitor.py --bridge BR_S1_LE1_H1_1 --table
+/usr/local/bin/bridge_monitor.py --bridge BR_S1_T1_H1_1 --table
 
 # Output JSON for scripting
 /usr/local/bin/bridge_monitor.py --json

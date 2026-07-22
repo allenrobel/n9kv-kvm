@@ -3,12 +3,17 @@
 Configuration file generators
 """
 
+import logging
+import os
+import pwd
 from pathlib import Path
 
 from jinja2 import Template
 
 from interfaces import CommandExecutor, ConfigurationGenerator
 from models import ContainerSpec
+
+logger = logging.getLogger(__name__)
 
 
 class FRRConfigGenerator(ConfigurationGenerator):
@@ -274,3 +279,62 @@ exec /bin/bash
 
         self.executor.run(["sudo", "tee", str(init_path)], input_text=init_content)
         self.executor.run(["sudo", "chmod", "+x", str(init_path)])
+
+
+class SSHAuthorizedKeysGenerator(ConfigurationGenerator):
+    """Injects SSH public keys for root into the container rootfs.
+
+    No password is ever set inside the container (root stays locked), so SSH is
+    key-only: Ubuntu's default `PermitRootLogin prohibit-password` accepts keys
+    without any sshd_config change. Keys are read from the lab host at build
+    time -- never from this repository:
+
+    1. `$CONTAINER_SSH_KEYS` -- explicit path to an authorized_keys-format file
+    2. the invoking (sudo) user's `~/.ssh/authorized_keys`
+    3. the invoking (sudo) user's `~/.ssh/*.pub`, concatenated
+
+    If none yields a key, injection is skipped with a warning (console access
+    via `virsh -c lxc:/// console` is unaffected).
+    """
+
+    def __init__(self, executor: CommandExecutor) -> None:
+        self.executor: CommandExecutor = executor
+
+    @staticmethod
+    def _invoking_user_ssh_dir() -> Path:
+        user: str = os.environ.get("SUDO_USER", "")
+        if user:
+            try:
+                return Path(pwd.getpwnam(user).pw_dir) / ".ssh"
+            except KeyError:
+                pass
+        return Path.home() / ".ssh"
+
+    def _collect_keys(self) -> str:
+        override: str = os.environ.get("CONTAINER_SSH_KEYS", "")
+        if override:
+            path = Path(override)
+            if not path.is_file():
+                logger.warning(f"CONTAINER_SSH_KEYS={override} is not a readable file")
+                return ""
+            return path.read_text()
+        ssh_dir: Path = self._invoking_user_ssh_dir()
+        authorized: Path = ssh_dir / "authorized_keys"
+        if authorized.is_file() and authorized.read_text().strip():
+            return authorized.read_text()
+        return "".join(pub.read_text() for pub in sorted(ssh_dir.glob("*.pub")))
+
+    def generate(self, spec: ContainerSpec, output_path: Path) -> None:
+        """Write the collected public keys to <rootfs>/root/.ssh/authorized_keys"""
+        keys: str = self._collect_keys().strip()
+        if not keys:
+            logger.warning(f"No SSH public keys found; skipping authorized_keys injection for {spec.name} (set CONTAINER_SSH_KEYS to point at a key file)")
+            return
+        ssh_dir: Path = output_path / "root" / ".ssh"
+        keys_file: Path = ssh_dir / "authorized_keys"
+
+        self.executor.run(["sudo", "mkdir", "-p", str(ssh_dir)])
+        self.executor.run(["sudo", "chmod", "700", str(ssh_dir)])
+        self.executor.run(["sudo", "tee", str(keys_file)], input_text=keys + "\n")
+        self.executor.run(["sudo", "chmod", "600", str(keys_file)])
+        logger.info(f"Injected {len(keys.splitlines())} SSH key(s) into {spec.name}:/root/.ssh/authorized_keys")

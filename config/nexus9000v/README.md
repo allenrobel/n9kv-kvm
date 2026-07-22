@@ -60,8 +60,8 @@ name: S1_LE1
 role: Leaf Switch
 sid: 51
 mgmt_bridge: BR_ND_DATA_12
-neighbors: [S1_SP1, S1_H1]
-isl_bridges: [BR_S1_SP1_LE1_1, BR_S1_LE1_H1_1]
+neighbors: [S1_SP1, S1_LE2]
+isl_bridges: [BR_S1_SP1_LE1_1, BR_S1_LE1_LE2_1]
 # Optional overrides
 ram: 20480
 ```

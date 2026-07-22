@@ -21,6 +21,7 @@ straight into each switch's NX-OS CLI over the console or SSH.
   - `BR_S1_LE1_LE2_1` (peer-link)
   - `BR_S1_LE1_T1_1`  (S1_LE1 → S1_TOR1)
   - `BR_S1_LE2_T1_1`  (S1_LE2 → S1_TOR1)
+  - `BR_S1_T1_H1_1`   (S1_TOR1 → S1_H1 host container)
 
 ## Topology
 
@@ -29,23 +30,27 @@ straight into each switch's NX-OS CLI over the console or SSH.
                              /       \
                             /         \
         S1_LE1 (Eth1/1) ---       --- (Eth1/1) S1_LE2
-        S1_LE1 (Eth1/3) === peer-link === (Eth1/2) S1_LE2
-        S1_LE1 (Eth1/4) ---\         /--- (Eth1/3) S1_LE2
+        S1_LE1 (Eth1/2) === peer-link === (Eth1/2) S1_LE2
+        S1_LE1 (Eth1/3) ---\         /--- (Eth1/3) S1_LE2
                             \       /
                           S1_TOR1 (Eth1/1, Eth1/2)
+                                |
+                            (Eth1/3)
+                                |
+                          S1_H1 (eth1)
 ```
 
 | Switch   | Mgmt IP          | Interface | Faces                       | Bridge               |
 |----------|------------------|-----------|-----------------------------|----------------------|
 | S1_LE1   | 192.168.12.151   | Eth1/1    | S1_SP1                      | BR_S1_SP1_LE1_1      |
-|          |                  | Eth1/2    | S1_H1 (host)                | BR_S1_LE1_H1_1       |
-|          |                  | Eth1/3    | S1_LE2 (peer-link)          | BR_S1_LE1_LE2_1      |
-|          |                  | Eth1/4    | S1_TOR1                     | BR_S1_LE1_T1_1       |
+|          |                  | Eth1/2    | S1_LE2 (peer-link)          | BR_S1_LE1_LE2_1      |
+|          |                  | Eth1/3    | S1_TOR1                     | BR_S1_LE1_T1_1       |
 | S1_LE2   | 192.168.12.152   | Eth1/1    | S1_SP1                      | BR_S1_SP1_LE2_1      |
 |          |                  | Eth1/2    | S1_LE1 (peer-link)          | BR_S1_LE1_LE2_1      |
 |          |                  | Eth1/3    | S1_TOR1                     | BR_S1_LE2_T1_1       |
 | S1_TOR1  | 192.168.12.161   | Eth1/1    | S1_LE1                      | BR_S1_LE1_T1_1       |
 |          |                  | Eth1/2    | S1_LE2                      | BR_S1_LE2_T1_1       |
+|          |                  | Eth1/3    | S1_H1 (host)                | BR_S1_T1_H1_1        |
 
 ## Design choices
 
@@ -103,8 +108,8 @@ vpc domain 1
   ip arp synchronize
   ipv6 nd synchronize
 
-! Peer-link: Eth1/3 -> S1_LE2 Eth1/2
-interface Ethernet1/3
+! Peer-link: Eth1/2 -> S1_LE2 Eth1/2
+interface Ethernet1/2
   description S1_LE2 peer-link
   switchport
   switchport mode trunk
@@ -119,8 +124,8 @@ interface port-channel1
   spanning-tree port type network
   vpc peer-link
 
-! VPC member port-channel to S1_TOR1: Eth1/4
-interface Ethernet1/4
+! VPC member port-channel to S1_TOR1: Eth1/3
+interface Ethernet1/3
   description S1_TOR1 vpc member
   switchport
   switchport mode trunk
@@ -162,7 +167,7 @@ vpc domain 1
   ip arp synchronize
   ipv6 nd synchronize
 
-! Peer-link: Eth1/2 -> S1_LE1 Eth1/3
+! Peer-link: Eth1/2 -> S1_LE1 Eth1/2
 interface Ethernet1/2
   description S1_LE1 peer-link
   switchport
@@ -233,6 +238,15 @@ interface port-channel10
   switchport trunk allowed vlan 2-3
   spanning-tree port type edge trunk
 
+! Host port: S1_H1 eth1 (untagged, VLAN 2 = 192.0.1.0/24)
+interface Ethernet1/3
+  description S1_H1 host port
+  switchport
+  switchport mode access
+  switchport access vlan 2
+  spanning-tree port type edge
+  no shutdown
+
 end
 copy running-config startup-config
 ```
@@ -278,7 +292,7 @@ show port-channel summary
 
 Expect:
 
-- **S1_LE1**: `Po1(SU)` with `Eth1/3(P)`, `Po10(SU)` with `Eth1/4(P)`
+- **S1_LE1**: `Po1(SU)` with `Eth1/2(P)`, `Po10(SU)` with `Eth1/3(P)`
 - **S1_LE2**: `Po1(SU)` with `Eth1/2(P)`, `Po10(SU)` with `Eth1/3(P)`
 - **S1_TOR1**: `Po10(SU)` with `Eth1/1(P)` and `Eth1/2(P)`
 

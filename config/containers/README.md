@@ -70,7 +70,7 @@ sudo python3 main.py --config $HOME/repos/n9kv-kvm/config/containers/container_c
 ### S1_H1 Container (access mode interfaces, SITE1)
 
 - eth0: 192.168.12.171/24 on BR_ND_DATA_12
-- eth1: 192.0.1.171/24 on BR_S1_LE1_H1_1
+- eth1: 192.0.1.171/24 on BR_S1_T1_H1_1
 
 ### S2_H1 Container (access mode interfaces, SITE2)
 
@@ -80,8 +80,8 @@ sudo python3 main.py --config $HOME/repos/n9kv-kvm/config/containers/container_c
 ### S1_H1 Container (trunk mode interfaces, SITE1)
 
 - eth0: 192.168.12.171/24 on BR_ND_DATA_12
-- eth1.2: 192.0.1.171/24 on BR_S1_LE1_H1_1
-- eth1.3: 192.0.2.171/24 on BR_S1_LE1_H1_1
+- eth1.2: 192.0.1.171/24 on BR_S1_T1_H1_1
+- eth1.3: 192.0.2.171/24 on BR_S1_T1_H1_1
 
 ### S2_H1 Container (trunk mode interfaces, SITE2)
 
@@ -137,7 +137,7 @@ network-test iperf-client 192.0.1.171  # Connect to S1_H1's server (run from S2_
 # VLANs are tagged inside the container and passed trunk-all by OVS, so there
 # is no host-side VLAN config to check. Confirm the container's vnet attached
 # to the OVS test bridge:
-sudo ovs-vsctl list-ports BR_S1_LE1_H1_1
+sudo ovs-vsctl list-ports BR_S1_T1_H1_1
 
 # Check the container's own VLAN subinterfaces from inside the container:
 # ip -d link show eth1.2
@@ -242,7 +242,7 @@ vnet to the OVS bridge:
 ```bash
 # The container's vnet should appear under its bridge
 sudo ovs-vsctl show
-sudo ovs-vsctl list-ports BR_S1_LE1_H1_1
+sudo ovs-vsctl list-ports BR_S1_T1_H1_1
 ```
 
 #### 4. Container Won't Start

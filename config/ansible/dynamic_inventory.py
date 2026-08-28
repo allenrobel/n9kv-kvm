@@ -41,8 +41,8 @@ from os import environ
 
 # Device IP addresses
 
-ND_IP4 = environ.get("ND_IP4", "192.168.7.7")
-ND_IP4_2 = environ.get("ND_IP4_2", "192.168.7.8")
+ND_IP4 = environ.get("ND_IP4", "10.10.20.10")
+ND_IP4_2 = environ.get("ND_IP4_2", "10.10.20.20")
 
 # SITE1 / SITE2
 S1_BG1_IP4 = environ.get("S1_BG1_IP4", "192.168.12.131")

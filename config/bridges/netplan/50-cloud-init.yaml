@@ -16,12 +16,12 @@ network:
       interfaces:
         - eno5
       addresses:
-        - 192.168.7.6/24 
+        - 10.10.20.7/16
       routes:
         - to: 0.0.0.0/0
-          via: 192.168.7.1
+          via: 10.10.0.1
         - to: "::/0"
-          via: fe80::262d:6cff:fe98:a614
+          via: fe80::76fa:29ff:fe48:4bed
       optional: false
       accept-ra: true
       parameters:

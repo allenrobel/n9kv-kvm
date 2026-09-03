@@ -86,12 +86,29 @@ scheme if you want.
               - `Summary`
                 - Review and click `Submit`
 
-### SITE1 fabric PTP (deliberate asymmetry — SITE1 enabled, SITE2 disabled)
+### SITE1 fabric PTP (BACKED OUT 2026-08-12 — deployed PTP crashes Nexus 9000v)
 
-SITE1 runs with fabric PTP **enabled and deployed** (since 2026-08-12); SITE2 stays **disabled**.
-This is intentional: one fabric in each state supports API-behavior testing (e.g. the ND-injected
-`ptp` echo reads `true` on SITE1 pre-deploy records vs `false` on SITE2 — see vault note
-`interface-get-undocumented-ptp-field`). Do not "clean up" the SITE1 PTP config.
+SITE1 briefly ran with fabric PTP **enabled and deployed** (2026-08-12, for the
+`interface-get-undocumented-ptp-field` probes), but the config was **backed out the same day**:
+deployed PTP crashes the 9000v. `bcm_usd` (the Broadcom user-space ASIC driver, running against the
+9000v's simulated data plane) segfaults when interface PTP activates, sysmgr HAP policy fails the
+Ethernet module, and the switch reloads — 6 of 7 SITE1 switches went down (all but S1_TOR1, whose
+uplinks are port-channel members and thus never got per-port `ptp`). The image's PTP code is broken
+generally: with PTP lines in the config, `show startup-config` dies with
+`libptpcli.so: undefined symbol: ptp_td_get_default_time_src_wait` (NX-OS 10.6(2)).
+**Do NOT deploy fabric PTP on 9000v fabrics.** Enabled-but-not-deployed intent was safe if the
+asymmetry regime is ever wanted again. The probe evidence (all three fabric-PTP regimes) was captured
+before the back-out, so nothing is owed re-verification.
+
+**Recovery recipe used** (config subsystem on crashed boxes holds a startup-config lock and can't
+save): reload WITHOUT saving (startup keeps full interface config), then race in post-boot over SSH
+— `no feature ptp`, `no clock protocol ptp vdc 1`, `copy run start` — retrying until "system not
+ready" clears (~2 attempts). ND-side: fabric `ptp: false` + delete the vlan1000 SVI intents FIRST so
+a later deploy can't re-push PTP; `switchActions/rediscover` does NOT refresh the config-compliance
+snapshot, so either remove the SVI/vlan on-box and let `configDeploy` reconcile (what we did) or
+wait for the periodic compliance poll.
+
+The original setup, kept for reference should PTP ever be deployed on real hardware:
 
 - Fabric settings (`management` block): `ptp: true`, `ptpVlanId: 1000`, `ptpLoopbackId: 0`, `ptpDomainId: 0`
 - ND preflight requires, on each ToR **and its pairing vPC leafs** (here S1_TOR1 + S1_LE1/S1_LE2):

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Install a Nexus Dashboard (ND) instance using QEMU/KVM
-ND_SOURCE_DIR=/iso1/nd/322m
+ND_SOURCE_DIR=/iso1/nd/prod/3.2.1.m
 ND_IMAGE=nd-dk9.3.2.2m.qcow2
 ND_INSTALL_DIR=/iso3/nd/322m_test
 ND_MGMT_NET=outside

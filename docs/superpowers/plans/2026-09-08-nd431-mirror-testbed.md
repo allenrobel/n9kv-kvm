@@ -550,7 +550,7 @@ role: Border Gateway
 sid: 3301
 mgmt_bridge: BR_ND_DATA_14
 mgmt_ip: 192.168.14.131/24
-mgmt_gw: 192.168.12.1
+mgmt_gw: 192.168.14.1
 neighbors:
   - S4_BG1
   - S3_SP1
@@ -572,7 +572,7 @@ role: Spine Switch
 sid: 3401
 mgmt_bridge: BR_ND_DATA_14
 mgmt_ip: 192.168.14.141/24
-mgmt_gw: 192.168.12.1
+mgmt_gw: 192.168.14.1
 neighbors:
   - S3_BG1
   - S3_LE1
@@ -598,7 +598,7 @@ role: Leaf Switch
 sid: 3501
 mgmt_bridge: BR_ND_DATA_14
 mgmt_ip: 192.168.14.151/24
-mgmt_gw: 192.168.12.1
+mgmt_gw: 192.168.14.1
 neighbors:
   - S3_SP1
   - S3_LE2
@@ -620,7 +620,7 @@ role: Leaf Switch
 sid: 3502
 mgmt_bridge: BR_ND_DATA_14
 mgmt_ip: 192.168.14.152/24
-mgmt_gw: 192.168.12.1
+mgmt_gw: 192.168.14.1
 neighbors:
   - S3_SP1
   - S3_LE1
@@ -642,7 +642,7 @@ role: Leaf Switch
 sid: 3503
 mgmt_bridge: BR_ND_DATA_14
 mgmt_ip: 192.168.14.154/24
-mgmt_gw: 192.168.12.1
+mgmt_gw: 192.168.14.1
 neighbors:
   - S3_SP1
   - S3_LE4
@@ -662,7 +662,7 @@ role: Leaf Switch
 sid: 3504
 mgmt_bridge: BR_ND_DATA_14
 mgmt_ip: 192.168.14.155/24
-mgmt_gw: 192.168.12.1
+mgmt_gw: 192.168.14.1
 neighbors:
   - S3_SP1
   - S3_LE3
@@ -682,7 +682,7 @@ role: Top-of-Rack Switch
 sid: 3601
 mgmt_bridge: BR_ND_DATA_14
 mgmt_ip: 192.168.14.161/24
-mgmt_gw: 192.168.12.1
+mgmt_gw: 192.168.14.1
 neighbors:
   - S3_LE1
   - S3_LE2
@@ -771,7 +771,7 @@ role: Border Gateway
 sid: 4301
 mgmt_bridge: BR_ND_DATA_14
 mgmt_ip: 192.168.14.132/24
-mgmt_gw: 192.168.12.1
+mgmt_gw: 192.168.14.1
 neighbors:
   - S3_BG1
   - S4_SP1
@@ -793,7 +793,7 @@ role: Spine Switch
 sid: 4401
 mgmt_bridge: BR_ND_DATA_14
 mgmt_ip: 192.168.14.142/24
-mgmt_gw: 192.168.12.1
+mgmt_gw: 192.168.14.1
 neighbors:
   - S4_BG1
   - S4_LE1
@@ -813,7 +813,7 @@ role: Leaf Switch
 sid: 4501
 mgmt_bridge: BR_ND_DATA_14
 mgmt_ip: 192.168.14.153/24
-mgmt_gw: 192.168.12.1
+mgmt_gw: 192.168.14.1
 neighbors:
   - S4_SP1
   - S4_H1
@@ -885,7 +885,7 @@ role: WAN Router
 sid: 9102
 mgmt_bridge: BR_ND_DATA_14
 mgmt_ip: 192.168.14.112/24
-mgmt_gw: 192.168.12.1
+mgmt_gw: 192.168.14.1
 neighbors:
   - S3_BG1
   - S4_BG1

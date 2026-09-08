@@ -1,28 +1,32 @@
-# This provides the bridge configurations used for SITE3/SITE4
-# in this repository.  This is needed ONLY if you want a second
-# virtual testbed on the same host.  For example, you could
-# use a second testbed for a different version of Nexus Dashboard.
+# SITE3/SITE4 data-plane bridges: the ND 4.3.1 mirror of SITE1/SITE2 (see 9912-bridges.yaml).
 #
-# Copy it to /etc/netplan/9914-bridges.yaml on the target system.
-# sudo cp 9914-bridges.yaml /etc/netplan/9914-bridges.yaml
+# Management for ND 4.3.1, S3_*/S4_*, WAN2 and S3_H1/S4_H1 is BR_ND_DATA_14 (Vlan14, 192.168.14.0/24,
+# host 192.168.14.2, gateway 192.168.14.1) -- the 192.168.14.x twin of BR_ND_DATA_12 in 9912-bridges.yaml.
+#
+# Copy to /etc/netplan/9914-bridges.yaml on the target system.
+# sudo cp $HOME/repos/n9kv-kvm/config/bridges/netplan/9914-bridges.yaml /etc/netplan/9914-bridges.yaml
 # sudo chmod 600 /etc/netplan/9914-bridges.yaml
 # sudo netplan try
 # sudo netplan apply
-
-# Bridge names are outlined below, along with the interfaces they connect.
 #
-# Src Interface           Dst Interface           Bridge                       Site
-# S3_BG1_INTERFACE_1      S4_BG1_INTERFACE_1      BR_ISN_S3_S4_1         MSD inter-site
-# S3_BG1_INTERFACE_2      S3_SP1_INTERFACE_1      BR_S3_BG1_SP1_1              SITE3
-# S4_BG1_INTERFACE_2      S4_SP1_INTERFACE_1      BR_S4_BG1_SP1_1              SITE4
-# S3_SP1_INTERFACE_2      S3_LE1_INTERFACE_1      BR_S3_SP1_LE1_1              SITE3
-# S4_SP1_INTERFACE_2      S4_LE1_INTERFACE_1      BR_S4_SP1_LE1_1              SITE4
-# S3_LE1_INTERFACE_2      S3_H1_INTERFACE_1       BR_S3_LE1_H1_1               SITE3
-# S4_LE1_INTERFACE_2      S4_H1_INTERFACE_1       BR_S4_LE1_H1_1               SITE4
-# S4_SP1_INTERFACE_3      S4_LE2_INTERFACE_1      BR_S4_SP1_LE2_1              SITE4
-# S4_SP1_INTERFACE_4      S4_LE3_INTERFACE_1      BR_S4_SP1_LE3_1              SITE4
-# S4_LE2_INTERFACE_2      S4_H2_INTERFACE_1       BR_S4_LE2_H2_1               SITE4
-# S4_LE3_INTERFACE_2      S4_H2_INTERFACE_2       BR_S4_LE3_H2_1               SITE4
+# Src Interface           Dst Interface           Bridge            Mirror of
+# S3_BG1_INTERFACE_1      S4_BG1_INTERFACE_1      BR_ISN_S3_S4_1    BR_ISN_S1_S2_1   (cross-site MSD)
+# S3_BG1_INTERFACE_2      S3_SP1_INTERFACE_1      BR_S3_BG1_SP1_1   BR_S1_BG1_SP1_1
+# S4_BG1_INTERFACE_2      S4_SP1_INTERFACE_1      BR_S4_BG1_SP1_1   BR_S2_BG1_SP1_1
+# S3_SP1_INTERFACE_2      S3_LE1_INTERFACE_1      BR_S3_SP1_LE1_1   BR_S1_SP1_LE1_1
+# S4_SP1_INTERFACE_2      S4_LE1_INTERFACE_1      BR_S4_SP1_LE1_1   BR_S2_SP1_LE1_1
+# S3_TOR1_INTERFACE_3     S3_H1_INTERFACE_1       BR_S3_T1_H1_1     BR_S1_T1_H1_1
+# S4_LE1_INTERFACE_2      S4_H1_INTERFACE_1       BR_S4_LE1_H1_1    BR_S2_LE1_H1_1
+# S3_SP1_INTERFACE_3      S3_LE2_INTERFACE_1      BR_S3_SP1_LE2_1   BR_S1_SP1_LE2_1
+# S3_LE1_INTERFACE_2      S3_LE2_INTERFACE_2      BR_S3_LE1_LE2_1   BR_S1_LE1_LE2_1  (VPC peer-link)
+# S3_LE1_INTERFACE_3      S3_TOR1_INTERFACE_1     BR_S3_LE1_T1_1    BR_S1_LE1_T1_1
+# S3_LE2_INTERFACE_3      S3_TOR1_INTERFACE_2     BR_S3_LE2_T1_1    BR_S1_LE2_T1_1
+# S3_SP1_INTERFACE_4      S3_LE3_INTERFACE_1      BR_S3_SP1_LE3_1   BR_S1_SP1_LE3_1
+# S3_SP1_INTERFACE_5      S3_LE4_INTERFACE_1      BR_S3_SP1_LE4_1   BR_S1_SP1_LE4_1
+# S3_LE3_INTERFACE_2      S3_LE4_INTERFACE_2      BR_S3_LE3_LE4_1   BR_S1_LE3_LE4_1  (VPC peer-link)
+# WAN2_INTERFACE_2        S3_BG1_INTERFACE_3      BR_ISN_WAN_S3_1   BR_ISN_WAN_S1_1  (C8000V WAN/ISN router)
+# WAN2_INTERFACE_3        S4_BG1_INTERFACE_3      BR_ISN_WAN_S4_1   BR_ISN_WAN_S2_1  (C8000V WAN/ISN router)
+# All mgmt0                                       BR_ND_DATA_14
 
 network:
   version: 2
@@ -33,7 +37,6 @@ network:
       link: eno6
       optional: true
   bridges:
-
     BR_ISN_S3_S4_1:
       openvswitch: {}
       dhcp4: false
@@ -64,7 +67,107 @@ network:
         stp: false
       interfaces: []
 
+    BR_ISN_WAN_S3_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_ISN_WAN_S4_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
     BR_S3_SP1_LE1_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_S3_SP1_LE2_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_S3_SP1_LE3_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_S3_SP1_LE4_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_S3_LE1_LE2_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_S3_LE3_LE4_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_S3_LE1_T1_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_S3_LE2_T1_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_S3_T1_H1_1:
       openvswitch: {}
       dhcp4: false
       dhcp6: false
@@ -84,57 +187,7 @@ network:
         stp: false
       interfaces: []
 
-    BR_S4_SP1_LE2_1:
-      openvswitch: {}
-      dhcp4: false
-      dhcp6: false
-      mtu: 9216
-      accept-ra: false
-      parameters:
-        stp: false
-      interfaces: []
-
-    BR_S4_SP1_LE3_1:
-      openvswitch: {}
-      dhcp4: false
-      dhcp6: false
-      mtu: 9216
-      accept-ra: false
-      parameters:
-        stp: false
-      interfaces: []
-
-    BR_S3_LE1_H1_1:
-      openvswitch: {}
-      dhcp4: false
-      dhcp6: false
-      mtu: 9216
-      accept-ra: false
-      parameters:
-        stp: false
-      interfaces: []
-
     BR_S4_LE1_H1_1:
-      openvswitch: {}
-      dhcp4: false
-      dhcp6: false
-      mtu: 9216
-      accept-ra: false
-      parameters:
-        stp: false
-      interfaces: []
-
-    BR_S4_LE2_H2_1:
-      openvswitch: {}
-      dhcp4: false
-      dhcp6: false
-      mtu: 9216
-      accept-ra: false
-      parameters:
-        stp: false
-      interfaces: []
-
-    BR_S4_LE3_H2_1:
       openvswitch: {}
       dhcp4: false
       dhcp6: false

@@ -9,6 +9,8 @@ Two layers create and configure them:
 
 - **netplan** (`config/bridges/netplan/9912-bridges.yaml`) creates the bridges
   declaratively and persists them across reboot (MTU 9216, `stp: false`).
+- **`9914-bridges.yaml`** carries the SITE3/SITE4 bridges for the ND 4.3.1 mirror testbed. Install it the same way; its
+  switches, WAN2, containers and ND 4.3.1 itself manage over its `BR_ND_DATA_14` (`Vlan14`, 192.168.14.2/24).
 - **`bridges_config_ovs.sh`** asserts the OVS settings netplan does not set —
   notably `other-config:forward-bpdu=true`, which LACP / vPC peer-links need,
   plus the jumbo `mtu_request` — and creates any bridge that is missing.

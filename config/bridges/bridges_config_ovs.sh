@@ -18,7 +18,7 @@ set -euo pipefail
 
 MTU=9216
 
-# SITE1/SITE2 bridges (canonical, from 9912-bridges.yaml).
+# SITE1/SITE2 bridges (canonical, from 9912-bridges.yaml) followed by SITE3/SITE4.
 BRIDGES=(
     BR_ND_DATA_12
     BR_ISN_S1_S2_1
@@ -37,6 +37,24 @@ BRIDGES=(
     BR_S2_LE1_H1_1
     BR_ISN_WAN_S1_1
     BR_ISN_WAN_S2_1
+    # SITE3/SITE4 mirror (canonical, from 9914-bridges.yaml); BR_ND_DATA_14 is their management bridge.
+    BR_ND_DATA_14
+    BR_ISN_S3_S4_1
+    BR_S3_BG1_SP1_1
+    BR_S4_BG1_SP1_1
+    BR_S3_SP1_LE1_1
+    BR_S3_SP1_LE2_1
+    BR_S3_SP1_LE3_1
+    BR_S3_SP1_LE4_1
+    BR_S3_LE1_LE2_1
+    BR_S3_LE3_LE4_1
+    BR_S3_LE1_T1_1
+    BR_S3_LE2_T1_1
+    BR_S3_T1_H1_1
+    BR_S4_SP1_LE1_1
+    BR_S4_LE1_H1_1
+    BR_ISN_WAN_S3_1
+    BR_ISN_WAN_S4_1
 )
 
 if [[ $EUID -ne 0 ]]; then

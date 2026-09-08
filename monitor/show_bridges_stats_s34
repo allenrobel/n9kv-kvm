@@ -6,7 +6,8 @@
 # Also useful when run with watch
 # watch --color --differences ./show_bridges_stats
 #
-export BRIDGES="BR_ISN_S3_S4_1 BR_S3_BG1_SP1_1 BR_S4_BG1_SP1_1 BR_S3_SP1_LE1_1 BR_S4_SP1_LE1_1 BR_S3_LE1_H1_1 BR_S4_LE1_H1_1"
+export BRIDGES="BR_ISN_S3_S4_1 BR_S3_BG1_SP1_1 BR_S4_BG1_SP1_1 BR_S3_SP1_LE1_1 BR_S3_SP1_LE2_1 BR_S3_SP1_LE3_1 BR_S3_SP1_LE4_1 BR_S3_LE1_LE2_1 \
+BR_S3_LE3_LE4_1 BR_S3_LE1_T1_1 BR_S3_LE2_T1_1 BR_S3_T1_H1_1 BR_S4_SP1_LE1_1 BR_S4_LE1_H1_1 BR_ISN_WAN_S3_1 BR_ISN_WAN_S4_1"
 
 # Show bridge RX/TX statistics
 for bridge in $BRIDGES; do echo "$bridge:"; ip -s link show $bridge; done

@@ -1,0 +1,15 @@
+---
+# WAN2.yaml - Cross-site WAN/ISN router for the ND 4.3.1 mirror testbed (Catalyst 8000V, IOS-XE); mirror of WAN1.
+# Cross-site infrastructure carries no site prefix (like ER).
+name: WAN2
+role: WAN Router
+sid: 9102
+mgmt_bridge: BR_ND_DATA_14
+mgmt_ip: 192.168.14.112/24
+mgmt_gw: 192.168.14.1
+neighbors:
+  - S3_BG1
+  - S4_BG1
+isl_bridges:
+  - BR_ISN_WAN_S3_1
+  - BR_ISN_WAN_S4_1

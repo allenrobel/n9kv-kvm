@@ -17,8 +17,6 @@ from __future__ import annotations
 import argparse
 import copy
 import json
-import os  # noqa: F401  used by switch/isn/overlay phases added in Tasks 10-12
-import time  # noqa: F401  used by switch/isn/overlay phases added in Tasks 10-12
 from pathlib import Path
 from typing import Any
 
@@ -70,8 +68,17 @@ class Provisioner:
         return None if self.dry_run else self.client.post(path, json=body)
 
     def _put(self, path: str, body: Any) -> Any:
-        self._log(f"PUT {path}")
+        self._log(f"PUT {path} {json.dumps(body)[:300]}")
         return None if self.dry_run else self.client.put(path, json=body)
+
+    def _read(self, path: str, key: str, params: dict | None = None) -> list:
+        """GET a list endpoint; an HTTP error (e.g. 404 for a fabric that does not exist yet) reads as empty."""
+        try:
+            body = self.client.get(path, params=params) or {}
+        except RuntimeError as exc:
+            self._log(f"read {path} failed ({str(exc)[:80]}); treating as empty")
+            return []
+        return body.get(key, []) if isinstance(body, dict) else body
 
     def existing_fabrics(self) -> dict[str, dict]:
         """Fabrics AND fabric groups by name. GET /fabrics lists only category=fabric; groups need ?category=fabricGroup."""
@@ -99,7 +106,7 @@ class Provisioner:
         for group in self.topo.fabric_groups:
             if group.name not in existing:
                 self._post("/fabrics", fabric_group_create_payload(group))
-            members = {m["name"] for m in (self.client.get(f"/fabrics/{group.name}/members") or {}).get("fabrics", [])} if not self.dry_run else set()
+            members = {m["name"] for m in self._read(f"/fabrics/{group.name}/members", "fabrics")}
             for member in group.members:
                 if member not in members:
                     self._post(f"/fabrics/{group.name}/actions/addMembers", {"members": [{"name": member}]})

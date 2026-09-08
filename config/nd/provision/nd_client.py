@@ -73,16 +73,18 @@ class NDClient:
     def delete(self, path: str) -> Any:
         return self._json(self.request("DELETE", path), path)
 
-    def paged(self, path: str, key: str, params: Optional[dict] = None, page: int = 100) -> list:
+    def paged(self, path: str, key: str, params: Optional[dict] = None, page: int = 100) -> list[dict]:
         """Walk offset/max pagination. ND silently pages some lists (policies) at 10; never trust one read."""
-        items: list = []
+        items: list[dict] = []
         offset = 0
         while True:
             query = dict(params or {}, offset=offset, max=page)
             body = self.get(path, params=query) or {}
             chunk = body.get(key, []) if isinstance(body, dict) else body
-            items.extend(chunk)
-            total = (body.get("meta", {}).get("counts", {}) or {}).get("total") if isinstance(body, dict) else None
-            if len(chunk) < page or (total is not None and len(items) >= total):
+            if not chunk:
                 return items
-            offset += page
+            items.extend(chunk)
+            offset += len(chunk)
+            total = (body.get("meta", {}).get("counts", {}) or {}).get("total") if isinstance(body, dict) else None
+            if total is not None and len(items) >= total:
+                return items

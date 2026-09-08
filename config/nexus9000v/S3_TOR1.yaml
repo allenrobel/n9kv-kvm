@@ -1,0 +1,17 @@
+---
+# SITE3 (ND 4.3.1 mirror of SITE1)
+# S3_TOR1.yaml - Top-of-Rack Switch 1 in SITE3 (dual-homed to VPC pair S3_LE1/S3_LE2; host S3_H1 on Eth1/3; mirror of S1_TOR1)
+name: S3_TOR1
+role: Top-of-Rack Switch
+sid: 3601
+mgmt_bridge: BR_ND_DATA_14
+mgmt_ip: 192.168.14.161/24
+mgmt_gw: 192.168.14.1
+neighbors:
+  - S3_LE1
+  - S3_LE2
+  - S3_H1
+isl_bridges:
+  - BR_S3_LE1_T1_1
+  - BR_S3_LE2_T1_1
+  - BR_S3_T1_H1_1

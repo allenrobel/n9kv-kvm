@@ -1,6 +1,6 @@
 ---
-# SITE3
-# S3_LE1.yaml - Leaf Switch 1 in SITE3
+# SITE3 (ND 4.3.1 mirror of SITE1)
+# S3_LE1.yaml - Leaf Switch 1 in SITE3 (VPC pair member with S3_LE2; uplink to S3_TOR1; mirror of S1_LE1)
 name: S3_LE1
 role: Leaf Switch
 sid: 3501
@@ -9,7 +9,9 @@ mgmt_ip: 192.168.14.151/24
 mgmt_gw: 192.168.14.1
 neighbors:
   - S3_SP1
-  - S3_H1
+  - S3_LE2
+  - S3_TOR1
 isl_bridges:
   - BR_S3_SP1_LE1_1
-  - BR_S3_LE1_H1_1
+  - BR_S3_LE1_LE2_1
+  - BR_S3_LE1_T1_1

@@ -1365,7 +1365,7 @@ fabrics:
       management:
         monitoredMode: false          # API-created external fabrics default to true; true silently blocks every deploy
     switches:
-      - {hostname: WAN1, ip: 192.168.12.112, role: edgeRouter, platform: ios-xe}
+      - {hostname: WAN1, ip: 192.168.12.112, role: coreRouter, platform: ios-xe}   # live ND 4.2.1 role (snapshot 2026-09-08)
 
 fabric_groups:
   - name: MSD
@@ -1380,9 +1380,9 @@ fabric_groups:
 isn:
   links:
     - {src_fabric: ISN, src: WAN1, src_if: GigabitEthernet2, dst_fabric: SITE1, dst: S1_BG1, dst_if: Ethernet1/3,
-       src_asn: "65535", dst_asn: "65001", src_ip: 10.33.0.1/30, dst_ip: 10.33.0.2, mtu: 9000}
+       src_asn: "65535", dst_asn: "65001", src_ip: 10.15.0.1/30, dst_ip: 10.15.0.2, mtu: 9000}
     - {src_fabric: ISN, src: WAN1, src_if: GigabitEthernet3, dst_fabric: SITE2, dst: S2_BG1, dst_if: Ethernet1/3,
-       src_asn: "65535", dst_asn: "65002", src_ip: 10.33.0.5/30, dst_ip: 10.33.0.6, mtu: 9000}
+       src_asn: "65535", dst_asn: "65002", src_ip: 10.25.0.1/30, dst_ip: 10.25.0.2, mtu: 9000}
   wan:
     hostname: WAN1
     fabric: ISN
@@ -1391,40 +1391,28 @@ isn:
     bgp_router_id: {BGP_AS: "65535", LOOPBACK_IP: 10.35.0.1}
 
 overlay:
-  # vrfs / networks: the objects returned by snapshot files vrfs_SITE1.json / networks_SITE1.json, minus
-  # fabricName, vrfStatus/networkStatus and any key listed in snapshot.VOLATILE_KEYS. Copy them verbatim
-  # (vrfName, vrfId, vlanId, vrfTemplateName/coreData..., networkName, networkId, vlanId, vrfName,
-  # networkMode, l2Data, l3Data.gatewayIpv4Address == 192.0.1.1/24). They are created in every fabric
-  # listed under `fabrics:`.
-  vrfs:
-    - fabrics: [SITE1, SITE2]
-      object: {}     # <- paste from vrfs_SITE1.json
-  networks:
-    - fabrics: [SITE1, SITE2]
-      object: {}     # <- paste from networks_SITE1.json (VLAN 2, gateway 192.0.1.1/24)
-  # attachments: from vrf_attachments_*.json / network_attachments_*.json; one entry per switch.
-  # `interfaces` is the list from the snapshot (mode/name per interface, e.g. the S1_TOR1 host port
-  # and the vPC pair's port-channel to the TOR, S2_LE1 Ethernet1/2).
-  vrf_attachments:
-    - {fabric: SITE1, vrf: "<vrfName>", switch: S1_LE1}
-    - {fabric: SITE1, vrf: "<vrfName>", switch: S1_LE2}
-    - {fabric: SITE1, vrf: "<vrfName>", switch: S1_TOR1}
-    - {fabric: SITE2, vrf: "<vrfName>", switch: S2_LE1}
-  network_attachments:
-    - {fabric: SITE1, network: "<networkName>", switch: S1_LE1, vlan: 2, interfaces: []}
-    - {fabric: SITE1, network: "<networkName>", switch: S1_LE2, vlan: 2, interfaces: []}
-    - {fabric: SITE1, network: "<networkName>", switch: S1_TOR1, vlan: 2, interfaces: []}
-    - {fabric: SITE2, network: "<networkName>", switch: S2_LE1, vlan: 2, interfaces: []}
+  # EMPTY on purpose: the 2026-09-08 snapshot of ND 4.2.1 (~/tmp/snap_nd421 on the host) has no VRFs,
+  # networks or attachments in SITE1/SITE2. Fill in later by copying the objects returned by
+  # /fabrics/{f}/vrfs and /fabrics/{f}/networks (minus fabricName, *Status and snapshot.VOLATILE_KEYS)
+  # into `object:` entries, e.g.
+  #   vrfs:
+  #     - fabrics: [SITE1, SITE2]
+  #       object: {vrfName: ..., vrfId: ..., vlanId: ..., ...}
+  #   networks:
+  #     - fabrics: [SITE1, SITE2]
+  #       object: {networkName: ..., networkId: ..., vlanId: ..., vrfName: ..., l3Data: {gatewayIpv4Address: ...}}
+  #   vrf_attachments:     [{fabric: SITE1, vrf: ..., switch: S1_LE1}, ...]
+  #   network_attachments: [{fabric: SITE1, network: ..., switch: S1_TOR1, vlan: ..., interfaces: [{mode: access, name: Ethernet1/3}]}, ...]
+  vrfs: []
+  networks: []
+  vrf_attachments: []
+  network_attachments: []
 ```
 
-Transcription rules for the `overlay:` section (do this with `~/tmp/snap_nd421` open; the file must contain no `<...>` markers or empty `object: {}` when done):
-
-1. `vrfs[].object` = each element of `vrfs_SITE1.json["vrfs"]` with keys `fabricName`, `vrfStatus` and `snapshot.VOLATILE_KEYS` removed.
-2. `networks[].object` = same from `networks_SITE1.json["networks"]`.
-3. `vrf_attachments` / `network_attachments` = one entry per `(fabric, switch)` that has `attach: true` / `isAttached` in the `*_attachments_*.json` files; copy
-   `vlanId` and the `interfaces` list verbatim. Delete the entries above for switches that are not attached, add entries for switches that are.
-4. Fabric `settings` keys are checked against `fabric_SITE1.json`: if the snapshot shows a different value for any listed key, the snapshot wins (record why in the
-   commit message).
+Values above that come from the live ND 4.2.1 snapshot of 2026-09-08 (they override older notes): ISN links use `10.15.0.1/30 -> 10.15.0.2` and
+`10.25.0.1/30 -> 10.25.0.2`; WAN1's role is `coreRouter`; the MSD group's live settings include `multisiteOverlayInterConnectType: directPeering`,
+`autoMultisiteUnderlayInterConnect: true`, `bgpSendCommunity: true` (everything else is a server default). The fabric `settings` keys match the snapshot's
+`fabric_SITE1.json` / `fabric_SITE2.json` exactly.
 
 - [ ] **Step 5: Write `topology_nd431.yaml`**
 
@@ -1452,6 +1440,9 @@ git commit -m "Add declarative topology model and the ND 4.2.1 / ND 4.3.1 testbe
 **Files:**
 
 - Create: `config/nd/provision/provision.py`, `config/nd/provision/tests/test_provision_payloads.py`
+- Modify: `config/nd/provision/snapshot.py` (`dump()`: after writing `fabrics.json`, also fetch `client.get("/fabrics", params={"category": "fabricGroup"})`,
+  write it as `fabric_groups.json`, and for each group write `fabric_group_<name>.json` (`GET /fabrics/<name>`) and `members_<name>.json`
+  (`GET /fabrics/<name>/members`) — the plain `/fabrics` list omits fabric groups)
 
 **Interfaces:**
 
@@ -1566,7 +1557,10 @@ class Provisioner:
         return None if self.dry_run else self.client.put(path, json=body)
 
     def existing_fabrics(self) -> dict[str, dict]:
-        return {f["name"]: f for f in (self.client.get("/fabrics") or {}).get("fabrics", [])}
+        """Fabrics AND fabric groups by name. GET /fabrics lists only category=fabric; groups need ?category=fabricGroup."""
+        found = {f["name"]: f for f in (self.client.get("/fabrics") or {}).get("fabrics", [])}
+        found.update({g["name"]: g for g in (self.client.get("/fabrics", params={"category": "fabricGroup"}) or {}).get("fabrics", [])})
+        return found
 
     # -- phase: fabrics ------------------------------------------------------------------------------------
     def phase_fabrics(self) -> None:

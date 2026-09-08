@@ -71,7 +71,8 @@ check that ND 4.3.1's node data IP (`.14`) and persistent `.30-.32` do not overl
 ### D3. Fabric names, ASNs, pools, VNIs are identical on ND 4.3.1 (confirmed by the user 2026-09-08)
 
 ND 4.3.1 gets fabrics `SITE1`, `SITE2`, `ISN`, fabric group `MSD`, ASNs 65001/65002/65535, the same Resources-tab pools
-(`10.1x`/`10.2x`), the same ISN /30s (10.33.0.0/30, 10.33.0.4/30), the same WAN Loopback0 (10.35.0.1/32), and the same
+(`10.1x`/`10.2x`), the same ISN /30s (10.15.0.0/30 and 10.25.0.0/30, inside each site's VRF-Lite pool), the same WAN
+Loopback0 (10.35.0.1/32), the same WAN router role (`coreRouter`), and the same
 overlay VRF/network/VNI/VLAN. Only the member device hostnames (S3_*/S4_*/WAN2) and their mgmt IPs differ.
 
 Rationale: the fabrics live on separate controllers and separate bridges, so there is no collision; the user's `env_prod`
@@ -127,8 +128,11 @@ unchanged in both the 4.2.1 and 4.3.1 OpenAPI schemas.
 
 The overlay definition (VRF name/ID, network name/ID, VLAN, gateway, attachment ports) is captured from the live ND 4.2.1
 with `snapshot.py` and transcribed into `topology_nd421.yaml`; `topology_nd431.yaml` is a copy with only the hostname/IP
-substitutions. Known from memory and docs today: VLAN 2, anycast gateway 192.0.1.1/24, host addresses 192.0.1.171/.172,
-attachment on the S1 vPC pair + S1_TOR1 host port and on S2_LE1 Eth1/2.
+substitutions. The 2026-09-08 snapshot of ND 4.2.1 shows NO VRFs, networks or attachments in SITE1/SITE2 (the VLAN-2 /
+192.0.1.1 overlay noted in older session memory was not re-created after the 2026-08 rebuild), so both topology files ship
+with an empty `overlay:` section; the schema and the `overlay` phase remain so the section can be filled in later.
+The snapshot also showed that fabric groups are listed only by `GET /fabrics?category=fabricGroup`, and that the live ISN
+links use 10.15.0.1/30 and 10.25.0.1/30 (not the 10.33.0.x of the earlier lab), with WAN1 in role `coreRouter`.
 
 ### D6. Scope boundaries
 

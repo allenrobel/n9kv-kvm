@@ -43,6 +43,8 @@ from os import environ
 
 ND_IP4 = environ.get("ND_IP4", "10.10.20.10")
 ND_IP4_2 = environ.get("ND_IP4_2", "10.10.20.20")
+# ND 4.3.1.175 node1 management IP; data 192.168.14.14 on BR_ND_DATA_14 (persistent data .30-.32, persistent mgmt 10.10.20.60-.62)
+ND_431_IP4 = environ.get("ND_431_IP4", "10.10.20.20")
 
 # SITE1 / SITE2
 S1_BG1_IP4 = environ.get("S1_BG1_IP4", "192.168.12.131")
@@ -58,20 +60,19 @@ S1_LE1_IP4_INTERFACE_2 = environ.get("S1_LE1_IP4_INTERFACE_2", "192.168.0.1")
 S2_LE1_IP4 = environ.get("S2_LE1_IP4", "192.168.12.153")
 S2_LE1_IP4_INTERFACE_2 = environ.get("S2_LE1_IP4_INTERFACE_2", "192.168.0.2")
 
-# SITE3 / SITE4
+# SITE3 / SITE4 (ND 4.3.1 mirror of SITE1 / SITE2: same last octet on 192.168.14.0/24 / BR_ND_DATA_14)
 S3_BG1_IP4 = environ.get("S3_BG1_IP4", "192.168.14.131")
 S4_BG1_IP4 = environ.get("S4_BG1_IP4", "192.168.14.132")
 S3_SP1_IP4 = environ.get("S3_SP1_IP4", "192.168.14.141")
 S4_SP1_IP4 = environ.get("S4_SP1_IP4", "192.168.14.142")
 S3_LE1_IP4 = environ.get("S3_LE1_IP4", "192.168.14.151")
-S4_LE1_IP4 = environ.get("S4_LE1_IP4", "192.168.14.152")
-S4_LE2_IP4 = environ.get("S4_LE2_IP4", "192.168.14.153")
-S4_LE3_IP4 = environ.get("S4_LE3_IP4", "192.168.14.154")
+S3_LE2_IP4 = environ.get("S3_LE2_IP4", "192.168.14.152")
+S3_LE3_IP4 = environ.get("S3_LE3_IP4", "192.168.14.154")
+S3_LE4_IP4 = environ.get("S3_LE4_IP4", "192.168.14.155")
+S3_TOR1_IP4 = environ.get("S3_TOR1_IP4", "192.168.14.161")
+S4_LE1_IP4 = environ.get("S4_LE1_IP4", "192.168.14.153")
 S3_LE1_IP4_INTERFACE_2 = environ.get("S3_LE1_IP4_INTERFACE_2", "192.168.0.3")
 S4_LE1_IP4_INTERFACE_2 = environ.get("S4_LE1_IP4_INTERFACE_2", "192.168.0.4")
-
-S4_LE2_IP4_INTERFACE_2 = environ.get("S4_LE2_IP4_INTERFACE_2", "192.168.0.5")
-S4_LE3_IP4_INTERFACE_2 = environ.get("S4_LE3_IP4_INTERFACE_2", "192.168.0.6")
 
 # Fabric types
 SITE1_FABRIC = environ.get("ND_SITE1_FABRIC", "SITE1")
@@ -110,9 +111,11 @@ S4_BG1_HOSTNAME = environ.get("S4_BG1_HOSTNAME", "S4_BG1")
 S3_SP1_HOSTNAME = environ.get("S3_SP1_HOSTNAME", "S3_SP1")
 S4_SP1_HOSTNAME = environ.get("S4_SP1_HOSTNAME", "S4_SP1")
 S3_LE1_HOSTNAME = environ.get("S3_LE1_HOSTNAME", "S3_LE1")
+S3_LE2_HOSTNAME = environ.get("S3_LE2_HOSTNAME", "S3_LE2")
+S3_LE3_HOSTNAME = environ.get("S3_LE3_HOSTNAME", "S3_LE3")
+S3_LE4_HOSTNAME = environ.get("S3_LE4_HOSTNAME", "S3_LE4")
+S3_TOR1_HOSTNAME = environ.get("S3_TOR1_HOSTNAME", "S3_TOR1")
 S4_LE1_HOSTNAME = environ.get("S4_LE1_HOSTNAME", "S4_LE1")
-S4_LE2_HOSTNAME = environ.get("S4_LE2_HOSTNAME", "S4_LE2")
-S4_LE3_HOSTNAME = environ.get("S4_LE3_HOSTNAME", "S4_LE3")
 
 # Links
 # Source                  Destination             Bridge
@@ -125,14 +128,35 @@ S4_LE3_HOSTNAME = environ.get("S4_LE3_HOSTNAME", "S4_LE3")
 # S1_SP1_INTERFACE_4      S1_LE3_INTERFACE_1      BR_S1_SP1_LE3_1
 # S1_SP1_INTERFACE_5      S1_LE4_INTERFACE_1      BR_S1_SP1_LE4_1
 # S1_LE3_INTERFACE_2      S1_LE4_INTERFACE_2      BR_S1_LE3_LE4_1
+# WAN1_INTERFACE_2        S1_BG1_INTERFACE_3      BR_ISN_WAN_S1_1
+# WAN1_INTERFACE_3        S2_BG1_INTERFACE_3      BR_ISN_WAN_S2_1
+# SITE3 / SITE4 (mirror of SITE1 / SITE2 above)
+# S3_BG1_INTERFACE_1      S4_BG1_INTERFACE_1      BR_ISN_S3_S4_1
+# S3_BG1_INTERFACE_2      S3_SP1_INTERFACE_1      BR_S3_BG1_SP1_1
+# S4_BG1_INTERFACE_2      S4_SP1_INTERFACE_1      BR_S4_BG1_SP1_1
+# S3_SP1_INTERFACE_2      S3_LE1_INTERFACE_1      BR_S3_SP1_LE1_1
+# S4_SP1_INTERFACE_2      S4_LE1_INTERFACE_1      BR_S4_SP1_LE1_1
+# S3_TOR1_INTERFACE_3     S3_H1_INTERFACE_1       BR_S3_T1_H1_1
+# S4_LE1_INTERFACE_2      S4_H1_INTERFACE_1       BR_S4_LE1_H1_1
+# S3_SP1_INTERFACE_3      S3_LE2_INTERFACE_1      BR_S3_SP1_LE2_1
+# S3_LE1_INTERFACE_2      S3_LE2_INTERFACE_2      BR_S3_LE1_LE2_1
+# S3_LE1_INTERFACE_3      S3_TOR1_INTERFACE_1     BR_S3_LE1_T1_1
+# S3_LE2_INTERFACE_3      S3_TOR1_INTERFACE_2     BR_S3_LE2_T1_1
+# S3_SP1_INTERFACE_4      S3_LE3_INTERFACE_1      BR_S3_SP1_LE3_1
+# S3_SP1_INTERFACE_5      S3_LE4_INTERFACE_1      BR_S3_SP1_LE4_1
+# S3_LE3_INTERFACE_2      S3_LE4_INTERFACE_2      BR_S3_LE3_LE4_1
+# WAN2_INTERFACE_2        S3_BG1_INTERFACE_3      BR_ISN_WAN_S3_1
+# WAN2_INTERFACE_3        S4_BG1_INTERFACE_3      BR_ISN_WAN_S4_1
 
 # Base set of interfaces
 # SITE1 / SITE2
 S1_BG1_INTERFACE_1 = environ.get("S1_BG1_INTERFACE_1", "Ethernet1/1")
 S1_BG1_INTERFACE_2 = environ.get("S1_BG1_INTERFACE_2", "Ethernet1/2")
+S1_BG1_INTERFACE_3 = environ.get("S1_BG1_INTERFACE_3", "Ethernet1/3")
 
 S2_BG1_INTERFACE_1 = environ.get("S2_BG1_INTERFACE_1", "Ethernet1/1")
 S2_BG1_INTERFACE_2 = environ.get("S2_BG1_INTERFACE_2", "Ethernet1/2")
+S2_BG1_INTERFACE_3 = environ.get("S2_BG1_INTERFACE_3", "Ethernet1/3")
 
 S1_SP1_INTERFACE_1 = environ.get("S1_SP1_INTERFACE_1", "Ethernet1/1")
 S1_SP1_INTERFACE_2 = environ.get("S1_SP1_INTERFACE_2", "Ethernet1/2")
@@ -169,17 +193,17 @@ S1_LE4_INTERFACE_2 = environ.get("S1_LE4_INTERFACE_2", "Ethernet1/2")
 # SITE3 / SITE4
 S3_BG1_INTERFACE_1 = environ.get("S3_BG1_INTERFACE_1", "Ethernet1/1")
 S3_BG1_INTERFACE_2 = environ.get("S3_BG1_INTERFACE_2", "Ethernet1/2")
+S3_BG1_INTERFACE_3 = environ.get("S3_BG1_INTERFACE_3", "Ethernet1/3")
 
 S4_BG1_INTERFACE_1 = environ.get("S4_BG1_INTERFACE_1", "Ethernet1/1")
 S4_BG1_INTERFACE_2 = environ.get("S4_BG1_INTERFACE_2", "Ethernet1/2")
+S4_BG1_INTERFACE_3 = environ.get("S4_BG1_INTERFACE_3", "Ethernet1/3")
 
 S3_SP1_INTERFACE_1 = environ.get("S3_SP1_INTERFACE_1", "Ethernet1/1")
 S3_SP1_INTERFACE_2 = environ.get("S3_SP1_INTERFACE_2", "Ethernet1/2")
 
 S4_SP1_INTERFACE_1 = environ.get("S4_SP1_INTERFACE_1", "Ethernet1/1")
 S4_SP1_INTERFACE_2 = environ.get("S4_SP1_INTERFACE_2", "Ethernet1/2")
-S4_SP1_INTERFACE_3 = environ.get("S4_SP1_INTERFACE_3", "Ethernet1/3")
-S4_SP1_INTERFACE_4 = environ.get("S4_SP1_INTERFACE_4", "Ethernet1/4")
 
 S3_LE1_INTERFACE_1 = environ.get("S3_LE1_INTERFACE_1", "Ethernet1/1")
 S3_LE1_INTERFACE_2 = environ.get("S3_LE1_INTERFACE_2", "Ethernet1/2")
@@ -187,11 +211,25 @@ S3_LE1_INTERFACE_2 = environ.get("S3_LE1_INTERFACE_2", "Ethernet1/2")
 S4_LE1_INTERFACE_1 = environ.get("S4_LE1_INTERFACE_1", "Ethernet1/1")
 S4_LE1_INTERFACE_2 = environ.get("S4_LE1_INTERFACE_2", "Ethernet1/2")
 
-S4_LE2_INTERFACE_1 = environ.get("S4_LE2_INTERFACE_1", "Ethernet1/1")
-S4_LE2_INTERFACE_2 = environ.get("S4_LE2_INTERFACE_2", "Ethernet1/2")
+# S3_LE2 has 3 ISLs (spine, VPC peer-link to S3_LE1, downlink to S3_TOR1).
+# S3_LE1 grows to 4 ISLs (spine, host, VPC peer-link, downlink to S3_TOR1).
+S3_LE1_INTERFACE_3 = environ.get("S3_LE1_INTERFACE_3", "Ethernet1/3")
+S3_LE1_INTERFACE_4 = environ.get("S3_LE1_INTERFACE_4", "Ethernet1/4")
+S3_LE2_INTERFACE_1 = environ.get("S3_LE2_INTERFACE_1", "Ethernet1/1")
+S3_LE2_INTERFACE_2 = environ.get("S3_LE2_INTERFACE_2", "Ethernet1/2")
+S3_LE2_INTERFACE_3 = environ.get("S3_LE2_INTERFACE_3", "Ethernet1/3")
+S3_TOR1_INTERFACE_1 = environ.get("S3_TOR1_INTERFACE_1", "Ethernet1/1")
+S3_TOR1_INTERFACE_2 = environ.get("S3_TOR1_INTERFACE_2", "Ethernet1/2")
+S3_TOR1_INTERFACE_3 = environ.get("S3_TOR1_INTERFACE_3", "Ethernet1/3")
+S3_SP1_INTERFACE_3 = environ.get("S3_SP1_INTERFACE_3", "Ethernet1/3")
+S3_SP1_INTERFACE_4 = environ.get("S3_SP1_INTERFACE_4", "Ethernet1/4")
+S3_SP1_INTERFACE_5 = environ.get("S3_SP1_INTERFACE_5", "Ethernet1/5")
 
-S4_LE3_INTERFACE_1 = environ.get("S4_LE3_INTERFACE_1", "Ethernet1/1")
-S4_LE3_INTERFACE_2 = environ.get("S4_LE3_INTERFACE_2", "Ethernet1/2")
+# S3_LE3/S3_LE4 are a second VPC pair (spine uplink + peer-link).
+S3_LE3_INTERFACE_1 = environ.get("S3_LE3_INTERFACE_1", "Ethernet1/1")
+S3_LE3_INTERFACE_2 = environ.get("S3_LE3_INTERFACE_2", "Ethernet1/2")
+S3_LE4_INTERFACE_1 = environ.get("S3_LE4_INTERFACE_1", "Ethernet1/1")
+S3_LE4_INTERFACE_2 = environ.get("S3_LE4_INTERFACE_2", "Ethernet1/2")
 
 # output is printed to STDOUT, where ansible-playbook -i reads it.
 # If you change any vars above, be sure to add them below.
@@ -212,6 +250,7 @@ output = {
             "ISN_FABRIC": ISN_FABRIC,
             "ND_IP4": ND_IP4,
             "ND_IP4_2": ND_IP4_2,
+            "ND_431_IP4": ND_431_IP4,
             "S1_BG1_IP4": S1_BG1_IP4,
             "S2_BG1_IP4": S2_BG1_IP4,
             "S1_SP1_IP4": S1_SP1_IP4,
@@ -227,9 +266,11 @@ output = {
             "S3_SP1_IP4": S3_SP1_IP4,
             "S4_SP1_IP4": S4_SP1_IP4,
             "S3_LE1_IP4": S3_LE1_IP4,
+            "S3_LE2_IP4": S3_LE2_IP4,
+            "S3_LE3_IP4": S3_LE3_IP4,
+            "S3_LE4_IP4": S3_LE4_IP4,
+            "S3_TOR1_IP4": S3_TOR1_IP4,
             "S4_LE1_IP4": S4_LE1_IP4,
-            "S4_LE2_IP4": S4_LE2_IP4,
-            "S4_LE3_IP4": S4_LE3_IP4,
             "S1_BG1_HOSTNAME": S1_BG1_HOSTNAME,
             "S2_BG1_HOSTNAME": S2_BG1_HOSTNAME,
             "S1_SP1_HOSTNAME": S1_SP1_HOSTNAME,
@@ -245,13 +286,17 @@ output = {
             "S3_SP1_HOSTNAME": S3_SP1_HOSTNAME,
             "S4_SP1_HOSTNAME": S4_SP1_HOSTNAME,
             "S3_LE1_HOSTNAME": S3_LE1_HOSTNAME,
+            "S3_LE2_HOSTNAME": S3_LE2_HOSTNAME,
+            "S3_LE3_HOSTNAME": S3_LE3_HOSTNAME,
+            "S3_LE4_HOSTNAME": S3_LE4_HOSTNAME,
+            "S3_TOR1_HOSTNAME": S3_TOR1_HOSTNAME,
             "S4_LE1_HOSTNAME": S4_LE1_HOSTNAME,
-            "S4_LE2_HOSTNAME": S4_LE2_HOSTNAME,
-            "S4_LE3_HOSTNAME": S4_LE3_HOSTNAME,
             "S1_BG1_INTERFACE_1": S1_BG1_INTERFACE_1,
             "S1_BG1_INTERFACE_2": S1_BG1_INTERFACE_2,
+            "S1_BG1_INTERFACE_3": S1_BG1_INTERFACE_3,
             "S2_BG1_INTERFACE_1": S2_BG1_INTERFACE_1,
             "S2_BG1_INTERFACE_2": S2_BG1_INTERFACE_2,
+            "S2_BG1_INTERFACE_3": S2_BG1_INTERFACE_3,
             "S1_SP1_INTERFACE_1": S1_SP1_INTERFACE_1,
             "S1_SP1_INTERFACE_2": S1_SP1_INTERFACE_2,
             "S2_SP1_INTERFACE_1": S2_SP1_INTERFACE_1,
@@ -279,26 +324,35 @@ output = {
             "S2_LE1_IP4_INTERFACE_2": S2_LE1_IP4_INTERFACE_2,
             "S3_BG1_INTERFACE_1": S3_BG1_INTERFACE_1,
             "S3_BG1_INTERFACE_2": S3_BG1_INTERFACE_2,
+            "S3_BG1_INTERFACE_3": S3_BG1_INTERFACE_3,
             "S4_BG1_INTERFACE_1": S4_BG1_INTERFACE_1,
             "S4_BG1_INTERFACE_2": S4_BG1_INTERFACE_2,
+            "S4_BG1_INTERFACE_3": S4_BG1_INTERFACE_3,
             "S3_SP1_INTERFACE_1": S3_SP1_INTERFACE_1,
             "S3_SP1_INTERFACE_2": S3_SP1_INTERFACE_2,
             "S4_SP1_INTERFACE_1": S4_SP1_INTERFACE_1,
             "S4_SP1_INTERFACE_2": S4_SP1_INTERFACE_2,
-            "S4_SP1_INTERFACE_3": S4_SP1_INTERFACE_3,
-            "S4_SP1_INTERFACE_4": S4_SP1_INTERFACE_4,
             "S3_LE1_INTERFACE_1": S3_LE1_INTERFACE_1,
             "S3_LE1_INTERFACE_2": S3_LE1_INTERFACE_2,
             "S4_LE1_INTERFACE_1": S4_LE1_INTERFACE_1,
             "S4_LE1_INTERFACE_2": S4_LE1_INTERFACE_2,
             "S3_LE1_IP4_INTERFACE_2": S3_LE1_IP4_INTERFACE_2,
             "S4_LE1_IP4_INTERFACE_2": S4_LE1_IP4_INTERFACE_2,
-            "S4_LE2_INTERFACE_1": S4_LE2_INTERFACE_1,
-            "S4_LE2_INTERFACE_2": S4_LE2_INTERFACE_2,
-            "S4_LE3_INTERFACE_1": S4_LE3_INTERFACE_1,
-            "S4_LE3_INTERFACE_2": S4_LE3_INTERFACE_2,
-            "S4_LE2_IP4_INTERFACE_2": S4_LE2_IP4_INTERFACE_2,
-            "S4_LE3_IP4_INTERFACE_2": S4_LE3_IP4_INTERFACE_2,
+            "S3_LE1_INTERFACE_3": S3_LE1_INTERFACE_3,
+            "S3_LE1_INTERFACE_4": S3_LE1_INTERFACE_4,
+            "S3_LE2_INTERFACE_1": S3_LE2_INTERFACE_1,
+            "S3_LE2_INTERFACE_2": S3_LE2_INTERFACE_2,
+            "S3_LE2_INTERFACE_3": S3_LE2_INTERFACE_3,
+            "S3_TOR1_INTERFACE_1": S3_TOR1_INTERFACE_1,
+            "S3_TOR1_INTERFACE_2": S3_TOR1_INTERFACE_2,
+            "S3_TOR1_INTERFACE_3": S3_TOR1_INTERFACE_3,
+            "S3_SP1_INTERFACE_3": S3_SP1_INTERFACE_3,
+            "S3_SP1_INTERFACE_4": S3_SP1_INTERFACE_4,
+            "S3_SP1_INTERFACE_5": S3_SP1_INTERFACE_5,
+            "S3_LE3_INTERFACE_1": S3_LE3_INTERFACE_1,
+            "S3_LE3_INTERFACE_2": S3_LE3_INTERFACE_2,
+            "S3_LE4_INTERFACE_1": S3_LE4_INTERFACE_1,
+            "S3_LE4_INTERFACE_2": S3_LE4_INTERFACE_2,
             "ND_PASSWORD": ND_PASSWORD,
             "ND_USERNAME": ND_USERNAME,
             "NXOS_USERNAME": NXOS_USERNAME,
@@ -321,6 +375,13 @@ output = {
             "ansible_network_os": "cisco.nd.nd",
         },
     },
+    "nd431": {
+        "hosts": [ND_431_IP4],
+        "vars": {
+            "ansible_connection": "ansible.netcommon.httpapi",
+            "ansible_network_os": "cisco.nd.nd",
+        },
+    },
     "nxos": {
         "children": [
             "S1_BG1",
@@ -335,12 +396,14 @@ output = {
             "S2_LE1",
             "S3_LE1",
             "S4_LE1",
-            "S4_LE2",
-            "S4_LE3",
             "S1_LE2",
             "S1_LE3",
             "S1_LE4",
             "S1_TOR1",
+            "S3_LE2",
+            "S3_LE3",
+            "S3_LE4",
+            "S3_TOR1",
         ],
         "vars": {
             "ansible_become": "true",

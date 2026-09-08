@@ -33,8 +33,7 @@ below verbatim).
   `pymarkdown scan`.
 - `env_prod/` is never staged or committed. Credentials come only from the environment (`ND_IP4`, `ND_USERNAME`, `ND_PASSWORD`, `ND_DOMAIN`, `NXOS_PASSWORD`,
   `IOSXE_PASSWORD`).
-- Work on branch `nd431-mirror-testbed` off `main`; finish with a PR (never push to `main`). Suggested split: PR A = Tasks 1-7 (lab definitions), PR B = Tasks 8-13
-  (provisioning tool + docs). Both can be one PR if preferred.
+- Work on branch `nd431-mirror-testbed` off `main`; finish with one PR covering Tasks 1-13 (never push to `main`).
 - Host is `glide-wired.laukapu.com` (replaces `glide`). `sudo` there needs a password; `virsh -c qemu:///system` and `ip`/`ps` do not.
 - No test suite exists today. This plan adds the first one (`config/nd/provision/tests/`, pytest) for the pure functions of the provisioning tool only.
 
@@ -1100,7 +1099,7 @@ S4_LE1_IP4_INTERFACE_2 = environ.get("S4_LE1_IP4_INTERFACE_2", "192.168.0.4")
 ```
 
 and next to `ND_IP4_2` add `ND_431_IP4 = environ.get("ND_431_IP4", "10.10.20.20")` with the comment
-`# ND 4.3.1.175 node1 management IP (persistent mgmt 10.10.20.60-.62, persistent data 192.168.14.30-.32 on BR_ND_DATA_14)`. Delete `S4_LE2_IP4`, `S4_LE3_IP4`,
+`# ND 4.3.1.175 node1 management IP; data 192.168.14.14 on BR_ND_DATA_14 (persistent data .30-.32, persistent mgmt 10.10.20.60-.62)`. Delete `S4_LE2_IP4`, `S4_LE3_IP4`,
 `S4_LE2_IP4_INTERFACE_2`, `S4_LE3_IP4_INTERFACE_2`, `S4_LE2_HOSTNAME`, `S4_LE3_HOSTNAME`, every `S4_LE2_INTERFACE_*`/`S4_LE3_INTERFACE_*`, and their
 `all.vars`/`nxos.children` entries. Add `S3_LE2_HOSTNAME`, `S3_LE3_HOSTNAME`, `S3_LE4_HOSTNAME`, `S3_TOR1_HOSTNAME` (defaults = names).
 
@@ -2015,8 +2014,8 @@ sudo rm -rf /iso2/nd/4.3.1.175            # disk1/disk2 of the throw-away instan
 cd ~/repos/n9kv-kvm/config/nd && ./nd-4-3-1-175-node1.sh && virsh -c qemu:///system console nd.4.3.1.175.node1
 ```
 
-CLI bootstrap: mgmt 10.10.20.20/16 via 10.10.0.1 (unchanged). Web/`nd-bootstrap` phase: data network = ND 4.2.1's node data IP with the third octet 12
--> 14, gateway 192.168.14.1, persistent data IPs `192.168.14.30,192.168.14.31,192.168.14.32`, persistent mgmt IPs `10.10.20.60-.62`. Update
+CLI bootstrap: mgmt 10.10.20.20/16 via 10.10.0.1 (unchanged). Web/`nd-bootstrap` phase: data network `192.168.14.14/24` (ND 4.2.1 is `192.168.12.14/24`),
+gateway 192.168.14.1, persistent data IPs `192.168.14.30,192.168.14.31,192.168.14.32`, persistent mgmt IPs `10.10.20.60-.62`. Update
 `~/repos/nd-bootstrap/nd_bootstrap_4.3.1.175.vnode1.yaml` accordingly (separate repo). Wait for the UI, then continue.
 
 - [ ] **R1. Pre-flight**
@@ -2026,6 +2025,7 @@ cd ~/repos/n9kv-kvm && git checkout nd431-mirror-testbed && git pull
 free -g | head -2                                   # need ~190 GB free for 11 n9kv + WAN2 + 2 containers; launch site by site otherwise
 virsh -c qemu:///system domiflist nd.4.3.1.175.node1 | grep BR_ND_DATA_14      # R0 done: ND 4.3.1 data NIC is on BR_ND_DATA_14
 ip -br addr show BR_ND_DATA_14                                                 # host is 192.168.14.2/24
+ping -c1 -W2 192.168.14.14 >/dev/null && echo "ND 4.3.1 data IP up"                # ND 4.3.1 node data IP
 for o in 131 132 141 142 151 152 153 154 155 161 171 172 112; do ping -c1 -W1 192.168.14.$o >/dev/null && echo "IN USE: .$o"; done; echo "sweep done"
 ```
 

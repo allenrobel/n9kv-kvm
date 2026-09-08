@@ -56,3 +56,61 @@ containers:
     gateway_ip: "192.168.12.2"
     memory_kb: 1048576
     vcpus: 2
+
+  S3_H1:
+    name: "S3_H1"
+    management_interface:
+      name: "eth0"
+      ip_address: "192.168.14.171"
+      netmask: "24"
+      bridge: "BR_ND_DATA_14"
+      mac_address: "00:00:73:00:00:01"
+      description: "Management Interface"
+    test_interface:
+      name: "eth1"
+      ip_address: ""
+      netmask: ""
+      bridge: "BR_S3_T1_H1_1"
+      mac_address: "00:00:73:00:00:02"
+      description: "Test Interface"
+    vlans:
+      - vlan_id: 2
+        ip_address: "192.0.1.171"
+        netmask: "24"
+        description: "VLAN 2 Test Interface"
+      - vlan_id: 3
+        ip_address: "192.0.2.171"
+        netmask: "24"
+        description: "VLAN 3 Test Interface"
+    gateway_ip: "192.168.14.2"
+    memory_kb: 1048576
+    vcpus: 2
+
+  S4_H1:
+    name: "S4_H1"
+    management_interface:
+      name: "eth0"
+      ip_address: "192.168.14.172"
+      netmask: "24"
+      bridge: "BR_ND_DATA_14"
+      mac_address: "00:00:74:00:00:01"
+      description: "Management Interface"
+    test_interface:
+      name: "eth1"
+      ip_address: ""
+      netmask: ""
+      bridge: "BR_S4_LE1_H1_1"
+      mac_address: "00:00:74:00:00:02"
+      description: "Test Interface"
+    vlans:
+      - vlan_id: 2
+        ip_address: "192.0.1.172"
+        netmask: "24"
+        description: "VLAN 2 Test Interface"
+      - vlan_id: 3
+        ip_address: "192.0.2.172"
+        netmask: "24"
+        description: "VLAN 3 Test Interface"
+    gateway_ip: "192.168.14.2"
+    memory_kb: 1048576
+    vcpus: 2

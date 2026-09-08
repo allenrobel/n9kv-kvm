@@ -63,6 +63,12 @@ sudo python3 main.py --config $HOME/repos/n9kv-kvm/config/containers/container_c
 
 # Create S2_H1 container
 sudo python3 main.py --config $HOME/repos/n9kv-kvm/config/containers/container_configs_access_mode.yaml S2_H1
+
+# Create S3_H1 container
+sudo python3 main.py --config $HOME/repos/n9kv-kvm/config/containers/container_configs_access_mode.yaml S3_H1
+
+# Create S4_H1 container
+sudo python3 main.py --config $HOME/repos/n9kv-kvm/config/containers/container_configs_access_mode.yaml S4_H1
 ```
 
 ## Container Specifications
@@ -88,6 +94,16 @@ sudo python3 main.py --config $HOME/repos/n9kv-kvm/config/containers/container_c
 - eth0: 192.168.12.172/24 on BR_ND_DATA_12
 - eth1.2: 192.0.1.172/24 on BR_S2_LE1_H1_1
 - eth1.3: 192.0.2.172/24 on BR_S2_LE1_H1_1
+
+### S3_H1 Container (access mode interfaces, SITE3 - ND 4.3.1 mirror of S1_H1)
+
+- eth0: 192.168.14.171/24 on BR_ND_DATA_14
+- eth1: 192.0.1.171/24 on BR_S3_T1_H1_1
+
+### S4_H1 Container (access mode interfaces, SITE4 - ND 4.3.1 mirror of S2_H1)
+
+- eth0: 192.168.14.172/24 on BR_ND_DATA_14
+- eth1: 192.0.1.172/24 on BR_S4_LE1_H1_1
 
 ## Usage Examples
 

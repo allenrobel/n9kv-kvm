@@ -30,3 +30,9 @@ max-line-length = 169
 plugins.md013.line_length = 169
 plugins.md013.code_block_line_length = 169
 plugins.md013.heading_line_length = 169
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "types-requests>=2.33.0.20260906",
+]

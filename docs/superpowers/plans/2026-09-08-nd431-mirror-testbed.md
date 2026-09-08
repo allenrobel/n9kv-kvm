@@ -8,7 +8,8 @@ ND 4.3.1.175, and turn the ND-side provisioning that today lives in memory and t
 
 **Architecture:** Day-0 stays what it is: one YAML per VM under `config/nexus9000v/` and `config/8000v/` (launcher + ISO generator read the same file), OVS bridges
 from netplan, libvirt-LXC host containers from `config/containers/`. The new part is `config/nd/provision/`: a small `requests`-based ND client, a read-only
-`snapshot.py` (dump + diff), a declarative topology file per controller, and an idempotent phased `provision.py`. Both testbeds share only `BR_ND_DATA_12`.
+`snapshot.py` (dump + diff), a declarative topology file per controller, and an idempotent phased `provision.py`. The testbeds share only the
+host: ND 4.2.1 manages over `BR_ND_DATA_12`, ND 4.3.1 over `BR_ND_DATA_14`.
 
 **Tech Stack:** Python 3.13 (`uv`, `requests`, `pyyaml`, `pytest` new dev dep), netplan + Open vSwitch, bash one-liners, NX-OS 10.6(2), IOS-XE 17.15.05, ND REST
 `/api/v1/manage`.
@@ -18,9 +19,10 @@ below verbatim).
 
 ## Global Constraints
 
-- Management segment for every new device: `BR_ND_DATA_12`, 192.168.12.0/24, gateway `192.168.12.1` (spec D1).
-- Addresses (spec D2): S3_BG1 `.133`, S3_SP1 `.143`, S3_LE1 `.181`, S3_LE2 `.182`, S3_LE3 `.183`, S3_LE4 `.184`, S3_TOR1 `.163`, S3_H1 `.173` (test 192.0.1.173),
-  S4_BG1 `.134`, S4_SP1 `.144`, S4_LE1 `.185`, S4_H1 `.174` (test 192.0.1.174), WAN2 `.113`.
+- Management segment for every new device: `BR_ND_DATA_14`, 192.168.14.0/24, gateway `192.168.14.1` (spec D1). ND 4.3.1 is re-instantiated there (runbook R0).
+- Addresses (spec D2): every mirror device = its counterpart's address with `192.168.12.` -> `192.168.14.`: S3_BG1 `.131`, S3_SP1 `.141`, S3_LE1 `.151`,
+  S3_LE2 `.152`, S3_LE3 `.154`, S3_LE4 `.155`, S3_TOR1 `.161`, S3_H1 `.171`, S4_BG1 `.132`, S4_SP1 `.142`, S4_LE1 `.153`, S4_H1 `.172`, WAN2 `.112`.
+  Container test-net addresses stay 192.0.1.171/.172 (separate overlay); container MACs are `00:00:73/74:...` (spec D2).
 - sids: S3_BG1 3301, S3_SP1 3401, S3_LE1 3501, S3_LE2 3502, S3_LE3 3503, S3_LE4 3504, S3_TOR1 3601, S4_BG1 4301, S4_SP1 4401, S4_LE1 4501, WAN2 9102.
   Console = 10000+sid, monitor = 20000+sid. `sid` must be unique across `config/nexus9000v/*.yaml` and `config/8000v/*.yaml` (MACs derive from it).
 - Bridge names <= 15 chars; intra-site `BR_S<site>_<upper>_<lower>_<n>`, `TOR` -> `T` in bridge names only; cross-site `BR_ISN_S<a>_S<b>_<n>`, WAN `BR_ISN_WAN_S<x>_1`.
@@ -40,7 +42,8 @@ below verbatim).
 
 | Path | Action | Responsibility |
 |------|--------|----------------|
-| `config/bridges/netplan/9914-bridges.yaml` | rewrite | SITE3/SITE4 data bridges (16) + legacy `Vlan14`/`BR_ND_DATA_14` |
+| `config/bridges/netplan/9914-bridges.yaml` | rewrite | SITE3/SITE4 data bridges (16) + `Vlan14`/`BR_ND_DATA_14` (mgmt) |
+| `config/nd/nd-4-3-1-175-node1.sh` | modify | `ND_DATA_NET=BR_ND_DATA_14` |
 | `config/bridges/bridges_config_ovs.sh`, `bridges_down.sh` | modify | add the SITE3/SITE4 bridge set |
 | `monitor/show_bridges_stats_s34` | modify | new bridge list |
 | `config/nexus9000v/S3_*.yaml` (7), `S4_*.yaml` (3) | rewrite/create | per-switch SoT for launcher + ISO |
@@ -382,14 +385,13 @@ git commit -m "Add ND REST client and read-only fabric snapshot/diff tool"
 
 - [ ] **Step 1: Rewrite `9914-bridges.yaml`**
 
-Header comment, then one stanza per bridge (identical shape to `9912-bridges.yaml`), then the legacy `Vlan14`/`BR_ND_DATA_14`:
+Header comment, then one stanza per bridge (identical shape to `9912-bridges.yaml`), then the unchanged `BR_ND_DATA_14` management stanza:
 
 ```yaml
 # SITE3/SITE4 data-plane bridges: the ND 4.3.1 mirror of SITE1/SITE2 (see 9912-bridges.yaml).
 #
-# Management for S3_*/S4_*/WAN2 is on BR_ND_DATA_12 (192.168.12.0/24, defined in 9912-bridges.yaml)
-# because ND 4.3.1's data interface lives there. Vlan14/BR_ND_DATA_14 at the bottom are kept ONLY
-# for the older config/nd/*node2*.sh scripts; nothing in the mirror uses them.
+# Management for ND 4.3.1, S3_*/S4_*, WAN2 and S3_H1/S4_H1 is BR_ND_DATA_14 (Vlan14, 192.168.14.0/24,
+# host 192.168.14.2, gateway 192.168.14.1) -- the 192.168.14.x twin of BR_ND_DATA_12 in 9912-bridges.yaml.
 #
 # Copy to /etc/netplan/9914-bridges.yaml on the target system.
 # sudo cp $HOME/repos/n9kv-kvm/config/bridges/netplan/9914-bridges.yaml /etc/netplan/9914-bridges.yaml
@@ -414,7 +416,7 @@ Header comment, then one stanza per bridge (identical shape to `9912-bridges.yam
 # S3_LE3_INTERFACE_2      S3_LE4_INTERFACE_2      BR_S3_LE3_LE4_1   BR_S1_LE3_LE4_1  (VPC peer-link)
 # WAN2_INTERFACE_2        S3_BG1_INTERFACE_3      BR_ISN_WAN_S3_1   BR_ISN_WAN_S1_1  (C8000V WAN/ISN router)
 # WAN2_INTERFACE_3        S4_BG1_INTERFACE_3      BR_ISN_WAN_S4_1   BR_ISN_WAN_S2_1  (C8000V WAN/ISN router)
-# All mgmt0                                       BR_ND_DATA_12     (9912-bridges.yaml)
+# All mgmt0                                       BR_ND_DATA_14
 
 network:
   version: 2
@@ -437,7 +439,7 @@ network:
 ```
 
 Repeat that exact stanza for each of the other 15 names in the Interfaces list above (same 8 lines, only the key changes), then close the file with the
-legacy stanza copied unchanged from the current file:
+management stanza copied unchanged from the current file:
 
 ```yaml
     BR_ND_DATA_14:
@@ -465,7 +467,8 @@ Expected: `17` (16 data bridges + `BR_ND_DATA_14`), no assertion.
 In `bridges_config_ovs.sh`, after the `BR_ISN_WAN_S2_1` line of the `BRIDGES` array, add a comment and the 16 names:
 
 ```bash
-    # SITE3/SITE4 mirror (canonical, from 9914-bridges.yaml). Mgmt stays on BR_ND_DATA_12.
+    # SITE3/SITE4 mirror (canonical, from 9914-bridges.yaml); BR_ND_DATA_14 is their management bridge.
+    BR_ND_DATA_14
     BR_ISN_S3_S4_1
     BR_S3_BG1_SP1_1
     BR_S4_BG1_SP1_1
@@ -500,17 +503,23 @@ In `docs/bridges.md`, after the netplan bullet, add:
 
 ```markdown
 - **`9914-bridges.yaml`** carries the SITE3/SITE4 bridges for the ND 4.3.1 mirror testbed. Install it the same way; its
-  switches use `BR_ND_DATA_12` for management, so `9912-bridges.yaml` is a prerequisite.
+  switches, WAN2, containers and ND 4.3.1 itself manage over its `BR_ND_DATA_14` (`Vlan14`, 192.168.14.2/24).
 ```
 
-- [ ] **Step 5: Verify and commit**
+- [ ] **Step 5: Point the ND 4.3.1 install script at `BR_ND_DATA_14`**
+
+In `config/nd/nd-4-3-1-175-node1.sh` change `ND_DATA_NET=BR_ND_DATA_12` to `ND_DATA_NET=BR_ND_DATA_14` and add the comment
+`# ND 4.3.1 testbed: data on Vlan14 (192.168.14.0/24); persistent data IPs 192.168.14.30-.32, persistent mgmt 10.10.20.60-.62` above it.
+
+- [ ] **Step 6: Verify and commit**
 
 ```bash
+bash -n config/nd/nd-4-3-1-175-node1.sh && grep -q 'ND_DATA_NET=BR_ND_DATA_14' config/nd/nd-4-3-1-175-node1.sh && echo ND_SCRIPT_OK
 bash -n config/bridges/bridges_config_ovs.sh config/bridges/bridges_down.sh monitor/show_bridges_stats_s34
-grep -c 'BR_' config/bridges/bridges_config_ovs.sh   # expected 34 (17 + 16 + header mention)
+grep -c 'BR_' config/bridges/bridges_config_ovs.sh   # expected 35 (17 + 17 + header mention)
 pymarkdown scan docs/bridges.md
-git add config/bridges monitor/show_bridges_stats_s34 docs/bridges.md
-git commit -m "Define SITE3/SITE4 mirror bridges; drop S4_LE2/S4_LE3/H2 bridges"
+git add config/bridges monitor/show_bridges_stats_s34 docs/bridges.md config/nd/nd-4-3-1-175-node1.sh
+git commit -m "Define SITE3/SITE4 mirror bridges on BR_ND_DATA_14; drop S4_LE2/S4_LE3/H2 bridges"
 ```
 
 ---
@@ -540,8 +549,8 @@ git commit -m "Define SITE3/SITE4 mirror bridges; drop S4_LE2/S4_LE3/H2 bridges"
 name: S3_BG1
 role: Border Gateway
 sid: 3301
-mgmt_bridge: BR_ND_DATA_12
-mgmt_ip: 192.168.12.133/24
+mgmt_bridge: BR_ND_DATA_14
+mgmt_ip: 192.168.14.131/24
 mgmt_gw: 192.168.12.1
 neighbors:
   - S4_BG1
@@ -562,8 +571,8 @@ isl_bridges:
 name: S3_SP1
 role: Spine Switch
 sid: 3401
-mgmt_bridge: BR_ND_DATA_12
-mgmt_ip: 192.168.12.143/24
+mgmt_bridge: BR_ND_DATA_14
+mgmt_ip: 192.168.14.141/24
 mgmt_gw: 192.168.12.1
 neighbors:
   - S3_BG1
@@ -588,8 +597,8 @@ isl_bridges:
 name: S3_LE1
 role: Leaf Switch
 sid: 3501
-mgmt_bridge: BR_ND_DATA_12
-mgmt_ip: 192.168.12.181/24
+mgmt_bridge: BR_ND_DATA_14
+mgmt_ip: 192.168.14.151/24
 mgmt_gw: 192.168.12.1
 neighbors:
   - S3_SP1
@@ -610,8 +619,8 @@ isl_bridges:
 name: S3_LE2
 role: Leaf Switch
 sid: 3502
-mgmt_bridge: BR_ND_DATA_12
-mgmt_ip: 192.168.12.182/24
+mgmt_bridge: BR_ND_DATA_14
+mgmt_ip: 192.168.14.152/24
 mgmt_gw: 192.168.12.1
 neighbors:
   - S3_SP1
@@ -632,8 +641,8 @@ isl_bridges:
 name: S3_LE3
 role: Leaf Switch
 sid: 3503
-mgmt_bridge: BR_ND_DATA_12
-mgmt_ip: 192.168.12.183/24
+mgmt_bridge: BR_ND_DATA_14
+mgmt_ip: 192.168.14.154/24
 mgmt_gw: 192.168.12.1
 neighbors:
   - S3_SP1
@@ -652,8 +661,8 @@ isl_bridges:
 name: S3_LE4
 role: Leaf Switch
 sid: 3504
-mgmt_bridge: BR_ND_DATA_12
-mgmt_ip: 192.168.12.184/24
+mgmt_bridge: BR_ND_DATA_14
+mgmt_ip: 192.168.14.155/24
 mgmt_gw: 192.168.12.1
 neighbors:
   - S3_SP1
@@ -672,8 +681,8 @@ isl_bridges:
 name: S3_TOR1
 role: Top-of-Rack Switch
 sid: 3601
-mgmt_bridge: BR_ND_DATA_12
-mgmt_ip: 192.168.12.163/24
+mgmt_bridge: BR_ND_DATA_14
+mgmt_ip: 192.168.14.161/24
 mgmt_gw: 192.168.12.1
 neighbors:
   - S3_LE1
@@ -689,10 +698,10 @@ isl_bridges:
 
 ```bash
 cd config/nexus9000v
-for s in bg1:3301:133 sp1:3401:143 le1:3501:181 le2:3502:182 le3:3503:183 le4:3504:184 tor1:3601:163; do
+for s in bg1:3301:131 sp1:3401:141 le1:3501:151 le2:3502:152 le3:3503:154 le4:3504:155 tor1:3601:161; do
   IFS=: read -r name sid oct <<< "$s"
   printf 'telnet localhost %d\n' $((10000 + sid)) > "con_s3_$name"
-  printf 'ssh admin@192.168.12.%s\n' "$oct" > "ssh_s3_$name"
+  printf 'ssh admin@192.168.14.%s\n' "$oct" > "ssh_s3_$name"
   chmod +x "con_s3_$name" "ssh_s3_$name"
 done
 cat > site3.sh <<'SH'
@@ -712,8 +721,8 @@ cd -
 ```bash
 cd config/nexus9000v
 for s in BG1 SP1 LE1 LE2 LE3 LE4 TOR1; do
-  diff <(sed -e 's/S1_/S3_/g; s/S2_/S4_/g; s/WAN1/WAN2/g; s/BR_ISN_S1_S2/BR_ISN_S3_S4/' "S1_$s.yaml" | grep -vE '^#|sid:|mgmt_ip:') \
-       <(grep -vE '^#|sid:|mgmt_ip:' "S3_$s.yaml") && echo "S3_$s mirrors S1_$s"
+  diff <(sed -e 's/S1_/S3_/g; s/S2_/S4_/g; s/WAN1/WAN2/g; s/BR_ISN_S1_S2/BR_ISN_S3_S4/; s/BR_ND_DATA_12/BR_ND_DATA_14/; s/192\.168\.12\./192.168.14./' "S1_$s.yaml" \
+         | grep -vE '^#|sid:') <(grep -vE '^#|sid:' "S3_$s.yaml") && echo "S3_$s mirrors S1_$s"
 done
 NXOS_PASSWORD=dummy python3 startup_config.py --print S3_SP1.yaml | grep -c 'interface Ethernet'   # expected 5
 python3 nexus9000v.py --config S3_TOR1.yaml --dry-run | grep -E 'Telnet|tap3601'                   # expected Telnet: 13601, taps tap3601-0..3
@@ -733,7 +742,7 @@ Expected: seven `mirrors` lines, `5`, port 13601, no assertion.
 
 ```bash
 git add config/nexus9000v/S3_*.yaml config/nexus9000v/con_s3_* config/nexus9000v/ssh_s3_* config/nexus9000v/site3.sh
-git commit -m "SITE3: mirror SITE1 switch definitions on BR_ND_DATA_12 for ND 4.3.1"
+git commit -m "SITE3: mirror SITE1 switch definitions on BR_ND_DATA_14 for ND 4.3.1"
 ```
 
 ---
@@ -748,7 +757,7 @@ git commit -m "SITE3: mirror SITE1 switch definitions on BR_ND_DATA_12 for ND 4.
 
 **Interfaces:**
 
-- Produces hostnames `S4_BG1 S4_SP1 S4_LE1` with IPs `.134 .144 .185`.
+- Produces hostnames `S4_BG1 S4_SP1 S4_LE1` with IPs `192.168.14.132 .142 .153`.
 
 - [ ] **Step 1: Write the three YAMLs**
 
@@ -761,8 +770,8 @@ git commit -m "SITE3: mirror SITE1 switch definitions on BR_ND_DATA_12 for ND 4.
 name: S4_BG1
 role: Border Gateway
 sid: 4301
-mgmt_bridge: BR_ND_DATA_12
-mgmt_ip: 192.168.12.134/24
+mgmt_bridge: BR_ND_DATA_14
+mgmt_ip: 192.168.14.132/24
 mgmt_gw: 192.168.12.1
 neighbors:
   - S3_BG1
@@ -783,8 +792,8 @@ isl_bridges:
 name: S4_SP1
 role: Spine Switch
 sid: 4401
-mgmt_bridge: BR_ND_DATA_12
-mgmt_ip: 192.168.12.144/24
+mgmt_bridge: BR_ND_DATA_14
+mgmt_ip: 192.168.14.142/24
 mgmt_gw: 192.168.12.1
 neighbors:
   - S4_BG1
@@ -803,8 +812,8 @@ isl_bridges:
 name: S4_LE1
 role: Leaf Switch
 sid: 4501
-mgmt_bridge: BR_ND_DATA_12
-mgmt_ip: 192.168.12.185/24
+mgmt_bridge: BR_ND_DATA_14
+mgmt_ip: 192.168.14.153/24
 mgmt_gw: 192.168.12.1
 neighbors:
   - S4_SP1
@@ -819,10 +828,10 @@ isl_bridges:
 ```bash
 cd config/nexus9000v
 git rm -q S4_LE2.yaml S4_LE3.yaml
-for s in bg1:4301:134 sp1:4401:144 le1:4501:185; do
+for s in bg1:4301:132 sp1:4401:142 le1:4501:153; do
   IFS=: read -r name sid oct <<< "$s"
   printf 'telnet localhost %d\n' $((10000 + sid)) > "con_s4_$name"
-  printf 'ssh admin@192.168.12.%s\n' "$oct" > "ssh_s4_$name"
+  printf 'ssh admin@192.168.14.%s\n' "$oct" > "ssh_s4_$name"
   chmod +x "con_s4_$name" "ssh_s4_$name"
 done
 cat > site4.sh <<'SH'
@@ -838,10 +847,10 @@ cd -
 ```bash
 cd config/nexus9000v
 for s in BG1 SP1 LE1; do
-  diff <(sed -e 's/S1_/S3_/g; s/S2_/S4_/g; s/WAN1/WAN2/g; s/BR_ISN_S1_S2/BR_ISN_S3_S4/' "S2_$s.yaml" | grep -vE '^#|sid:|mgmt_ip:') \
-       <(grep -vE '^#|sid:|mgmt_ip:' "S4_$s.yaml") && echo "S4_$s mirrors S2_$s"
+  diff <(sed -e 's/S1_/S3_/g; s/S2_/S4_/g; s/WAN1/WAN2/g; s/BR_ISN_S1_S2/BR_ISN_S3_S4/; s/BR_ND_DATA_12/BR_ND_DATA_14/; s/192\.168\.12\./192.168.14./' "S2_$s.yaml" \
+         | grep -vE '^#|sid:') <(grep -vE '^#|sid:' "S4_$s.yaml") && echo "S4_$s mirrors S2_$s"
 done
-grep -rl 'BR_ND_DATA_14\|192.168.14' S*.yaml; echo "(expected: no output)"
+grep -l 'BR_ND_DATA_12\|192.168.12' S3_*.yaml S4_*.yaml; echo "(expected: no output)"
 NXOS_PASSWORD=dummy python3 startup_config.py --all --print >/dev/null && echo RENDER_OK
 bash -n site4.sh; cd -
 ```
@@ -864,7 +873,7 @@ git commit -m "SITE4: mirror SITE2 switch definitions; retire S4_LE2/S4_LE3"
 
 **Interfaces:**
 
-- Produces hostname `WAN2`, mgmt `192.168.12.113`, `GigabitEthernet2` -> `BR_ISN_WAN_S3_1`, `GigabitEthernet3` -> `BR_ISN_WAN_S4_1`.
+- Produces hostname `WAN2`, mgmt `192.168.14.112`, `GigabitEthernet2` -> `BR_ISN_WAN_S3_1`, `GigabitEthernet3` -> `BR_ISN_WAN_S4_1`.
 
 - [ ] **Step 1: Write `WAN2.yaml`**
 
@@ -875,8 +884,8 @@ git commit -m "SITE4: mirror SITE2 switch definitions; retire S4_LE2/S4_LE3"
 name: WAN2
 role: WAN Router
 sid: 9102
-mgmt_bridge: BR_ND_DATA_12
-mgmt_ip: 192.168.12.113/24
+mgmt_bridge: BR_ND_DATA_14
+mgmt_ip: 192.168.14.112/24
 mgmt_gw: 192.168.12.1
 neighbors:
   - S3_BG1
@@ -890,7 +899,7 @@ isl_bridges:
 
 ```bash
 cd config/8000v
-printf 'telnet localhost 19102\n' > con_wan2; printf 'ssh admin@192.168.12.113\n' > ssh_wan2; chmod +x con_wan2 ssh_wan2
+printf 'telnet localhost 19102\n' > con_wan2; printf 'ssh admin@192.168.14.112\n' > ssh_wan2; chmod +x con_wan2 ssh_wan2
 cd -
 ```
 
@@ -910,7 +919,7 @@ python3 8000v.py --config WAN2.yaml --dry-run | grep -E 'Telnet|tap9102'
 pymarkdown scan README.md; cd -
 ```
 
-Expected: `hostname WAN2`, `GigabitEthernet1..3`, `192.168.12.113 255.255.255.0`; `Telnet: 19102`; taps `tap9102-0..2`.
+Expected: `hostname WAN2`, `GigabitEthernet1..3`, `192.168.14.112 255.255.255.0`; `Telnet: 19102`; taps `tap9102-0..2`.
 
 - [ ] **Step 4: Commit**
 
@@ -931,8 +940,8 @@ git commit -m "Add WAN2 (C8000V) for the ND 4.3.1 mirror testbed"
 
 **Interfaces:**
 
-- Produces containers `S3_H1` (eth0 192.168.12.173 on `BR_ND_DATA_12`, eth1 192.0.1.173 on `BR_S3_T1_H1_1`, MAC `00:00:73:00:00:01/02`) and `S4_H1`
-  (eth0 192.168.12.174, eth1 192.0.1.174 on `BR_S4_LE1_H1_1`, MAC `00:00:74:00:00:01/02`).
+- Produces containers `S3_H1` (eth0 192.168.14.171 on `BR_ND_DATA_14`, eth1 192.0.1.171 on `BR_S3_T1_H1_1`, MAC `00:00:73:00:00:01/02`) and `S4_H1`
+  (eth0 192.168.14.172, eth1 192.0.1.172 on `BR_S4_LE1_H1_1`, MAC `00:00:74:00:00:01/02`). Test-net addresses equal S1_H1/S2_H1's on purpose.
 
 - [ ] **Step 1: Append to `container_configs_access_mode.yaml`**
 
@@ -942,20 +951,20 @@ git commit -m "Add WAN2 (C8000V) for the ND 4.3.1 mirror testbed"
     name: "S3_H1"
     management_interface:
       name: "eth0"
-      ip_address: "192.168.12.173"
+      ip_address: "192.168.14.171"
       netmask: "24"
-      bridge: "BR_ND_DATA_12"
+      bridge: "BR_ND_DATA_14"
       mac_address: "00:00:73:00:00:01"
       description: "Management Interface"
     test_interface:
       name: "eth1"
-      ip_address: "192.0.1.173"
+      ip_address: "192.0.1.171"
       netmask: "24"
       bridge: "BR_S3_T1_H1_1"
       mac_address: "00:00:73:00:00:02"
       description: "Test Interface"
     vlans: []
-    gateway_ip: "192.168.12.1"
+    gateway_ip: "192.168.14.1"
     memory_kb: 1048576
     vcpus: 2
 
@@ -963,42 +972,42 @@ git commit -m "Add WAN2 (C8000V) for the ND 4.3.1 mirror testbed"
     name: "S4_H1"
     management_interface:
       name: "eth0"
-      ip_address: "192.168.12.174"
+      ip_address: "192.168.14.172"
       netmask: "24"
-      bridge: "BR_ND_DATA_12"
+      bridge: "BR_ND_DATA_14"
       mac_address: "00:00:74:00:00:01"
       description: "Management Interface"
     test_interface:
       name: "eth1"
-      ip_address: "192.0.1.174"
+      ip_address: "192.0.1.172"
       netmask: "24"
       bridge: "BR_S4_LE1_H1_1"
       mac_address: "00:00:74:00:00:02"
       description: "Test Interface"
     vlans: []
-    gateway_ip: "192.168.12.1"
+    gateway_ip: "192.168.14.1"
     memory_kb: 1048576
     vcpus: 2
 ```
 
-- [ ] **Step 2: Append to `container_configs_trunk_mode.yaml`** (same two blocks, but `test_interface.ip_address: ""`, `netmask: ""`, `gateway_ip: "192.168.12.2"`
+- [ ] **Step 2: Append to `container_configs_trunk_mode.yaml`** (same two blocks, but `test_interface.ip_address: ""`, `netmask: ""`, `gateway_ip: "192.168.14.2"`
   as the existing trunk entries do, and):
 
 ```yaml
     vlans:
       - vlan_id: 2
-        ip_address: "192.0.1.173"
+        ip_address: "192.0.1.171"
         netmask: "24"
         description: "VLAN 2 Test Interface"
       - vlan_id: 3
-        ip_address: "192.0.2.173"
+        ip_address: "192.0.2.171"
         netmask: "24"
         description: "VLAN 3 Test Interface"
 ```
 
-(`.174` for S4_H1.)
+(`.172` for S4_H1.)
 
-- [ ] **Step 3: Netplan reference files** (`S3_H1.netplan.yaml`; `S4_H1.netplan.yaml` identical with `.174` and `74ff`)
+- [ ] **Step 3: Netplan reference files** (`S3_H1.netplan.yaml`; `S4_H1.netplan.yaml` identical with `.172` and `74ff`)
 
 ```yaml
 network:
@@ -1007,18 +1016,18 @@ network:
   ethernets:
     eth0:
       addresses:
-        - 192.168.12.173/24
+        - 192.168.14.171/24
       dhcp4: false
       dhcp6: false
       accept-ra: true
       link-local: [ipv6]
       routes:
         - to: 10.10.0.0/16
-          via: 192.168.12.1
+          via: 192.168.14.1
 
     eth1:
       addresses:
-        - 192.0.1.173/24
+        - 192.0.1.171/24
         - 2001:192:0:1:200:73ff:fe00:2/64
       dhcp4: false
       dhcp6: false
@@ -1036,13 +1045,13 @@ network:
 ```markdown
 ### S3_H1 Container (access mode interfaces, SITE3 - ND 4.3.1 mirror of S1_H1)
 
-- eth0: 192.168.12.173/24 on BR_ND_DATA_12
-- eth1: 192.0.1.173/24 on BR_S3_T1_H1_1
+- eth0: 192.168.14.171/24 on BR_ND_DATA_14
+- eth1: 192.0.1.171/24 on BR_S3_T1_H1_1
 
 ### S4_H1 Container (access mode interfaces, SITE4 - ND 4.3.1 mirror of S2_H1)
 
-- eth0: 192.168.12.174/24 on BR_ND_DATA_12
-- eth1: 192.0.1.174/24 on BR_S4_LE1_H1_1
+- eth0: 192.168.14.172/24 on BR_ND_DATA_14
+- eth1: 192.0.1.172/24 on BR_S4_LE1_H1_1
 ```
 
 - [ ] **Step 5: Verify and commit**
@@ -1075,23 +1084,23 @@ git commit -m "Add S3_H1/S4_H1 host containers for the ND 4.3.1 mirror testbed"
 Replace the SITE3/SITE4 IP block with:
 
 ```python
-# SITE3 / SITE4 (ND 4.3.1 mirror of SITE1 / SITE2; same mgmt segment as SITE1/SITE2)
-S3_BG1_IP4 = environ.get("S3_BG1_IP4", "192.168.12.133")
-S4_BG1_IP4 = environ.get("S4_BG1_IP4", "192.168.12.134")
-S3_SP1_IP4 = environ.get("S3_SP1_IP4", "192.168.12.143")
-S4_SP1_IP4 = environ.get("S4_SP1_IP4", "192.168.12.144")
-S3_LE1_IP4 = environ.get("S3_LE1_IP4", "192.168.12.181")
-S3_LE2_IP4 = environ.get("S3_LE2_IP4", "192.168.12.182")
-S3_LE3_IP4 = environ.get("S3_LE3_IP4", "192.168.12.183")
-S3_LE4_IP4 = environ.get("S3_LE4_IP4", "192.168.12.184")
-S3_TOR1_IP4 = environ.get("S3_TOR1_IP4", "192.168.12.163")
-S4_LE1_IP4 = environ.get("S4_LE1_IP4", "192.168.12.185")
+# SITE3 / SITE4 (ND 4.3.1 mirror of SITE1 / SITE2: same last octet on 192.168.14.0/24 / BR_ND_DATA_14)
+S3_BG1_IP4 = environ.get("S3_BG1_IP4", "192.168.14.131")
+S4_BG1_IP4 = environ.get("S4_BG1_IP4", "192.168.14.132")
+S3_SP1_IP4 = environ.get("S3_SP1_IP4", "192.168.14.141")
+S4_SP1_IP4 = environ.get("S4_SP1_IP4", "192.168.14.142")
+S3_LE1_IP4 = environ.get("S3_LE1_IP4", "192.168.14.151")
+S3_LE2_IP4 = environ.get("S3_LE2_IP4", "192.168.14.152")
+S3_LE3_IP4 = environ.get("S3_LE3_IP4", "192.168.14.154")
+S3_LE4_IP4 = environ.get("S3_LE4_IP4", "192.168.14.155")
+S3_TOR1_IP4 = environ.get("S3_TOR1_IP4", "192.168.14.161")
+S4_LE1_IP4 = environ.get("S4_LE1_IP4", "192.168.14.153")
 S3_LE1_IP4_INTERFACE_2 = environ.get("S3_LE1_IP4_INTERFACE_2", "192.168.0.3")
 S4_LE1_IP4_INTERFACE_2 = environ.get("S4_LE1_IP4_INTERFACE_2", "192.168.0.4")
 ```
 
 and next to `ND_IP4_2` add `ND_431_IP4 = environ.get("ND_431_IP4", "10.10.20.20")` with the comment
-`# ND 4.3.1.175 node1 management IP (persistent mgmt 10.10.20.60-.62, persistent data 192.168.12.30-.32)`. Delete `S4_LE2_IP4`, `S4_LE3_IP4`,
+`# ND 4.3.1.175 node1 management IP (persistent mgmt 10.10.20.60-.62, persistent data 192.168.14.30-.32 on BR_ND_DATA_14)`. Delete `S4_LE2_IP4`, `S4_LE3_IP4`,
 `S4_LE2_IP4_INTERFACE_2`, `S4_LE3_IP4_INTERFACE_2`, `S4_LE2_HOSTNAME`, `S4_LE3_HOSTNAME`, every `S4_LE2_INTERFACE_*`/`S4_LE3_INTERFACE_*`, and their
 `all.vars`/`nxos.children` entries. Add `S3_LE2_HOSTNAME`, `S3_LE3_HOSTNAME`, `S3_LE4_HOSTNAME`, `S3_TOR1_HOSTNAME` (defaults = names).
 
@@ -1117,7 +1126,7 @@ and publish every new var in `all.vars`; `nxos.children` gains `S3_LE2 S3_LE3 S3
 
 ```bash
 python3 config/ansible/dynamic_inventory.py | python3 -m json.tool > /dev/null && echo OK
-python3 config/ansible/dynamic_inventory.py | grep -c '192.168.14'     # expected 0
+python3 config/ansible/dynamic_inventory.py | grep -c '192.168.14'     # expected 10 (every S3/S4 IP4 var)
 python3 config/ansible/dynamic_inventory.py | grep -c 'S4_LE[23]'       # expected 0
 flake8 config/ansible/dynamic_inventory.py && black --check config/ansible/dynamic_inventory.py
 git add config/ansible/dynamic_inventory.py
@@ -1423,11 +1432,9 @@ Transcription rules for the `overlay:` section (do this with `~/tmp/snap_nd421` 
 ```bash
 cd config/nd/provision
 sed -e 's/\bS1_/S3_/g; s/\bS2_/S4_/g; s/\bWAN1\b/WAN2/g; s/ND 4\.2\.1/ND 4.3.1/; s/topology_nd431/topology_nd421/' \
-    -e 's/192\.168\.12\.131/192.168.12.133/; s/192\.168\.12\.132/192.168.12.134/; s/192\.168\.12\.141/192.168.12.143/; s/192\.168\.12\.142/192.168.12.144/' \
-    -e 's/192\.168\.12\.151/192.168.12.181/; s/192\.168\.12\.152/192.168.12.182/; s/192\.168\.12\.154/192.168.12.183/; s/192\.168\.12\.155/192.168.12.184/' \
-    -e 's/192\.168\.12\.161/192.168.12.163/; s/192\.168\.12\.153/192.168.12.185/; s/192\.168\.12\.112/192.168.12.113/' \
+    -e 's/192\.168\.12\./192.168.14./g' \
     topology_nd421.yaml > topology_nd431.yaml
-diff topology_nd421.yaml topology_nd431.yaml | grep '^[<>]' | grep -vE 'S[1-4]_|WAN[12]|192\.168\.12\.|ND 4\.[23]\.1|topology_nd4' ; echo "(expected: no output)"
+diff topology_nd421.yaml topology_nd431.yaml | grep '^[<>]' | grep -vE 'S[1-4]_|WAN[12]|192\.168\.1[24]\.|ND 4\.[23]\.1|topology_nd4' ; echo "(expected: no output)"
 cd -
 ```
 
@@ -1644,10 +1651,10 @@ from topology import Fabric, Switch
 
 
 def test_switch_add_payload_groups_by_platform_and_never_preserves_config():
-    fab = Fabric(name="ISN", type="externalConnectivity", asn="65535", switches=[Switch("WAN2", "192.168.12.113", "edgeRouter", "ios-xe")])
+    fab = Fabric(name="ISN", type="externalConnectivity", asn="65535", switches=[Switch("WAN2", "192.168.14.112", "edgeRouter", "ios-xe")])
     body = switch_add_payload(fab, "pw")
     assert body == {
-        "switches": [{"ip": "192.168.12.113", "hostname": "WAN2", "switchRole": "edgeRouter"}],
+        "switches": [{"ip": "192.168.14.112", "hostname": "WAN2", "switchRole": "edgeRouter"}],
         "platformType": "ios-xe", "preserveConfig": False, "useCredentialForWrite": True, "username": "admin", "password": "pw",
     }
 ```
@@ -1976,8 +1983,10 @@ uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 \
 
 - [ ] **Step 3: `CLAUDE.md`** - add rows for `config/8000v/` and `config/nd/provision/` to the layout table; in the "Architectural Notes" add:
   "**Two testbeds share one host and one mgmt segment.** SITE1/SITE2/WAN1/S1_H1/S2_H1 belong to ND 4.2.1 (10.10.20.10); SITE3/SITE4/WAN2/S3_H1/S4_H1 are their
-  exact mirror under ND 4.3.1 (10.10.20.20), with identical fabric names, ASNs and pools. Only hostnames, sids and mgmt IPs differ. `9914-bridges.yaml` is the
-  SITE3/SITE4 bridge set; `BR_ND_DATA_14` inside it is legacy." Update the `config/ansible/` row ("SITE1-SITE4") and the `config/nd/` row (mention provision/).
+  exact mirror under ND 4.3.1 (10.10.20.20, data on `BR_ND_DATA_14`), with identical fabric names, ASNs and pools. Only hostnames, sids and the
+  third octet of the mgmt IPs (12 -> 14) differ. `9914-bridges.yaml` is the
+  SITE3/SITE4 bridge set including their management bridge `BR_ND_DATA_14`." Update the `config/ansible/` row ("SITE1-SITE4") and the
+  `config/nd/` row (mention provision/).
 
 - [ ] **Step 4: `docs/nd4_fabrics_bringup.md`** - add under the title: "The steps below are now automated by `config/nd/provision/provision.py`
   (`--phase fabrics`, `msd`, `isn`); this page remains the GUI walk-through and the record of the API payloads."
@@ -1998,14 +2007,26 @@ gh pr create --title "ND 4.3.1 mirror testbed (SITE3/SITE4 + WAN2) and ND provis
 
 Order matters: bridges before VMs, ISOs before VMs, switches reachable before `--phase switches`, ISN links before the overlay.
 
+- [ ] **R0. Re-instantiate ND 4.3.1 on `BR_ND_DATA_14`** (user decision 2026-09-08; the current instance on `BR_ND_DATA_12` was a throw-away)
+
+```bash
+virsh -c qemu:///system destroy nd.4.3.1.175.node1 && virsh -c qemu:///system undefine nd.4.3.1.175.node1
+sudo rm -rf /iso2/nd/4.3.1.175            # disk1/disk2 of the throw-away instance (ND_INSTALL_DIR in the script)
+cd ~/repos/n9kv-kvm/config/nd && ./nd-4-3-1-175-node1.sh && virsh -c qemu:///system console nd.4.3.1.175.node1
+```
+
+CLI bootstrap: mgmt 10.10.20.20/16 via 10.10.0.1 (unchanged). Web/`nd-bootstrap` phase: data network = ND 4.2.1's node data IP with the third octet 12
+-> 14, gateway 192.168.14.1, persistent data IPs `192.168.14.30,192.168.14.31,192.168.14.32`, persistent mgmt IPs `10.10.20.60-.62`. Update
+`~/repos/nd-bootstrap/nd_bootstrap_4.3.1.175.vnode1.yaml` accordingly (separate repo). Wait for the UI, then continue.
+
 - [ ] **R1. Pre-flight**
 
 ```bash
 cd ~/repos/n9kv-kvm && git checkout nd431-mirror-testbed && git pull
 free -g | head -2                                   # need ~190 GB free for 11 n9kv + WAN2 + 2 containers; launch site by site otherwise
-for o in 133 134 143 144 163 173 174 181 182 183 184 185 113; do ping -c1 -W1 192.168.12.$o >/dev/null && echo "IN USE: .$o"; done; echo "sweep done"
-ip neigh show dev BR_ND_DATA_12 | sort -t. -k4 -n   # ND 4.2.1 node data IP must not be one of the above
-virsh -c qemu:///system domiflist nd.4.3.1.175.node1 | grep BR_ND_DATA_12
+virsh -c qemu:///system domiflist nd.4.3.1.175.node1 | grep BR_ND_DATA_14      # R0 done: ND 4.3.1 data NIC is on BR_ND_DATA_14
+ip -br addr show BR_ND_DATA_14                                                 # host is 192.168.14.2/24
+for o in 131 132 141 142 151 152 153 154 155 161 171 172 112; do ping -c1 -W1 192.168.14.$o >/dev/null && echo "IN USE: .$o"; done; echo "sweep done"
 ```
 
 - [ ] **R2. Bridges**
@@ -2040,7 +2061,7 @@ cd config/containers
 sudo python3 main.py --config container_configs_access_mode.yaml S3_H1
 sudo python3 main.py --config container_configs_access_mode.yaml S4_H1
 sudo virsh -c lxc:/// start S3_H1 && sudo virsh -c lxc:/// start S4_H1
-ping -c2 192.168.12.173 && ping -c2 192.168.12.174; cd -
+ping -c2 192.168.14.171 && ping -c2 192.168.14.172; cd -
 ```
 
 - [ ] **R5. Provision ND 4.3.1** (each phase, dry-run first)
@@ -2066,7 +2087,7 @@ uv run config/nd/provision/snapshot.py dump ~/tmp/snap_nd431 --nd-ip 10.10.20.20
 uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 --map S1_BG1=S3_BG1 --map S1_SP1=S3_SP1 --map S1_LE1=S3_LE1 \
   --map S1_LE2=S3_LE2 --map S1_LE3=S3_LE3 --map S1_LE4=S3_LE4 --map S1_TOR1=S3_TOR1 --map S2_BG1=S4_BG1 --map S2_SP1=S4_SP1 --map S2_LE1=S4_LE1 --map WAN1=WAN2
 # data plane: from S3_H1, ping S4_H1 across the overlay
-ssh root@192.168.12.173 'ping -c3 192.0.1.174'
+ssh root@192.168.14.171 'ping -c3 192.0.1.172'
 ```
 
 Expected: an empty diff apart from ND-version-specific fields (record any such field in `snapshot.VOLATILE_KEYS` with a comment), and 3 replies.

@@ -8,59 +8,64 @@ Run a second, independent copy of the ND 4.2.1 lab under ND 4.3.1.175, identical
 management addresses, and formalize the ND-side provisioning (fabrics, MSD membership, switch onboarding, ISN links and
 WAN policies, overlay VRF/network/attachments) that today lives only in session memory and the `provision-isn` skill.
 
-The two testbeds share one host (glide-wired.laukapu.com), one management segment (`BR_ND_DATA_12`, 192.168.12.0/24), and
-nothing else. Every data-plane bridge is per-testbed, so underlay/overlay address pools, ASNs, VNIs and fabric names can be
-byte-identical across the two Nexus Dashboards.
+The two testbeds share one host (glide-wired.laukapu.com) and nothing else: ND 4.2.1 and its devices manage over
+`BR_ND_DATA_12` (192.168.12.0/24), ND 4.3.1 and its devices over `BR_ND_DATA_14` (192.168.14.0/24). Every data-plane
+bridge is per-testbed too, so underlay/overlay address pools, ASNs, VNIs and fabric names can be byte-identical.
 
 ## Facts established (2026-09-08, read-only inspection of the host)
 
 - `nd.4.2.1.10.node1` and `nd.4.3.1.175.node1` are both running, both with `outside` (mgmt) + `BR_ND_DATA_12` (data).
-  ND 4.3.1 node data IP is 192.168.12.15; its persistent data IPs are 192.168.12.30-.32 and persistent mgmt IPs
-  10.10.20.60-.62 (from the request). ND 4.2.1 persistent data IPs are 192.168.12.10-.12 (docs).
+  The ND 4.3.1 placement on `BR_ND_DATA_12` (node data IP 192.168.12.15) was a quick verification install; the user will
+  tear it down and re-instantiate it on `BR_ND_DATA_14` so that its node data IP and persistent IPs mirror ND 4.2.1's
+  on 192.168.14.0/24 (persistent data IPs 192.168.14.30-.32; persistent mgmt IPs 10.10.20.60-.62; node mgmt 10.10.20.20).
+  `config/nd/nd-4-3-1-175-node1.sh` still says `ND_DATA_NET=BR_ND_DATA_12` and must be changed before the re-install.
 - The host still carries every bridge from `9914-bridges.yaml` (`BR_ND_DATA_14`, `BR_ISN_S3_S4_1`, `BR_S3_*`, `BR_S4_*`
   including the `S4_LE2/S4_LE3/H2` set) and from `9915-bridges.yaml`. No S3/S4 VMs, no WAN2, no S3/S4 containers exist.
 - Running: S1_BG1, S1_SP1, S1_LE1-4, S1_TOR1, S2_BG1, S2_SP1, S2_LE1, WAN1. Containers S1_H1/S2_H1 are defined but shut off.
 - The existing `S3_*.yaml`/`S4_*.yaml` describe a *different* topology (no LE2-4, no TOR, no WAN, an extra S4 leaf pair
-  toward a non-existent `S4_H2`) on the *wrong* management network (`BR_ND_DATA_14` / 192.168.14.x). They must be rewritten.
+  toward a non-existent `S4_H2`). Their management network (`BR_ND_DATA_14` / 192.168.14.x) is right; the topology is not.
+  They must be rewritten.
 
 ## Decisions
 
-### D1. Management network: `BR_ND_DATA_12`, 192.168.12.0/24, gateway 192.168.12.1
+### D1. Management network: `BR_ND_DATA_14`, 192.168.14.0/24, gateway 192.168.14.1
 
-Forced by the ND 4.3.1 install (data interface on `BR_ND_DATA_12`). All S3/S4 switches, WAN2 and the S3/S4 containers move
-off 192.168.14.x. `BR_ND_DATA_14` / `Vlan14` stay defined in `9914-bridges.yaml` because seven `config/nd/*node2*` scripts
-reference them; the file header is rewritten to say the S3/S4 mirror does not use them.
+ND 4.3.1 is re-instantiated with its data interface on `BR_ND_DATA_14` (`Vlan14`, host address 192.168.14.2/24, already in
+`9914-bridges.yaml` and live on the host). Every S3/S4 switch, WAN2 and the S3/S4 containers manage over it. Nothing else
+changes on the host side: `9914-bridges.yaml` keeps `Vlan14`/`BR_ND_DATA_14` and gains the data-plane bridges of D4.
 
-Alternative rejected: re-installing ND 4.3.1 on `BR_ND_DATA_14`. It is already up with its persistent IPs allocated.
+Alternative rejected (2026-09-08, user decision): keeping ND 4.3.1 on `BR_ND_DATA_12`. That forced a second address plan
+on the shared segment and made "mirror" an exception rather than a substitution.
 
-### D2. Management address plan (last octet of 192.168.12.x)
+### D2. Management address plan: same last octet, third octet 12 -> 14
 
-Existing blocks: `.13x` BG, `.14x` SP, `.15x` LE (sequential), `.16x` TOR, `.17x` hosts, `.11x` WAN/edge. BG/SP/TOR/host
-blocks are site-coded in the last digit, so the mirror continues that. The `.15x` leaf block has only four free slots for
-five mirror leaves, so mirror leaves get a fresh `.18x` block.
+Every mirror device takes its counterpart's address with the third octet changed from 12 to 14, so the whole address plan
+(`.13x` BG, `.14x` SP, `.15x` LE, `.16x` TOR, `.17x` hosts, `.11x` WAN) is reused unchanged and any address can be mapped
+in one's head. ND 4.3.1's own node data IP and persistent IPs follow the same rule.
 
 | Device  | Mirror of | sid  | mgmt IP         | console port | Test-net IP (hosts) |
 |---------|-----------|------|-----------------|--------------|---------------------|
-| S3_BG1  | S1_BG1    | 3301 | 192.168.12.133  | 13301        |                     |
-| S3_SP1  | S1_SP1    | 3401 | 192.168.12.143  | 13401        |                     |
-| S3_LE1  | S1_LE1    | 3501 | 192.168.12.181  | 13501        |                     |
-| S3_LE2  | S1_LE2    | 3502 | 192.168.12.182  | 13502        |                     |
-| S3_LE3  | S1_LE3    | 3503 | 192.168.12.183  | 13503        |                     |
-| S3_LE4  | S1_LE4    | 3504 | 192.168.12.184  | 13504        |                     |
-| S3_TOR1 | S1_TOR1   | 3601 | 192.168.12.163  | 13601        |                     |
-| S3_H1   | S1_H1     | n/a  | 192.168.12.173  | n/a          | 192.0.1.173         |
-| S4_BG1  | S2_BG1    | 4301 | 192.168.12.134  | 14301        |                     |
-| S4_SP1  | S2_SP1    | 4401 | 192.168.12.144  | 14401        |                     |
-| S4_LE1  | S2_LE1    | 4501 | 192.168.12.185  | 14501        |                     |
-| S4_H1   | S2_H1     | n/a  | 192.168.12.174  | n/a          | 192.0.1.174         |
-| WAN2    | WAN1      | 9102 | 192.168.12.113  | 19102        |                     |
+| S3_BG1  | S1_BG1    | 3301 | 192.168.14.131  | 13301        |                     |
+| S3_SP1  | S1_SP1    | 3401 | 192.168.14.141  | 13401        |                     |
+| S3_LE1  | S1_LE1    | 3501 | 192.168.14.151  | 13501        |                     |
+| S3_LE2  | S1_LE2    | 3502 | 192.168.14.152  | 13502        |                     |
+| S3_LE3  | S1_LE3    | 3503 | 192.168.14.154  | 13503        |                     |
+| S3_LE4  | S1_LE4    | 3504 | 192.168.14.155  | 13504        |                     |
+| S3_TOR1 | S1_TOR1   | 3601 | 192.168.14.161  | 13601        |                     |
+| S3_H1   | S1_H1     | n/a  | 192.168.14.171  | n/a          | 192.0.1.171         |
+| S4_BG1  | S2_BG1    | 4301 | 192.168.14.132  | 14301        |                     |
+| S4_SP1  | S2_SP1    | 4401 | 192.168.14.142  | 14401        |                     |
+| S4_LE1  | S2_LE1    | 4501 | 192.168.14.153  | 14501        |                     |
+| S4_H1   | S2_H1     | n/a  | 192.168.14.172  | n/a          | 192.0.1.172         |
+| WAN2    | WAN1      | 9102 | 192.168.14.112  | 19102        |                     |
 
 Console port = 10000 + sid, QEMU monitor = 20000 + sid, MACs derive from sid (unchanged launcher behaviour). Host
-container MACs follow the existing `00:00:<last-octet-hex-ish>` pattern: S3_H1 `00:00:73:00:00:01/02`, S4_H1
-`00:00:74:00:00:01/02`.
+container test-network addresses are identical to their counterparts (192.0.1.171/.172): the overlay is a separate L2/L3
+domain per testbed. The one deliberate non-mirror is the container MACs, `00:00:73:...` / `00:00:74:...` instead of
+`00:00:71/72`, so that the upstream `eno6` trunk never learns one MAC on two VLANs.
 
-Pre-flight before first launch: confirm none of the new addresses answer on the segment
-(`ip neigh show dev BR_ND_DATA_12` plus a one-packet ping sweep). The only unknown today is the ND 4.2.1 node data IP.
+Pre-flight before first launch: 192.168.14.0/24 carries only the host (`.2`) and ND 4.3.1 today, so the sweep is a sanity
+check that ND 4.3.1's node data IP and persistent `.30-.32` do not overlap the device plan (they do not: `.1xx`).
 
 ### D3. Fabric names, ASNs, pools, VNIs are identical on ND 4.3.1
 
@@ -136,8 +141,11 @@ password and is no longer produced by any tool); the stale IPv6 EUI-64 addresses
 
 ## Risks
 
-- **Address collisions on the shared segment.** Mitigated by the pre-flight sweep (D2) and by keeping every new address in
-  a previously unused block.
+- **Address collisions.** None possible with SITE1/SITE2: the testbeds are on different VLANs. Within 192.168.14.0/24 the
+  device plan (`.1xx`) is disjoint from ND 4.3.1 (`.30-.32` plus its node IP).
+- **ND 4.3.1 re-instantiation.** Its libvirt domain must be destroyed/undefined and disks removed before re-running the
+  install script with `ND_DATA_NET=BR_ND_DATA_14`; the CLI bootstrap and the nd-bootstrap YAML (separate repo) must use
+  the 192.168.14.x addresses. Until that is done nothing in SITE3/SITE4 can be onboarded.
 - **ND 4.3.1 behavioural differences** (e.g. fabric create defaults, monitored-mode default on external fabrics). The tool
   asserts `management.monitoredMode: false` on ISN after create and treats every deploy as "verify `pendingConfig` empty",
   the same guards that were learned on 4.2.1.

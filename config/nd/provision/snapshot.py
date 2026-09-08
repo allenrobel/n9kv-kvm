@@ -74,6 +74,12 @@ def dump(client: NDClient, out_dir: Path) -> None:
     fabrics = client.get("/fabrics") or {}
     _write(out_dir, "fabrics", fabrics)
     _write(out_dir, "inventory_switches", client.get("/inventory/switches"))
+    fabric_groups = client.get("/fabrics", params={"category": "fabricGroup"}) or {}
+    _write(out_dir, "fabric_groups", fabric_groups)
+    for group in fabric_groups.get("fabrics", []):
+        name = group["name"]
+        _write(out_dir, f"fabric_group_{name}", client.get(f"/fabrics/{name}"))
+        _write(out_dir, f"members_{name}", client.get(f"/fabrics/{name}/members"))
     for fabric in fabrics.get("fabrics", []):
         name = fabric["name"]
         _write(out_dir, f"fabric_{name}", client.get(f"/fabrics/{name}"))

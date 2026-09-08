@@ -1,0 +1,146 @@
+# ND 4.3.1 Mirror Testbed (SITE3/SITE4 + WAN2) Design
+
+Date: 2026-09-08. Status: proposed, awaiting review.
+
+## Goal
+
+Run a second, independent copy of the ND 4.2.1 lab under ND 4.3.1.175, identical in every respect except device names and
+management addresses, and formalize the ND-side provisioning (fabrics, MSD membership, switch onboarding, ISN links and
+WAN policies, overlay VRF/network/attachments) that today lives only in session memory and the `provision-isn` skill.
+
+The two testbeds share one host (glide-wired.laukapu.com), one management segment (`BR_ND_DATA_12`, 192.168.12.0/24), and
+nothing else. Every data-plane bridge is per-testbed, so underlay/overlay address pools, ASNs, VNIs and fabric names can be
+byte-identical across the two Nexus Dashboards.
+
+## Facts established (2026-09-08, read-only inspection of the host)
+
+- `nd.4.2.1.10.node1` and `nd.4.3.1.175.node1` are both running, both with `outside` (mgmt) + `BR_ND_DATA_12` (data).
+  ND 4.3.1 node data IP is 192.168.12.15; its persistent data IPs are 192.168.12.30-.32 and persistent mgmt IPs
+  10.10.20.60-.62 (from the request). ND 4.2.1 persistent data IPs are 192.168.12.10-.12 (docs).
+- The host still carries every bridge from `9914-bridges.yaml` (`BR_ND_DATA_14`, `BR_ISN_S3_S4_1`, `BR_S3_*`, `BR_S4_*`
+  including the `S4_LE2/S4_LE3/H2` set) and from `9915-bridges.yaml`. No S3/S4 VMs, no WAN2, no S3/S4 containers exist.
+- Running: S1_BG1, S1_SP1, S1_LE1-4, S1_TOR1, S2_BG1, S2_SP1, S2_LE1, WAN1. Containers S1_H1/S2_H1 are defined but shut off.
+- The existing `S3_*.yaml`/`S4_*.yaml` describe a *different* topology (no LE2-4, no TOR, no WAN, an extra S4 leaf pair
+  toward a non-existent `S4_H2`) on the *wrong* management network (`BR_ND_DATA_14` / 192.168.14.x). They must be rewritten.
+
+## Decisions
+
+### D1. Management network: `BR_ND_DATA_12`, 192.168.12.0/24, gateway 192.168.12.1
+
+Forced by the ND 4.3.1 install (data interface on `BR_ND_DATA_12`). All S3/S4 switches, WAN2 and the S3/S4 containers move
+off 192.168.14.x. `BR_ND_DATA_14` / `Vlan14` stay defined in `9914-bridges.yaml` because seven `config/nd/*node2*` scripts
+reference them; the file header is rewritten to say the S3/S4 mirror does not use them.
+
+Alternative rejected: re-installing ND 4.3.1 on `BR_ND_DATA_14`. It is already up with its persistent IPs allocated.
+
+### D2. Management address plan (last octet of 192.168.12.x)
+
+Existing blocks: `.13x` BG, `.14x` SP, `.15x` LE (sequential), `.16x` TOR, `.17x` hosts, `.11x` WAN/edge. BG/SP/TOR/host
+blocks are site-coded in the last digit, so the mirror continues that. The `.15x` leaf block has only four free slots for
+five mirror leaves, so mirror leaves get a fresh `.18x` block.
+
+| Device  | Mirror of | sid  | mgmt IP         | console port | Test-net IP (hosts) |
+|---------|-----------|------|-----------------|--------------|---------------------|
+| S3_BG1  | S1_BG1    | 3301 | 192.168.12.133  | 13301        |                     |
+| S3_SP1  | S1_SP1    | 3401 | 192.168.12.143  | 13401        |                     |
+| S3_LE1  | S1_LE1    | 3501 | 192.168.12.181  | 13501        |                     |
+| S3_LE2  | S1_LE2    | 3502 | 192.168.12.182  | 13502        |                     |
+| S3_LE3  | S1_LE3    | 3503 | 192.168.12.183  | 13503        |                     |
+| S3_LE4  | S1_LE4    | 3504 | 192.168.12.184  | 13504        |                     |
+| S3_TOR1 | S1_TOR1   | 3601 | 192.168.12.163  | 13601        |                     |
+| S3_H1   | S1_H1     | n/a  | 192.168.12.173  | n/a          | 192.0.1.173         |
+| S4_BG1  | S2_BG1    | 4301 | 192.168.12.134  | 14301        |                     |
+| S4_SP1  | S2_SP1    | 4401 | 192.168.12.144  | 14401        |                     |
+| S4_LE1  | S2_LE1    | 4501 | 192.168.12.185  | 14501        |                     |
+| S4_H1   | S2_H1     | n/a  | 192.168.12.174  | n/a          | 192.0.1.174         |
+| WAN2    | WAN1      | 9102 | 192.168.12.113  | 19102        |                     |
+
+Console port = 10000 + sid, QEMU monitor = 20000 + sid, MACs derive from sid (unchanged launcher behaviour). Host
+container MACs follow the existing `00:00:<last-octet-hex-ish>` pattern: S3_H1 `00:00:73:00:00:01/02`, S4_H1
+`00:00:74:00:00:01/02`.
+
+Pre-flight before first launch: confirm none of the new addresses answer on the segment
+(`ip neigh show dev BR_ND_DATA_12` plus a one-packet ping sweep). The only unknown today is the ND 4.2.1 node data IP.
+
+### D3. Fabric names, ASNs, pools, VNIs are identical on ND 4.3.1
+
+ND 4.3.1 gets fabrics `SITE1`, `SITE2`, `ISN`, fabric group `MSD`, ASNs 65001/65002/65535, the same Resources-tab pools
+(`10.1x`/`10.2x`), the same ISN /30s (10.33.0.0/30, 10.33.0.4/30), the same WAN Loopback0 (10.35.0.1/32), and the same
+overlay VRF/network/VNI/VLAN. Only the member device hostnames (S3_*/S4_*/WAN2) and their mgmt IPs differ.
+
+Rationale: the fabrics live on separate controllers and separate bridges, so there is no collision; the user's `env_prod`
+already keys everything on `ND_FABRIC_SITE1`/`SITE2`/`ISN`/`MSD` with `ND_IP4` selecting the controller, so the
+ansible-nd test suite runs unchanged against either ND. Device names must differ only because both testbeds share one host
+(unique QEMU names, TAP names, YAML files, container domains).
+
+Alternative (not chosen): name the fabrics `SITE3`/`SITE4` and override `ND_FABRIC_SITE1=SITE3` in the env. It buys
+nothing and makes the "mirror" a naming exception.
+
+### D4. Exact link mirror (S1 -> S3, S2 -> S4)
+
+| Bridge (new unless noted) | A side               | B side              | Mirror of         |
+|---------------------------|----------------------|---------------------|-------------------|
+| BR_ISN_S3_S4_1 (exists)   | S3_BG1 Eth1/1        | S4_BG1 Eth1/1       | BR_ISN_S1_S2_1    |
+| BR_S3_BG1_SP1_1 (exists)  | S3_BG1 Eth1/2        | S3_SP1 Eth1/1       | BR_S1_BG1_SP1_1   |
+| BR_ISN_WAN_S3_1           | WAN2 Gi2             | S3_BG1 Eth1/3       | BR_ISN_WAN_S1_1   |
+| BR_S3_SP1_LE1_1 (exists)  | S3_SP1 Eth1/2        | S3_LE1 Eth1/1       | BR_S1_SP1_LE1_1   |
+| BR_S3_SP1_LE2_1           | S3_SP1 Eth1/3        | S3_LE2 Eth1/1       | BR_S1_SP1_LE2_1   |
+| BR_S3_SP1_LE3_1           | S3_SP1 Eth1/4        | S3_LE3 Eth1/1       | BR_S1_SP1_LE3_1   |
+| BR_S3_SP1_LE4_1           | S3_SP1 Eth1/5        | S3_LE4 Eth1/1       | BR_S1_SP1_LE4_1   |
+| BR_S3_LE1_LE2_1           | S3_LE1 Eth1/2        | S3_LE2 Eth1/2       | BR_S1_LE1_LE2_1   |
+| BR_S3_LE1_T1_1            | S3_LE1 Eth1/3        | S3_TOR1 Eth1/1      | BR_S1_LE1_T1_1    |
+| BR_S3_LE2_T1_1            | S3_LE2 Eth1/3        | S3_TOR1 Eth1/2      | BR_S1_LE2_T1_1    |
+| BR_S3_T1_H1_1             | S3_TOR1 Eth1/3       | S3_H1 eth1          | BR_S1_T1_H1_1     |
+| BR_S3_LE3_LE4_1           | S3_LE3 Eth1/2        | S3_LE4 Eth1/2       | BR_S1_LE3_LE4_1   |
+| BR_S4_BG1_SP1_1 (exists)  | S4_BG1 Eth1/2        | S4_SP1 Eth1/1       | BR_S2_BG1_SP1_1   |
+| BR_ISN_WAN_S4_1           | WAN2 Gi3             | S4_BG1 Eth1/3       | BR_ISN_WAN_S2_1   |
+| BR_S4_SP1_LE1_1 (exists)  | S4_SP1 Eth1/2        | S4_LE1 Eth1/1       | BR_S2_SP1_LE1_1   |
+| BR_S4_LE1_H1_1 (exists)   | S4_LE1 Eth1/2        | S4_H1 eth1          | BR_S2_LE1_H1_1    |
+
+Removed (not in the ND 4.2.1 topology): `BR_S4_SP1_LE2_1`, `BR_S4_SP1_LE3_1`, `BR_S4_LE2_H2_1`, `BR_S4_LE3_H2_1`,
+`S4_LE2.yaml`, `S4_LE3.yaml`, `BR_S3_LE1_H1_1` (S3_H1 hangs off the TOR, like S1_H1). Every name is <= 15 chars.
+
+The `isl_bridges` order in each YAML is what fixes `Ethernet1/N`; it is copied position-for-position from the S1/S2 file it
+mirrors. Interface numbering on the ND side (links, attachments) is therefore also identical.
+
+### D5. Provisioning is a Python REST tool in this repo, driven by a declarative topology file
+
+`config/nd/provision/` gains a small package (`nd_client.py`, `topology.py`, `snapshot.py`, `provision.py`) plus two data
+files, `topology_nd421.yaml` and `topology_nd431.yaml`. The tool is idempotent per phase (`fabrics`, `msd`, `switches`,
+`isn`, `overlay`, `deploy`), has `--dry-run`, reads `ND_IP4`/`ND_USERNAME`/`ND_PASSWORD`/`ND_DOMAIN`/`NXOS_PASSWORD`/
+`IOSXE_PASSWORD` from the environment, and resolves switch serial numbers at run time by hostname (serials change on every
+VM rebuild). `snapshot.py` dumps an ND's fabric state read-only and can diff two dumps while ignoring hostnames, mgmt IPs
+and serials, which is the mechanical proof that the two testbeds mirror each other.
+
+Why Python and not `cisco.nd` playbooks: this lab exists to develop those modules, so bringup must not depend on them; the
+REST payloads are already captured in `docs/nd4_fabrics_bringup.md` and the `provision-isn` skill; the repo's other tooling
+is Python-plus-YAML. The `/api/v1/manage` paths used (`/fabrics`, `/fabrics/{f}/switches`, `switchActions/changeRoles`,
+`/links`, `/fabrics/{f}/policies`, `/vrfs`, `/networks`, `vrfAttachments`, `networkAttachments`, `actions/configDeploy`,
+`vrfActions/deploy`, `networkActions/deploy`, `switchActions/rediscover`, `inventory/switchActions/showCommands`) exist
+unchanged in both the 4.2.1 and 4.3.1 OpenAPI schemas.
+
+The overlay definition (VRF name/ID, network name/ID, VLAN, gateway, attachment ports) is captured from the live ND 4.2.1
+with `snapshot.py` and transcribed into `topology_nd421.yaml`; `topology_nd431.yaml` is a copy with only the hostname/IP
+substitutions. Known from memory and docs today: VLAN 2, anycast gateway 192.0.1.1/24, host addresses 192.0.1.171/.172,
+attachment on the S1 vPC pair + S1_TOR1 host port and on S2_LE1 Eth1/2.
+
+### D6. Scope boundaries
+
+In scope: switch/router/container definitions, bridges, helper scripts, launch scripts, inventory, provisioning tool and
+topology files, docs. Also the deployment runbook for the host (netplan, ISOs, launches, provisioning order, verification).
+
+Out of scope (follow-ups, listed in the plan): deleting the stale generated `config/nexus9000v/cfg/` directory (it embeds a
+password and is no longer produced by any tool); the stale IPv6 EUI-64 addresses in `S1_H1/S2_H1.netplan.yaml`; updating
+`~/lab_recover.sh` on the host (not in the repo) to include site3/site4/WAN2/containers; the `provision-isn` skill (lives in
+`~/.claude`, will be pointed at the new tool once it lands).
+
+## Risks
+
+- **Address collisions on the shared segment.** Mitigated by the pre-flight sweep (D2) and by keeping every new address in
+  a previously unused block.
+- **ND 4.3.1 behavioural differences** (e.g. fabric create defaults, monitored-mode default on external fabrics). The tool
+  asserts `management.monitoredMode: false` on ISN after create and treats every deploy as "verify `pendingConfig` empty",
+  the same guards that were learned on 4.2.1.
+- **Host resources.** Eleven more n9kv (16 GB RAM, 4 vCPU each by default) plus one C8000V (8 GB) and two containers add
+  ~186 GB RAM and 48 vCPUs. The plan's runbook checks free memory before launching and launches site by site.
+- **netplan apply removing bridges with live ports.** The four removed `S4_*` bridges have no ports today, so removal is safe.

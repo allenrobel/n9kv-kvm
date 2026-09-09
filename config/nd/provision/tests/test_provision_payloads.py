@@ -52,6 +52,7 @@ def test_switch_add_payload_carries_discovered_serial_and_model_and_never_preser
             {"ip": "192.168.14.112", "hostname": "WAN2", "switchRole": "coreRouter", "serialNumber": "9ABCDEF1234", "model": "C8000V", "softwareVersion": "17.15.5"}
         ],
         "platformType": "ios-xe",
+        "snmpV3AuthProtocol": "md5",
         "preserveConfig": False,
         "useCredentialForWrite": True,
         "username": "admin",
@@ -79,6 +80,7 @@ def test_discovery_payload_seeds_every_switch_with_zero_hops():
         "seedIpCollection": ["192.168.14.132", "192.168.14.153"],
         "maxHop": 0,
         "platformType": "nx-os",
+        "snmpV3AuthProtocol": "md5",
         "username": "admin",
         "password": "pw",  # ggignore: unit-test placeholder, not a credential
     }

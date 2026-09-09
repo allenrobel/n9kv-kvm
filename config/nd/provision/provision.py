@@ -58,6 +58,8 @@ def merge_settings(current: dict, settings: dict) -> dict:
 
 
 DISCOVERY_PLACEHOLDER = "<from-discovery>"
+# ND rejects shallowDiscovery without it ("snmpV3AuthProtocol must not be empty or missing"); the GUI defaults to MD5.
+SNMPV3_AUTH_PROTOCOL = "md5"
 REDACTED_KEYS = {"password", "userPasswd", "secret"}
 
 
@@ -80,7 +82,14 @@ def redact(body: Any) -> Any:
 def discovery_payload(fabric: Fabric, password: str, username: str = "admin") -> dict:
     """Body for POST /fabrics/{f}/actions/shallowDiscovery: ND logs into each seed IP and reports serial, model,
     software version and a manageability status. Its output is what the add call requires."""
-    return {"seedIpCollection": [s.ip for s in fabric.switches], "maxHop": 0, "platformType": _platform(fabric), "username": username, "password": password}
+    return {
+        "seedIpCollection": [s.ip for s in fabric.switches],
+        "maxHop": 0,
+        "platformType": _platform(fabric),
+        "snmpV3AuthProtocol": SNMPV3_AUTH_PROTOCOL,
+        "username": username,
+        "password": password,
+    }
 
 
 def switch_add_payload(fabric: Fabric, discovered: dict[str, dict], password: str, username: str = "admin") -> dict:
@@ -99,6 +108,7 @@ def switch_add_payload(fabric: Fabric, discovered: dict[str, dict], password: st
     return {
         "switches": entries,
         "platformType": platform,
+        "snmpV3AuthProtocol": SNMPV3_AUTH_PROTOCOL,
         "preserveConfig": False,
         "useCredentialForWrite": True,
         "username": username,

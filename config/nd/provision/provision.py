@@ -340,12 +340,52 @@ class Provisioner:
             time.sleep(15)
         raise TimeoutError(f"{fabric_name}: switches never listed: {[h for h in hostnames if h not in present]}")
 
+    def _pending_counts(self, fabric_name: str) -> dict[str, int]:
+        """hostname -> pending line count for every switch in the fabric (404-tolerant; used for the redeploy check)."""
+        counts = {}
+        for hostname, entry in self.fabric_switches(fabric_name).items():
+            counts[hostname] = len(self._read(f"/fabrics/{fabric_name}/switches/{entry['serialNumber']}/pendingConfig", "pendingConfigs"))
+        return counts
+
+    def _deploy_failures(self, fabric_name: str, since: str) -> list[str]:
+        """First failed CLI command per switch from deploymentHistory records started at/after `since` (ISO-8601 UTC)."""
+        failures = []
+        for rec in self._read(f"/fabrics/{fabric_name}/deploymentHistory", "deploymentRecords"):
+            if (rec.get("startTimestamp") or "") < since or rec.get("status") == "success":
+                continue
+            for cmd in rec.get("configCommandResponses", []):
+                if cmd.get("status") == "failed":
+                    failures.append(f"{rec.get('hostname')}: {cmd.get('command', '').strip()!r} -> {(cmd.get('cliResponse') or '')[:120]}")
+                    break
+        return failures
+
     def config_deploy(self, fabric_name: str) -> None:
         """The GUI's "Recalculate and Deploy": configSave (recalculate intent from the fabric settings + policies)
         followed by deploy (push pending config). Both are synchronous and can run for minutes. The older
-        actions/configDeploy is deprecated on 4.3.1 and, as observed there, never generated the underlay intent."""
+        actions/configDeploy is deprecated on 4.3.1 and, as observed there, never generated the underlay intent.
+
+        ND 4.3.1 quirk: the first deploy after a Recalculate can run against the switch's stale expected config
+        (the import-time defaults), emit `no vlan 1` and abort the whole switch; the next deploy uses the fresh
+        intent and succeeds. So after deploying, if anything is still pending, report the failed commands and
+        deploy once more."""
         self._post(f"/fabrics/{fabric_name}/actions/configSave", None, timeout=FABRIC_ACTION_TIMEOUT)
+        started = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime())
         self._post(f"/fabrics/{fabric_name}/actions/deploy", None, timeout=FABRIC_ACTION_TIMEOUT)
+        if self.dry_run:
+            return
+        time.sleep(self.settle_seconds)
+        left = {h: n for h, n in self._pending_counts(fabric_name).items() if n}
+        if not left:
+            return
+        self._log(f"{fabric_name}: still pending after deploy {left}")
+        for line in self._deploy_failures(fabric_name, started):
+            self._log(f"{fabric_name}: deploy failure {line}")
+        self._log(f"{fabric_name}: deploying once more (first deploy after a Recalculate can use a stale expected config on ND 4.3.1)")
+        self._post(f"/fabrics/{fabric_name}/actions/deploy", None, timeout=FABRIC_ACTION_TIMEOUT)
+        time.sleep(self.settle_seconds)
+        left = {h: n for h, n in self._pending_counts(fabric_name).items() if n}
+        if left:
+            self._log(f"{fabric_name}: still pending after the second deploy {left} -- read /fabrics/{fabric_name}/deploymentHistory")
 
     def pending(self, fabric_name: str, serial: str) -> list:
         """Final convergence check: fails loud (does not swallow HTTP errors like `_read`) since a request

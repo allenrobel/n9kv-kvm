@@ -6,10 +6,17 @@ from types import SimpleNamespace
 
 import pytest
 
+import provision
 from provision import Provisioner, merge_settings
 from topology import Overlay, load
 
 HERE = Path(__file__).resolve().parents[1]
+
+
+@pytest.fixture(autouse=True)
+def _no_settle_sleep(monkeypatch):
+    """config_deploy/phase_deploy/phase_isn sleep settle_seconds between deploy and the pending check; never in tests."""
+    monkeypatch.setattr(provision.time, "sleep", lambda _seconds: None)
 
 
 class StubClient:
@@ -787,3 +794,71 @@ def test_phase_deploy_live_prints_the_pending_lines_themselves_when_nonempty(cap
     assert f"    {diff_line}" in out.splitlines()
     # a switch with nothing pending gets no extra indented lines
     assert "ISN/WAN1: pendingConfig 0 line(s)" in out
+
+
+class _StubClientPendingSequence(StubClient):
+    """GET on a pendingConfig path answers the next value from a per-path queue (last value repeats)."""
+
+    def __init__(self, responses: dict, sequences: dict[str, list]) -> None:
+        super().__init__(responses)
+        self.sequences = {k: list(v) for k, v in sequences.items()}
+
+    def get(self, path: str, params: dict | None = None):
+        if path in self.sequences:
+            self.calls.append(("GET", path, params))
+            queue = self.sequences[path]
+            return queue.pop(0) if len(queue) > 1 else queue[0]
+        return super().get(path, params)
+
+
+def test_config_deploy_recalculates_then_deploys_once_when_nothing_is_pending():
+    topo = _topo()
+    site2 = topo.fabrics[1]
+    responses = {("/fabrics/SITE2/switches", ()): _already_present(site2)}
+    responses.update({(f"/fabrics/SITE2/switches/SN-{s.hostname}/pendingConfig", ()): {"pendingConfigs": []} for s in site2.switches})
+    client = StubClient(responses)
+
+    Provisioner(client, topo, settle_seconds=0).config_deploy("SITE2")
+
+    assert [p[1] for p in _posts(client)] == ["/fabrics/SITE2/actions/configSave", "/fabrics/SITE2/actions/deploy"]
+
+
+def test_config_deploy_redeploys_once_when_the_first_deploy_leaves_pending_config(capsys):
+    topo = _topo()
+    site2 = topo.fabrics[1]
+    responses = {
+        ("/fabrics/SITE2/switches", ()): _already_present(site2),
+        ("/fabrics/SITE2/deploymentHistory", ()): {
+            "deploymentRecords": [
+                {
+                    "hostname": "S2_BG1",
+                    "status": "notExecuted",
+                    "startTimestamp": "2999-01-01T00:00:00.000Z",
+                    "configCommandResponses": [{"command": "no vlan 1", "status": "failed", "cliResponse": "Deletion of VLAN 1 is not allowed!!"}],
+                }
+            ]
+        },
+    }
+    responses.update({(f"/fabrics/SITE2/switches/SN-{s.hostname}/pendingConfig", ()): {"pendingConfigs": []} for s in site2.switches})
+    sequences = {"/fabrics/SITE2/switches/SN-S2_BG1/pendingConfig": [{"pendingConfigs": ["no vlan 1", "cfs eth distribute"]}, {"pendingConfigs": []}]}
+    client = _StubClientPendingSequence(responses, sequences)
+
+    Provisioner(client, topo, settle_seconds=0).config_deploy("SITE2")
+
+    assert [p[1] for p in _posts(client)] == ["/fabrics/SITE2/actions/configSave", "/fabrics/SITE2/actions/deploy", "/fabrics/SITE2/actions/deploy"]
+    out = capsys.readouterr().out
+    assert "still pending after deploy {'S2_BG1': 2}" in out
+    assert "deploy failure S2_BG1: 'no vlan 1' -> Deletion of VLAN 1 is not allowed!!" in out
+    assert "still pending after the second deploy" not in out
+
+
+def test_config_deploy_dry_run_only_logs_recalculate_and_deploy(capsys):
+    topo = _topo()
+    client = StubClient({})
+
+    Provisioner(client, topo, dry_run=True).config_deploy("SITE2")
+
+    assert _posts(client) == []
+    assert not any(call[0] == "GET" and "pendingConfig" in call[1] for call in client.calls)
+    out = capsys.readouterr().out
+    assert [line.split()[2] for line in out.splitlines() if line.startswith("[dry-run] POST")] == ["/fabrics/SITE2/actions/configSave", "/fabrics/SITE2/actions/deploy"]

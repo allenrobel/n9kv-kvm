@@ -219,7 +219,8 @@ Follow the link below to install this extension.
 ## Topology built by this repository
 
 Two independent testbeds, one per Nexus Dashboard controller, sharing the KVM host and nothing else (separate
-management bridges, separate data-plane bridges, identical fabric names/ASNs/pools):
+management/data bridges (`BR_ND_DATA_12` vs `BR_ND_DATA_14`) and separate data-plane bridges, identical fabric
+names/ASNs/pools):
 
 - **ND 4.2.1** (10.10.20.10, data on `BR_ND_DATA_12`)
   - MSD (Multi Site Domain) - contains SITE1, SITE2 and ISN

@@ -43,7 +43,7 @@ def test_merge_settings_is_deep_and_non_destructive():
     assert current["management"] == {"type": "vxlanIbgp", "bgpAsn": "65001", "ptp": False}
 
 
-def test_switch_add_payload_carries_discovered_serial_and_model_and_never_preserves_config():
+def test_switch_add_payload_carries_discovered_serial_and_model_and_preserves_config_on_external_fabrics():
     fab = Fabric(name="ISN", type="externalConnectivity", asn="65535", switches=[Switch("WAN2", "192.168.14.112", "coreRouter", "ios-xe")])
     discovered = {"192.168.14.112": {"serialNumber": "9ABCDEF1234", "model": "C8000V", "softwareVersion": "17.15.5", "status": "manageable"}}
     body = switch_add_payload(fab, discovered, "pw")  # ggignore: unit-test placeholder, not a credential
@@ -53,11 +53,17 @@ def test_switch_add_payload_carries_discovered_serial_and_model_and_never_preser
         ],
         "platformType": "ios-xe",
         "snmpV3AuthProtocol": "md5",
-        "preserveConfig": False,
+        "preserveConfig": True,
         "useCredentialForWrite": True,
         "username": "admin",
         "password": "pw",  # ggignore: unit-test placeholder, not a credential
     }
+
+
+def test_switch_add_payload_does_not_preserve_config_on_vxlan_fabrics():
+    fab = Fabric(name="SITE2", type="vxlanIbgp", asn="65002", switches=[Switch("S4_LE1", "192.168.14.153", "leaf")])
+    body = switch_add_payload(fab, {"192.168.14.153": {"serialNumber": "9TNWE163CJY", "model": "N9K-C9300v"}}, "pw")  # ggignore: unit-test placeholder, not a credential
+    assert body["preserveConfig"] is False and body["platformType"] == "nx-os"
 
 
 def test_switch_add_payload_requires_a_discovery_result_for_every_switch():

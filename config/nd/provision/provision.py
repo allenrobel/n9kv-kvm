@@ -95,7 +95,10 @@ def discovery_payload(fabric: Fabric, password: str, username: str = "admin") ->
 
 def switch_add_payload(fabric: Fabric, discovered: dict[str, dict], password: str, username: str = "admin") -> dict:
     """Body for POST /fabrics/{f}/switches. `discovered` maps switch IP -> shallowDiscovery entry; ND rejects the add
-    (HTTP 400, schema validation) unless every switch carries the discovered `serialNumber` and `model`."""
+    (HTTP 400, schema validation) unless every switch carries the discovered `serialNumber` and `model`.
+    `preserveConfig` is false for VXLAN fabrics (ND owns the switch config; the GUI's "Preserve Config" is unchecked)
+    and must be true for external fabrics: ND answers HTTP 400 "preserveConfig option should be true for External
+    Fabric Type" otherwise (the WAN router keeps its own config; ND only layers policies on it)."""
     platform = _platform(fabric)
     entries = []
     for switch in fabric.switches:
@@ -110,7 +113,7 @@ def switch_add_payload(fabric: Fabric, discovered: dict[str, dict], password: st
         "switches": entries,
         "platformType": platform,
         "snmpV3AuthProtocol": SNMPV3_AUTH_PROTOCOL,
-        "preserveConfig": False,
+        "preserveConfig": fabric.type == "externalConnectivity",
         "useCredentialForWrite": True,
         "username": username,
         "password": password,

@@ -61,7 +61,8 @@ class NDClient:
 
     def request(self, method: str, path: str, **kwargs: Any) -> requests.Response:
         url = path if path.startswith("http") else f"{self.url}{self.BASE}{path}"
-        return self.session.request(method, url, timeout=self.timeout, **kwargs)
+        kwargs.setdefault("timeout", self.timeout)
+        return self.session.request(method, url, **kwargs)
 
     def _json(self, resp: requests.Response, path: str) -> Any:
         method = resp.request.method
@@ -80,8 +81,12 @@ class NDClient:
     def get(self, path: str, params: Optional[dict] = None) -> Any:
         return self._json(self.request("GET", path, params=params), path)
 
-    def post(self, path: str, json: Any = None) -> Any:
-        return self._json(self.request("POST", path, json=json), path)
+    def post(self, path: str, json: Any = None, timeout: Optional[int] = None) -> Any:
+        """POST; `timeout` overrides the session default for long synchronous actions (configSave, deploy)."""
+        kwargs: dict[str, Any] = {"json": json}
+        if timeout is not None:
+            kwargs["timeout"] = timeout
+        return self._json(self.request("POST", path, **kwargs), path)
 
     def put(self, path: str, json: Any) -> Any:
         return self._json(self.request("PUT", path, json=json), path)

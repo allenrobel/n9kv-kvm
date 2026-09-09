@@ -6,10 +6,17 @@ from types import SimpleNamespace
 
 import pytest
 
+import provision
 from provision import Provisioner, merge_settings
 from topology import Overlay, load
 
 HERE = Path(__file__).resolve().parents[1]
+
+
+@pytest.fixture(autouse=True)
+def _no_settle_sleep(monkeypatch):
+    """config_deploy/phase_deploy/phase_isn sleep settle_seconds between deploy and the pending check; never in tests."""
+    monkeypatch.setattr(provision.time, "sleep", lambda _seconds: None)
 
 
 class StubClient:
@@ -31,7 +38,7 @@ class StubClient:
             raise RuntimeError("HTTP 404")
         return self.responses[key]
 
-    def post(self, path: str, json=None):
+    def post(self, path: str, json=None, timeout=None):
         self.calls.append(("POST", path, json))
         return self.responses.get(path)
 
@@ -316,7 +323,7 @@ def test_phase_switches_dry_run_posts_add_and_deploy_but_no_role_change(monkeypa
         assert f'"hostname": "{hostname}", "switchRole": "{role}", "serialNumber": "<from-discovery>", "model": "<from-discovery>"' in add_line
     assert "nxos-pw" not in out and '"password": "***"' in add_line  # ggignore: unit-test placeholder, not a credential
 
-    deploy_lines = _dry_run_lines(out, "/fabrics/SITE2/actions/configDeploy")
+    deploy_lines = _dry_run_lines(out, "/fabrics/SITE2/actions/deploy")
     assert len(deploy_lines) == 1
     assert not any("switchActions" in line for line in out.splitlines() if "SITE2" in line)
 
@@ -348,7 +355,7 @@ def test_phase_switches_changes_wrong_role_when_switches_already_present():
     role_posts = [p for p in posts if p[1] == "/fabrics/SITE2/switchActions/changeRoles"]
     assert len(role_posts) == 1
     assert role_posts[0][2] == {"switchRoles": [{"switchId": "SN-S2_BG1", "role": "borderGateway"}]}
-    deploy_index = [p[1] for p in posts].index("/fabrics/SITE2/actions/configDeploy")
+    deploy_index = [p[1] for p in posts].index("/fabrics/SITE2/actions/deploy")
     role_index = [p[1] for p in posts].index("/fabrics/SITE2/switchActions/changeRoles")
     assert role_index < deploy_index
 
@@ -386,10 +393,10 @@ class _StubClientListsAfterAdd(StubClient):
             return {"switches": [dict(entry, switchRole=entry["switchRole"]) for entry in self.added]}
         return super().get(path, params)
 
-    def post(self, path: str, json=None):
+    def post(self, path: str, json=None, timeout=None):
         if path == f"/fabrics/{self.fabric}/switches":
             self.added.extend(json["switches"])
-        return super().post(path, json)
+        return super().post(path, json, timeout)
 
 
 def test_phase_switches_live_discovers_then_adds_only_manageable_switches(monkeypatch):
@@ -414,11 +421,14 @@ def test_phase_switches_live_discovers_then_adds_only_manageable_switches(monkey
 
     posts = _posts(client)
     assert [p[1] for p in posts] == [
-        "/fabrics/SITE1/actions/configDeploy",  # SITE1 fully present: deploy only
+        "/fabrics/SITE1/actions/configSave",  # SITE1 fully present: deploy only
+        "/fabrics/SITE1/actions/deploy",
         "/fabrics/SITE2/actions/shallowDiscovery",
         "/fabrics/SITE2/switches",
-        "/fabrics/SITE2/actions/configDeploy",
-        "/fabrics/ISN/actions/configDeploy",
+        "/fabrics/SITE2/actions/configSave",
+        "/fabrics/SITE2/actions/deploy",
+        "/fabrics/ISN/actions/configSave",
+        "/fabrics/ISN/actions/deploy",
     ]
     discovery = next(p[2] for p in posts if p[1].endswith("shallowDiscovery"))
     assert discovery["seedIpCollection"] == ["192.168.12.132", "192.168.12.142", "192.168.12.153"] and discovery["maxHop"] == 0
@@ -499,11 +509,14 @@ def test_phase_isn_dry_run_creates_everything_and_deploys(capsys):
     assert any("10.15.0.1/30" in line for line in link_lines)
     assert any("10.25.0.1/30" in line for line in link_lines)
 
-    deploy_paths = [line.split()[2] for line in out.splitlines() if "actions/configDeploy" in line]
+    deploy_paths = [line.split()[2] for line in out.splitlines() if "actions/configSave" in line or "actions/deploy" in line]
     assert deploy_paths == [
-        "/fabrics/ISN/actions/configDeploy",
-        "/fabrics/SITE1/actions/configDeploy",
-        "/fabrics/SITE2/actions/configDeploy",
+        "/fabrics/ISN/actions/configSave",
+        "/fabrics/ISN/actions/deploy",
+        "/fabrics/SITE1/actions/configSave",
+        "/fabrics/SITE1/actions/deploy",
+        "/fabrics/SITE2/actions/configSave",
+        "/fabrics/SITE2/actions/deploy",
     ]
 
     assert not any(line.startswith("[dry-run] PUT") for line in out.splitlines())
@@ -521,11 +534,14 @@ def test_phase_isn_deploys_wan_fabric_first_even_when_alphabetically_last(capsys
     Provisioner(client, topo, dry_run=True, settle_seconds=0).phase_isn()
 
     out = capsys.readouterr().out
-    deploy_paths = [line.split()[2] for line in out.splitlines() if "actions/configDeploy" in line]
+    deploy_paths = [line.split()[2] for line in out.splitlines() if "actions/configSave" in line or "actions/deploy" in line]
     assert deploy_paths == [
-        "/fabrics/ZZZ_WAN/actions/configDeploy",
-        "/fabrics/SITE1/actions/configDeploy",
-        "/fabrics/SITE2/actions/configDeploy",
+        "/fabrics/ZZZ_WAN/actions/configSave",
+        "/fabrics/ZZZ_WAN/actions/deploy",
+        "/fabrics/SITE1/actions/configSave",
+        "/fabrics/SITE1/actions/deploy",
+        "/fabrics/SITE2/actions/configSave",
+        "/fabrics/SITE2/actions/deploy",
     ]
 
 
@@ -567,9 +583,12 @@ def test_phase_isn_live_everything_present_only_deploys(capsys):
     assert _puts(client) == []
     posts = _posts(client)
     assert [p[1] for p in posts] == [
-        "/fabrics/ISN/actions/configDeploy",
-        "/fabrics/SITE1/actions/configDeploy",
-        "/fabrics/SITE2/actions/configDeploy",
+        "/fabrics/ISN/actions/configSave",
+        "/fabrics/ISN/actions/deploy",
+        "/fabrics/SITE1/actions/configSave",
+        "/fabrics/SITE1/actions/deploy",
+        "/fabrics/SITE2/actions/configSave",
+        "/fabrics/SITE2/actions/deploy",
     ]
     out = capsys.readouterr().out
     assert "WAN1 pendingConfig after deploy: 0 line(s)" in out
@@ -587,9 +606,12 @@ def test_phase_isn_live_clears_monitored_mode_when_true(capsys):
     assert puts[0][2]["management"]["monitoredMode"] is False
     posts = _posts(client)
     assert [p[1] for p in posts] == [
-        "/fabrics/ISN/actions/configDeploy",
-        "/fabrics/SITE1/actions/configDeploy",
-        "/fabrics/SITE2/actions/configDeploy",
+        "/fabrics/ISN/actions/configSave",
+        "/fabrics/ISN/actions/deploy",
+        "/fabrics/SITE1/actions/configSave",
+        "/fabrics/SITE1/actions/deploy",
+        "/fabrics/SITE2/actions/configSave",
+        "/fabrics/SITE2/actions/deploy",
     ]
     out = capsys.readouterr().out
     assert "WAN1 pendingConfig after deploy: 0 line(s)" in out
@@ -724,11 +746,14 @@ def test_phase_deploy_dry_run_deploys_every_fabric_and_does_not_check_pending(ca
     assert _posts(client) == []
     assert not any(call[0] == "GET" and "pendingConfig" in call[1] for call in client.calls)
     out = capsys.readouterr().out
-    deploy_lines = [line for line in out.splitlines() if "actions/configDeploy" in line]
+    deploy_lines = [line for line in out.splitlines() if "actions/configSave" in line or "actions/deploy" in line]
     assert [line.split()[2] for line in deploy_lines] == [
-        "/fabrics/SITE1/actions/configDeploy",
-        "/fabrics/SITE2/actions/configDeploy",
-        "/fabrics/ISN/actions/configDeploy",
+        "/fabrics/SITE1/actions/configSave",
+        "/fabrics/SITE1/actions/deploy",
+        "/fabrics/SITE2/actions/configSave",
+        "/fabrics/SITE2/actions/deploy",
+        "/fabrics/ISN/actions/configSave",
+        "/fabrics/ISN/actions/deploy",
     ]
 
 
@@ -751,9 +776,12 @@ def test_phase_deploy_live_prints_pending_config_for_every_switch(capsys):
 
     posts = _posts(client)
     assert [p[1] for p in posts] == [
-        "/fabrics/SITE1/actions/configDeploy",
-        "/fabrics/SITE2/actions/configDeploy",
-        "/fabrics/ISN/actions/configDeploy",
+        "/fabrics/SITE1/actions/configSave",
+        "/fabrics/SITE1/actions/deploy",
+        "/fabrics/SITE2/actions/configSave",
+        "/fabrics/SITE2/actions/deploy",
+        "/fabrics/ISN/actions/configSave",
+        "/fabrics/ISN/actions/deploy",
     ]
     out = capsys.readouterr().out
     assert "SITE1/S1_BG1: pendingConfig 0 line(s)" in out
@@ -774,3 +802,71 @@ def test_phase_deploy_live_prints_the_pending_lines_themselves_when_nonempty(cap
     assert f"    {diff_line}" in out.splitlines()
     # a switch with nothing pending gets no extra indented lines
     assert "ISN/WAN1: pendingConfig 0 line(s)" in out
+
+
+class _StubClientPendingSequence(StubClient):
+    """GET on a pendingConfig path answers the next value from a per-path queue (last value repeats)."""
+
+    def __init__(self, responses: dict, sequences: dict[str, list]) -> None:
+        super().__init__(responses)
+        self.sequences = {k: list(v) for k, v in sequences.items()}
+
+    def get(self, path: str, params: dict | None = None):
+        if path in self.sequences:
+            self.calls.append(("GET", path, params))
+            queue = self.sequences[path]
+            return queue.pop(0) if len(queue) > 1 else queue[0]
+        return super().get(path, params)
+
+
+def test_config_deploy_recalculates_then_deploys_once_when_nothing_is_pending():
+    topo = _topo()
+    site2 = topo.fabrics[1]
+    responses = {("/fabrics/SITE2/switches", ()): _already_present(site2)}
+    responses.update({(f"/fabrics/SITE2/switches/SN-{s.hostname}/pendingConfig", ()): {"pendingConfigs": []} for s in site2.switches})
+    client = StubClient(responses)
+
+    Provisioner(client, topo, settle_seconds=0).config_deploy("SITE2")
+
+    assert [p[1] for p in _posts(client)] == ["/fabrics/SITE2/actions/configSave", "/fabrics/SITE2/actions/deploy"]
+
+
+def test_config_deploy_redeploys_once_when_the_first_deploy_leaves_pending_config(capsys):
+    topo = _topo()
+    site2 = topo.fabrics[1]
+    responses = {
+        ("/fabrics/SITE2/switches", ()): _already_present(site2),
+        ("/fabrics/SITE2/deploymentHistory", ()): {
+            "deploymentRecords": [
+                {
+                    "hostname": "S2_BG1",
+                    "status": "notExecuted",
+                    "startTimestamp": "2999-01-01T00:00:00.000Z",
+                    "configCommandResponses": [{"command": "no vlan 1", "status": "failed", "cliResponse": "Deletion of VLAN 1 is not allowed!!"}],
+                }
+            ]
+        },
+    }
+    responses.update({(f"/fabrics/SITE2/switches/SN-{s.hostname}/pendingConfig", ()): {"pendingConfigs": []} for s in site2.switches})
+    sequences = {"/fabrics/SITE2/switches/SN-S2_BG1/pendingConfig": [{"pendingConfigs": ["no vlan 1", "cfs eth distribute"]}, {"pendingConfigs": []}]}
+    client = _StubClientPendingSequence(responses, sequences)
+
+    Provisioner(client, topo, settle_seconds=0).config_deploy("SITE2")
+
+    assert [p[1] for p in _posts(client)] == ["/fabrics/SITE2/actions/configSave", "/fabrics/SITE2/actions/deploy", "/fabrics/SITE2/actions/deploy"]
+    out = capsys.readouterr().out
+    assert "still pending after deploy {'S2_BG1': 2}" in out
+    assert "deploy failure S2_BG1: 'no vlan 1' -> Deletion of VLAN 1 is not allowed!!" in out
+    assert "still pending after the second deploy" not in out
+
+
+def test_config_deploy_dry_run_only_logs_recalculate_and_deploy(capsys):
+    topo = _topo()
+    client = StubClient({})
+
+    Provisioner(client, topo, dry_run=True).config_deploy("SITE2")
+
+    assert _posts(client) == []
+    assert not any(call[0] == "GET" and "pendingConfig" in call[1] for call in client.calls)
+    out = capsys.readouterr().out
+    assert [line.split()[2] for line in out.splitlines() if line.startswith("[dry-run] POST")] == ["/fabrics/SITE2/actions/configSave", "/fabrics/SITE2/actions/deploy"]

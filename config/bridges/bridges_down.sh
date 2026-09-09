@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Tear down SITE1/SITE2 bridges and any associated TAP/VNET interfaces.
+# Tear down SITE1-SITE4 bridges and any associated TAP/VNET interfaces.
 
 BRIDGES=(
     BR_ISN_S1_S2_1
@@ -19,6 +19,22 @@ BRIDGES=(
     BR_S2_LE1_H1_1
     BR_ISN_WAN_S1_1
     BR_ISN_WAN_S2_1
+    BR_ISN_S3_S4_1
+    BR_S3_BG1_SP1_1
+    BR_S4_BG1_SP1_1
+    BR_S3_SP1_LE1_1
+    BR_S3_SP1_LE2_1
+    BR_S3_SP1_LE3_1
+    BR_S3_SP1_LE4_1
+    BR_S3_LE1_LE2_1
+    BR_S3_LE3_LE4_1
+    BR_S3_LE1_T1_1
+    BR_S3_LE2_T1_1
+    BR_S3_T1_H1_1
+    BR_S4_SP1_LE1_1
+    BR_S4_LE1_H1_1
+    BR_ISN_WAN_S3_1
+    BR_ISN_WAN_S4_1
 )
 
 # Detach any tap/vnet interfaces still bound to these bridges, then bring the
@@ -42,4 +58,4 @@ for bridge in "${BRIDGES[@]}"; do
     ip link delete "$bridge"
 done
 
-echo "All SITE1/SITE2 bridges torn down successfully"
+echo "All SITE1-SITE4 bridges torn down successfully"

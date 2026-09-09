@@ -56,9 +56,11 @@ The repo is organized by **lab subsystem**, not by language. Each subdir is larg
 | Path | What it does |
 |------|--------------|
 | `config/nexus9000v/` | YAML per-switch configs (`S1_BG1.yaml`, `S1_SP1.yaml`, …) + `global_config.yaml`. `nexus9000v.py` reads those YAMLs and launches each switch as a raw `qemu-system-x86_64` process, attaching data interfaces to OVS bridges. `startup_config.py` renders the per-switch NX-OS day-0 startup-config and builds its boot ISO from the same YAML (the single source of truth). `con_*` / `ssh_*` are one-liner helpers that telnet/ssh to each switch's serial console or mgmt IP. |
-| `config/nd/` | Shell scripts that run `virt-install` for each ND release/node combination (e.g. `nd-42-1-4-node1.sh`). One script == one ND VM. Versions in filenames are intentional; do not consolidate. |
+| `config/nd/` | Shell scripts that run `virt-install` for each ND release/node combination (e.g. `nd-42-1-4-node1.sh`). One script == one ND VM. Versions in filenames are intentional; do not consolidate. `config/nd/provision/` is a separate Python package (see below) that provisions fabrics/switches/ISN/overlay into a running ND over REST; it does not launch VMs. |
+| `config/nd/provision/` | Declarative, idempotent ND provisioning tool (`provision.py`, `snapshot.py`, `nd_client.py`, `topology.py`) driven by `topology_nd421.yaml` / `topology_nd431.yaml`. `provision.py --phase {fabrics,msd,switches,isn,overlay,deploy,all}` builds one testbed on one ND controller; `snapshot.py dump`/`diff` proves two testbeds mirror each other. See `config/nd/provision/README.md`. |
 | `config/ansible/` and `config/ansible_local/` | Each now contains only a `dynamic_inventory.py` (env-var-driven inventory; `ansible/` covers SITE1–SITE4, `ansible_local/` covers SITE1/SITE2 + the edge router). The former `cisco.dcnm` fabric playbooks were removed — fabric/overlay config now happens through Nexus Dashboard from a separate `ansible-nd` repo. The inventories are retained for ad-hoc use and as the canonical source of per-switch IPs/interfaces. |
-| `config/containers/` | A Python package (no `__init__.py`, run via `main.py`) implementing SOLID-style orchestration for creating libvirt-LXC "host" containers (e.g. `S1_H1`, `S2_H1`) used as endpoint hosts on the leaves. See `config/containers/README.md` for the module breakdown and usage. Entry point: `sudo python3 main.py --config <yaml> <CONTAINER_NAME>`. |
+| `config/containers/` | A Python package (no `__init__.py`, run via `main.py`) implementing SOLID-style orchestration for creating libvirt-LXC "host" containers (e.g. `S1_H1`, `S2_H1`, `S3_H1`, `S4_H1`) used as endpoint hosts on the leaves/TORs. See `config/containers/README.md` for the module breakdown and usage. Entry point: `sudo python3 main.py --config <yaml> <CONTAINER_NAME>`. |
+| `config/8000v/` | Launches Cisco Catalyst 8000V (IOS-XE) router VMs, mirroring the `config/nexus9000v/` pattern (raw QEMU, day-0 ISO via `startup_config.py`). `WAN1.yaml`/`WAN2.yaml` are the ND 4.2.1 / ND 4.3.1 cross-site ISN routers. See `config/8000v/README.md`. |
 | `config/bridges/` | Shell + netplan YAML that provisions the Linux bridges (`BR_ND_DATA_12`, `BR_S1_T1_H1_1`, etc.) connecting all the VMs. `bridges_config_ovs.sh` (re)creates them; the `*-bridges.yaml` are netplan variants. MTU 9216 is intentional (VXLAN overhead). |
 | `monitor/` | Ad hoc operator scripts (`show_bridges`, `show_nd_interfaces`, …) for inspecting the lab from the host. |
 | `cockpit/` | Two optional Cockpit extensions (bridge monitor, n9kv monitor) installed onto the lab host. Each has its own README. |
@@ -78,6 +80,11 @@ The repo is organized by **lab subsystem**, not by language. Each subdir is larg
   means editing the per-switch YAML or that Jinja template, not the launch script.
 - **`config/ansible/` vs `config/ansible_local/`** are not "remote vs local" — both are localhost env-var-driven inventories that target different fabrics
   (`ansible/` covers SITE1–SITE4; `ansible_local/` covers SITE1/SITE2 + the edge router). Don't merge them.
+- **Two testbeds share one host, on separate device-management (ND data) segments.** SITE1/SITE2/WAN1/S1_H1/S2_H1 belong to ND 4.2.1
+  (10.10.20.10, data on `BR_ND_DATA_12`); SITE3/SITE4/WAN2/S3_H1/S4_H1 are their exact mirror under ND 4.3.1
+  (10.10.20.20, data on `BR_ND_DATA_14`), with identical fabric names, ASNs and pools. Only hostnames, sids and the
+  third octet of the mgmt IPs (12 -> 14) differ. `9914-bridges.yaml` is the
+  SITE3/SITE4 bridge set including their management bridge `BR_ND_DATA_14`.
 - **ND has multiple coexisting versions** (`nd_321e.sh`, `nd_411g.sh`, `nd-42-1-*-node*.sh`, …). Each is a distinct VM definition; the lab can run several
   ND clusters simultaneously on different bridges. The numeric suffixes (`.105`, `.119`, `.4`) are the management IP last octet, not version numbers.
 - **`n9kv-kvm/` subdirectory at the repo root** is a stray Python venv (note `pyvenv.cfg`, `bin/`, `lib/`), not source. The real venv is `.venv/`. Ignore

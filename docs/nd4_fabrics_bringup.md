@@ -1,5 +1,8 @@
 # ND 4.1 - Create ISN, SITE1, and SITE2 fabrics
 
+The steps below are now automated by `config/nd/provision/provision.py` (`--phase fabrics`, `msd`, `isn`); this page
+remains the GUI walk-through and the record of the API payloads.
+
 Below are summary steps for creating the fabrics used in this project.
 The outlines follow the GUI paths to effect the desired configurations.
 For example, `Manage` refers to the `Manage` button in the left sidebar.

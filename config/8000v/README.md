@@ -10,8 +10,8 @@ the VM boots via OVMF firmware and its console is on the serial port.
 - `8000v.py` - the launcher (raw QEMU process, not libvirt; manage by PID)
 - `startup_config.py` + `iosxe_startup_config.j2` - day-0 config / boot ISO generator
 - `global_config.yaml` - global defaults (image paths, RAM, vCPUs, NIC type)
-- `WAN1.yaml` - per-router config (cross-site WAN/ISN router)
-- `con_wan1` / `ssh_wan1` - console / SSH one-liners
+- `WAN1.yaml`, `WAN2.yaml` - per-router configs (ND 4.2.1 and ND 4.3.1 cross-site WAN/ISN routers)
+- `con_wan1` / `ssh_wan1`, `con_wan2` / `ssh_wan2` - console / SSH one-liners
 
 ## Interface mapping
 

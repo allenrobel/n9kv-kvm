@@ -8,7 +8,8 @@ ND_IMAGE=nd-dk9.$ND_VERSION.qcow2
 ND_NAME=nd.$ND_VERSION.$ND_NODE
 ND_INSTALL_DIR=/iso2/nd/$ND_VERSION
 ND_MGMT_NET=outside
-ND_DATA_NET=BR_ND_DATA_12
+# ND 4.3.1 testbed: data on Vlan14 (192.168.14.0/24); persistent data IPs 192.168.14.30-.32, persistent mgmt 10.10.20.60-.62
+ND_DATA_NET=BR_ND_DATA_14
 ND_DISK1_IMAGE=nd-$ND_NODE-disk1.qcow2
 ND_DISK2_IMAGE=nd-$ND_NODE-disk2.qcow2
 echo "ND_SOURCE_DIR: $ND_SOURCE_DIR"

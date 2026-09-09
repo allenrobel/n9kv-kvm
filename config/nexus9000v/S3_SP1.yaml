@@ -1,6 +1,6 @@
 ---
-# SITE3
-# S3_SP1.yaml - Spine Switch 1 in SITE3
+# SITE3 (ND 4.3.1 mirror of SITE1)
+# S3_SP1.yaml - Spine Switch 1 in SITE3 (mirror of S1_SP1)
 name: S3_SP1
 role: Spine Switch
 sid: 3401
@@ -10,6 +10,12 @@ mgmt_gw: 192.168.14.1
 neighbors:
   - S3_BG1
   - S3_LE1
+  - S3_LE2
+  - S3_LE3
+  - S3_LE4
 isl_bridges:
   - BR_S3_BG1_SP1_1
   - BR_S3_SP1_LE1_1
+  - BR_S3_SP1_LE2_1
+  - BR_S3_SP1_LE3_1
+  - BR_S3_SP1_LE4_1

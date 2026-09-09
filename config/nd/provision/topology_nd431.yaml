@@ -1,0 +1,93 @@
+# Declarative description of the ND 4.3.1 testbed. topology_nd421.yaml is the same file with only
+# hostnames and mgmt IPs changed -- `diff` the two to prove the mirror. Values that must match the
+# live ND 4.3.1 were captured with snapshot.py (fields noted per section).
+fabrics:
+  - name: SITE1
+    type: vxlanIbgp
+    asn: "65001"
+    settings:            # merged into the fabric object (GET -> update -> PUT) after create
+      management:
+        bgpLoopbackIpRange: 10.11.0.0/22
+        nveLoopbackIpRange: 10.12.0.0/22
+        anycastRendezvousPointIpRange: 10.13.0.0/24
+        intraFabricSubnetRange: 10.14.0.0/22
+        vrfLiteSubnetRange: 10.15.0.0/16
+        vrfLiteAutoConfig: back2BackAndToExternal
+        autoSymmetricVrfLite: true
+        autoVrfLiteDefaultVrf: true
+        autoSymmetricDefaultVrf: true
+    switches:
+      - {hostname: S3_BG1, ip: 192.168.14.131, role: borderGateway}
+      - {hostname: S3_SP1, ip: 192.168.14.141, role: spine}
+      - {hostname: S3_LE1, ip: 192.168.14.151, role: leaf}
+      - {hostname: S3_LE2, ip: 192.168.14.152, role: leaf}
+      - {hostname: S3_LE3, ip: 192.168.14.154, role: leaf}
+      - {hostname: S3_LE4, ip: 192.168.14.155, role: leaf}
+      - {hostname: S3_TOR1, ip: 192.168.14.161, role: tor}
+  - name: SITE2
+    type: vxlanIbgp
+    asn: "65002"
+    settings:
+      management:
+        bgpLoopbackIpRange: 10.21.0.0/22
+        nveLoopbackIpRange: 10.22.0.0/22
+        anycastRendezvousPointIpRange: 10.23.0.0/24
+        intraFabricSubnetRange: 10.24.0.0/22
+        vrfLiteSubnetRange: 10.25.0.0/16
+        vrfLiteAutoConfig: back2BackAndToExternal
+        autoSymmetricVrfLite: true
+        autoVrfLiteDefaultVrf: true
+        autoSymmetricDefaultVrf: true
+    switches:
+      - {hostname: S4_BG1, ip: 192.168.14.132, role: borderGateway}
+      - {hostname: S4_SP1, ip: 192.168.14.142, role: spine}
+      - {hostname: S4_LE1, ip: 192.168.14.153, role: leaf}
+  - name: ISN
+    type: externalConnectivity
+    asn: "65535"
+    settings:
+      management:
+        monitoredMode: false          # API-created external fabrics default to true; true silently blocks every deploy
+    switches:
+      - {hostname: WAN2, ip: 192.168.14.112, role: coreRouter, platform: ios-xe}   # live ND 4.3.1 role (snapshot 2026-09-08)
+
+fabric_groups:
+  - name: MSD
+    settings:
+      management:
+        type: vxlan
+        multisiteOverlayInterConnectType: directPeering
+        autoMultisiteUnderlayInterConnect: true
+        bgpSendCommunity: true
+    members: [SITE1, SITE2, ISN]
+
+isn:
+  links:
+    - {src_fabric: ISN, src: WAN2, src_if: GigabitEthernet2, dst_fabric: SITE1, dst: S3_BG1, dst_if: Ethernet1/3,
+       src_asn: "65535", dst_asn: "65001", src_ip: 10.15.0.1/30, dst_ip: 10.15.0.2, mtu: 9000}
+    - {src_fabric: ISN, src: WAN2, src_if: GigabitEthernet3, dst_fabric: SITE2, dst: S4_BG1, dst_if: Ethernet1/3,
+       src_asn: "65535", dst_asn: "65002", src_ip: 10.25.0.1/30, dst_ip: 10.25.0.2, mtu: 9000}
+  wan:
+    hostname: WAN2
+    fabric: ISN
+    cdp_interfaces: [GigabitEthernet2, GigabitEthernet3]
+    loopback: {ip: 10.35.0.1, description: "Routing loopback (router-id)"}
+    bgp_router_id: {BGP_AS: "65535", LOOPBACK_IP: 10.35.0.1}
+
+overlay:
+  # EMPTY on purpose: the 2026-09-08 ND 4.2.1 baseline snapshot this file mirrors has no VRFs,
+  # networks or attachments in SITE1/SITE2. Fill in later by copying the objects returned by
+  # /fabrics/{f}/vrfs and /fabrics/{f}/networks (minus fabricName, *Status and snapshot.VOLATILE_KEYS)
+  # into `object:` entries, e.g.
+  #   vrfs:
+  #     - fabrics: [SITE1, SITE2]
+  #       object: {vrfName: ..., vrfId: ..., vlanId: ..., ...}
+  #   networks:
+  #     - fabrics: [SITE1, SITE2]
+  #       object: {networkName: ..., networkId: ..., vlanId: ..., vrfName: ..., l3Data: {gatewayIpv4Address: ...}}
+  #   vrf_attachments:     [{fabric: SITE1, vrf: ..., switch: S3_LE1}, ...]
+  #   network_attachments: [{fabric: SITE1, network: ..., switch: S3_TOR1, vlan: ..., interfaces: [{mode: access, name: Ethernet1/3}]}, ...]
+  vrfs: []
+  networks: []
+  vrf_attachments: []
+  network_attachments: []

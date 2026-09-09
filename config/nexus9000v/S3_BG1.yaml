@@ -1,6 +1,6 @@
 ---
-# SITE3
-# S3_BG1.yaml - Border Gateway 1 in SITE3
+# SITE3 (ND 4.3.1 mirror of SITE1)
+# S3_BG1.yaml - Border Gateway 1 in SITE3 (mirror of S1_BG1)
 name: S3_BG1
 role: Border Gateway
 sid: 3301
@@ -10,6 +10,8 @@ mgmt_gw: 192.168.14.1
 neighbors:
   - S4_BG1
   - S3_SP1
+  - WAN2
 isl_bridges:
   - BR_ISN_S3_S4_1
   - BR_S3_BG1_SP1_1
+  - BR_ISN_WAN_S3_1

@@ -9,6 +9,10 @@ global_config.yaml for common settings
 Individual YAML files use the schema `S<site>_<role><idx>.yaml` (e.g., `S1_BG1.yaml`, `S2_SP1.yaml`, `S1_LE1.yaml`). Site membership is encoded in the
 filename and the `name:` field; role indices are renumbered per-site starting at 1.
 
+`S3_*.yaml`/`S4_*.yaml` are the ND 4.3.1 mirror of `S1_*`/`S2_*` (same last octet, on 192.168.14.x, management bridge
+`BR_ND_DATA_14`). `site3.sh`/`site4.sh` launch them the same way `site1.sh`/`site2.sh` launch their SITE1/SITE2
+counterparts.
+
 ## Override capability
 
 Switch-specific settings override global defaults

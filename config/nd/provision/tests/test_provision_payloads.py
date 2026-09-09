@@ -15,6 +15,7 @@ from provision import (
     redact,
     router_id_policy,
     switch_add_payload,
+    vpc_pair_payload,
 )
 from topology import Fabric, FabricGroup, Link, Switch
 
@@ -178,3 +179,7 @@ def test_loopback_interface_carries_the_managed_mode_discriminator():
             }
         ]
     }
+
+
+def test_vpc_pair_payload_uses_the_default_pairing_template():
+    assert vpc_pair_payload("SN-LE1", "SN-LE2") == {"vpcAction": "pair", "switchId": "SN-LE1", "peerSwitchId": "SN-LE2", "useVirtualPeerLink": False}

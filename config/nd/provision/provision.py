@@ -7,6 +7,7 @@ Phases (each safe to re-run; --phase all runs them in order):
   fabrics   create SITE1/SITE2/ISN if absent, then merge `settings` into each fabric object (GET/update/PUT)
   msd       create the MSD fabric group if absent, add members one at a time (ND rejects batches)
   switches  shallowDiscovery per fabric (serial/model), add the manageable ones, wait until they list, set roles, recalculate + deploy
+  vpc       pair the vPC leaf pairs (ND's default template generates the peer-link port-channel), then recalculate + deploy
   isn       WAN loopback + router-id policy, ebgpVrfLite links, CDP policies, deploy ISN/SITE1/SITE2
   overlay   VRFs + networks in each fabric, attachments per switch, vrfActions/networkActions deploy
   deploy    recalculate + deploy every fabric, then every fabric group (MSD), and print any non-empty pendingConfig
@@ -25,7 +26,7 @@ from typing import Any
 from nd_client import NDClient, NDCredentials
 from topology import Fabric, FabricGroup, Link, Topology, load
 
-PHASES = ["fabrics", "msd", "switches", "isn", "overlay", "deploy"]
+PHASES = ["fabrics", "msd", "switches", "vpc", "isn", "overlay", "deploy"]
 
 LOG_BODY_LIMIT = 2000
 # configSave (Recalculate) and deploy are synchronous and take minutes on a 7-switch fabric.
@@ -135,6 +136,12 @@ def _switch_password(fabric: Fabric) -> str:
     if not value:
         raise SystemExit(f"NXOS_PASSWORD is not set; it is required to add NX-OS switches to fabric {fabric.name}")
     return value
+
+
+def vpc_pair_payload(serial: str, peer_serial: str) -> dict:
+    """Body for PUT /fabrics/{f}/switches/{serial}/vpcPair with ND's default pairing template (no vpcPairDetails):
+    ND picks the domain id, the keep-alive over mgmt0 and the peer-link port-channel from the discovered leaf link."""
+    return {"vpcAction": "pair", "switchId": serial, "peerSwitchId": peer_serial, "useVirtualPeerLink": False}
 
 
 def link_payload(link: Link, src_serial: str, dst_serial: str) -> dict:
@@ -438,6 +445,24 @@ class Provisioner:
             if wrong:
                 self._post(f"/fabrics/{fabric.name}/switchActions/changeRoles", {"switchRoles": wrong})
             self.config_deploy(fabric.name)
+
+    # -- phase: vpc ------------------------------------------------------------------------------------------
+    def phase_vpc(self) -> None:
+        """Create the vPC pairs of the topology (skipping pairs ND already lists, in either switch order), then
+        recalculate + deploy every fabric that gained a pair so ND generates the vpc domain and peer-link config."""
+        touched: list[str] = []
+        for fabric_name in sorted({pair.fabric for pair in self.topo.vpc_pairs}):
+            existing = {frozenset((p.get("switchId"), p.get("peerSwitchId"))) for p in self._read(f"/fabrics/{fabric_name}/vpcPairs", "vpcPairs")}
+            for pair in [p for p in self.topo.vpc_pairs if p.fabric == fabric_name]:
+                serial, peer_serial = self.serial(pair.switch), self.serial(pair.peer)
+                if frozenset((serial, peer_serial)) in existing:
+                    self._log(f"{fabric_name}: {pair.switch} <-> {pair.peer} already paired")
+                    continue
+                self._put(f"/fabrics/{fabric_name}/switches/{serial}/vpcPair", vpc_pair_payload(serial, peer_serial))
+                if fabric_name not in touched:
+                    touched.append(fabric_name)
+        for fabric_name in touched:
+            self.config_deploy(fabric_name)
 
     # -- phase: isn ------------------------------------------------------------------------------------------
     def _policies(self, fabric: str, serial: str) -> list[dict]:

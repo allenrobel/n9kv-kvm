@@ -343,8 +343,10 @@ class Provisioner:
 
     def pending(self, fabric_name: str, serial: str) -> list:
         """Final convergence check: fails loud (does not swallow HTTP errors like `_read`) since a request
-        error here must stop `deploy`/`isn`/`overlay` from reporting false convergence."""
-        return self.client.get(f"/fabrics/{fabric_name}/switches/{serial}/pendingConfig") or []
+        error here must stop `deploy`/`isn`/`overlay` from reporting false convergence. The endpoint answers
+        `{"pendingConfigs": [<cli line>, ...]}` (both 4.2.1 and 4.3.1 specs); an empty list means in sync."""
+        body = self.client.get(f"/fabrics/{fabric_name}/switches/{serial}/pendingConfig") or {}
+        return body.get("pendingConfigs", []) if isinstance(body, dict) else body
 
     def discover(self, fabric: Fabric, password: str) -> dict[str, dict]:
         """shallowDiscovery for fabric.switches: ND logs into each seed IP and returns serial/model/version plus a

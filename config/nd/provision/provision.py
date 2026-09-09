@@ -111,6 +111,12 @@ def link_payload(link: Link, src_serial: str, dst_serial: str) -> dict:
     }
 
 
+def attachment_payload(kind: str, att: dict, serial: str) -> dict:
+    if kind == "vrf":
+        return {"attachments": [{"vrfName": att["vrf"], "switchId": serial, "attach": True}]}
+    return {"attachments": [{"networkName": att["network"], "switchId": serial, "vlanId": att["vlan"], "interfaces": att.get("interfaces", []), "attach": True}]}
+
+
 def cdp_run_policy(serial: str) -> dict:
     return {"templateName": "ios_xe_cdp_run", "entityType": "switch", "entityName": "SWITCH", "switchId": serial, "templateInputs": {}}
 
@@ -311,6 +317,43 @@ class Provisioner:
             assert wan_serial is not None
             left = self.pending(wan.fabric, wan_serial)
             print(f"{wan.hostname} pendingConfig after deploy: {len(left)} line(s)" + ("" if not left else " -- read /deploymentHistory"))
+
+    # -- phase: overlay --------------------------------------------------------------------------------------
+    def phase_overlay(self) -> None:
+        for item in self.topo.overlay.vrfs:
+            for fabric in item["fabrics"]:
+                have = {v["vrfName"] for v in self._read(f"/fabrics/{fabric}/vrfs", "vrfs")}
+                if item["object"]["vrfName"] not in have:
+                    self._post(f"/fabrics/{fabric}/vrfs", {"vrfs": [dict(item["object"], fabricName=fabric)]})
+        for item in self.topo.overlay.networks:
+            for fabric in item["fabrics"]:
+                have = {n["networkName"] for n in self._read(f"/fabrics/{fabric}/networks", "networks")}
+                if item["object"]["networkName"] not in have:
+                    self._post(f"/fabrics/{fabric}/networks", {"networks": [dict(item["object"], fabricName=fabric)]})
+        touched: dict[str, set[str]] = {}
+        for att in self.topo.overlay.vrf_attachments:
+            serial = self.serial(att["switch"])
+            self._post(f"/fabrics/{att['fabric']}/vrfAttachments", attachment_payload("vrf", att, serial))
+            touched.setdefault(att["fabric"], set()).add(serial)
+        for att in self.topo.overlay.network_attachments:
+            serial = self.serial(att["switch"])
+            self._post(f"/fabrics/{att['fabric']}/networkAttachments", attachment_payload("network", att, serial))
+            touched.setdefault(att["fabric"], set()).add(serial)
+        for fabric, serials in touched.items():
+            self._post(f"/fabrics/{fabric}/vrfActions/deploy", {"switchIds": sorted(serials)})
+            self._post(f"/fabrics/{fabric}/networkActions/deploy", {"switchIds": sorted(serials)})
+
+    # -- phase: deploy -----------------------------------------------------------------------------------------
+    def phase_deploy(self) -> None:
+        for fabric in self.topo.fabrics:
+            self.config_deploy(fabric.name)
+        if self.dry_run:
+            return
+        time.sleep(self.settle_seconds)
+        for fabric in self.topo.fabrics:
+            for hostname, entry in self.fabric_switches(fabric.name).items():
+                left = self.pending(fabric.name, entry["serialNumber"])
+                print(f"{fabric.name}/{hostname}: pendingConfig {len(left)} line(s)")
 
     def run(self, phases: list[str]) -> None:
         for phase in phases:

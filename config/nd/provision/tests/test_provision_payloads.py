@@ -2,6 +2,7 @@
 
 from provision import (
     _switch_password,
+    attachment_payload,
     cdp_policy,
     fabric_create_payload,
     fabric_group_create_payload,
@@ -79,6 +80,18 @@ def test_link_payload_matches_the_known_good_isn_link():
     inputs = body["links"][0]["configData"]["templateInputs"]
     assert inputs["templateConfigGenPeer"] == "ios_xe_Ext_VRF_Lite_Jython" and inputs["srcIpAddressMask"] == "10.33.0.5/30" and inputs["dstIpAddress"] == "10.33.0.6"
     assert inputs["srcInterfaceDescription"] == "connected-to-S2_BG1-Ethernet1/3"
+
+
+def test_network_attachment_payload():
+    att = {"fabric": "SITE1", "network": "NET_2", "switch": "S1_TOR1", "vlan": 2, "interfaces": [{"mode": "access", "name": "Ethernet1/3"}]}
+    assert attachment_payload("network", att, "SER") == {
+        "attachments": [{"networkName": "NET_2", "switchId": "SER", "vlanId": 2, "interfaces": [{"mode": "access", "name": "Ethernet1/3"}], "attach": True}]
+    }
+
+
+def test_vrf_attachment_payload():
+    body = attachment_payload("vrf", {"fabric": "SITE1", "vrf": "V1", "switch": "S1_LE1"}, "SER")
+    assert body == {"attachments": [{"vrfName": "V1", "switchId": "SER", "attach": True}]}
 
 
 def test_policies():

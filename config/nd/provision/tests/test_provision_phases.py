@@ -1,12 +1,13 @@
 """Tests for Provisioner.phase_fabrics / phase_msd against a stub NDClient."""
 
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
 from provision import Provisioner, merge_settings
-from topology import load
+from topology import Overlay, load
 
 HERE = Path(__file__).resolve().parents[1]
 
@@ -360,3 +361,134 @@ def test_phase_isn_live_clears_monitored_mode_when_true(capsys):
     ]
     out = capsys.readouterr().out
     assert "WAN1 pendingConfig after deploy: 0 line(s)" in out
+
+
+def _dry_run_post_paths(out: str) -> list[str]:
+    return [line.split()[2] for line in out.splitlines() if line.startswith("[dry-run] POST ")]
+
+
+def _populated_overlay_topo():
+    topo = _topo()
+    overlay = Overlay(
+        vrfs=[{"fabrics": ["SITE1", "SITE2"], "object": {"vrfName": "V1", "vrfId": 50001, "vlanId": 2001}}],
+        networks=[{"fabrics": ["SITE1", "SITE2"], "object": {"networkName": "N1", "networkId": 30001, "vlanId": 2, "vrfName": "V1"}}],
+        vrf_attachments=[{"fabric": "SITE1", "vrf": "V1", "switch": "S1_TOR1"}],
+        network_attachments=[{"fabric": "SITE1", "network": "N1", "switch": "S1_TOR1", "vlan": 2, "interfaces": [{"mode": "access", "name": "Ethernet1/3"}]}],
+    )
+    return replace(topo, overlay=overlay)
+
+
+def test_phase_overlay_empty_topology_is_noop(capsys):
+    topo = _topo()  # topology_nd421.yaml ships with an empty overlay
+    client = StubClient({})
+
+    Provisioner(client, topo).phase_overlay()
+
+    assert _posts(client) == []
+    assert _puts(client) == []
+    out = capsys.readouterr().out
+    assert "POST" not in out
+
+
+def test_phase_overlay_dry_run_creates_everything_and_deploys(capsys):
+    topo = _populated_overlay_topo()
+    client = StubClient({})  # nothing exists yet -> every GET raises HTTP 404
+
+    Provisioner(client, topo, dry_run=True).phase_overlay()
+
+    assert _posts(client) == []  # dry-run never issues a real write
+    assert _puts(client) == []
+    out = capsys.readouterr().out
+
+    assert _dry_run_post_paths(out) == [
+        "/fabrics/SITE1/vrfs",
+        "/fabrics/SITE2/vrfs",
+        "/fabrics/SITE1/networks",
+        "/fabrics/SITE2/networks",
+        "/fabrics/SITE1/vrfAttachments",
+        "/fabrics/SITE1/networkAttachments",
+        "/fabrics/SITE1/vrfActions/deploy",
+        "/fabrics/SITE1/networkActions/deploy",
+    ]
+    lines = [line for line in out.splitlines() if line.startswith("[dry-run] POST ")]
+    assert '"fabricName": "SITE1"' in lines[0]
+    assert "<S1_TOR1-serial>" in lines[4]
+    assert "<S1_TOR1-serial>" in lines[5]
+
+
+def test_phase_overlay_live_attaches_existing_vrf_and_network(capsys):
+    topo = _populated_overlay_topo()
+    responses = {
+        ("/fabrics/SITE1/vrfs", ()): {"vrfs": [{"vrfName": "V1", "vrfId": 50001, "vlanId": 2001}]},
+        ("/fabrics/SITE2/vrfs", ()): {"vrfs": [{"vrfName": "V1", "vrfId": 50001, "vlanId": 2001}]},
+        ("/fabrics/SITE1/networks", ()): {"networks": [{"networkName": "N1", "networkId": 30001, "vlanId": 2, "vrfName": "V1"}]},
+        ("/fabrics/SITE2/networks", ()): {"networks": [{"networkName": "N1", "networkId": 30001, "vlanId": 2, "vrfName": "V1"}]},
+        ("/fabrics/SITE1/switches", ()): {"switches": [{"hostname": "S1_TOR1", "serialNumber": "SN-TOR1", "switchRole": "tor"}]},
+    }
+    client = StubClient(responses)
+
+    Provisioner(client, topo).phase_overlay()
+
+    posts = _posts(client)
+    assert [p[1] for p in posts if p[1] in ("/fabrics/SITE1/vrfs", "/fabrics/SITE2/vrfs")] == []
+    assert [p[1] for p in posts if p[1] in ("/fabrics/SITE1/networks", "/fabrics/SITE2/networks")] == []
+
+    vrf_att = [p for p in posts if p[1] == "/fabrics/SITE1/vrfAttachments"]
+    assert len(vrf_att) == 1
+    assert vrf_att[0][2] == {"attachments": [{"vrfName": "V1", "switchId": "SN-TOR1", "attach": True}]}
+
+    net_att = [p for p in posts if p[1] == "/fabrics/SITE1/networkAttachments"]
+    assert len(net_att) == 1
+    assert net_att[0][2] == {
+        "attachments": [{"networkName": "N1", "switchId": "SN-TOR1", "vlanId": 2, "interfaces": [{"mode": "access", "name": "Ethernet1/3"}], "attach": True}]
+    }
+
+    assert [p[1] for p in posts if "Actions/deploy" in p[1]] == ["/fabrics/SITE1/vrfActions/deploy", "/fabrics/SITE1/networkActions/deploy"]
+    for p in posts:
+        if "Actions/deploy" in p[1]:
+            assert p[2] == {"switchIds": ["SN-TOR1"]}
+
+
+def test_phase_deploy_dry_run_deploys_every_fabric_and_does_not_check_pending(capsys):
+    topo = _topo()
+    client = StubClient({})
+
+    Provisioner(client, topo, dry_run=True).phase_deploy()
+
+    assert _posts(client) == []
+    assert not any(call[0] == "GET" and "pendingConfig" in call[1] for call in client.calls)
+    out = capsys.readouterr().out
+    deploy_lines = [line for line in out.splitlines() if "actions/configDeploy" in line]
+    assert [line.split()[2] for line in deploy_lines] == [
+        "/fabrics/SITE1/actions/configDeploy",
+        "/fabrics/SITE2/actions/configDeploy",
+        "/fabrics/ISN/actions/configDeploy",
+    ]
+
+
+def _all_switches_present_responses(topo) -> dict:
+    responses = {}
+    for fabric in topo.fabrics:
+        responses[(f"/fabrics/{fabric.name}/switches", ())] = {
+            "switches": [{"hostname": s.hostname, "serialNumber": f"SN-{s.hostname}", "switchRole": s.role} for s in fabric.switches]
+        }
+        for switch in fabric.switches:
+            responses[(f"/fabrics/{fabric.name}/switches/SN-{switch.hostname}/pendingConfig", ())] = []
+    return responses
+
+
+def test_phase_deploy_live_prints_pending_config_for_every_switch(capsys):
+    topo = _topo()
+    client = StubClient(_all_switches_present_responses(topo))
+
+    Provisioner(client, topo, settle_seconds=0).phase_deploy()
+
+    posts = _posts(client)
+    assert [p[1] for p in posts] == [
+        "/fabrics/SITE1/actions/configDeploy",
+        "/fabrics/SITE2/actions/configDeploy",
+        "/fabrics/ISN/actions/configDeploy",
+    ]
+    out = capsys.readouterr().out
+    assert "SITE1/S1_BG1: pendingConfig 0 line(s)" in out
+    assert "ISN/WAN1: pendingConfig 0 line(s)" in out

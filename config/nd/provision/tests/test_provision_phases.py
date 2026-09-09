@@ -435,13 +435,21 @@ def test_pending_raises_when_stub_get_raises():
         Provisioner(client, topo).pending("SITE2", "SN123")
 
 
-def test_pending_returns_list_when_stub_returns_one():
+def test_pending_unwraps_the_pendingconfigs_envelope():
     topo = _topo()
-    pending_diff = [{"switchId": "SN123", "diffType": "pendingConfig"}]
-    responses = {("/fabrics/SITE2/switches/SN123/pendingConfig", ()): pending_diff}
+    lines = ["interface Ethernet1/1", "  no shutdown"]
+    responses = {("/fabrics/SITE2/switches/SN123/pendingConfig", ()): {"pendingConfigs": lines}}
     client = StubClient(responses)
 
-    assert Provisioner(client, topo).pending("SITE2", "SN123") == pending_diff
+    assert Provisioner(client, topo).pending("SITE2", "SN123") == lines
+
+
+def test_pending_empty_envelope_means_in_sync():
+    topo = _topo()
+    responses = {("/fabrics/SITE2/switches/SN123/pendingConfig", ()): {"pendingConfigs": []}}
+    client = StubClient(responses)
+
+    assert Provisioner(client, topo).pending("SITE2", "SN123") == []
 
 
 def test_serial_dry_run_returns_placeholder_when_switch_absent():
@@ -546,7 +554,7 @@ def _live_isn_responses(monitored_mode: bool) -> dict:
         ("/links", (("fabricName", "ISN"),)): _isn_links_present(),
         ("/fabrics/SITE1/switches", ()): {"switches": [{"hostname": "S1_BG1", "serialNumber": "SN-S1_BG1", "switchRole": "borderGateway"}]},
         ("/fabrics/SITE2/switches", ()): {"switches": [{"hostname": "S2_BG1", "serialNumber": "SN-S2_BG1", "switchRole": "borderGateway"}]},
-        ("/fabrics/ISN/switches/SN-WAN1/pendingConfig", ()): [],
+        ("/fabrics/ISN/switches/SN-WAN1/pendingConfig", ()): {"pendingConfigs": []},
     }
 
 

@@ -48,6 +48,19 @@ VOLATILE_KEYS = {
     "vpcData",
     "softwareVersion",
     "model",
+    # per-object identity/time/operational fields that differ between two controllers by construction
+    "policyId",
+    "POLICY_ID",
+    "createTimestamp",
+    "updateTimestamp",
+    "operData",
+    "srcSwitchInfo",
+    "dstSwitchInfo",
+    "linkPresent",
+    "linkDiscovered",
+    "SERIAL_NUMBER",
+    "PASSWORD_ENCRYPT",
+    "switchName",
 }
 
 

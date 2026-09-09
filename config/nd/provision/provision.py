@@ -213,11 +213,18 @@ class Provisioner:
                 continue
             current = self._read_one(f"/fabrics/{fabric.name}")
             if not current and not self.dry_run:
-                # the fabric was just created above (POST is not dry-run here); re-read now that it exists.
+                # any empty first read in a live run gets one re-read: either the fabric was just created
+                # by the POST above (re-read now that it exists), or this is a transient read failure on a
+                # fabric that already existed.
                 current = self._read_one(f"/fabrics/{fabric.name}")
             if not current:
-                # dry-run before create: nothing to merge against yet.
-                self._log(f"would apply settings to new fabric /fabrics/{fabric.name}: {json.dumps(fabric.settings)[:LOG_BODY_LIMIT]}")
+                if self.dry_run:
+                    # dry-run before create: nothing to merge against yet.
+                    self._log(f"would apply settings to new fabric /fabrics/{fabric.name}: {json.dumps(fabric.settings)[:LOG_BODY_LIMIT]}")
+                else:
+                    # live run, still empty after the re-read: a transient failure, not a missing fabric --
+                    # do not create or write anything based on a guess.
+                    self._log(f"could not read /fabrics/{fabric.name} after create/re-read; skipping settings this run")
                 continue
             merged = merge_settings(current, fabric.settings)
             if merged != current:

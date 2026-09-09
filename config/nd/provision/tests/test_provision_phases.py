@@ -47,6 +47,27 @@ class StubClient:
         return self.responses[lookup]
 
 
+class _StubClientFlakyRead(StubClient):
+    """StubClient whose GET on `flaky_path` raises HTTP 404 the first time it is called, then answers
+    `steady_value` on every call after that. Models an ND read-after-create race: the object briefly 404s
+    right after the create POST before it is queryable."""
+
+    def __init__(self, responses: dict, flaky_path: str, steady_value: dict) -> None:
+        super().__init__(responses)
+        self.flaky_path = flaky_path
+        self.steady_value = steady_value
+        self._flaky_reads = 0
+
+    def get(self, path: str, params: dict | None = None):
+        if path != self.flaky_path:
+            return super().get(path, params)
+        self.calls.append(("GET", path, params))
+        self._flaky_reads += 1
+        if self._flaky_reads == 1:
+            raise RuntimeError("HTTP 404")
+        return self.steady_value
+
+
 def _topo():
     return load(HERE / "topology_nd421.yaml")
 
@@ -161,6 +182,58 @@ def test_phase_fabrics_live_puts_only_the_fabric_missing_a_setting(capsys):
     puts = _puts(client)
     assert [p[1] for p in puts] == ["/fabrics/SITE1"]
     assert puts[0][2]["management"]["vrfLiteAutoConfig"] == "back2BackAndToExternal"
+
+
+def test_phase_fabrics_live_re_reads_after_create_then_puts_merged_settings():
+    """SITE1 does not exist yet: the create POST fires, the immediate read-back 404s (ND has not indexed
+    it yet), and the guarded re-read picks up the freshly-created object so settings still get merged/PUT."""
+    topo = _topo()
+    responses = {
+        ("/fabrics", ()): {"fabrics": [{"name": "SITE2"}, {"name": "ISN"}]},
+        ("/fabrics", (("category", "fabricGroup"),)): {"fabrics": []},
+    }
+    for fabric in topo.fabrics:
+        if fabric.name == "SITE1":
+            continue
+        current = {"name": fabric.name, "management": {"type": fabric.type, "bgpAsn": fabric.asn}}
+        current = merge_settings(current, fabric.settings) if fabric.settings else current
+        responses[(f"/fabrics/{fabric.name}", ())] = current
+    client = _StubClientFlakyRead(responses, "/fabrics/SITE1", {"name": "SITE1", "management": {"type": "vxlanIbgp", "bgpAsn": "65001"}})
+
+    Provisioner(client, topo).phase_fabrics()
+
+    posts = _posts(client)
+    assert [p[1] for p in posts] == ["/fabrics"]
+    assert posts[0][2]["name"] == "SITE1"
+    puts = _puts(client)
+    assert [p[1] for p in puts] == ["/fabrics/SITE1"]
+    assert "vrfLiteAutoConfig" in puts[0][2]["management"]
+
+
+def test_phase_fabrics_live_skips_settings_and_logs_when_read_never_succeeds(capsys):
+    """SITE1 is present in /fabrics but GET /fabrics/SITE1 always 404s (a persistent, not transient,
+    read failure): must not create (it already exists) or write settings based on a guess."""
+    topo = _topo()
+    responses = {
+        ("/fabrics", ()): {"fabrics": [{"name": f.name} for f in topo.fabrics]},
+        ("/fabrics", (("category", "fabricGroup"),)): {"fabrics": []},
+        # /fabrics/SITE1 deliberately absent -> StubClient.get always raises HTTP 404
+    }
+    for fabric in topo.fabrics:
+        if fabric.name == "SITE1":
+            continue
+        current = {"name": fabric.name, "management": {"type": fabric.type, "bgpAsn": fabric.asn}}
+        current = merge_settings(current, fabric.settings) if fabric.settings else current
+        responses[(f"/fabrics/{fabric.name}", ())] = current
+    client = StubClient(responses)
+
+    Provisioner(client, topo).phase_fabrics()
+
+    assert _posts(client) == []
+    assert _puts(client) == []
+    out = capsys.readouterr().out
+    assert "could not read /fabrics/SITE1 after create/re-read; skipping settings this run" in out
+    assert "would apply settings" not in out
 
 
 def test_phase_msd_creates_group_and_adds_members_in_order_when_members_404():

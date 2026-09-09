@@ -73,7 +73,9 @@ class NDClient:
             return resp.json()
         except ValueError:
             content_type = resp.headers.get("Content-Type", "")
-            raise RuntimeError(f"{method} {path} -> HTTP {resp.status_code} returned non-JSON ({content_type}); is the ND API up? " f"body starts: {resp.text[:120]!r}")
+            raise RuntimeError(
+                f"{method} {path} -> HTTP {resp.status_code} returned non-JSON ({content_type}); is the ND API up? body starts: {resp.text[:120]!r}"
+            ) from None
 
     def get(self, path: str, params: Optional[dict] = None) -> Any:
         return self._json(self.request("GET", path, params=params), path)

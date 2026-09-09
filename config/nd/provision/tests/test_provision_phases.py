@@ -3,6 +3,8 @@
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 from provision import Provisioner, merge_settings
 from topology import load
 
@@ -211,3 +213,43 @@ def test_switch_add_payload_for_isn_uses_iosxe_password(monkeypatch, capsys):
     assert len(add_lines) == 1
     assert '"platformType": "ios-xe"' in add_lines[0]
     assert '"password": "iosxe-secret"' in add_lines[0]
+
+
+def test_pending_raises_when_stub_get_raises():
+    topo = _topo()
+    client = StubClient({})  # /fabrics/SITE2/switches/SN123/pendingConfig deliberately absent -> HTTP 404
+
+    with pytest.raises(RuntimeError):
+        Provisioner(client, topo).pending("SITE2", "SN123")
+
+
+def test_pending_returns_list_when_stub_returns_one():
+    topo = _topo()
+    pending_diff = [{"switchId": "SN123", "diffType": "pendingConfig"}]
+    responses = {("/fabrics/SITE2/switches/SN123/pendingConfig", ()): pending_diff}
+    client = StubClient(responses)
+
+    assert Provisioner(client, topo).pending("SITE2", "SN123") == pending_diff
+
+
+def test_serial_dry_run_returns_placeholder_when_switch_absent():
+    topo = _topo()
+    client = StubClient({})  # /fabrics/SITE2/switches deliberately absent -> HTTP 404, treated as empty
+
+    assert Provisioner(client, topo, dry_run=True).serial("S2_BG1") == "<S2_BG1-serial>"
+
+
+def test_serial_live_raises_when_switch_absent():
+    topo = _topo()
+    client = StubClient({})  # /fabrics/SITE2/switches deliberately absent -> HTTP 404, treated as empty
+
+    with pytest.raises(RuntimeError, match="S2_BG1"):
+        Provisioner(client, topo).serial("S2_BG1")
+
+
+def test_serial_live_returns_serial_number_when_switch_present():
+    topo = _topo()
+    responses = {("/fabrics/SITE2/switches", ()): {"switches": [{"hostname": "S2_BG1", "serialNumber": "SN-BG1", "switchRole": "borderGateway"}]}}
+    client = StubClient(responses)
+
+    assert Provisioner(client, topo).serial("S2_BG1") == "SN-BG1"

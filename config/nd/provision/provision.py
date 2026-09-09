@@ -163,7 +163,9 @@ class Provisioner:
         self._post(f"/fabrics/{fabric_name}/actions/configDeploy", None)
 
     def pending(self, fabric_name: str, serial: str) -> list:
-        return self._read(f"/fabrics/{fabric_name}/switches/{serial}/pendingConfig", "pendingConfig")
+        """Final convergence check: fails loud (does not swallow HTTP errors like `_read`) since a request
+        error here must stop `deploy`/`isn`/`overlay` from reporting false convergence."""
+        return self.client.get(f"/fabrics/{fabric_name}/switches/{serial}/pendingConfig") or []
 
     def phase_switches(self) -> None:
         for fabric in self.topo.fabrics:

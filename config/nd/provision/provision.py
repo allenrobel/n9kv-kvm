@@ -9,7 +9,7 @@ Phases (each safe to re-run; --phase all runs them in order):
   switches  shallowDiscovery per fabric (serial/model), add the manageable ones, wait until they list, set roles, recalculate + deploy
   isn       WAN loopback + router-id policy, ebgpVrfLite links, CDP policies, deploy ISN/SITE1/SITE2
   overlay   VRFs + networks in each fabric, attachments per switch, vrfActions/networkActions deploy
-  deploy    recalculate + deploy every fabric and print any non-empty pendingConfig
+  deploy    recalculate + deploy every fabric, then every fabric group (MSD), and print any non-empty pendingConfig
 Credentials: ND_IP4/ND_USERNAME/ND_PASSWORD/ND_DOMAIN (controller), NXOS_PASSWORD / IOSXE_PASSWORD (switch discovery).
 """
 from __future__ import annotations
@@ -530,8 +530,12 @@ class Provisioner:
 
     # -- phase: deploy -----------------------------------------------------------------------------------------
     def phase_deploy(self) -> None:
+        """Recalculate + deploy every fabric, then every fabric group (child fabrics before the MSD, as the docs
+        require: the group deploy generates the multisite underlay/overlay links and BG policies)."""
         for fabric in self.topo.fabrics:
             self.config_deploy(fabric.name)
+        for group in self.topo.fabric_groups:
+            self.config_deploy(group.name)
         if self.dry_run:
             return
         time.sleep(self.settle_seconds)

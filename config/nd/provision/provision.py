@@ -6,7 +6,7 @@
 Phases (each safe to re-run; --phase all runs them in order):
   fabrics   create SITE1/SITE2/ISN if absent, then merge `settings` into each fabric object (GET/update/PUT)
   msd       create the MSD fabric group if absent, add members one at a time (ND rejects batches)
-  switches  add switches per fabric by IP (discover+import), wait until they list, set roles, configDeploy
+  switches  shallowDiscovery per fabric (serial/model), add the manageable ones, wait until they list, set roles, configDeploy
   isn       WAN loopback + router-id policy, ebgpVrfLite links, CDP policies, deploy ISN/SITE1/SITE2
   overlay   VRFs + networks in each fabric, attachments per switch, vrfActions/networkActions deploy
   deploy    configDeploy every fabric and print any non-empty pendingConfig
@@ -57,13 +57,48 @@ def merge_settings(current: dict, settings: dict) -> dict:
     return merged
 
 
-def switch_add_payload(fabric: Fabric, password: str, username: str = "admin") -> dict:
+DISCOVERY_PLACEHOLDER = "<from-discovery>"
+REDACTED_KEYS = {"password", "userPasswd", "secret"}
+
+
+def _platform(fabric: Fabric) -> str:
     platforms = {s.platform for s in fabric.switches}
     if len(platforms) != 1:
         raise ValueError(f"{fabric.name}: one platformType per add call, got {platforms}")
+    return platforms.pop()
+
+
+def redact(body: Any) -> Any:
+    """Copy of body with credential values replaced by *** (log lines must never carry switch/ND passwords)."""
+    if isinstance(body, dict):
+        return {k: ("***" if k in REDACTED_KEYS else redact(v)) for k, v in body.items()}
+    if isinstance(body, list):
+        return [redact(v) for v in body]
+    return body
+
+
+def discovery_payload(fabric: Fabric, password: str, username: str = "admin") -> dict:
+    """Body for POST /fabrics/{f}/actions/shallowDiscovery: ND logs into each seed IP and reports serial, model,
+    software version and a manageability status. Its output is what the add call requires."""
+    return {"seedIpCollection": [s.ip for s in fabric.switches], "maxHop": 0, "platformType": _platform(fabric), "username": username, "password": password}
+
+
+def switch_add_payload(fabric: Fabric, discovered: dict[str, dict], password: str, username: str = "admin") -> dict:
+    """Body for POST /fabrics/{f}/switches. `discovered` maps switch IP -> shallowDiscovery entry; ND rejects the add
+    (HTTP 400, schema validation) unless every switch carries the discovered `serialNumber` and `model`."""
+    platform = _platform(fabric)
+    entries = []
+    for switch in fabric.switches:
+        found = discovered.get(switch.ip)
+        if not found:
+            raise ValueError(f"{fabric.name}: {switch.hostname} ({switch.ip}) has no discovery result; run shallowDiscovery first")
+        entry = {"ip": switch.ip, "hostname": switch.hostname, "switchRole": switch.role, "serialNumber": found["serialNumber"], "model": found["model"]}
+        if found.get("softwareVersion"):
+            entry["softwareVersion"] = found["softwareVersion"]
+        entries.append(entry)
     return {
-        "switches": [{"ip": s.ip, "hostname": s.hostname, "switchRole": s.role} for s in fabric.switches],
-        "platformType": platforms.pop(),
+        "switches": entries,
+        "platformType": platform,
         "preserveConfig": False,
         "useCredentialForWrite": True,
         "username": username,
@@ -172,11 +207,11 @@ class Provisioner:
         print(("[dry-run] " if self.dry_run else "") + msg)
 
     def _post(self, path: str, body: Any) -> Any:
-        self._log(f"POST {path} {json.dumps(body)[:LOG_BODY_LIMIT]}")
+        self._log(f"POST {path} {json.dumps(redact(body))[:LOG_BODY_LIMIT]}")
         return None if self.dry_run else self.client.post(path, json=body)
 
     def _put(self, path: str, body: Any) -> Any:
-        self._log(f"PUT {path} {json.dumps(body)[:LOG_BODY_LIMIT]}")
+        self._log(f"PUT {path} {json.dumps(redact(body))[:LOG_BODY_LIMIT]}")
         return None if self.dry_run else self.client.put(path, json=body)
 
     def _read(self, path: str, key: str, params: dict | None = None) -> list:
@@ -295,16 +330,41 @@ class Provisioner:
         error here must stop `deploy`/`isn`/`overlay` from reporting false convergence."""
         return self.client.get(f"/fabrics/{fabric_name}/switches/{serial}/pendingConfig") or []
 
+    def discover(self, fabric: Fabric, password: str) -> dict[str, dict]:
+        """shallowDiscovery for fabric.switches: ND logs into each seed IP and returns serial/model/version plus a
+        status. Nothing changes on ND, but the switches must be up, so a dry run only logs the call and returns
+        placeholders. Returns ip -> entry for the switches ND reports as `manageable`; others are logged and skipped."""
+        body = discovery_payload(fabric, password)
+        self._log(f"POST /fabrics/{fabric.name}/actions/shallowDiscovery {json.dumps(redact(body))[:LOG_BODY_LIMIT]}")
+        if self.dry_run:
+            return {s.ip: {"serialNumber": DISCOVERY_PLACEHOLDER, "model": DISCOVERY_PLACEHOLDER} for s in fabric.switches}
+        result = self.client.post(f"/fabrics/{fabric.name}/actions/shallowDiscovery", json=body) or {}
+        found: dict[str, dict] = {}
+        for entry in result.get("switches", []):
+            status = entry.get("status")
+            if status == "manageable":
+                found[entry["ip"]] = entry
+            else:
+                self._log(f"discovery: {entry.get('ip')} ({entry.get('hostname') or '?'}) is {status}: {entry.get('statusReason', '')} -- not added")
+        for switch in fabric.switches:
+            if switch.ip not in found and switch.ip not in {e.get("ip") for e in result.get("switches", [])}:
+                self._log(f"discovery: {switch.hostname} ({switch.ip}) missing from the shallowDiscovery response -- not added")
+        return found
+
     def phase_switches(self) -> None:
         for fabric in self.topo.fabrics:
             present = self.fabric_switches(fabric.name)
             missing = [s for s in fabric.switches if s.hostname not in present]
             if missing:
                 password = _switch_password(fabric)
-                self._post(f"/fabrics/{fabric.name}/switches", switch_add_payload(Fabric(fabric.name, fabric.type, fabric.asn, {}, missing), password))
-                if not self.dry_run:
-                    self.wait_for_switches(fabric.name, [s.hostname for s in missing])
-                    present = self.fabric_switches(fabric.name)
+                to_discover = Fabric(fabric.name, fabric.type, fabric.asn, {}, missing)
+                discovered = self.discover(to_discover, password)
+                to_add = [s for s in missing if s.ip in discovered]
+                if to_add:
+                    self._post(f"/fabrics/{fabric.name}/switches", switch_add_payload(Fabric(fabric.name, fabric.type, fabric.asn, {}, to_add), discovered, password))
+                    if not self.dry_run:
+                        self.wait_for_switches(fabric.name, [s.hostname for s in to_add])
+                        present = self.fabric_switches(fabric.name)
             wrong = [
                 {"switchId": present[s.hostname]["serialNumber"], "role": s.role}
                 for s in fabric.switches

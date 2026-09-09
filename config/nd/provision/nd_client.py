@@ -51,15 +51,29 @@ class NDClient:
         resp = self.session.post(f"{self.url}/login", json=body, timeout=self.timeout)
         if resp.status_code != 200:
             raise SystemExit(f"ND login to {self.creds.ip} failed: HTTP {resp.status_code} {resp.text[:200]}")
+        content_type = resp.headers.get("Content-Type", "")
+        try:
+            parsed = resp.json() if resp.content else None
+        except ValueError:
+            parsed = None
+        if not isinstance(parsed, dict):
+            raise SystemExit(f"ND login to {self.creds.ip} answered HTTP 200 but not JSON ({content_type}) -- the API is not ready (node still bootstrapping?)")
 
     def request(self, method: str, path: str, **kwargs: Any) -> requests.Response:
         url = path if path.startswith("http") else f"{self.url}{self.BASE}{path}"
         return self.session.request(method, url, timeout=self.timeout, **kwargs)
 
     def _json(self, resp: requests.Response, path: str) -> Any:
+        method = resp.request.method
         if resp.status_code >= 400:
-            raise RuntimeError(f"{resp.request.method} {path} -> HTTP {resp.status_code}: {resp.text[:500]}")
-        return resp.json() if resp.content else None
+            raise RuntimeError(f"{method} {path} -> HTTP {resp.status_code}: {resp.text[:500]}")
+        if not resp.content:
+            return None
+        try:
+            return resp.json()
+        except ValueError:
+            content_type = resp.headers.get("Content-Type", "")
+            raise RuntimeError(f"{method} {path} -> HTTP {resp.status_code} returned non-JSON ({content_type}); is the ND API up? " f"body starts: {resp.text[:120]!r}")
 
     def get(self, path: str, params: Optional[dict] = None) -> Any:
         return self._json(self.request("GET", path, params=params), path)

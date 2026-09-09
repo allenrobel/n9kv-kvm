@@ -209,13 +209,21 @@ class Provisioner:
         for fabric in self.topo.fabrics:
             if fabric.name not in existing:
                 self._post("/fabrics", fabric_create_payload(fabric))
-            if fabric.settings and not self.dry_run:
-                current = self.client.get(f"/fabrics/{fabric.name}")
-                merged = merge_settings(current, fabric.settings)
-                if merged != current:
-                    self._put(f"/fabrics/{fabric.name}", merged)
-            elif fabric.settings:
-                self._log(f"would merge settings into /fabrics/{fabric.name}: {json.dumps(fabric.settings)}")
+            if not fabric.settings:
+                continue
+            current = self._read_one(f"/fabrics/{fabric.name}")
+            if not current and not self.dry_run:
+                # the fabric was just created above (POST is not dry-run here); re-read now that it exists.
+                current = self._read_one(f"/fabrics/{fabric.name}")
+            if not current:
+                # dry-run before create: nothing to merge against yet.
+                self._log(f"would apply settings to new fabric /fabrics/{fabric.name}: {json.dumps(fabric.settings)[:LOG_BODY_LIMIT]}")
+                continue
+            merged = merge_settings(current, fabric.settings)
+            if merged != current:
+                self._put(f"/fabrics/{fabric.name}", merged)
+            else:
+                self._log(f"settings already applied on /fabrics/{fabric.name}")
 
     # -- phase: msd ----------------------------------------------------------------------------------------
     def phase_msd(self) -> None:

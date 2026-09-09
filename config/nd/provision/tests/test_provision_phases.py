@@ -98,6 +98,71 @@ def test_phase_fabrics_no_writes_when_already_present_and_merged():
     assert _puts(client) == []
 
 
+def test_phase_fabrics_dry_run_logs_already_applied_when_settings_match(capsys):
+    topo = _topo()
+    responses = {
+        ("/fabrics", ()): {"fabrics": [{"name": f.name} for f in topo.fabrics]},
+        ("/fabrics", (("category", "fabricGroup"),)): {"fabrics": []},
+    }
+    for fabric in topo.fabrics:
+        current = {"name": fabric.name, "management": {"type": fabric.type, "bgpAsn": fabric.asn}}
+        current = merge_settings(current, fabric.settings) if fabric.settings else current
+        responses[(f"/fabrics/{fabric.name}", ())] = current
+    client = StubClient(responses)
+
+    Provisioner(client, topo, dry_run=True).phase_fabrics()
+
+    assert _posts(client) == []
+    assert _puts(client) == []
+    out = capsys.readouterr().out
+    for fabric in topo.fabrics:
+        assert f"settings already applied on /fabrics/{fabric.name}" in out
+    assert "would merge" not in out
+    assert "PUT" not in out
+
+
+def test_phase_fabrics_dry_run_logs_would_apply_when_fabrics_absent(capsys):
+    topo = _topo()
+    responses = {
+        ("/fabrics", ()): {"fabrics": []},
+        ("/fabrics", (("category", "fabricGroup"),)): {"fabrics": []},
+        # /fabrics/<name> deliberately absent -> StubClient.get raises HTTP 404, treated as empty
+    }
+    client = StubClient(responses)
+
+    Provisioner(client, topo, dry_run=True).phase_fabrics()
+
+    assert _posts(client) == []  # dry-run never issues a real write
+    assert _puts(client) == []
+    out = capsys.readouterr().out
+    create_lines = [line for line in out.splitlines() if line.startswith("[dry-run] POST /fabrics ")]
+    assert len(create_lines) == 3
+    for fabric in topo.fabrics:
+        assert f"would apply settings to new fabric /fabrics/{fabric.name}" in out
+
+
+def test_phase_fabrics_live_puts_only_the_fabric_missing_a_setting(capsys):
+    topo = _topo()
+    responses = {
+        ("/fabrics", ()): {"fabrics": [{"name": f.name} for f in topo.fabrics]},
+        ("/fabrics", (("category", "fabricGroup"),)): {"fabrics": []},
+    }
+    for fabric in topo.fabrics:
+        current = {"name": fabric.name, "management": {"type": fabric.type, "bgpAsn": fabric.asn}}
+        current = merge_settings(current, fabric.settings) if fabric.settings else current
+        if fabric.name == "SITE1":
+            del current["management"]["vrfLiteAutoConfig"]
+        responses[(f"/fabrics/{fabric.name}", ())] = current
+    client = StubClient(responses)
+
+    Provisioner(client, topo).phase_fabrics()
+
+    assert _posts(client) == []
+    puts = _puts(client)
+    assert [p[1] for p in puts] == ["/fabrics/SITE1"]
+    assert puts[0][2]["management"]["vrfLiteAutoConfig"] == "back2BackAndToExternal"
+
+
 def test_phase_msd_creates_group_and_adds_members_in_order_when_members_404():
     topo = _topo()
     responses = {

@@ -17,6 +17,8 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import os
+import time
 from pathlib import Path
 from typing import Any
 
@@ -51,6 +53,28 @@ def merge_settings(current: dict, settings: dict) -> dict:
         else:
             merged[key] = value
     return merged
+
+
+def switch_add_payload(fabric: Fabric, password: str, username: str = "admin") -> dict:
+    platforms = {s.platform for s in fabric.switches}
+    if len(platforms) != 1:
+        raise ValueError(f"{fabric.name}: one platformType per add call, got {platforms}")
+    return {
+        "switches": [{"ip": s.ip, "hostname": s.hostname, "switchRole": s.role} for s in fabric.switches],
+        "platformType": platforms.pop(),
+        "preserveConfig": False,
+        "useCredentialForWrite": True,
+        "username": username,
+        "password": password,
+    }
+
+
+def _switch_password(fabric: Fabric) -> str:
+    """IOSXE_PASSWORD for externalConnectivity fabrics (they hold the ios-xe WAN router), NXOS_PASSWORD otherwise;
+    falls back to NXOS_PASSWORD if IOSXE_PASSWORD is unset."""
+    env_var = "IOSXE_PASSWORD" if fabric.type == "externalConnectivity" else "NXOS_PASSWORD"
+    value = os.environ.get(env_var)
+    return value if value else os.environ.get("NXOS_PASSWORD", "")
 
 
 class Provisioner:
@@ -110,6 +134,55 @@ class Provisioner:
             for member in group.members:
                 if member not in members:
                     self._post(f"/fabrics/{group.name}/actions/addMembers", {"members": [{"name": member}]})
+
+    # -- phase: switches ------------------------------------------------------------------------------------
+    def fabric_switches(self, fabric_name: str) -> dict[str, dict]:
+        return {s["hostname"]: s for s in self._read(f"/fabrics/{fabric_name}/switches", "switches")}
+
+    def serial(self, hostname: str) -> str:
+        """Serial number by hostname, looked up live (serials change on every VM rebuild). Placeholder in dry runs."""
+        fabric = self.topo.switch_fabric(hostname)
+        entry = self.fabric_switches(fabric).get(hostname)
+        if entry:
+            return entry["serialNumber"]
+        if self.dry_run:
+            return f"<{hostname}-serial>"
+        raise RuntimeError(f"{hostname} is not in fabric {fabric} on {self.client.creds.ip}; run --phase switches first")
+
+    def wait_for_switches(self, fabric_name: str, hostnames: list[str], timeout: int = 900) -> None:
+        deadline = time.time() + timeout
+        present: dict[str, dict] = {}
+        while time.time() < deadline:
+            present = self.fabric_switches(fabric_name)
+            if all(hostname in present for hostname in hostnames):
+                return
+            time.sleep(15)
+        raise TimeoutError(f"{fabric_name}: switches never listed: {[h for h in hostnames if h not in present]}")
+
+    def config_deploy(self, fabric_name: str) -> None:
+        self._post(f"/fabrics/{fabric_name}/actions/configDeploy", None)
+
+    def pending(self, fabric_name: str, serial: str) -> list:
+        return self._read(f"/fabrics/{fabric_name}/switches/{serial}/pendingConfig", "pendingConfig")
+
+    def phase_switches(self) -> None:
+        for fabric in self.topo.fabrics:
+            present = self.fabric_switches(fabric.name)
+            missing = [s for s in fabric.switches if s.hostname not in present]
+            if missing:
+                password = _switch_password(fabric)
+                self._post(f"/fabrics/{fabric.name}/switches", switch_add_payload(Fabric(fabric.name, fabric.type, fabric.asn, {}, missing), password))
+                if not self.dry_run:
+                    self.wait_for_switches(fabric.name, [s.hostname for s in missing])
+                    present = self.fabric_switches(fabric.name)
+            wrong = [
+                {"switchId": present[s.hostname]["serialNumber"], "role": s.role}
+                for s in fabric.switches
+                if s.hostname in present and present[s.hostname].get("switchRole") != s.role
+            ]
+            if wrong:
+                self._post(f"/fabrics/{fabric.name}/switchActions/changeRoles", {"switchRoles": wrong})
+            self.config_deploy(fabric.name)
 
     def run(self, phases: list[str]) -> None:
         for phase in phases:

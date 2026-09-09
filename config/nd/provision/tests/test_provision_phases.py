@@ -135,3 +135,79 @@ def test_phase_msd_dry_run_reads_members_and_logs_no_add_members(capsys):
     assert _posts(client) == []
     out = capsys.readouterr().out
     assert "addMembers" not in out
+
+
+def _dry_run_lines(out: str, path: str) -> list[str]:
+    prefix = f"[dry-run] POST {path} "
+    return [line for line in out.splitlines() if line.startswith(prefix)]
+
+
+def test_phase_switches_dry_run_posts_add_and_deploy_but_no_role_change(capsys):
+    topo = _topo()
+    responses = {("/fabrics/SITE2/switches", ()): {"switches": []}}
+    client = StubClient(responses)
+
+    Provisioner(client, topo, dry_run=True).phase_switches()
+
+    assert _posts(client) == []  # dry-run never issues a real write
+    out = capsys.readouterr().out
+
+    add_lines = _dry_run_lines(out, "/fabrics/SITE2/switches")
+    assert len(add_lines) == 1
+    add_line = add_lines[0]
+    assert '"platformType": "nx-os"' in add_line
+    assert '"preserveConfig": false' in add_line
+    for hostname, role in [("S2_BG1", "borderGateway"), ("S2_SP1", "spine"), ("S2_LE1", "leaf")]:
+        assert f'"hostname": "{hostname}", "switchRole": "{role}"' in add_line
+
+    deploy_lines = _dry_run_lines(out, "/fabrics/SITE2/actions/configDeploy")
+    assert len(deploy_lines) == 1
+    assert not any("switchActions" in line for line in out.splitlines() if "SITE2" in line)
+
+
+def _already_present(fabric, role_overrides: dict | None = None) -> dict:
+    """Build a /fabrics/<name>/switches response with every switch present, so nothing is missing
+    and wait_for_switches is never invoked (which would otherwise really sleep, since the stub never
+    grows a fabric's switch list after a POST)."""
+    overrides = role_overrides or {}
+    return {"switches": [{"hostname": s.hostname, "serialNumber": f"SN-{s.hostname}", "switchRole": overrides.get(s.hostname, s.role)} for s in fabric.switches]}
+
+
+def test_phase_switches_changes_wrong_role_when_switches_already_present():
+    topo = _topo()
+    site1 = next(f for f in topo.fabrics if f.name == "SITE1")
+    site2 = next(f for f in topo.fabrics if f.name == "SITE2")
+    isn = next(f for f in topo.fabrics if f.name == "ISN")
+    responses = {
+        ("/fabrics/SITE1/switches", ()): _already_present(site1),
+        ("/fabrics/SITE2/switches", ()): _already_present(site2, {"S2_BG1": "leaf"}),
+        ("/fabrics/ISN/switches", ()): _already_present(isn),
+    }
+    client = StubClient(responses)
+
+    Provisioner(client, topo).phase_switches()
+
+    posts = _posts(client)
+    assert [p[1] for p in posts if p[1] == "/fabrics/SITE2/switches"] == []
+    role_posts = [p for p in posts if p[1] == "/fabrics/SITE2/switchActions/changeRoles"]
+    assert len(role_posts) == 1
+    assert role_posts[0][2] == {"switchRoles": [{"switchId": "SN-S2_BG1", "role": "borderGateway"}]}
+    deploy_index = [p[1] for p in posts].index("/fabrics/SITE2/actions/configDeploy")
+    role_index = [p[1] for p in posts].index("/fabrics/SITE2/switchActions/changeRoles")
+    assert role_index < deploy_index
+
+
+def test_switch_add_payload_for_isn_uses_iosxe_password(monkeypatch, capsys):
+    monkeypatch.setenv("IOSXE_PASSWORD", "iosxe-secret")
+    topo = _topo()
+    responses = {("/fabrics/ISN/switches", ()): {"switches": []}}
+    client = StubClient(responses)
+
+    Provisioner(client, topo, dry_run=True).phase_switches()
+
+    assert _posts(client) == []  # dry-run never issues a real write
+    out = capsys.readouterr().out
+    add_lines = _dry_run_lines(out, "/fabrics/ISN/switches")
+    assert len(add_lines) == 1
+    assert '"platformType": "ios-xe"' in add_lines[0]
+    assert '"password": "iosxe-secret"' in add_lines[0]

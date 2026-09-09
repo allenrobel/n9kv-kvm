@@ -6,10 +6,10 @@
 Phases (each safe to re-run; --phase all runs them in order):
   fabrics   create SITE1/SITE2/ISN if absent, then merge `settings` into each fabric object (GET/update/PUT)
   msd       create the MSD fabric group if absent, add members one at a time (ND rejects batches)
-  switches  shallowDiscovery per fabric (serial/model), add the manageable ones, wait until they list, set roles, configDeploy
+  switches  shallowDiscovery per fabric (serial/model), add the manageable ones, wait until they list, set roles, recalculate + deploy
   isn       WAN loopback + router-id policy, ebgpVrfLite links, CDP policies, deploy ISN/SITE1/SITE2
   overlay   VRFs + networks in each fabric, attachments per switch, vrfActions/networkActions deploy
-  deploy    configDeploy every fabric and print any non-empty pendingConfig
+  deploy    recalculate + deploy every fabric and print any non-empty pendingConfig
 Credentials: ND_IP4/ND_USERNAME/ND_PASSWORD/ND_DOMAIN (controller), NXOS_PASSWORD / IOSXE_PASSWORD (switch discovery).
 """
 from __future__ import annotations
@@ -28,6 +28,8 @@ from topology import Fabric, FabricGroup, Link, Topology, load
 PHASES = ["fabrics", "msd", "switches", "isn", "overlay", "deploy"]
 
 LOG_BODY_LIMIT = 2000
+# configSave (Recalculate) and deploy are synchronous and take minutes on a 7-switch fabric.
+FABRIC_ACTION_TIMEOUT = 900
 
 
 def fabric_create_payload(fabric: Fabric) -> dict:
@@ -222,9 +224,9 @@ class Provisioner:
     def _log(self, msg: str) -> None:
         print(("[dry-run] " if self.dry_run else "") + msg)
 
-    def _post(self, path: str, body: Any) -> Any:
+    def _post(self, path: str, body: Any, timeout: int | None = None) -> Any:
         self._log(f"POST {path} {json.dumps(redact(body))[:LOG_BODY_LIMIT]}")
-        return None if self.dry_run else self.client.post(path, json=body)
+        return None if self.dry_run else self.client.post(path, json=body, timeout=timeout)
 
     def _put(self, path: str, body: Any) -> Any:
         self._log(f"PUT {path} {json.dumps(redact(body))[:LOG_BODY_LIMIT]}")
@@ -339,7 +341,11 @@ class Provisioner:
         raise TimeoutError(f"{fabric_name}: switches never listed: {[h for h in hostnames if h not in present]}")
 
     def config_deploy(self, fabric_name: str) -> None:
-        self._post(f"/fabrics/{fabric_name}/actions/configDeploy", None)
+        """The GUI's "Recalculate and Deploy": configSave (recalculate intent from the fabric settings + policies)
+        followed by deploy (push pending config). Both are synchronous and can run for minutes. The older
+        actions/configDeploy is deprecated on 4.3.1 and, as observed there, never generated the underlay intent."""
+        self._post(f"/fabrics/{fabric_name}/actions/configSave", None, timeout=FABRIC_ACTION_TIMEOUT)
+        self._post(f"/fabrics/{fabric_name}/actions/deploy", None, timeout=FABRIC_ACTION_TIMEOUT)
 
     def pending(self, fabric_name: str, serial: str) -> list:
         """Final convergence check: fails loud (does not swallow HTTP errors like `_read`) since a request
@@ -392,7 +398,9 @@ class Provisioner:
 
     # -- phase: isn ------------------------------------------------------------------------------------------
     def _policies(self, fabric: str, serial: str) -> list[dict]:
-        return self._read_paged(f"/fabrics/{fabric}/policies", "policies", params={"switchId": serial})
+        """Policies of one switch. ND 4.3.1 ignores the switchId query parameter (returns the whole fabric), so
+        filter client-side as well; the parameter is kept for 4.2.1 where it works."""
+        return [p for p in self._read_paged(f"/fabrics/{fabric}/policies", "policies", params={"switchId": serial}) if p.get("switchId", serial) == serial]
 
     def _ensure_policy(self, fabric: str, serial: str, policy: dict) -> None:
         have = [p for p in self._policies(fabric, serial) if p.get("templateName") == policy["templateName"] and p.get("entityName") == policy["entityName"]]

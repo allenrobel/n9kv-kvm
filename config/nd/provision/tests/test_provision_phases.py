@@ -627,12 +627,12 @@ def _populated_overlay_topo():
         vrfs=[{"fabrics": ["SITE1", "SITE2"], "object": {"vrfName": "V1", "vrfId": 50001, "vlanId": 2001}}],
         networks=[{"fabrics": ["SITE1", "SITE2"], "object": {"networkName": "N1", "networkId": 30001, "vlanId": 2, "vrfName": "V1"}}],
         vrf_attachments=[{"fabric": "SITE1", "vrf": "V1", "switch": "S1_TOR1"}],
-        network_attachments=[{"fabric": "SITE1", "network": "N1", "switch": "S1_TOR1", "vlan": 2, "interfaces": [{"mode": "access", "name": "Ethernet1/3"}]}],
+        network_attachments=[{"fabric": "SITE1", "network": "N1", "switch": "S1_TOR1", "vlan": 2, "interfaces": [{"mode": "access", "interfaceRange": "Ethernet1/3"}]}],
     )
     return replace(topo, overlay=overlay)
 
 
-def test_phase_overlay_empty_topology_is_noop(capsys):
+def test_phase_overlay_with_an_empty_overlay_section_is_a_noop(capsys):
     topo = _topo()  # topology_nd421.yaml ships with an empty overlay
     client = StubClient({})
 
@@ -705,13 +705,13 @@ def test_phase_overlay_live_attaches_existing_vrf_and_network(capsys):
     net_att = [p for p in posts if p[1] == "/fabrics/SITE1/networkAttachments"]
     assert len(net_att) == 1
     assert net_att[0][2] == {
-        "attachments": [{"networkName": "N1", "switchId": "SN-TOR1", "vlanId": 2, "interfaces": [{"mode": "access", "name": "Ethernet1/3"}], "attach": True}]
+        "attachments": [{"networkName": "N1", "switchId": "SN-TOR1", "vlanId": 2, "interfaces": [{"mode": "access", "interfaceRange": "Ethernet1/3"}], "attach": True}]
     }
 
     assert [p[1] for p in posts if "Actions/deploy" in p[1]] == ["/fabrics/SITE1/vrfActions/deploy", "/fabrics/SITE1/networkActions/deploy"]
     for p in posts:
         if "Actions/deploy" in p[1]:
-            assert p[2] == {"switchIds": ["SN-TOR1"]}
+            assert p[2]["switchIds"] == ["SN-TOR1"] and (p[2].get("vrfNames") == ["V1"] or p[2].get("networkNames") == ["N1"])
 
 
 def test_phase_overlay_live_skips_existing_vrf_attachment_but_attaches_missing_network(capsys):
@@ -927,3 +927,21 @@ def test_phase_vpc_live_is_a_no_op_when_every_pair_exists():
     Provisioner(client, topo, settle_seconds=0).phase_vpc()
 
     assert _puts(client) == [] and _posts(client) == []
+
+
+def test_ensure_access_port_puts_access_host_policy_only_when_port_is_not_access(capsys):
+    topo = _topo()
+    responses = {
+        ("/fabrics/SITE2/switches/SN-LE1/interfaces/Ethernet1%2F2", ()): {"configData": {"mode": "trunk"}},
+        ("/fabrics/SITE2/switches/SN-LE1/interfaces/Ethernet1%2F3", ()): {"configData": {"mode": "access"}},
+    }
+    client = StubClient(responses)
+    prov = Provisioner(client, topo)
+
+    prov._ensure_access_port("SITE2", "SN-LE1", "Ethernet1/2", "S2_H1 eth1")
+    prov._ensure_access_port("SITE2", "SN-LE1", "Ethernet1/3", "unused")
+
+    puts = _puts(client)
+    assert [p[1] for p in puts] == ["/fabrics/SITE2/switches/SN-LE1/interfaces/Ethernet1%2F2"]
+    policy = puts[0][2]["configData"]["networkOS"]["policy"]
+    assert puts[0][2]["configData"]["mode"] == "access" and policy["policyType"] == "accessHost" and policy["description"] == "S2_H1 eth1"

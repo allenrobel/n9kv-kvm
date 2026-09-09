@@ -38,6 +38,13 @@ uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 \
   Recalculate can run against a stale expected config (the import-time defaults), emit `no vlan 1`, fail with "Deletion of VLAN 1 is not allowed!!" and
   abort that switch; the next deploy uses the fresh intent. `config_deploy()` checks pendingConfig after the deploy, prints the failed commands from
   `deploymentHistory`, and deploys once more if anything is left.
+- The `overlay` phase creates the objects under `overlay:` in the fabrics they list (`MSD` for both shipped files, so the two sites share one L2/L3
+  VNI; ND propagates them to SITE1/SITE2), attaches them per switch, and deploys with `vrfActions/deploy` / `networkActions/deploy` (both need the
+  VRF/network names in the body). An access-mode attachment interface (`{mode: access, interfaceRange: Ethernet1/2}`) makes the tool first put that
+  port into access mode (`accessHost` policy): every unused leaf port defaults to `trunkHost` and ND refuses an access attachment on a trunk port.
+  The shipped overlay is VRF `LAB` (L3VNI 50001) + network `LAB_NET1` (VLAN 2, L2VNI 30001, anycast gateway 192.0.1.1/24) on the S1 vPC pair and
+  S2_LE1 (Ethernet1/2 = the S2_H1 host port). S1_H1 hangs off S1_TOR1 and is not reachable through this: the attachment API has no ToR-port
+  concept, so that leg needs ND's ToR pairing, which the tool does not model yet.
 - The `vpc` phase pairs the leaf pairs listed under `vpc_pairs:` with ND's default template (`PUT /fabrics/{f}/switches/{sn}/vpcPair`,
   `vpcAction: pair`); ND allocates the domain id in pairing order and generates the `port-channel500` peer-link over the discovered leaf link.
   It then recalculates and deploys the fabric. Pairs ND already lists (`GET /fabrics/{f}/vpcPairs`, either order) are skipped.

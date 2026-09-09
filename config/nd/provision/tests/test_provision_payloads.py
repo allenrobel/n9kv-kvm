@@ -139,9 +139,9 @@ def test_link_payload_matches_the_known_good_isn_link():
 
 
 def test_network_attachment_payload():
-    att = {"fabric": "SITE1", "network": "NET_2", "switch": "S1_TOR1", "vlan": 2, "interfaces": [{"mode": "access", "name": "Ethernet1/3"}]}
+    att = {"fabric": "SITE1", "network": "NET_2", "switch": "S1_TOR1", "vlan": 2, "interfaces": [{"mode": "access", "interfaceRange": "Ethernet1/3"}]}
     assert attachment_payload("network", att, "SER") == {
-        "attachments": [{"networkName": "NET_2", "switchId": "SER", "vlanId": 2, "interfaces": [{"mode": "access", "name": "Ethernet1/3"}], "attach": True}]
+        "attachments": [{"networkName": "NET_2", "switchId": "SER", "vlanId": 2, "interfaces": [{"mode": "access", "interfaceRange": "Ethernet1/3"}], "attach": True}]
     }
 
 

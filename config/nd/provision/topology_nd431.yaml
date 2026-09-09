@@ -81,19 +81,28 @@ vpc_pairs:
   - {fabric: SITE1, switch: S3_LE3, peer: S3_LE4}
 
 overlay:
-  # EMPTY on purpose: the 2026-09-08 ND 4.2.1 baseline snapshot this file mirrors has no VRFs,
-  # networks or attachments in SITE1/SITE2. Fill in later by copying the objects returned by
-  # /fabrics/{f}/vrfs and /fabrics/{f}/networks (minus fabricName, *Status and snapshot.VOLATILE_KEYS)
-  # into `object:` entries, e.g.
-  #   vrfs:
-  #     - fabrics: [SITE1, SITE2]
-  #       object: {vrfName: ..., vrfId: ..., vlanId: ..., ...}
-  #   networks:
-  #     - fabrics: [SITE1, SITE2]
-  #       object: {networkName: ..., networkId: ..., vlanId: ..., vrfName: ..., l3Data: {gatewayIpv4Address: ...}}
-  #   vrf_attachments:     [{fabric: SITE1, vrf: ..., switch: S3_LE1}, ...]
-  #   network_attachments: [{fabric: SITE1, network: ..., switch: S3_TOR1, vlan: ..., interfaces: [{mode: access, name: Ethernet1/3}]}, ...]
-  vrfs: []
-  networks: []
-  vrf_attachments: []
-  network_attachments: []
+  # One VRF and one VLAN-2 network, created at the MSD level so both sites share the L3/L2 VNIs (ND propagates
+  # them to SITE1 and SITE2 as vxlanIbgp objects). Attached to the S1 vPC pair and to S2_LE1, whose Ethernet1/2
+  # is the S2_H1 host port (192.0.1.172/24, anycast gateway 192.0.1.1). S1_H1 sits behind S1_TOR1 and needs ND's
+  # ToR pairing, which the attachment API does not model; see the README.
+  vrfs:
+    - fabrics: [MSD]
+      object: {vrfName: LAB, vrfType: vxlan, vrfId: 50001, vlanId: 2001}
+  networks:
+    - fabrics: [MSD]
+      object:
+        networkName: LAB_NET1
+        networkType: vxlan
+        networkId: 30001
+        vrfName: LAB
+        vlanId: 2
+        networkMode: layer3
+        l3Data: {gatewayIpv4Address: 192.0.1.1/24}
+  vrf_attachments:
+    - {fabric: SITE1, vrf: LAB, switch: S3_LE1}
+    - {fabric: SITE1, vrf: LAB, switch: S3_LE2}
+    - {fabric: SITE2, vrf: LAB, switch: S4_LE1}
+  network_attachments:
+    - {fabric: SITE1, network: LAB_NET1, switch: S3_LE1, vlan: 2, interfaces: []}
+    - {fabric: SITE1, network: LAB_NET1, switch: S3_LE2, vlan: 2, interfaces: []}
+    - {fabric: SITE2, network: LAB_NET1, switch: S4_LE1, vlan: 2, interfaces: [{mode: access, interfaceRange: Ethernet1/2}]}

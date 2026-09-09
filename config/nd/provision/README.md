@@ -30,6 +30,8 @@ uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 \
 
 - `POST /fabrics/{f}/switches` rejects entries without `serialNumber` and `model` (HTTP 400 schema validation). The `switches` phase therefore runs
   `POST /fabrics/{f}/actions/shallowDiscovery` first (seed IPs, `maxHop: 0`) and adds only the switches ND reports `manageable`; unreachable ones are logged and skipped.
+- The add sends `preserveConfig: true` for external fabrics (ND rejects `false` there: "preserveConfig option should be true for External Fabric Type")
+  and `false` for VXLAN fabrics, matching the GUI's *Preserve Config* checkbox.
 - Log lines redact `password`/`userPasswd` values; the real requests still carry them.
 - External fabrics created via API come up with `management.monitoredMode: true`; the `isn` phase flips it, otherwise every deploy is silently a no-op.
 - IOS-XE runs one BGP process: any stray `router bgp` on the WAN router other than the ISN ASN aborts the deploy mid-script.

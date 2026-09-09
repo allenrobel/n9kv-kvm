@@ -73,3 +73,9 @@ def test_dump_writes_null_for_a_failing_read_and_still_writes_the_rest(tmp_path)
     assert json.loads((tmp_path / "networks_SITE1.json").read_text()) == {"networks": []}
     assert json.loads((tmp_path / "fabric_SITE1.json").read_text()) == {"name": "SITE1"}
     assert json.loads((tmp_path / "fabrics.json").read_text()) == {"fabrics": [{"name": "SITE1"}]}
+
+
+def test_normalize_maps_hostnames_adjacent_to_underscores_but_not_longer_names():
+    name_map = {"S1_BG1": "S3_BG1", "S1_LE1": "S3_LE1"}
+    assert normalize("interfaces_SITE1_S1_BG1.json", name_map) == "interfaces_SITE1_S3_BG1.json"
+    assert normalize("tap_S1_LE1 S1_BG1 S1_BG10", name_map) == "tap_S3_LE1 S3_BG1 S1_BG10"

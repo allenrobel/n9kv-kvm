@@ -754,6 +754,8 @@ def test_phase_deploy_dry_run_deploys_every_fabric_and_does_not_check_pending(ca
         "/fabrics/SITE2/actions/deploy",
         "/fabrics/ISN/actions/configSave",
         "/fabrics/ISN/actions/deploy",
+        "/fabrics/MSD/actions/configSave",
+        "/fabrics/MSD/actions/deploy",
     ]
 
 
@@ -782,6 +784,8 @@ def test_phase_deploy_live_prints_pending_config_for_every_switch(capsys):
         "/fabrics/SITE2/actions/deploy",
         "/fabrics/ISN/actions/configSave",
         "/fabrics/ISN/actions/deploy",
+        "/fabrics/MSD/actions/configSave",
+        "/fabrics/MSD/actions/deploy",
     ]
     out = capsys.readouterr().out
     assert "SITE1/S1_BG1: pendingConfig 0 line(s)" in out

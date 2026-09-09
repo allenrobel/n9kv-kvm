@@ -48,6 +48,19 @@ VOLATILE_KEYS = {
     "vpcData",
     "softwareVersion",
     "model",
+    # per-object identity/time/operational fields that differ between two controllers by construction
+    "policyId",
+    "POLICY_ID",
+    "createTimestamp",
+    "updateTimestamp",
+    "operData",
+    "srcSwitchInfo",
+    "dstSwitchInfo",
+    "linkPresent",
+    "linkDiscovered",
+    "SERIAL_NUMBER",
+    "PASSWORD_ENCRYPT",
+    "switchName",
 }
 
 
@@ -60,7 +73,9 @@ def normalize(obj: Any, name_map: dict[str, str]) -> Any:
         return sorted(items, key=lambda v: json.dumps(v, sort_keys=True))
     if isinstance(obj, str):
         for old, new in name_map.items():
-            obj = re.sub(rf"\b{re.escape(old)}\b", new, obj)
+            # Hostnames contain underscores, which `\b` treats as word characters; use alphanumeric lookarounds so
+            # "interfaces_SITE1_S1_BG1.json" and "tap_S1_BG1" map too, while "S1_BG10" does not.
+            obj = re.sub(rf"(?<![A-Za-z0-9]){re.escape(old)}(?![A-Za-z0-9])", new, obj)
         return obj
     return obj
 

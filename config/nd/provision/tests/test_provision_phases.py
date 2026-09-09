@@ -633,7 +633,7 @@ def _populated_overlay_topo():
 
 
 def test_phase_overlay_with_an_empty_overlay_section_is_a_noop(capsys):
-    topo = _topo()  # topology_nd421.yaml ships with an empty overlay
+    topo = replace(_topo(), overlay=Overlay())  # the shipped files carry the LAB overlay; strip it for the no-op case
     client = StubClient({})
 
     Provisioner(client, topo).phase_overlay()

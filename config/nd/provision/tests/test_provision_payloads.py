@@ -6,10 +6,12 @@ from provision import (
     _switch_password,
     attachment_payload,
     cdp_policy,
+    discovery_payload,
     fabric_create_payload,
     fabric_group_create_payload,
     link_payload,
     merge_settings,
+    redact,
     router_id_policy,
     switch_add_payload,
 )
@@ -41,17 +43,51 @@ def test_merge_settings_is_deep_and_non_destructive():
     assert current["management"] == {"type": "vxlanIbgp", "bgpAsn": "65001", "ptp": False}
 
 
-def test_switch_add_payload_groups_by_platform_and_never_preserves_config():
+def test_switch_add_payload_carries_discovered_serial_and_model_and_never_preserves_config():
     fab = Fabric(name="ISN", type="externalConnectivity", asn="65535", switches=[Switch("WAN2", "192.168.14.112", "coreRouter", "ios-xe")])
-    body = switch_add_payload(fab, "pw")  # ggignore: unit-test placeholder, not a credential
+    discovered = {"192.168.14.112": {"serialNumber": "9ABCDEF1234", "model": "C8000V", "softwareVersion": "17.15.5", "status": "manageable"}}
+    body = switch_add_payload(fab, discovered, "pw")  # ggignore: unit-test placeholder, not a credential
     assert body == {
-        "switches": [{"ip": "192.168.14.112", "hostname": "WAN2", "switchRole": "coreRouter"}],
+        "switches": [
+            {"ip": "192.168.14.112", "hostname": "WAN2", "switchRole": "coreRouter", "serialNumber": "9ABCDEF1234", "model": "C8000V", "softwareVersion": "17.15.5"}
+        ],
         "platformType": "ios-xe",
         "preserveConfig": False,
         "useCredentialForWrite": True,
         "username": "admin",
         "password": "pw",  # ggignore: unit-test placeholder, not a credential
     }
+
+
+def test_switch_add_payload_requires_a_discovery_result_for_every_switch():
+    fab = Fabric(name="SITE2", type="vxlanIbgp", asn="65002", switches=[Switch("S4_LE1", "192.168.14.153", "leaf")])
+    with pytest.raises(ValueError, match="S4_LE1"):
+        switch_add_payload(fab, {}, "pw")  # ggignore: unit-test placeholder, not a credential
+
+
+def test_switch_add_payload_rejects_mixed_platforms():
+    fab = Fabric(name="X", type="vxlanIbgp", asn="1", switches=[Switch("A", "10.0.0.1", "leaf"), Switch("B", "10.0.0.2", "leaf", "ios-xe")])
+    with pytest.raises(ValueError, match="platformType"):
+        switch_add_payload(
+            fab, {"10.0.0.1": {"serialNumber": "S", "model": "M"}, "10.0.0.2": {"serialNumber": "T", "model": "N"}}, "pw"
+        )  # ggignore: unit-test placeholder, not a credential
+
+
+def test_discovery_payload_seeds_every_switch_with_zero_hops():
+    fab = Fabric(name="SITE2", type="vxlanIbgp", asn="65002", switches=[Switch("S4_BG1", "192.168.14.132", "borderGateway"), Switch("S4_LE1", "192.168.14.153", "leaf")])
+    assert discovery_payload(fab, "pw") == {  # ggignore: unit-test placeholder, not a credential
+        "seedIpCollection": ["192.168.14.132", "192.168.14.153"],
+        "maxHop": 0,
+        "platformType": "nx-os",
+        "username": "admin",
+        "password": "pw",  # ggignore: unit-test placeholder, not a credential
+    }
+
+
+def test_redact_masks_credentials_at_any_depth_without_mutating_input():
+    body = {"username": "admin", "password": "pw", "nested": [{"userPasswd": "x", "keep": 1}]}  # ggignore: unit-test placeholder, not a credential
+    assert redact(body) == {"username": "admin", "password": "***", "nested": [{"userPasswd": "***", "keep": 1}]}
+    assert body["password"] == "pw"  # ggignore: unit-test placeholder, not a credential
 
 
 def test_switch_password_uses_iosxe_for_external_connectivity(monkeypatch):

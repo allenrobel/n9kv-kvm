@@ -304,13 +304,17 @@ def test_phase_switches_dry_run_posts_add_and_deploy_but_no_role_change(monkeypa
     assert _posts(client) == []  # dry-run never issues a real write
     out = capsys.readouterr().out
 
+    discovery_lines = _dry_run_lines(out, "/fabrics/SITE2/actions/shallowDiscovery")
+    assert len(discovery_lines) == 1
+    assert '"seedIpCollection": ["192.168.12.132", "192.168.12.142", "192.168.12.153"]' in discovery_lines[0]
     add_lines = _dry_run_lines(out, "/fabrics/SITE2/switches")
     assert len(add_lines) == 1
     add_line = add_lines[0]
     assert '"platformType": "nx-os"' in add_line
     assert '"preserveConfig": false' in add_line
     for hostname, role in [("S2_BG1", "borderGateway"), ("S2_SP1", "spine"), ("S2_LE1", "leaf")]:
-        assert f'"hostname": "{hostname}", "switchRole": "{role}"' in add_line
+        assert f'"hostname": "{hostname}", "switchRole": "{role}", "serialNumber": "<from-discovery>", "model": "<from-discovery>"' in add_line
+    assert "nxos-pw" not in out and '"password": "***"' in add_line  # ggignore: unit-test placeholder, not a credential
 
     deploy_lines = _dry_run_lines(out, "/fabrics/SITE2/actions/configDeploy")
     assert len(deploy_lines) == 1
@@ -349,8 +353,8 @@ def test_phase_switches_changes_wrong_role_when_switches_already_present():
     assert role_index < deploy_index
 
 
-def test_switch_add_payload_for_isn_uses_iosxe_password(monkeypatch, capsys):
-    monkeypatch.setenv("IOSXE_PASSWORD", "iosxe-secret")
+def test_phase_switches_isn_dry_run_is_ios_xe_and_never_logs_the_password(monkeypatch, capsys):
+    monkeypatch.setenv("IOSXE_PASSWORD", "iosxe-secret")  # ggignore: unit-test placeholder, not a credential
     topo = _topo()
     responses = {("/fabrics/ISN/switches", ()): {"switches": []}}
     client = StubClient(responses)
@@ -362,7 +366,65 @@ def test_switch_add_payload_for_isn_uses_iosxe_password(monkeypatch, capsys):
     add_lines = _dry_run_lines(out, "/fabrics/ISN/switches")
     assert len(add_lines) == 1
     assert '"platformType": "ios-xe"' in add_lines[0]
-    assert '"password": "iosxe-secret"' in add_lines[0]
+    assert "iosxe-secret" not in out  # ggignore: unit-test placeholder, not a credential
+    assert '"password": "***"' in add_lines[0]
+
+
+class _StubClientListsAfterAdd(StubClient):
+    """GET /fabrics/<f>/switches answers empty until POST /fabrics/<f>/switches has happened, then lists the
+    switches that POST carried (with their serialNumber), modelling ND import. Keeps wait_for_switches from
+    sleeping in tests."""
+
+    def __init__(self, responses: dict, fabric: str) -> None:
+        super().__init__(responses)
+        self.fabric = fabric
+        self.added: list[dict] = []
+
+    def get(self, path: str, params: dict | None = None):
+        if path == f"/fabrics/{self.fabric}/switches":
+            self.calls.append(("GET", path, params))
+            return {"switches": [dict(entry, switchRole=entry["switchRole"]) for entry in self.added]}
+        return super().get(path, params)
+
+    def post(self, path: str, json=None):
+        if path == f"/fabrics/{self.fabric}/switches":
+            self.added.extend(json["switches"])
+        return super().post(path, json)
+
+
+def test_phase_switches_live_discovers_then_adds_only_manageable_switches(monkeypatch):
+    monkeypatch.setenv("NXOS_PASSWORD", "nxos-pw")  # ggignore: unit-test placeholder, not a credential
+    monkeypatch.setenv("IOSXE_PASSWORD", "iosxe-pw")  # ggignore: unit-test placeholder, not a credential
+    topo = _topo()
+    site1, isn = topo.fabrics[0], topo.fabrics[2]
+    responses = {
+        ("/fabrics/SITE1/switches", ()): _already_present(site1),
+        ("/fabrics/ISN/switches", ()): _already_present(isn),
+        "/fabrics/SITE2/actions/shallowDiscovery": {
+            "switches": [
+                {"ip": "192.168.12.132", "hostname": "S2_BG1", "serialNumber": "SN-BG1", "model": "N9K-C9300v", "softwareVersion": "10.6(2)", "status": "manageable"},
+                {"ip": "192.168.12.142", "hostname": "S2_SP1", "serialNumber": "SN-SP1", "model": "N9K-C9300v", "softwareVersion": "10.6(2)", "status": "manageable"},
+                {"ip": "192.168.12.153", "hostname": "S2_LE1", "status": "notReachable", "statusReason": "SSH timeout"},
+            ]
+        },
+    }
+    client = _StubClientListsAfterAdd(responses, "SITE2")
+
+    Provisioner(client, topo).phase_switches()
+
+    posts = _posts(client)
+    assert [p[1] for p in posts] == [
+        "/fabrics/SITE1/actions/configDeploy",  # SITE1 fully present: deploy only
+        "/fabrics/SITE2/actions/shallowDiscovery",
+        "/fabrics/SITE2/switches",
+        "/fabrics/SITE2/actions/configDeploy",
+        "/fabrics/ISN/actions/configDeploy",
+    ]
+    discovery = next(p[2] for p in posts if p[1].endswith("shallowDiscovery"))
+    assert discovery["seedIpCollection"] == ["192.168.12.132", "192.168.12.142", "192.168.12.153"] and discovery["maxHop"] == 0
+    add = next(p[2] for p in posts if p[1] == "/fabrics/SITE2/switches")
+    assert [(e["hostname"], e["serialNumber"], e["model"]) for e in add["switches"]] == [("S2_BG1", "SN-BG1", "N9K-C9300v"), ("S2_SP1", "SN-SP1", "N9K-C9300v")]
+    assert add["password"] == "nxos-pw"  # ggignore: unit-test placeholder, not a credential -- the real call still carries it
 
 
 def test_pending_raises_when_stub_get_raises():

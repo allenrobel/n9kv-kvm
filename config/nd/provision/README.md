@@ -7,7 +7,7 @@ used to live only in the `provision-isn` skill and `docs/nd4_fabrics_bringup.md`
 ## Files
 
 - `topology_nd421.yaml` / `topology_nd431.yaml` - the two testbeds (SITE1/SITE2/ISN/MSD on each controller); they differ only in hostnames and mgmt IPs
-- `provision.py` - phased, idempotent, `--dry-run`
+- `provision.py` - phased, idempotent, `--dry-run` (phases: fabrics, msd, switches, vpc, isn, overlay, deploy)
 - `snapshot.py` - `dump` (read-only) and `diff` (normalized)
 - `nd_client.py`, `topology.py` - library code; `tests/` - pytest for the pure parts
 
@@ -38,6 +38,9 @@ uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 \
   Recalculate can run against a stale expected config (the import-time defaults), emit `no vlan 1`, fail with "Deletion of VLAN 1 is not allowed!!" and
   abort that switch; the next deploy uses the fresh intent. `config_deploy()` checks pendingConfig after the deploy, prints the failed commands from
   `deploymentHistory`, and deploys once more if anything is left.
+- The `vpc` phase pairs the leaf pairs listed under `vpc_pairs:` with ND's default template (`PUT /fabrics/{f}/switches/{sn}/vpcPair`,
+  `vpcAction: pair`); ND allocates the domain id in pairing order and generates the `port-channel500` peer-link over the discovered leaf link.
+  It then recalculates and deploys the fabric. Pairs ND already lists (`GET /fabrics/{f}/vpcPairs`, either order) are skipped.
 - The `deploy` phase recalculates and deploys the fabric group (MSD) after its child fabrics; that group deploy is what creates the multisite
   underlay/overlay links between the border gateways and their `ext_base_border_multisite` / `evpn_multisite_interface` policies.
 - `snapshot.py diff` maps hostnames with alphanumeric lookarounds (hostnames contain `_`), so per-switch files such as

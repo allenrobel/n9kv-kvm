@@ -874,3 +874,56 @@ def test_config_deploy_dry_run_only_logs_recalculate_and_deploy(capsys):
     assert not any(call[0] == "GET" and "pendingConfig" in call[1] for call in client.calls)
     out = capsys.readouterr().out
     assert [line.split()[2] for line in out.splitlines() if line.startswith("[dry-run] POST")] == ["/fabrics/SITE2/actions/configSave", "/fabrics/SITE2/actions/deploy"]
+
+
+def _site1_present(topo) -> dict:
+    return _already_present(topo.fabrics[0])
+
+
+def test_phase_vpc_dry_run_logs_one_put_per_pair_then_recalculate_and_deploy(capsys):
+    topo = _topo()
+    client = StubClient({("/fabrics/SITE1/switches", ()): _site1_present(topo)})
+
+    Provisioner(client, topo, dry_run=True).phase_vpc()
+
+    assert _posts(client) == [] and _puts(client) == []
+    out = capsys.readouterr().out
+    puts = [line.split()[2] for line in out.splitlines() if line.startswith("[dry-run] PUT")]
+    assert puts == ["/fabrics/SITE1/switches/SN-S1_LE1/vpcPair", "/fabrics/SITE1/switches/SN-S1_LE3/vpcPair"]
+    assert '"vpcAction": "pair", "switchId": "SN-S1_LE1", "peerSwitchId": "SN-S1_LE2"' in out
+    posts = [line.split()[2] for line in out.splitlines() if line.startswith("[dry-run] POST")]
+    assert posts == ["/fabrics/SITE1/actions/configSave", "/fabrics/SITE1/actions/deploy"]
+
+
+def test_phase_vpc_live_skips_pairs_nd_already_lists_in_either_order(capsys):
+    topo = _topo()
+    responses = {
+        ("/fabrics/SITE1/switches", ()): _site1_present(topo),
+        ("/fabrics/SITE1/vpcPairs", ()): {"vpcPairs": [{"switchId": "SN-S1_LE2", "peerSwitchId": "SN-S1_LE1", "domainId": 1}]},
+    }
+    responses.update({(f"/fabrics/SITE1/switches/SN-{s.hostname}/pendingConfig", ()): {"pendingConfigs": []} for s in topo.fabrics[0].switches})
+    client = StubClient(responses)
+
+    Provisioner(client, topo, settle_seconds=0).phase_vpc()
+
+    assert [p[1] for p in _puts(client)] == ["/fabrics/SITE1/switches/SN-S1_LE3/vpcPair"]
+    assert [p[1] for p in _posts(client)] == ["/fabrics/SITE1/actions/configSave", "/fabrics/SITE1/actions/deploy"]
+    assert "S1_LE1 <-> S1_LE2 already paired" in capsys.readouterr().out
+
+
+def test_phase_vpc_live_is_a_no_op_when_every_pair_exists():
+    topo = _topo()
+    responses = {
+        ("/fabrics/SITE1/switches", ()): _site1_present(topo),
+        ("/fabrics/SITE1/vpcPairs", ()): {
+            "vpcPairs": [
+                {"switchId": "SN-S1_LE1", "peerSwitchId": "SN-S1_LE2", "domainId": 1},
+                {"switchId": "SN-S1_LE3", "peerSwitchId": "SN-S1_LE4", "domainId": 2},
+            ]
+        },
+    }
+    client = StubClient(responses)
+
+    Provisioner(client, topo, settle_seconds=0).phase_vpc()
+
+    assert _puts(client) == [] and _posts(client) == []

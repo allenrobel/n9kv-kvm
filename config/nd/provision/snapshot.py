@@ -116,6 +116,7 @@ def dump(client: NDClient, out_dir: Path) -> None:
         _write(out_dir, f"members_{name}", _fetch(f"members_{name}", lambda: client.get(f"/fabrics/{name}/members")))
         _write(out_dir, f"links_{name}", _fetch(f"links_{name}", lambda: client.paged("/links", "links", params={"fabricName": name})))
         _write(out_dir, f"policies_{name}", _fetch(f"policies_{name}", lambda: client.paged(f"/fabrics/{name}/policies", "policies")))
+        _write(out_dir, f"vpcPairs_{name}", _fetch(f"vpcPairs_{name}", lambda: client.get(f"/fabrics/{name}/vpcPairs")))
         _write(out_dir, f"vrfs_{name}", _fetch(f"vrfs_{name}", lambda: client.get(f"/fabrics/{name}/vrfs")))
         _write(out_dir, f"networks_{name}", _fetch(f"networks_{name}", lambda: client.get(f"/fabrics/{name}/networks")))
         serials = [s["serialNumber"] for s in switches.get("switches", [])]

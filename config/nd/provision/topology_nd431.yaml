@@ -74,6 +74,12 @@ isn:
     loopback: {ip: 10.35.0.1, description: "Routing loopback (router-id)"}
     bgp_router_id: {BGP_AS: "65535", LOOPBACK_IP: 10.35.0.1}
 
+vpc_pairs:
+  # Paired in this order with ND's default template: ND allocates vPC domain ids 1 and 2 in pairing order and
+  # generates the peer-link port-channel500 over the discovered Ethernet1/2 <-> Ethernet1/2 leaf link.
+  - {fabric: SITE1, switch: S3_LE1, peer: S3_LE2}
+  - {fabric: SITE1, switch: S3_LE3, peer: S3_LE4}
+
 overlay:
   # EMPTY on purpose: the 2026-09-08 ND 4.2.1 baseline snapshot this file mirrors has no VRFs,
   # networks or attachments in SITE1/SITE2. Fill in later by copying the objects returned by

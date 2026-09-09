@@ -58,6 +58,16 @@ class Wan:
 
 
 @dataclass(frozen=True)
+class VpcPair:
+    """One vPC pair, paired with ND's default template (ND generates the peer-link port-channel over the
+    discovered leaf-to-leaf link and allocates the domain id in pairing order)."""
+
+    fabric: str
+    switch: str
+    peer: str
+
+
+@dataclass(frozen=True)
 class Isn:
     links: list[Link] = field(default_factory=list)
     wan: Wan | None = None
@@ -77,6 +87,7 @@ class Topology:
     fabric_groups: list[FabricGroup]
     isn: Isn
     overlay: Overlay
+    vpc_pairs: list[VpcPair] = field(default_factory=list)
 
     def switches(self) -> dict[str, Switch]:
         return {s.hostname: s for f in self.fabrics for s in f.switches}
@@ -108,6 +119,14 @@ def _validate(topo: Topology) -> None:
                 raise ValueError(f"isn link references unknown switch {host}")
     if topo.isn.wan and topo.isn.wan.hostname not in names:
         raise ValueError(f"isn.wan references unknown switch {topo.isn.wan.hostname}")
+    for pair in topo.vpc_pairs:
+        for host in (pair.switch, pair.peer):
+            if host not in names:
+                raise ValueError(f"vpc_pairs: unknown switch {host}")
+            if topo.switch_fabric(host) != pair.fabric:
+                raise ValueError(f"vpc_pairs: {host} is not in fabric {pair.fabric}")
+        if pair.switch == pair.peer:
+            raise ValueError(f"vpc_pairs: {pair.switch} cannot pair with itself")
     for att in topo.overlay.vrf_attachments + topo.overlay.network_attachments:
         switch_name = att.get("switch")
         if not switch_name:
@@ -126,6 +145,7 @@ def load(path: Path) -> Topology:
     isn_raw = raw.get("isn", {}) or {}
     isn = Isn(links=[Link(**item) for item in isn_raw.get("links", [])], wan=Wan(**isn_raw["wan"]) if isn_raw.get("wan") else None)
     overlay = Overlay(**(raw.get("overlay", {}) or {}))
-    topo = Topology(fabrics=fabrics, fabric_groups=groups, isn=isn, overlay=overlay)
+    pairs = [VpcPair(**item) for item in raw.get("vpc_pairs", []) or []]
+    topo = Topology(fabrics=fabrics, fabric_groups=groups, isn=isn, overlay=overlay, vpc_pairs=pairs)
     _validate(topo)
     return topo

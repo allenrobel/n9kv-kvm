@@ -53,3 +53,21 @@ def test_switch_hostname_declared_in_two_fabrics_is_rejected(tmp_path):
     )
     with pytest.raises(ValueError, match="S1_BG1"):
         load(bad)
+
+
+def test_shipped_topologies_declare_the_two_site1_vpc_pairs():
+    t421 = load(HERE / "topology_nd421.yaml")
+    t431 = load(HERE / "topology_nd431.yaml")
+    assert [(p.fabric, p.switch, p.peer) for p in t421.vpc_pairs] == [("SITE1", "S1_LE1", "S1_LE2"), ("SITE1", "S1_LE3", "S1_LE4")]
+    assert [(p.fabric, p.switch, p.peer) for p in t431.vpc_pairs] == [("SITE1", "S3_LE1", "S3_LE2"), ("SITE1", "S3_LE3", "S3_LE4")]
+
+
+def test_vpc_pair_must_reference_switches_of_its_own_fabric(tmp_path):
+    bad = tmp_path / "t.yaml"
+    bad.write_text(
+        "fabrics:\n  - name: SITE1\n    type: vxlanIbgp\n    asn: '65001'\n    switches: [{hostname: A, ip: 10.0.0.1, role: leaf}]\n"
+        "  - name: SITE2\n    type: vxlanIbgp\n    asn: '65002'\n    switches: [{hostname: B, ip: 10.0.0.2, role: leaf}]\n"
+        "fabric_groups: []\nisn: {}\noverlay: {}\nvpc_pairs:\n  - {fabric: SITE1, switch: A, peer: B}\n"
+    )
+    with pytest.raises(ValueError, match="B is not in fabric SITE1"):
+        load(bad)

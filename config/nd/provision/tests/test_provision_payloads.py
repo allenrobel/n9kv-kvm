@@ -10,6 +10,7 @@ from provision import (
     fabric_create_payload,
     fabric_group_create_payload,
     link_payload,
+    loopback_interface,
     merge_settings,
     redact,
     router_id_policy,
@@ -157,3 +158,23 @@ def test_policies():
         "templateInputs": {"INTF_NAME": "GigabitEthernet2"},
     }
     assert router_id_policy("W", {"BGP_AS": "65535", "LOOPBACK_IP": "10.35.0.1"})["templateName"] == "ios_xe_bgp_router_id"
+
+
+def test_loopback_interface_carries_the_managed_mode_discriminator():
+    body = loopback_interface("SER", {"ip": "10.35.0.1", "description": "Routing loopback (router-id)"})
+    assert body == {
+        "interfaces": [
+            {
+                "switchId": "SER",
+                "interfaceType": "loopback",
+                "interfaceName": "Loopback0",
+                "configData": {
+                    "mode": "managed",
+                    "networkOS": {
+                        "networkOSType": "ios-xe",
+                        "policy": {"policyType": "iosXeLoopback", "adminState": True, "ip": "10.35.0.1", "description": "Routing loopback (router-id)"},
+                    },
+                },
+            }
+        ]
+    }

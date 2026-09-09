@@ -5,7 +5,7 @@ The lab's data-plane bridges are Open vSwitch (OVS) bridges. The VM launchers
 VM's TAP interfaces to these bridges with `ovs-vsctl`, so the bridges must be
 OVS bridges, not Linux bridges.
 
-Two layers create and configure them:
+Three pieces create and configure them:
 
 - **netplan** (`config/bridges/netplan/9912-bridges.yaml`) creates the bridges
   declaratively and persists them across reboot (MTU 9216, `stp: false`).

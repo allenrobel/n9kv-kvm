@@ -105,6 +105,18 @@ sudo python3 main.py --config $HOME/repos/n9kv-kvm/config/containers/container_c
 - eth0: 192.168.14.172/24 on BR_ND_DATA_14
 - eth1: 192.0.1.172/24 on BR_S4_LE1_H1_1
 
+### S3_H1 Container (trunk mode interfaces, SITE3 - ND 4.3.1 mirror of S1_H1)
+
+- eth0: 192.168.14.171/24 on BR_ND_DATA_14
+- eth1.2: 192.0.1.171/24 on BR_S3_T1_H1_1
+- eth1.3: 192.0.2.171/24 on BR_S3_T1_H1_1
+
+### S4_H1 Container (trunk mode interfaces, SITE4 - ND 4.3.1 mirror of S2_H1)
+
+- eth0: 192.168.14.172/24 on BR_ND_DATA_14
+- eth1.2: 192.0.1.172/24 on BR_S4_LE1_H1_1
+- eth1.3: 192.0.2.172/24 on BR_S4_LE1_H1_1
+
 ## Usage Examples
 
 ### Container Management

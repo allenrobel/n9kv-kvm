@@ -218,47 +218,111 @@ Follow the link below to install this extension.
 
 ## Topology built by this repository
 
-- Three fabrics
-  - MSD (Multi Site Domain)
-    - Contains both SITE1 and SITE2 fabrics
-  - SITE1 (VxLAN)
-    - 1x Border Gateway (S1_BG1)
-    - 1x Leaf (S1_LE1)
-    - 1x Host (S1_H1)
-  - SITE2 (VxLAN)
-    - 1x Border Gateway (S2_BG1)
-    - 1x Leaf (S2_LE1)
-    - 1x Host (S2_H1)
+Two independent testbeds, one per Nexus Dashboard controller, sharing the KVM host and nothing else (separate
+management bridges, separate data-plane bridges, identical fabric names/ASNs/pools):
+
+- **ND 4.2.1** (10.10.20.10, data on `BR_ND_DATA_12`)
+  - MSD (Multi Site Domain) - contains SITE1, SITE2 and ISN
+  - SITE1 (VxLAN) - Border Gateway (S1_BG1), Spine (S1_SP1), 4x Leaf (S1_LE1-4), TOR (S1_TOR1), Host (S1_H1)
+  - SITE2 (VxLAN) - Border Gateway (S2_BG1), Spine (S2_SP1), Leaf (S2_LE1), Host (S2_H1)
+  - ISN (External Connectivity) - WAN router (WAN1)
+- **ND 4.3.1** (10.10.20.20, data on `BR_ND_DATA_14`) - exact mirror of ND 4.2.1: same fabric names, ASNs and pools,
+  only hostnames and the third octet of the mgmt IPs (12 -> 14) differ
+  - MSD (Multi Site Domain) - contains SITE1, SITE2 and ISN
+  - SITE1 (VxLAN) - Border Gateway (S3_BG1), Spine (S3_SP1), 4x Leaf (S3_LE1-4), TOR (S3_TOR1), Host (S3_H1)
+  - SITE2 (VxLAN) - Border Gateway (S4_BG1), Spine (S4_SP1), Leaf (S4_LE1), Host (S4_H1)
+  - ISN (External Connectivity) - WAN router (WAN2)
 
 ```mermaid
 graph TD
-    subgraph MSD["MSD Fabric (Multi-site Domain)"]
-        subgraph SITE2["SITE2 - VXLAN Fabric"]
-            S2_BG1[Border Gateway - S2_BG1]
-            S2_SP1[Spine Switch - S2_SP1]
-            S2_LE1[Leaf Switch - S2_LE1]
-            S2_H1[Host Container - S2_H1]
-            
-            %% SITE2 fabric connections (top-down)
-            S2_BG1 --- S2_SP1
-            S2_SP1 --- S2_LE1
-            S2_LE1 --- S2_H1
-        end
+    subgraph ND421["ND 4.2.1 controller (10.10.20.10)"]
+        subgraph MSD1["MSD Fabric (Multi-site Domain)"]
+            subgraph SITE1a["SITE1 - VXLAN Fabric"]
+                S1_BG1[Border Gateway - S1_BG1]
+                S1_SP1[Spine Switch - S1_SP1]
+                S1_LE1[Leaf Switch - S1_LE1]
+                S1_LE2[Leaf Switch - S1_LE2]
+                S1_LE3[Leaf Switch - S1_LE3]
+                S1_LE4[Leaf Switch - S1_LE4]
+                S1_TOR1[TOR Switch - S1_TOR1]
+                S1_H1[Host Container - S1_H1]
 
-        subgraph SITE1["SITE1 - VXLAN Fabric"]
-            S1_BG1[Border Gateway - S1_BG1]
-            S1_SP1[Spine Switch - S1_SP1]
-            S1_LE1[Leaf Switch - S1_LE1]
-            S1_H1[Host Container - S1_H1]
-            
-            %% SITE1 fabric connections (top-down)
-            S1_BG1 --- S1_SP1
-            S1_SP1 --- S1_LE1
-            S1_LE1 --- S1_H1
-        end
+                %% SITE1 fabric connections
+                S1_BG1 --- S1_SP1
+                S1_SP1 --- S1_LE1
+                S1_SP1 --- S1_LE2
+                S1_SP1 --- S1_LE3
+                S1_SP1 --- S1_LE4
+                S1_LE1 --- S1_LE2
+                S1_LE1 --- S1_TOR1
+                S1_LE2 --- S1_TOR1
+                S1_LE3 --- S1_LE4
+                S1_TOR1 --- S1_H1
+            end
 
-        %% Inter-fabric connection (MSD backbone)
-        S1_BG1 --- S2_BG1
+            subgraph SITE2a["SITE2 - VXLAN Fabric"]
+                S2_BG1[Border Gateway - S2_BG1]
+                S2_SP1[Spine Switch - S2_SP1]
+                S2_LE1[Leaf Switch - S2_LE1]
+                S2_H1[Host Container - S2_H1]
+
+                %% SITE2 fabric connections
+                S2_BG1 --- S2_SP1
+                S2_SP1 --- S2_LE1
+                S2_LE1 --- S2_H1
+            end
+
+            WAN1[WAN Router - WAN1]
+
+            %% ISN: BG -- WAN -- BG
+            S1_BG1 --- WAN1
+            WAN1 --- S2_BG1
+        end
+    end
+
+    subgraph ND431["ND 4.3.1 controller (10.10.20.20) - mirror of ND 4.2.1"]
+        subgraph MSD2["MSD Fabric (Multi-site Domain)"]
+            subgraph SITE1b["SITE1 - VXLAN Fabric"]
+                S3_BG1[Border Gateway - S3_BG1]
+                S3_SP1[Spine Switch - S3_SP1]
+                S3_LE1[Leaf Switch - S3_LE1]
+                S3_LE2[Leaf Switch - S3_LE2]
+                S3_LE3[Leaf Switch - S3_LE3]
+                S3_LE4[Leaf Switch - S3_LE4]
+                S3_TOR1[TOR Switch - S3_TOR1]
+                S3_H1[Host Container - S3_H1]
+
+                %% SITE1 fabric connections
+                S3_BG1 --- S3_SP1
+                S3_SP1 --- S3_LE1
+                S3_SP1 --- S3_LE2
+                S3_SP1 --- S3_LE3
+                S3_SP1 --- S3_LE4
+                S3_LE1 --- S3_LE2
+                S3_LE1 --- S3_TOR1
+                S3_LE2 --- S3_TOR1
+                S3_LE3 --- S3_LE4
+                S3_TOR1 --- S3_H1
+            end
+
+            subgraph SITE2b["SITE2 - VXLAN Fabric"]
+                S4_BG1[Border Gateway - S4_BG1]
+                S4_SP1[Spine Switch - S4_SP1]
+                S4_LE1[Leaf Switch - S4_LE1]
+                S4_H1[Host Container - S4_H1]
+
+                %% SITE2 fabric connections
+                S4_BG1 --- S4_SP1
+                S4_SP1 --- S4_LE1
+                S4_LE1 --- S4_H1
+            end
+
+            WAN2[WAN Router - WAN2]
+
+            %% ISN: BG -- WAN -- BG
+            S3_BG1 --- WAN2
+            WAN2 --- S4_BG1
+        end
     end
 
     %% Styling
@@ -269,10 +333,10 @@ graph TD
     classDef leaf fill:#a8f3c8,stroke:#2e7d32,stroke-width:2px,color:#000000
     classDef host fill:#e8f2a0,stroke:#558b2f,stroke-width:2px,color:#000000
 
-    class S1_BG1,S2_BG1 borderGateway
-    class S1_SP1,S2_SP1 spine
-    class S1_LE1,S2_LE1 leaf
-    class S1_H1,S2_H1 host
+    class S1_BG1,S2_BG1,S3_BG1,S4_BG1,WAN1,WAN2 borderGateway
+    class S1_SP1,S2_SP1,S3_SP1,S4_SP1 spine
+    class S1_LE1,S1_LE2,S1_LE3,S1_LE4,S1_TOR1,S2_LE1,S3_LE1,S3_LE2,S3_LE3,S3_LE4,S3_TOR1,S4_LE1 leaf
+    class S1_H1,S2_H1,S3_H1,S4_H1 host
 ```
 
 ## Project Structure

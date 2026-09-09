@@ -75,7 +75,7 @@ isn:
     bgp_router_id: {BGP_AS: "65535", LOOPBACK_IP: 10.35.0.1}
 
 overlay:
-  # EMPTY on purpose: the 2026-09-08 snapshot of ND 4.3.1 (~/tmp/snap_nd421 on the host) has no VRFs,
+  # EMPTY on purpose: the 2026-09-08 ND 4.2.1 baseline snapshot this file mirrors has no VRFs,
   # networks or attachments in SITE1/SITE2. Fill in later by copying the objects returned by
   # /fabrics/{f}/vrfs and /fabrics/{f}/networks (minus fabricName, *Status and snapshot.VOLATILE_KEYS)
   # into `object:` entries, e.g.

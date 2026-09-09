@@ -1,5 +1,7 @@
 """Pure payload builders in provision.py."""
 
+import pytest
+
 from provision import (
     _switch_password,
     attachment_payload,
@@ -40,10 +42,10 @@ def test_merge_settings_is_deep_and_non_destructive():
 
 
 def test_switch_add_payload_groups_by_platform_and_never_preserves_config():
-    fab = Fabric(name="ISN", type="externalConnectivity", asn="65535", switches=[Switch("WAN2", "192.168.14.112", "edgeRouter", "ios-xe")])
+    fab = Fabric(name="ISN", type="externalConnectivity", asn="65535", switches=[Switch("WAN2", "192.168.14.112", "coreRouter", "ios-xe")])
     body = switch_add_payload(fab, "pw")  # ggignore: unit-test placeholder, not a credential
     assert body == {
-        "switches": [{"ip": "192.168.14.112", "hostname": "WAN2", "switchRole": "edgeRouter"}],
+        "switches": [{"ip": "192.168.14.112", "hostname": "WAN2", "switchRole": "coreRouter"}],
         "platformType": "ios-xe",
         "preserveConfig": False,
         "useCredentialForWrite": True,
@@ -66,19 +68,27 @@ def test_switch_password_uses_nxos_for_vxlan_fabric(monkeypatch):
     assert _switch_password(fab) == "nxos-pw"  # ggignore: unit-test placeholder, not a credential
 
 
-def test_switch_password_falls_back_to_nxos_when_iosxe_unset(monkeypatch):
+def test_switch_password_raises_when_iosxe_unset_for_external_connectivity(monkeypatch):
     monkeypatch.delenv("IOSXE_PASSWORD", raising=False)
     monkeypatch.setenv("NXOS_PASSWORD", "nxos-pw")  # ggignore: unit-test placeholder, not a credential
     fab = Fabric(name="ISN", type="externalConnectivity", asn="65535")
-    assert _switch_password(fab) == "nxos-pw"  # ggignore: unit-test placeholder, not a credential
+    with pytest.raises(SystemExit, match="IOSXE_PASSWORD"):
+        _switch_password(fab)
+
+
+def test_switch_password_raises_when_nxos_unset_for_vxlan_fabric(monkeypatch):
+    monkeypatch.delenv("NXOS_PASSWORD", raising=False)
+    fab = Fabric(name="SITE2", type="vxlanIbgp", asn="65002")
+    with pytest.raises(SystemExit, match="NXOS_PASSWORD"):
+        _switch_password(fab)
 
 
 def test_link_payload_matches_the_known_good_isn_link():
-    link = Link("ISN", "WAN1", "GigabitEthernet3", "SITE2", "S2_BG1", "Ethernet1/3", "65535", "65002", "10.33.0.5/30", "10.33.0.6", 9000)
+    link = Link("ISN", "WAN1", "GigabitEthernet3", "SITE2", "S2_BG1", "Ethernet1/3", "65535", "65002", "10.25.0.1/30", "10.25.0.2", 9000)
     body = link_payload(link, "WSER", "BSER")
     assert body["links"][0]["srcSwitchId"] == "WSER" and body["links"][0]["dstSwitchId"] == "BSER"
     inputs = body["links"][0]["configData"]["templateInputs"]
-    assert inputs["templateConfigGenPeer"] == "ios_xe_Ext_VRF_Lite_Jython" and inputs["srcIpAddressMask"] == "10.33.0.5/30" and inputs["dstIpAddress"] == "10.33.0.6"
+    assert inputs["templateConfigGenPeer"] == "ios_xe_Ext_VRF_Lite_Jython" and inputs["srcIpAddressMask"] == "10.25.0.1/30" and inputs["dstIpAddress"] == "10.25.0.2"
     assert inputs["srcInterfaceDescription"] == "connected-to-S2_BG1-Ethernet1/3"
 
 

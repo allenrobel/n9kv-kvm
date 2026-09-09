@@ -80,7 +80,7 @@ The repo is organized by **lab subsystem**, not by language. Each subdir is larg
   means editing the per-switch YAML or that Jinja template, not the launch script.
 - **`config/ansible/` vs `config/ansible_local/`** are not "remote vs local" — both are localhost env-var-driven inventories that target different fabrics
   (`ansible/` covers SITE1–SITE4; `ansible_local/` covers SITE1/SITE2 + the edge router). Don't merge them.
-- **Two testbeds share one host, on separate management segments.** SITE1/SITE2/WAN1/S1_H1/S2_H1 belong to ND 4.2.1
+- **Two testbeds share one host, on separate device-management (ND data) segments.** SITE1/SITE2/WAN1/S1_H1/S2_H1 belong to ND 4.2.1
   (10.10.20.10, data on `BR_ND_DATA_12`); SITE3/SITE4/WAN2/S3_H1/S4_H1 are their exact mirror under ND 4.3.1
   (10.10.20.20, data on `BR_ND_DATA_14`), with identical fabric names, ASNs and pools. Only hostnames, sids and the
   third octet of the mgmt IPs (12 -> 14) differ. `9914-bridges.yaml` is the

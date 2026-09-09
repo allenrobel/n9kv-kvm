@@ -171,7 +171,7 @@ S2_LE1_INTERFACE_1 = environ.get("S2_LE1_INTERFACE_1", "Ethernet1/1")
 S2_LE1_INTERFACE_2 = environ.get("S2_LE1_INTERFACE_2", "Ethernet1/2")
 
 # S1_LE2 has 3 ISLs (spine, VPC peer-link to S1_LE1, downlink to S1_TOR1).
-# S1_LE1 grows to 4 ISLs (spine, host, VPC peer-link, downlink to S1_TOR1).
+# S1_LE1 has 3 ISLs (spine, VPC peer-link, downlink to S1_TOR1); INTERFACE_4 is reserved.
 S1_LE1_INTERFACE_3 = environ.get("S1_LE1_INTERFACE_3", "Ethernet1/3")
 S1_LE1_INTERFACE_4 = environ.get("S1_LE1_INTERFACE_4", "Ethernet1/4")
 S1_LE2_INTERFACE_1 = environ.get("S1_LE2_INTERFACE_1", "Ethernet1/1")
@@ -212,7 +212,7 @@ S4_LE1_INTERFACE_1 = environ.get("S4_LE1_INTERFACE_1", "Ethernet1/1")
 S4_LE1_INTERFACE_2 = environ.get("S4_LE1_INTERFACE_2", "Ethernet1/2")
 
 # S3_LE2 has 3 ISLs (spine, VPC peer-link to S3_LE1, downlink to S3_TOR1).
-# S3_LE1 grows to 4 ISLs (spine, host, VPC peer-link, downlink to S3_TOR1).
+# S3_LE1 has 3 ISLs (spine, VPC peer-link, downlink to S3_TOR1); INTERFACE_4 is reserved.
 S3_LE1_INTERFACE_3 = environ.get("S3_LE1_INTERFACE_3", "Ethernet1/3")
 S3_LE1_INTERFACE_4 = environ.get("S3_LE1_INTERFACE_4", "Ethernet1/4")
 S3_LE2_INTERFACE_1 = environ.get("S3_LE2_INTERFACE_1", "Ethernet1/1")

@@ -33,7 +33,7 @@ class StubClient:
 
     def post(self, path: str, json=None):
         self.calls.append(("POST", path, json))
-        return None
+        return self.responses.get(path)
 
     def put(self, path: str, json=None):
         self.calls.append(("PUT", path, json))
@@ -290,7 +290,11 @@ def _dry_run_lines(out: str, path: str) -> list[str]:
     return [line for line in out.splitlines() if line.startswith(prefix)]
 
 
-def test_phase_switches_dry_run_posts_add_and_deploy_but_no_role_change(capsys):
+def test_phase_switches_dry_run_posts_add_and_deploy_but_no_role_change(monkeypatch, capsys):
+    # SITE1/ISN switches also 404 as "not present" below, so every fabric's `missing` list is non-empty and
+    # _switch_password() is called for all three -- both passwords must be set, not just SITE2/NX-OS's.
+    monkeypatch.setenv("NXOS_PASSWORD", "nxos-pw")  # ggignore: unit-test placeholder, not a credential
+    monkeypatch.setenv("IOSXE_PASSWORD", "iosxe-pw")  # ggignore: unit-test placeholder, not a credential
     topo = _topo()
     responses = {("/fabrics/SITE2/switches", ()): {"switches": []}}
     client = StubClient(responses)
@@ -435,6 +439,26 @@ def test_phase_isn_dry_run_creates_everything_and_deploys(capsys):
     assert not any(line.startswith("[dry-run] PUT") for line in out.splitlines())
 
 
+def test_phase_isn_deploys_wan_fabric_first_even_when_alphabetically_last(capsys):
+    """The deploy order must be WAN fabric, then destination fabrics sorted -- not whatever `sorted()` of the
+    union happens to produce. A WAN fabric name that sorts after the site fabrics proves the two are separate,
+    explicit steps rather than an accident of alphabetical ordering."""
+    topo = _topo()
+    isn = replace(topo.isn, wan=replace(topo.isn.wan, fabric="ZZZ_WAN"))
+    topo = replace(topo, isn=isn)
+    client = StubClient({})  # nothing exists yet -> every GET/paged raises HTTP 404
+
+    Provisioner(client, topo, dry_run=True, settle_seconds=0).phase_isn()
+
+    out = capsys.readouterr().out
+    deploy_paths = [line.split()[2] for line in out.splitlines() if "actions/configDeploy" in line]
+    assert deploy_paths == [
+        "/fabrics/ZZZ_WAN/actions/configDeploy",
+        "/fabrics/SITE1/actions/configDeploy",
+        "/fabrics/SITE2/actions/configDeploy",
+    ]
+
+
 def _isn_policies() -> list[dict]:
     return [
         {"templateName": "ios_xe_bgp_router_id", "entityType": "switch", "entityName": "SWITCH", "switchId": "SN-WAN1"},
@@ -530,11 +554,14 @@ def test_phase_overlay_empty_topology_is_noop(capsys):
 
 def test_phase_overlay_dry_run_creates_everything_and_deploys(capsys):
     topo = _populated_overlay_topo()
-    client = StubClient({})  # nothing exists yet -> every GET raises HTTP 404
+    client = StubClient({})  # nothing exists yet -> every GET raises HTTP 404; query POSTs are unregistered -> None
 
     Provisioner(client, topo, dry_run=True).phase_overlay()
 
-    assert _posts(client) == []  # dry-run never issues a real write
+    # the two idempotency queries are reads and execute for real even under --dry-run (nothing is stubbed for
+    # them, so StubClient.post() answers None -> treated as "nothing attached yet"); no other real POST/PUT fires.
+    posts = _posts(client)
+    assert [p[1] for p in posts] == ["/fabrics/SITE1/vrfAttachments/query", "/fabrics/SITE1/networkAttachments/query"]
     assert _puts(client) == []
     out = capsys.readouterr().out
 
@@ -554,6 +581,13 @@ def test_phase_overlay_dry_run_creates_everything_and_deploys(capsys):
     assert "<S1_TOR1-serial>" in lines[5]
 
 
+def _overlay_query_stubs(vrf_attachments: list[dict], network_attachments: list[dict]) -> dict:
+    return {
+        "/fabrics/SITE1/vrfAttachments/query": {"attachments": vrf_attachments},
+        "/fabrics/SITE1/networkAttachments/query": {"attachments": network_attachments},
+    }
+
+
 def test_phase_overlay_live_attaches_existing_vrf_and_network(capsys):
     topo = _populated_overlay_topo()
     responses = {
@@ -562,6 +596,7 @@ def test_phase_overlay_live_attaches_existing_vrf_and_network(capsys):
         ("/fabrics/SITE1/networks", ()): {"networks": [{"networkName": "N1", "networkId": 30001, "vlanId": 2, "vrfName": "V1"}]},
         ("/fabrics/SITE2/networks", ()): {"networks": [{"networkName": "N1", "networkId": 30001, "vlanId": 2, "vrfName": "V1"}]},
         ("/fabrics/SITE1/switches", ()): {"switches": [{"hostname": "S1_TOR1", "serialNumber": "SN-TOR1", "switchRole": "tor"}]},
+        **_overlay_query_stubs([], []),  # neither attachment exists yet
     }
     client = StubClient(responses)
 
@@ -585,6 +620,29 @@ def test_phase_overlay_live_attaches_existing_vrf_and_network(capsys):
     for p in posts:
         if "Actions/deploy" in p[1]:
             assert p[2] == {"switchIds": ["SN-TOR1"]}
+
+
+def test_phase_overlay_live_skips_existing_vrf_attachment_but_attaches_missing_network(capsys):
+    """The vrf attachment already has attach: true on ND; the network attachment does not. Only the network
+    side should POST/deploy -- proves vrf and network idempotency/deploy tracking are independent."""
+    topo = _populated_overlay_topo()
+    responses = {
+        ("/fabrics/SITE1/vrfs", ()): {"vrfs": [{"vrfName": "V1", "vrfId": 50001, "vlanId": 2001}]},
+        ("/fabrics/SITE2/vrfs", ()): {"vrfs": [{"vrfName": "V1", "vrfId": 50001, "vlanId": 2001}]},
+        ("/fabrics/SITE1/networks", ()): {"networks": [{"networkName": "N1", "networkId": 30001, "vlanId": 2, "vrfName": "V1"}]},
+        ("/fabrics/SITE2/networks", ()): {"networks": [{"networkName": "N1", "networkId": 30001, "vlanId": 2, "vrfName": "V1"}]},
+        ("/fabrics/SITE1/switches", ()): {"switches": [{"hostname": "S1_TOR1", "serialNumber": "SN-TOR1", "switchRole": "tor"}]},
+        **_overlay_query_stubs([{"vrfName": "V1", "switchId": "SN-TOR1", "attach": True}], []),
+    }
+    client = StubClient(responses)
+
+    Provisioner(client, topo).phase_overlay()
+
+    posts = _posts(client)
+    assert [p[1] for p in posts if p[1] == "/fabrics/SITE1/vrfAttachments"] == []
+    net_att = [p for p in posts if p[1] == "/fabrics/SITE1/networkAttachments"]
+    assert len(net_att) == 1
+    assert [p[1] for p in posts if "Actions/deploy" in p[1]] == ["/fabrics/SITE1/networkActions/deploy"]
 
 
 def test_phase_deploy_dry_run_deploys_every_fabric_and_does_not_check_pending(capsys):
@@ -629,4 +687,20 @@ def test_phase_deploy_live_prints_pending_config_for_every_switch(capsys):
     ]
     out = capsys.readouterr().out
     assert "SITE1/S1_BG1: pendingConfig 0 line(s)" in out
+    assert "ISN/WAN1: pendingConfig 0 line(s)" in out
+
+
+def test_phase_deploy_live_prints_the_pending_lines_themselves_when_nonempty(capsys):
+    topo = _topo()
+    responses = _all_switches_present_responses(topo)
+    diff_line = {"switchId": "SN-S1_BG1", "diffType": "pendingConfig", "config": "interface Ethernet1/3\n  no shutdown"}
+    responses[("/fabrics/SITE1/switches/SN-S1_BG1/pendingConfig", ())] = [diff_line]
+    client = StubClient(responses)
+
+    Provisioner(client, topo, settle_seconds=0).phase_deploy()
+
+    out = capsys.readouterr().out
+    assert "SITE1/S1_BG1: pendingConfig 1 line(s)" in out
+    assert f"    {diff_line}" in out.splitlines()
+    # a switch with nothing pending gets no extra indented lines
     assert "ISN/WAN1: pendingConfig 0 line(s)" in out

@@ -28,3 +28,28 @@ def test_dangling_switch_reference_is_rejected(tmp_path):
     )
     with pytest.raises(ValueError, match="WAN9"):
         load(bad)
+
+
+def test_overlay_attachment_missing_switch_key_is_rejected(tmp_path):
+    bad = tmp_path / "t.yaml"
+    bad.write_text(
+        "fabrics:\n  - name: SITE1\n    type: vxlanIbgp\n    asn: '65001'\n"
+        "    switches: [{hostname: S1_BG1, ip: 10.0.0.1, role: borderGateway}]\n"
+        "fabric_groups: []\nisn: {}\noverlay: {vrf_attachments: [{fabric: SITE1, vrf: V1}]}\n"
+    )
+    with pytest.raises(ValueError, match="SITE1"):
+        load(bad)
+
+
+def test_switch_hostname_declared_in_two_fabrics_is_rejected(tmp_path):
+    bad = tmp_path / "t.yaml"
+    bad.write_text(
+        "fabrics:\n"
+        "  - name: SITE1\n    type: vxlanIbgp\n    asn: '65001'\n"
+        "    switches: [{hostname: S1_BG1, ip: 10.0.0.1, role: borderGateway}]\n"
+        "  - name: SITE2\n    type: vxlanIbgp\n    asn: '65002'\n"
+        "    switches: [{hostname: S1_BG1, ip: 10.0.0.2, role: borderGateway}]\n"
+        "fabric_groups: []\nisn: {}\noverlay: {}\n"
+    )
+    with pytest.raises(ValueError, match="S1_BG1"):
+        load(bad)

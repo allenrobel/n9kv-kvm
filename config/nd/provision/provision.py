@@ -72,11 +72,18 @@ def switch_add_payload(fabric: Fabric, password: str, username: str = "admin") -
 
 
 def _switch_password(fabric: Fabric) -> str:
-    """IOSXE_PASSWORD for externalConnectivity fabrics (they hold the ios-xe WAN router), NXOS_PASSWORD otherwise;
-    falls back to NXOS_PASSWORD if IOSXE_PASSWORD is unset."""
-    env_var = "IOSXE_PASSWORD" if fabric.type == "externalConnectivity" else "NXOS_PASSWORD"
-    value = os.environ.get(env_var)
-    return value if value else os.environ.get("NXOS_PASSWORD", "")
+    """IOSXE_PASSWORD for externalConnectivity fabrics (they hold the ios-xe WAN router); NXOS_PASSWORD for
+    every other (NX-OS) fabric. Fail loud: an unset password must not silently fall back or add switches ND
+    can never SSH into."""
+    if fabric.type == "externalConnectivity":
+        value = os.environ.get("IOSXE_PASSWORD")
+        if not value:
+            raise SystemExit(f"IOSXE_PASSWORD is not set; it is required to add IOS-XE switches to fabric {fabric.name}")
+        return value
+    value = os.environ.get("NXOS_PASSWORD")
+    if not value:
+        raise SystemExit(f"NXOS_PASSWORD is not set; it is required to add NX-OS switches to fabric {fabric.name}")
+    return value
 
 
 def link_payload(link: Link, src_serial: str, dst_serial: str) -> dict:
@@ -196,6 +203,19 @@ class Provisioner:
         except RuntimeError as exc:
             self._log(f"read {path} failed ({str(exc)[:80]}); treating as empty")
             return []
+
+    def _query(self, path: str, key: str, body: Any) -> list:
+        """POST to one of ND's `/query` endpoints (e.g. `/fabrics/{f}/vrfAttachments/query`). Despite the POST
+        verb these are reads -- ND returns query results via POST because the request carries a `switchIds`
+        body, not because it writes anything -- so unlike `_post` this always runs (even under --dry-run,
+        since it never mutates state) and is not itself dry-run-logged. An HTTP error (e.g. no attachments
+        exist yet) reads as empty, same as `_read`."""
+        try:
+            body_resp = self.client.post(path, json=body) or {}
+        except RuntimeError as exc:
+            self._log(f"read {path} failed ({str(exc)[:80]}); treating as empty")
+            return []
+        return body_resp.get(key, []) if isinstance(body_resp, dict) else body_resp
 
     def existing_fabrics(self) -> dict[str, dict]:
         """Fabrics AND fabric groups by name. GET /fabrics lists only category=fabric; groups need ?category=fabricGroup."""
@@ -325,7 +345,8 @@ class Provisioner:
             if any(h.get("srcSwitchName") == link.src and h.get("srcInterfaceName") == link.src_if for h in have):
                 continue
             self._post("/links", link_payload(link, self.serial(link.src), self.serial(link.dst)))
-        for name in sorted({item.dst_fabric for item in self.topo.isn.links} | ({wan.fabric} if wan else set())):
+        dst_fabrics = sorted({item.dst_fabric for item in self.topo.isn.links} - ({wan.fabric} if wan else set()))
+        for name in ([wan.fabric] if wan else []) + dst_fabrics:
             self.config_deploy(name)
         if wan and not self.dry_run:
             time.sleep(self.settle_seconds)
@@ -345,18 +366,40 @@ class Provisioner:
                 have = {n["networkName"] for n in self._read(f"/fabrics/{fabric}/networks", "networks")}
                 if item["object"]["networkName"] not in have:
                     self._post(f"/fabrics/{fabric}/networks", {"networks": [dict(item["object"], fabricName=fabric)]})
-        touched: dict[str, set[str]] = {}
+        vrf_fabrics = sorted({att["fabric"] for att in self.topo.overlay.vrf_attachments})
+        vrf_attached: dict[str, set[tuple[str, str]]] = {}
+        for fabric in vrf_fabrics:
+            vrf_serials = sorted({self.serial(att["switch"]) for att in self.topo.overlay.vrf_attachments if att["fabric"] == fabric})
+            vrf_query = self._query(f"/fabrics/{fabric}/vrfAttachments/query", "attachments", {"switchIds": vrf_serials})
+            vrf_attached[fabric] = {(a["vrfName"], a["switchId"]) for a in vrf_query if a.get("attach")}
+
+        net_fabrics = sorted({att["fabric"] for att in self.topo.overlay.network_attachments})
+        net_attached: dict[str, set[tuple[str, str]]] = {}
+        for fabric in net_fabrics:
+            net_serials = sorted({self.serial(att["switch"]) for att in self.topo.overlay.network_attachments if att["fabric"] == fabric})
+            net_query = self._query(f"/fabrics/{fabric}/networkAttachments/query", "attachments", {"switchIds": net_serials})
+            net_attached[fabric] = {(a["networkName"], a["switchId"]) for a in net_query if a.get("attach")}
+
+        touched_vrf: dict[str, set[str]] = {}
         for att in self.topo.overlay.vrf_attachments:
             serial = self.serial(att["switch"])
+            if (att["vrf"], serial) in vrf_attached.get(att["fabric"], set()):
+                continue
             self._post(f"/fabrics/{att['fabric']}/vrfAttachments", attachment_payload("vrf", att, serial))
-            touched.setdefault(att["fabric"], set()).add(serial)
+            touched_vrf.setdefault(att["fabric"], set()).add(serial)
+
+        touched_net: dict[str, set[str]] = {}
         for att in self.topo.overlay.network_attachments:
             serial = self.serial(att["switch"])
+            if (att["network"], serial) in net_attached.get(att["fabric"], set()):
+                continue
             self._post(f"/fabrics/{att['fabric']}/networkAttachments", attachment_payload("network", att, serial))
-            touched.setdefault(att["fabric"], set()).add(serial)
-        for fabric, serials in touched.items():
-            self._post(f"/fabrics/{fabric}/vrfActions/deploy", {"switchIds": sorted(serials)})
-            self._post(f"/fabrics/{fabric}/networkActions/deploy", {"switchIds": sorted(serials)})
+            touched_net.setdefault(att["fabric"], set()).add(serial)
+
+        for fabric, touched_serials in touched_vrf.items():
+            self._post(f"/fabrics/{fabric}/vrfActions/deploy", {"switchIds": sorted(touched_serials)})
+        for fabric, touched_serials in touched_net.items():
+            self._post(f"/fabrics/{fabric}/networkActions/deploy", {"switchIds": sorted(touched_serials)})
 
     # -- phase: deploy -----------------------------------------------------------------------------------------
     def phase_deploy(self) -> None:
@@ -369,6 +412,8 @@ class Provisioner:
             for hostname, entry in self.fabric_switches(fabric.name).items():
                 left = self.pending(fabric.name, entry["serialNumber"])
                 print(f"{fabric.name}/{hostname}: pendingConfig {len(left)} line(s)")
+                for line in left:
+                    print(f"    {line}")
 
     def run(self, phases: list[str]) -> None:
         for phase in phases:

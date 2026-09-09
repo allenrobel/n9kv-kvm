@@ -2037,15 +2037,16 @@ sudo ovs-vsctl list-br | grep -E 'S4_LE2|S4_LE3|LE._H2' ; echo "(expected: no ou
 
 ```bash
 source env_prod/env.sh
-cd config/nexus9000v && sudo -E python3 startup_config.py --all && bash site3.sh && bash site4.sh && cd -
+cd config/nexus9000v && for y in S3_*.yaml S4_*.yaml; do sudo -E python3 startup_config.py "$y"; done && bash site3.sh && bash site4.sh && cd -
 cd config/8000v && sudo -E python3 startup_config.py WAN2.yaml && sudo python3 8000v.py --config WAN2.yaml && cd -
-./config/nexus9000v/list_n9kv.sh | grep -c 'S3_\|S4_\|WAN2'          # expected 12
+./config/nexus9000v/list_n9kv.sh | grep -c 'S3_\|S4_'          # expected 10
+ps -ef | grep -c '[q]emu-system-x86_64.*-name WAN2'  # expected 1
 ```
 
 Wait for POAP (several minutes; `./config/nexus9000v/con_s3_sp1` to watch), then:
 
 ```bash
-for o in 133 134 143 144 163 181 182 183 184 185 113; do ping -c1 -W2 192.168.12.$o >/dev/null && echo "up .$o" || echo "DOWN .$o"; done
+for o in 131 132 141 142 151 152 153 154 155 161 112; do ping -c1 -W2 192.168.14.$o >/dev/null && echo "up .$o" || echo "DOWN .$o"; done
 ```
 
 - [ ] **R4. Containers**

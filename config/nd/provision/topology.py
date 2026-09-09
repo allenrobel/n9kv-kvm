@@ -89,7 +89,14 @@ class Topology:
 
 
 def _validate(topo: Topology) -> None:
-    names = set(topo.switches())
+    fabrics_by_hostname: dict[str, list[str]] = {}
+    for fabric in topo.fabrics:
+        for switch in fabric.switches:
+            fabrics_by_hostname.setdefault(switch.hostname, []).append(fabric.name)
+    for hostname, fabric_names in fabrics_by_hostname.items():
+        if len(fabric_names) > 1:
+            raise ValueError(f"switch {hostname} is declared in more than one fabric: {fabric_names}")
+    names = set(fabrics_by_hostname)
     fabrics = {f.name for f in topo.fabrics}
     for group in topo.fabric_groups:
         for member in group.members:
@@ -102,8 +109,11 @@ def _validate(topo: Topology) -> None:
     if topo.isn.wan and topo.isn.wan.hostname not in names:
         raise ValueError(f"isn.wan references unknown switch {topo.isn.wan.hostname}")
     for att in topo.overlay.vrf_attachments + topo.overlay.network_attachments:
-        if att["switch"] not in names:
-            raise ValueError(f"overlay attachment references unknown switch {att['switch']}")
+        switch_name = att.get("switch")
+        if not switch_name:
+            raise ValueError(f"overlay attachment is missing 'switch': {att}")
+        if switch_name not in names:
+            raise ValueError(f"overlay attachment references unknown switch {switch_name}")
 
 
 def load(path: Path) -> Topology:

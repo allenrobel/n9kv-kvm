@@ -15,7 +15,7 @@ import difflib
 import json
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from nd_client import NDClient, NDCredentials
 
@@ -69,33 +69,51 @@ def _write(out_dir: Path, name: str, data: Any) -> None:
     (out_dir / f"{name}.json").write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def _fetch(name: str, fn: Callable[[], Any]) -> Any:
+    """Run one GET/POST closure for `dump`; a broken read (e.g. HTTP 404/500 on an endpoint that isn't
+    populated yet) must not abort the rest of the snapshot -- log it and let `_write` record `null`."""
+    try:
+        return fn()
+    except RuntimeError as exc:
+        print(f"skipped {name}: {exc}")
+        return None
+
+
 def dump(client: NDClient, out_dir: Path) -> None:
+    def _attach_query(kind: str, fabric: str, serials: list[str]) -> Any:
+        return client.post(f"/fabrics/{fabric}/{kind}Attachments/query", json={"switchIds": serials})
+
     out_dir.mkdir(parents=True, exist_ok=True)
-    fabrics = client.get("/fabrics") or {}
+    fabrics = _fetch("fabrics", lambda: client.get("/fabrics")) or {}
     _write(out_dir, "fabrics", fabrics)
-    _write(out_dir, "inventory_switches", client.get("/inventory/switches"))
-    fabric_groups = client.get("/fabrics", params={"category": "fabricGroup"}) or {}
+    _write(out_dir, "inventory_switches", _fetch("inventory_switches", lambda: client.get("/inventory/switches")))
+    fabric_groups = _fetch("fabric_groups", lambda: client.get("/fabrics", params={"category": "fabricGroup"})) or {}
     _write(out_dir, "fabric_groups", fabric_groups)
     for group in fabric_groups.get("fabrics", []):
         name = group["name"]
-        _write(out_dir, f"fabric_group_{name}", client.get(f"/fabrics/{name}"))
-        _write(out_dir, f"members_{name}", client.get(f"/fabrics/{name}/members"))
+        _write(out_dir, f"fabric_group_{name}", _fetch(f"fabric_group_{name}", lambda: client.get(f"/fabrics/{name}")))
+        _write(out_dir, f"members_{name}", _fetch(f"members_{name}", lambda: client.get(f"/fabrics/{name}/members")))
     for fabric in fabrics.get("fabrics", []):
         name = fabric["name"]
-        _write(out_dir, f"fabric_{name}", client.get(f"/fabrics/{name}"))
-        switches = client.get(f"/fabrics/{name}/switches") or {}
+        _write(out_dir, f"fabric_{name}", _fetch(f"fabric_{name}", lambda: client.get(f"/fabrics/{name}")))
+        switches = _fetch(f"switches_{name}", lambda: client.get(f"/fabrics/{name}/switches")) or {}
         _write(out_dir, f"switches_{name}", switches)
-        _write(out_dir, f"members_{name}", client.get(f"/fabrics/{name}/members"))
-        _write(out_dir, f"links_{name}", client.paged("/links", "links", params={"fabricName": name}))
-        _write(out_dir, f"policies_{name}", client.paged(f"/fabrics/{name}/policies", "policies"))
-        _write(out_dir, f"vrfs_{name}", client.get(f"/fabrics/{name}/vrfs"))
-        _write(out_dir, f"networks_{name}", client.get(f"/fabrics/{name}/networks"))
+        _write(out_dir, f"members_{name}", _fetch(f"members_{name}", lambda: client.get(f"/fabrics/{name}/members")))
+        _write(out_dir, f"links_{name}", _fetch(f"links_{name}", lambda: client.paged("/links", "links", params={"fabricName": name})))
+        _write(out_dir, f"policies_{name}", _fetch(f"policies_{name}", lambda: client.paged(f"/fabrics/{name}/policies", "policies")))
+        _write(out_dir, f"vrfs_{name}", _fetch(f"vrfs_{name}", lambda: client.get(f"/fabrics/{name}/vrfs")))
+        _write(out_dir, f"networks_{name}", _fetch(f"networks_{name}", lambda: client.get(f"/fabrics/{name}/networks")))
         serials = [s["serialNumber"] for s in switches.get("switches", [])]
         if serials:
-            _write(out_dir, f"vrf_attachments_{name}", client.post(f"/fabrics/{name}/vrfAttachments/query", json={"switchIds": serials}))
-            _write(out_dir, f"network_attachments_{name}", client.post(f"/fabrics/{name}/networkAttachments/query", json={"switchIds": serials}))
+            _write(out_dir, f"vrf_attachments_{name}", _fetch(f"vrf_attachments_{name}", lambda: _attach_query("vrf", name, serials)))
+            _write(out_dir, f"network_attachments_{name}", _fetch(f"network_attachments_{name}", lambda: _attach_query("network", name, serials)))
         for switch in switches.get("switches", []):
-            _write(out_dir, f"interfaces_{name}_{switch['hostname']}", client.get(f"/fabrics/{name}/switches/{switch['serialNumber']}/interfaces"))
+            serial_number = switch["serialNumber"]
+            _write(
+                out_dir,
+                f"interfaces_{name}_{switch['hostname']}",
+                _fetch(f"interfaces_{name}_{switch['hostname']}", lambda: client.get(f"/fabrics/{name}/switches/{serial_number}/interfaces")),
+            )
     print(f"snapshot written to {out_dir}")
 
 

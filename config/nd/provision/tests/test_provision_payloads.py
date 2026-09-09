@@ -1,7 +1,16 @@
 """Pure payload builders in provision.py."""
 
-from provision import _switch_password, fabric_create_payload, fabric_group_create_payload, merge_settings, switch_add_payload
-from topology import Fabric, FabricGroup, Switch
+from provision import (
+    _switch_password,
+    cdp_policy,
+    fabric_create_payload,
+    fabric_group_create_payload,
+    link_payload,
+    merge_settings,
+    router_id_policy,
+    switch_add_payload,
+)
+from topology import Fabric, FabricGroup, Link, Switch
 
 
 def test_fabric_create_payload_minimal_and_premier():
@@ -61,3 +70,23 @@ def test_switch_password_falls_back_to_nxos_when_iosxe_unset(monkeypatch):
     monkeypatch.setenv("NXOS_PASSWORD", "nxos-pw")  # ggignore: unit-test placeholder, not a credential
     fab = Fabric(name="ISN", type="externalConnectivity", asn="65535")
     assert _switch_password(fab) == "nxos-pw"  # ggignore: unit-test placeholder, not a credential
+
+
+def test_link_payload_matches_the_known_good_isn_link():
+    link = Link("ISN", "WAN1", "GigabitEthernet3", "SITE2", "S2_BG1", "Ethernet1/3", "65535", "65002", "10.33.0.5/30", "10.33.0.6", 9000)
+    body = link_payload(link, "WSER", "BSER")
+    assert body["links"][0]["srcSwitchId"] == "WSER" and body["links"][0]["dstSwitchId"] == "BSER"
+    inputs = body["links"][0]["configData"]["templateInputs"]
+    assert inputs["templateConfigGenPeer"] == "ios_xe_Ext_VRF_Lite_Jython" and inputs["srcIpAddressMask"] == "10.33.0.5/30" and inputs["dstIpAddress"] == "10.33.0.6"
+    assert inputs["srcInterfaceDescription"] == "connected-to-S2_BG1-Ethernet1/3"
+
+
+def test_policies():
+    assert cdp_policy("W", "GigabitEthernet2") == {
+        "templateName": "ios_xe_cdp_enable_interface",
+        "entityType": "interface",
+        "entityName": "GigabitEthernet2",
+        "switchId": "W",
+        "templateInputs": {"INTF_NAME": "GigabitEthernet2"},
+    }
+    assert router_id_policy("W", {"BGP_AS": "65535", "LOOPBACK_IP": "10.35.0.1"})["templateName"] == "ios_xe_bgp_router_id"

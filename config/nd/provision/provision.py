@@ -23,9 +23,11 @@ from pathlib import Path
 from typing import Any
 
 from nd_client import NDClient, NDCredentials
-from topology import Fabric, FabricGroup, Topology, load
+from topology import Fabric, FabricGroup, Link, Topology, load
 
 PHASES = ["fabrics", "msd", "switches", "isn", "overlay", "deploy"]
+
+LOG_BODY_LIMIT = 2000
 
 
 def fabric_create_payload(fabric: Fabric) -> dict:
@@ -77,22 +79,91 @@ def _switch_password(fabric: Fabric) -> str:
     return value if value else os.environ.get("NXOS_PASSWORD", "")
 
 
+def link_payload(link: Link, src_serial: str, dst_serial: str) -> dict:
+    return {
+        "links": [
+            {
+                "srcFabricName": link.src_fabric,
+                "srcSwitchName": link.src,
+                "srcSwitchId": src_serial,
+                "srcInterfaceName": link.src_if,
+                "dstFabricName": link.dst_fabric,
+                "dstSwitchName": link.dst,
+                "dstSwitchId": dst_serial,
+                "dstInterfaceName": link.dst_if,
+                "configData": {
+                    "policyType": "ebgpVrfLite",
+                    "templateInputs": {
+                        "srcEbgpAsn": link.src_asn,
+                        "dstEbgpAsn": link.dst_asn,
+                        "srcIpAddressMask": link.src_ip,
+                        "dstIpAddress": link.dst_ip,
+                        "linkMtu": link.mtu,
+                        "autoGenConfigPeer": True,
+                        "inheritTtagFabricSetting": True,
+                        "templateConfigGenPeer": "ios_xe_Ext_VRF_Lite_Jython",
+                        "srcInterfaceDescription": f"connected-to-{link.dst}-{link.dst_if}",
+                        "dstInterfaceDescription": f"connected-to-{link.src}-{link.src_if}",
+                    },
+                },
+            }
+        ]
+    }
+
+
+def cdp_run_policy(serial: str) -> dict:
+    return {"templateName": "ios_xe_cdp_run", "entityType": "switch", "entityName": "SWITCH", "switchId": serial, "templateInputs": {}}
+
+
+def cdp_policy(serial: str, interface: str) -> dict:
+    return {
+        "templateName": "ios_xe_cdp_enable_interface",
+        "entityType": "interface",
+        "entityName": interface,
+        "switchId": serial,
+        "templateInputs": {"INTF_NAME": interface},
+    }
+
+
+def router_id_policy(serial: str, inputs: dict) -> dict:
+    return {"templateName": "ios_xe_bgp_router_id", "entityType": "switch", "entityName": "SWITCH", "switchId": serial, "templateInputs": inputs}
+
+
+def loopback_interface(serial: str, loopback: dict) -> dict:
+    return {
+        "interfaces": [
+            {
+                "switchId": serial,
+                "interfaceType": "loopback",
+                "interfaceName": f"Loopback{loopback.get('id', 0)}",
+                "configData": {
+                    "networkOS": {
+                        "networkOSType": "ios-xe",
+                        "policy": {"policyType": "iosXeLoopback", "adminState": True, "ip": loopback["ip"], "description": loopback.get("description", "")},
+                    }
+                },
+            }
+        ]
+    }
+
+
 class Provisioner:
-    def __init__(self, client: NDClient, topo: Topology, dry_run: bool = False) -> None:
+    def __init__(self, client: NDClient, topo: Topology, dry_run: bool = False, settle_seconds: int = 30) -> None:
         self.client = client
         self.topo = topo
         self.dry_run = dry_run
+        self.settle_seconds = settle_seconds
 
     # -- helpers -------------------------------------------------------------------------------------------
     def _log(self, msg: str) -> None:
         print(("[dry-run] " if self.dry_run else "") + msg)
 
     def _post(self, path: str, body: Any) -> Any:
-        self._log(f"POST {path} {json.dumps(body)[:300]}")
+        self._log(f"POST {path} {json.dumps(body)[:LOG_BODY_LIMIT]}")
         return None if self.dry_run else self.client.post(path, json=body)
 
     def _put(self, path: str, body: Any) -> Any:
-        self._log(f"PUT {path} {json.dumps(body)[:300]}")
+        self._log(f"PUT {path} {json.dumps(body)[:LOG_BODY_LIMIT]}")
         return None if self.dry_run else self.client.put(path, json=body)
 
     def _read(self, path: str, key: str, params: dict | None = None) -> list:
@@ -103,6 +174,22 @@ class Provisioner:
             self._log(f"read {path} failed ({str(exc)[:80]}); treating as empty")
             return []
         return body.get(key, []) if isinstance(body, dict) else body
+
+    def _read_one(self, path: str) -> dict:
+        """GET a single object endpoint; an HTTP error (e.g. 404 for a fabric that does not exist yet) reads as empty."""
+        try:
+            return self.client.get(path) or {}
+        except RuntimeError as exc:
+            self._log(f"read {path} failed ({str(exc)[:80]}); treating as empty")
+            return {}
+
+    def _read_paged(self, path: str, key: str, params: dict | None = None) -> list:
+        """Walk a paged list endpoint; an HTTP error (e.g. 404 for a fabric that does not exist yet) reads as empty."""
+        try:
+            return self.client.paged(path, key, params=params)
+        except RuntimeError as exc:
+            self._log(f"read {path} failed ({str(exc)[:80]}); treating as empty")
+            return []
 
     def existing_fabrics(self) -> dict[str, dict]:
         """Fabrics AND fabric groups by name. GET /fabrics lists only category=fabric; groups need ?category=fabricGroup."""
@@ -185,6 +272,45 @@ class Provisioner:
             if wrong:
                 self._post(f"/fabrics/{fabric.name}/switchActions/changeRoles", {"switchRoles": wrong})
             self.config_deploy(fabric.name)
+
+    # -- phase: isn ------------------------------------------------------------------------------------------
+    def _policies(self, fabric: str, serial: str) -> list[dict]:
+        return self._read_paged(f"/fabrics/{fabric}/policies", "policies", params={"switchId": serial})
+
+    def _ensure_policy(self, fabric: str, serial: str, policy: dict) -> None:
+        have = [p for p in self._policies(fabric, serial) if p.get("templateName") == policy["templateName"] and p.get("entityName") == policy["entityName"]]
+        if not have:
+            self._post(f"/fabrics/{fabric}/policies", {"policies": [policy]})
+
+    def phase_isn(self) -> None:
+        wan = self.topo.isn.wan
+        wan_serial: str | None = None
+        if wan:
+            fabric_obj = self._read_one(f"/fabrics/{wan.fabric}")
+            if fabric_obj and fabric_obj.get("management", {}).get("monitoredMode"):
+                self._put(f"/fabrics/{wan.fabric}", merge_settings(fabric_obj, {"management": {"monitoredMode": False}}))
+            wan_serial = self.serial(wan.hostname)
+            loopbacks = self._read(f"/fabrics/{wan.fabric}/switches/{wan_serial}/interfaces", "interfaces")
+            names = {i.get("interfaceName") for i in loopbacks}
+            if wan.loopback and f"Loopback{wan.loopback.get('id', 0)}" not in names:
+                self._post(f"/fabrics/{wan.fabric}/switches/{wan_serial}/interfaces", loopback_interface(wan_serial, wan.loopback))
+            if wan.bgp_router_id:
+                self._ensure_policy(wan.fabric, wan_serial, router_id_policy(wan_serial, wan.bgp_router_id))
+            self._ensure_policy(wan.fabric, wan_serial, cdp_run_policy(wan_serial))
+            for intf in wan.cdp_interfaces:
+                self._ensure_policy(wan.fabric, wan_serial, cdp_policy(wan_serial, intf))
+        for link in self.topo.isn.links:
+            have = self._read_paged("/links", "links", params={"fabricName": link.src_fabric})
+            if any(h.get("srcSwitchName") == link.src and h.get("srcInterfaceName") == link.src_if for h in have):
+                continue
+            self._post("/links", link_payload(link, self.serial(link.src), self.serial(link.dst)))
+        for name in sorted({item.dst_fabric for item in self.topo.isn.links} | ({wan.fabric} if wan else set())):
+            self.config_deploy(name)
+        if wan and not self.dry_run:
+            time.sleep(self.settle_seconds)
+            assert wan_serial is not None
+            left = self.pending(wan.fabric, wan_serial)
+            print(f"{wan.hostname} pendingConfig after deploy: {len(left)} line(s)" + ("" if not left else " -- read /deploymentHistory"))
 
     def run(self, phases: list[str]) -> None:
         for phase in phases:

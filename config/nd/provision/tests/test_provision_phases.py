@@ -38,6 +38,13 @@ class StubClient:
         self.calls.append(("PUT", path, json))
         return None
 
+    def paged(self, path: str, key: str, params: dict | None = None, page: int = 100):
+        self.calls.append(("GET", path, params))
+        lookup = self._key(path, params)
+        if lookup not in self.responses:
+            raise RuntimeError("HTTP 404")
+        return self.responses[lookup]
+
 
 def _topo():
     return load(HERE / "topology_nd421.yaml")
@@ -253,3 +260,103 @@ def test_serial_live_returns_serial_number_when_switch_present():
     client = StubClient(responses)
 
     assert Provisioner(client, topo).serial("S2_BG1") == "SN-BG1"
+
+
+def test_phase_isn_dry_run_creates_everything_and_deploys(capsys):
+    topo = _topo()
+    client = StubClient({})  # nothing exists yet -> every GET/paged raises HTTP 404
+
+    Provisioner(client, topo, dry_run=True, settle_seconds=0).phase_isn()
+
+    assert _posts(client) == []
+    assert _puts(client) == []
+    out = capsys.readouterr().out
+
+    loopback_lines = _dry_run_lines(out, "/fabrics/ISN/switches/<WAN1-serial>/interfaces")
+    assert len(loopback_lines) == 1
+
+    policy_lines = _dry_run_lines(out, "/fabrics/ISN/policies")
+    assert len(policy_lines) == 4
+    assert sum("ios_xe_bgp_router_id" in line for line in policy_lines) == 1
+    assert sum("ios_xe_cdp_run" in line for line in policy_lines) == 1
+    assert sum("ios_xe_cdp_enable_interface" in line for line in policy_lines) == 2
+
+    link_lines = _dry_run_lines(out, "/links")
+    assert len(link_lines) == 2
+    assert any("10.15.0.1/30" in line for line in link_lines)
+    assert any("10.25.0.1/30" in line for line in link_lines)
+
+    deploy_paths = [line.split()[2] for line in out.splitlines() if "actions/configDeploy" in line]
+    assert deploy_paths == [
+        "/fabrics/ISN/actions/configDeploy",
+        "/fabrics/SITE1/actions/configDeploy",
+        "/fabrics/SITE2/actions/configDeploy",
+    ]
+
+    assert not any(line.startswith("[dry-run] PUT") for line in out.splitlines())
+
+
+def _isn_policies() -> list[dict]:
+    return [
+        {"templateName": "ios_xe_bgp_router_id", "entityType": "switch", "entityName": "SWITCH", "switchId": "SN-WAN1"},
+        {"templateName": "ios_xe_cdp_run", "entityType": "switch", "entityName": "SWITCH", "switchId": "SN-WAN1"},
+        {"templateName": "ios_xe_cdp_enable_interface", "entityType": "interface", "entityName": "GigabitEthernet2", "switchId": "SN-WAN1"},
+        {"templateName": "ios_xe_cdp_enable_interface", "entityType": "interface", "entityName": "GigabitEthernet3", "switchId": "SN-WAN1"},
+    ]
+
+
+def _isn_links_present() -> list[dict]:
+    return [
+        {"srcSwitchName": "WAN1", "srcInterfaceName": "GigabitEthernet2"},
+        {"srcSwitchName": "WAN1", "srcInterfaceName": "GigabitEthernet3"},
+    ]
+
+
+def _live_isn_responses(monitored_mode: bool) -> dict:
+    return {
+        ("/fabrics/ISN", ()): {"name": "ISN", "management": {"monitoredMode": monitored_mode}},
+        ("/fabrics/ISN/switches", ()): {"switches": [{"hostname": "WAN1", "serialNumber": "SN-WAN1", "switchRole": "coreRouter"}]},
+        ("/fabrics/ISN/switches/SN-WAN1/interfaces", ()): {"interfaces": [{"interfaceName": "Loopback0"}]},
+        ("/fabrics/ISN/policies", (("switchId", "SN-WAN1"),)): _isn_policies(),
+        ("/links", (("fabricName", "ISN"),)): _isn_links_present(),
+        ("/fabrics/SITE1/switches", ()): {"switches": [{"hostname": "S1_BG1", "serialNumber": "SN-S1_BG1", "switchRole": "borderGateway"}]},
+        ("/fabrics/SITE2/switches", ()): {"switches": [{"hostname": "S2_BG1", "serialNumber": "SN-S2_BG1", "switchRole": "borderGateway"}]},
+        ("/fabrics/ISN/switches/SN-WAN1/pendingConfig", ()): [],
+    }
+
+
+def test_phase_isn_live_everything_present_only_deploys(capsys):
+    topo = _topo()
+    client = StubClient(_live_isn_responses(monitored_mode=False))
+
+    Provisioner(client, topo, settle_seconds=0).phase_isn()
+
+    assert _puts(client) == []
+    posts = _posts(client)
+    assert [p[1] for p in posts] == [
+        "/fabrics/ISN/actions/configDeploy",
+        "/fabrics/SITE1/actions/configDeploy",
+        "/fabrics/SITE2/actions/configDeploy",
+    ]
+    out = capsys.readouterr().out
+    assert "WAN1 pendingConfig after deploy: 0 line(s)" in out
+
+
+def test_phase_isn_live_clears_monitored_mode_when_true(capsys):
+    topo = _topo()
+    client = StubClient(_live_isn_responses(monitored_mode=True))
+
+    Provisioner(client, topo, settle_seconds=0).phase_isn()
+
+    puts = _puts(client)
+    assert len(puts) == 1
+    assert puts[0][1] == "/fabrics/ISN"
+    assert puts[0][2]["management"]["monitoredMode"] is False
+    posts = _posts(client)
+    assert [p[1] for p in posts] == [
+        "/fabrics/ISN/actions/configDeploy",
+        "/fabrics/SITE1/actions/configDeploy",
+        "/fabrics/SITE2/actions/configDeploy",
+    ]
+    out = capsys.readouterr().out
+    assert "WAN1 pendingConfig after deploy: 0 line(s)" in out

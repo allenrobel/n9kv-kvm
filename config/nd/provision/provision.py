@@ -364,10 +364,11 @@ class Provisioner:
         followed by deploy (push pending config). Both are synchronous and can run for minutes. The older
         actions/configDeploy is deprecated on 4.3.1 and, as observed there, never generated the underlay intent.
 
-        ND 4.3.1 quirk: the first deploy after a Recalculate can run against the switch's stale expected config
-        (the import-time defaults), emit `no vlan 1` and abort the whole switch; the next deploy uses the fresh
-        intent and succeeds. So after deploying, if anything is still pending, report the failed commands and
-        deploy once more."""
+        ND quirk (seen on 4.3.1 with API-added switches; the user has seen it on 4.2.1 with POAP/discovery adds,
+        never with GUI-added switches): the first deploy after a Recalculate can run against the switch's stale
+        expected config (the import-time defaults), emit `no vlan 1` and abort the whole switch; the next deploy
+        uses the fresh intent and succeeds. So after deploying, if anything is still pending, report the failed
+        commands and deploy once more."""
         self._post(f"/fabrics/{fabric_name}/actions/configSave", None, timeout=FABRIC_ACTION_TIMEOUT)
         started = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime())
         self._post(f"/fabrics/{fabric_name}/actions/deploy", None, timeout=FABRIC_ACTION_TIMEOUT)
@@ -380,7 +381,7 @@ class Provisioner:
         self._log(f"{fabric_name}: still pending after deploy {left}")
         for line in self._deploy_failures(fabric_name, started):
             self._log(f"{fabric_name}: deploy failure {line}")
-        self._log(f"{fabric_name}: deploying once more (first deploy after a Recalculate can use a stale expected config on ND 4.3.1)")
+        self._log(f"{fabric_name}: deploying once more (the first deploy after a Recalculate can use a stale expected config for API/POAP-added switches)")
         self._post(f"/fabrics/{fabric_name}/actions/deploy", None, timeout=FABRIC_ACTION_TIMEOUT)
         time.sleep(self.settle_seconds)
         left = {h: n for h, n in self._pending_counts(fabric_name).items() if n}

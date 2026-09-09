@@ -34,9 +34,10 @@ uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 \
   and `false` for VXLAN fabrics, matching the GUI's *Preserve Config* checkbox.
 - "Recalculate and Deploy" is two calls: `POST /fabrics/{f}/actions/configSave` then `POST /fabrics/{f}/actions/deploy`. The older
   `actions/configDeploy` is deprecated on 4.3.1 and never generated the underlay intent there. Both calls are synchronous (minutes on a 7-switch fabric).
-- On ND 4.3.1 the first deploy after a Recalculate can run against a stale expected config (the import-time defaults), emit `no vlan 1`, fail with
-  "Deletion of VLAN 1 is not allowed!!" and abort that switch; the next deploy uses the fresh intent. `config_deploy()` checks pendingConfig after the
-  deploy, prints the failed commands from `deploymentHistory`, and deploys once more if anything is left.
+- For switches added through the API (seen on 4.3.1; also seen on 4.2.1 with POAP/discovery adds, never with GUI-added switches) the first deploy after a
+  Recalculate can run against a stale expected config (the import-time defaults), emit `no vlan 1`, fail with "Deletion of VLAN 1 is not allowed!!" and
+  abort that switch; the next deploy uses the fresh intent. `config_deploy()` checks pendingConfig after the deploy, prints the failed commands from
+  `deploymentHistory`, and deploys once more if anything is left.
 - `GET /fabrics/{f}/policies?switchId=X` returns the whole fabric on 4.3.1 (the filter is ignored); the tool filters client-side.
 - Log lines redact `password`/`userPasswd` values; the real requests still carry them.
 - External fabrics created via API come up with `management.monitoredMode: true`; the `isn` phase flips it, otherwise every deploy is silently a no-op.

@@ -58,7 +58,8 @@ def merge_settings(current: dict, settings: dict) -> dict:
 
 
 DISCOVERY_PLACEHOLDER = "<from-discovery>"
-# ND rejects shallowDiscovery without it ("snmpV3AuthProtocol must not be empty or missing"); the GUI defaults to MD5.
+# ND rejects shallowDiscovery without it ("snmpV3AuthProtocol must not be empty or missing") although the spec marks it
+# optional with default md5; the GUI sends MD5. workaround: shallow-discovery-snmpv3-auth-required (ND vault)
 SNMPV3_AUTH_PROTOCOL = "md5"
 REDACTED_KEYS = {"password", "userPasswd", "secret"}
 

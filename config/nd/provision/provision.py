@@ -198,11 +198,13 @@ def loopback_interface(serial: str, loopback: dict) -> dict:
                 "switchId": serial,
                 "interfaceType": "loopback",
                 "interfaceName": f"Loopback{loopback.get('id', 0)}",
+                # `mode: managed` is the configData discriminator ND 4.3.1 validates (4.2.1 accepted the payload without it).
                 "configData": {
+                    "mode": "managed",
                     "networkOS": {
                         "networkOSType": "ios-xe",
                         "policy": {"policyType": "iosXeLoopback", "adminState": True, "ip": loopback["ip"], "description": loopback.get("description", "")},
-                    }
+                    },
                 },
             }
         ]

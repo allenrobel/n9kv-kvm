@@ -506,6 +506,35 @@ class Provisioner:
             left = self.pending(wan.fabric, wan_serial)
             print(f"{wan.hostname} pendingConfig after deploy: {len(left)} line(s)" + ("" if not left else " -- read /deploymentHistory"))
 
+    def _ensure_access_port(self, fabric: str, serial: str, interface: str, description: str) -> None:
+        """ND refuses an access-mode attachment on a port whose intent is trunk ("has mode 'trunk' on switch but
+        payload specifies 'access'"), and every unused leaf port defaults to trunkHost. Put the port in access mode
+        (accessHost policy) first; the attachment then supplies the access VLAN."""
+        current = self._read_one(f"/fabrics/{fabric}/switches/{serial}/interfaces/{interface.replace('/', '%2F')}")
+        if (current.get("configData") or {}).get("mode") == "access":
+            return
+        body = {
+            "switchId": serial,
+            "interfaceName": interface,
+            "interfaceType": "ethernet",
+            "configData": {
+                "mode": "access",
+                "networkOS": {
+                    "networkOSType": "nx-os",
+                    "policy": {
+                        "policyType": "accessHost",
+                        "adminState": True,
+                        "mtu": "jumbo",
+                        "speed": "auto",
+                        "bpduGuard": "default",
+                        "portTypeEdgeTrunk": True,
+                        "description": description,
+                    },
+                },
+            },
+        }
+        self._put(f"/fabrics/{fabric}/switches/{serial}/interfaces/{interface.replace('/', '%2F')}", body)
+
     # -- phase: overlay --------------------------------------------------------------------------------------
     def phase_overlay(self) -> None:
         for item in self.topo.overlay.vrfs:
@@ -545,13 +574,18 @@ class Provisioner:
             serial = self.serial(att["switch"])
             if (att["network"], serial) in net_attached.get(att["fabric"], set()):
                 continue
+            for intf in att.get("interfaces", []):
+                if intf.get("mode") == "access":
+                    self._ensure_access_port(att["fabric"], serial, intf["interfaceRange"], f"{att['network']} host port")
             self._post(f"/fabrics/{att['fabric']}/networkAttachments", attachment_payload("network", att, serial))
             touched_net.setdefault(att["fabric"], set()).add(serial)
 
         for fabric, touched_serials in touched_vrf.items():
-            self._post(f"/fabrics/{fabric}/vrfActions/deploy", {"switchIds": sorted(touched_serials)})
+            names = sorted({att["vrf"] for att in self.topo.overlay.vrf_attachments if att["fabric"] == fabric})
+            self._post(f"/fabrics/{fabric}/vrfActions/deploy", {"vrfNames": names, "switchIds": sorted(touched_serials)})
         for fabric, touched_serials in touched_net.items():
-            self._post(f"/fabrics/{fabric}/networkActions/deploy", {"switchIds": sorted(touched_serials)})
+            names = sorted({att["network"] for att in self.topo.overlay.network_attachments if att["fabric"] == fabric})
+            self._post(f"/fabrics/{fabric}/networkActions/deploy", {"networkNames": names, "switchIds": sorted(touched_serials)})
 
     # -- phase: deploy -----------------------------------------------------------------------------------------
     def phase_deploy(self) -> None:

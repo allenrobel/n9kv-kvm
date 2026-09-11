@@ -31,7 +31,8 @@ and if not set, it uses the defaults defined in this script.
 
 Hostnames and env var prefixes follow `S<site>_<role><idx>` (per-site
 renumbering from 1). For example, the leaf in SITE1 is `S1_LE1`; the
-border gateway in SITE4 is `S4_BG1`.
+border gateway in SITE4 is `S4_BG1`. Catalyst 9000v campus leaves use
+`C<n>_LE<idx>` (`C1_LE1` on ND 4.2.1, `C3_LE1` on ND 4.3.1).
 
 """
 import json
@@ -74,6 +75,10 @@ S4_LE1_IP4 = environ.get("S4_LE1_IP4", "192.168.14.153")
 S3_LE1_IP4_INTERFACE_2 = environ.get("S3_LE1_IP4_INTERFACE_2", "192.168.0.3")
 S4_LE1_IP4_INTERFACE_2 = environ.get("S4_LE1_IP4_INTERFACE_2", "192.168.0.4")
 
+# CAMPUS1 (Catalyst 9000v campus leaves, one per controller; .18x is the campus-leaf block)
+C1_LE1_IP4 = environ.get("C1_LE1_IP4", "192.168.12.181")
+C3_LE1_IP4 = environ.get("C3_LE1_IP4", "192.168.14.181")
+
 # Fabric types
 SITE1_FABRIC = environ.get("ND_SITE1_FABRIC", "SITE1")
 SITE2_FABRIC = environ.get("ND_SITE2_FABRIC", "SITE2")
@@ -81,6 +86,7 @@ SITE3_FABRIC = environ.get("ND_SITE3_FABRIC", "SITE3")
 SITE4_FABRIC = environ.get("ND_SITE4_FABRIC", "SITE4")
 ISN_FABRIC = environ.get("ND_ISN_FABRIC", "ISN")
 MSD_FABRIC = environ.get("ND_MSD_FABRIC", "MSD")
+CAMPUS1_FABRIC = environ.get("ND_FABRIC_CAMPUS1", "CAMPUS1")
 
 # Device credentials
 ND_PASSWORD = environ.get("ND_PASSWORD", "SuperSecretPassword")
@@ -116,6 +122,10 @@ S3_LE3_HOSTNAME = environ.get("S3_LE3_HOSTNAME", "S3_LE3")
 S3_LE4_HOSTNAME = environ.get("S3_LE4_HOSTNAME", "S3_LE4")
 S3_TOR1_HOSTNAME = environ.get("S3_TOR1_HOSTNAME", "S3_TOR1")
 S4_LE1_HOSTNAME = environ.get("S4_LE1_HOSTNAME", "S4_LE1")
+
+# CAMPUS1
+C1_LE1_HOSTNAME = environ.get("C1_LE1_HOSTNAME", "C1_LE1")
+C3_LE1_HOSTNAME = environ.get("C3_LE1_HOSTNAME", "C3_LE1")
 
 # Links
 # Source                  Destination             Bridge
@@ -238,7 +248,7 @@ S3_LE4_INTERFACE_2 = environ.get("S3_LE4_INTERFACE_2", "Ethernet1/2")
 output = {
     "_meta": {"hostvars": {}},
     "all": {
-        "children": ["ungrouped", "nd", "nxos"],
+        "children": ["ungrouped", "nd", "nxos", "iosxe"],
         "vars": {
             "ansible_httpapi_use_ssl": "true",
             "ansible_httpapi_validate_certs": "false",
@@ -248,6 +258,7 @@ output = {
             "SITE1_FABRIC": SITE1_FABRIC,
             "SITE2_FABRIC": SITE2_FABRIC,
             "ISN_FABRIC": ISN_FABRIC,
+            "CAMPUS1_FABRIC": CAMPUS1_FABRIC,
             "ND_IP4": ND_IP4,
             "ND_IP4_2": ND_IP4_2,
             "ND_431_IP4": ND_431_IP4,
@@ -271,6 +282,8 @@ output = {
             "S3_LE4_IP4": S3_LE4_IP4,
             "S3_TOR1_IP4": S3_TOR1_IP4,
             "S4_LE1_IP4": S4_LE1_IP4,
+            "C1_LE1_IP4": C1_LE1_IP4,
+            "C3_LE1_IP4": C3_LE1_IP4,
             "S1_BG1_HOSTNAME": S1_BG1_HOSTNAME,
             "S2_BG1_HOSTNAME": S2_BG1_HOSTNAME,
             "S1_SP1_HOSTNAME": S1_SP1_HOSTNAME,
@@ -291,6 +304,8 @@ output = {
             "S3_LE4_HOSTNAME": S3_LE4_HOSTNAME,
             "S3_TOR1_HOSTNAME": S3_TOR1_HOSTNAME,
             "S4_LE1_HOSTNAME": S4_LE1_HOSTNAME,
+            "C1_LE1_HOSTNAME": C1_LE1_HOSTNAME,
+            "C3_LE1_HOSTNAME": C3_LE1_HOSTNAME,
             "S1_BG1_INTERFACE_1": S1_BG1_INTERFACE_1,
             "S1_BG1_INTERFACE_2": S1_BG1_INTERFACE_2,
             "S1_BG1_INTERFACE_3": S1_BG1_INTERFACE_3,
@@ -410,6 +425,15 @@ output = {
             "ansible_become_method": "enable",
             "ansible_connection": "ansible.netcommon.network_cli",
             "ansible_network_os": "cisco.nxos.nxos",
+        },
+    },
+    "iosxe": {
+        "children": ["C1_LE1", "C3_LE1"],
+        "vars": {
+            "ansible_become": "true",
+            "ansible_become_method": "enable",
+            "ansible_connection": "ansible.netcommon.network_cli",
+            "ansible_network_os": "cisco.ios.ios",
         },
     },
 }

@@ -61,6 +61,7 @@ The repo is organized by **lab subsystem**, not by language. Each subdir is larg
 | `config/ansible/` and `config/ansible_local/` | Each now contains only a `dynamic_inventory.py` (env-var-driven inventory; `ansible/` covers SITE1–SITE4, `ansible_local/` covers SITE1/SITE2 + the edge router). The former `cisco.dcnm` fabric playbooks were removed — fabric/overlay config now happens through Nexus Dashboard from a separate `ansible-nd` repo. The inventories are retained for ad-hoc use and as the canonical source of per-switch IPs/interfaces. |
 | `config/containers/` | A Python package (no `__init__.py`, run via `main.py`) implementing SOLID-style orchestration for creating libvirt-LXC "host" containers (e.g. `S1_H1`, `S2_H1`, `S3_H1`, `S4_H1`) used as endpoint hosts on the leaves/TORs. See `config/containers/README.md` for the module breakdown and usage. Entry point: `sudo python3 main.py --config <yaml> <CONTAINER_NAME>`. |
 | `config/8000v/` | Launches Cisco Catalyst 8000V (IOS-XE) router VMs, mirroring the `config/nexus9000v/` pattern (raw QEMU, day-0 ISO via `startup_config.py`). `WAN1.yaml`/`WAN2.yaml` are the ND 4.2.1 / ND 4.3.1 cross-site ISN routers. See `config/8000v/README.md`. |
+| `config/cat9kv/` | Catalyst 9000v (IOS-XE) launcher mirroring `config/8000v/`. `C1_LE1.yaml`/`C3_LE1.yaml` are the `CAMPUS1` leaves. See its README. |
 | `config/bridges/` | Shell + netplan YAML that provisions the Linux bridges (`BR_ND_DATA_12`, `BR_S1_T1_H1_1`, etc.) connecting all the VMs. `bridges_config_ovs.sh` (re)creates them; the `*-bridges.yaml` are netplan variants. MTU 9216 is intentional (VXLAN overhead). |
 | `monitor/` | Ad hoc operator scripts (`show_bridges`, `show_nd_interfaces`, …) for inspecting the lab from the host. |
 | `cockpit/` | Two optional Cockpit extensions (bridge monitor, n9kv monitor) installed onto the lab host. Each has its own README. |
@@ -84,7 +85,8 @@ The repo is organized by **lab subsystem**, not by language. Each subdir is larg
   (10.10.20.10, data on `BR_ND_DATA_12`); SITE3/SITE4/WAN2/S3_H1/S4_H1 are their exact mirror under ND 4.3.1
   (10.10.20.20, data on `BR_ND_DATA_14`), with identical fabric names, ASNs and pools. Only hostnames, sids and the
   third octet of the mgmt IPs (12 -> 14) differ. `9914-bridges.yaml` is the
-  SITE3/SITE4 bridge set including their management bridge `BR_ND_DATA_14`.
+  SITE3/SITE4 bridge set including their management bridge `BR_ND_DATA_14`. Each controller also has a `CAMPUS1` campus fabric with one
+  Catalyst 9000v leaf (`C1_LE1` / `C3_LE1`, `.181`).
 - **ND has multiple coexisting versions** (`nd_321e.sh`, `nd_411g.sh`, `nd-42-1-*-node*.sh`, …). Each is a distinct VM definition; the lab can run several
   ND clusters simultaneously on different bridges. The numeric suffixes (`.105`, `.119`, `.4`) are the management IP last octet, not version numbers.
 - **`n9kv-kvm/` subdirectory at the repo root** is a stray Python venv (note `pyvenv.cfg`, `bin/`, `lib/`), not source. The real venv is `.venv/`. Ignore
@@ -95,7 +97,9 @@ The repo is organized by **lab subsystem**, not by language. Each subdir is larg
 - Lab IPs, fabric names, and credentials are read from environment variables with hardcoded fallbacks in `dynamic_inventory.py`. When adding a new
   switch/device, update both the dynamic inventory and the env scripts.
 - Switch/host hostnames encode site explicitly: `S<site>_<role><idx>` (e.g. `S1_BG1`, `S2_SP1`, `S1_LE1`, `S1_H1`, `S1_TOR1`). Roles: `BG` (border gateway),
-  `SP` (spine), `LE` (leaf), `TOR` (top-of-rack), `H` (host container). Indices renumber per-site starting at 1. Bridge names are subject to the Linux
+  `SP` (spine), `LE` (leaf), `TOR` (top-of-rack), `H` (host container). Indices renumber per-site starting at 1. Catalyst 9000v campus leaves use
+  `C<n>_LE<idx>` (`C1_LE1` on ND 4.2.1, `C3_LE1` on the ND 4.3.1 mirror); their `sid` uses SRII role digit `7` (1701, 3701) and their mgmt IPs the
+  `.18x` block. Bridge names are subject to the Linux
   IFNAMSIZ limit (15 chars), so they use shorter codes than hostnames: intra-site bridges follow `BR_S<site>_<upper>_<lower>_<n>` with the higher-tier
   endpoint first (BG > SP > LE > T) — note `TOR` is shortened to `T` in bridge names only (e.g. hostname `S1_TOR1` ↔ bridge `BR_S1_LE1_T1_1`). The
   link-index suffix `_<n>` is always present. Same-tier peer bridges sort endpoints alphabetically/numerically. Cross-site (ISN) bridges use

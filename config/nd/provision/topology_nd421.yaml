@@ -51,6 +51,20 @@ fabrics:
     switches:
       - {hostname: WAN1, ip: 192.168.12.112, role: coreRouter, platform: ios-xe}   # live ND 4.2.1 role (snapshot 2026-09-08)
 
+  - name: CAMPUS1
+    type: vxlanCampus           # Campus VXLAN EVPN (Easy_Fabric_IOS_XE): the only fabric type that takes Catalyst 9000
+    asn: "65003"
+    settings:
+      management:               # 10.4x pools, disjoint from SITE1 (10.1x), SITE2 (10.2x) and ND's campus default vrfLite pool 10.33.0.0/16
+        bgpLoopbackIpRange: 10.41.0.0/22
+        nveLoopbackIpRange: 10.42.0.0/22
+        anycastRendezvousPointIpRange: 10.43.0.0/24
+        intraFabricSubnetRange: 10.44.0.0/22
+        vrfLiteSubnetRange: 10.45.0.0/16
+    switches:
+      # One Catalyst 9000v leaf, no fabric links: GigabitEthernet1/0/1 must stay free for the cisco.nd IOS-XE interface tests.
+      - {hostname: C1_LE1, ip: 192.168.12.181, role: leaf, platform: ios-xe}
+
 fabric_groups:
   - name: MSD
     settings:

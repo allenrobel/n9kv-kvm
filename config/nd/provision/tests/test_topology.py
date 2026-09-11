@@ -12,9 +12,15 @@ HERE = Path(__file__).resolve().parents[1]
 def test_shipped_topologies_load_and_mirror():
     t421 = load(HERE / "topology_nd421.yaml")
     t431 = load(HERE / "topology_nd431.yaml")
-    assert [f.name for f in t421.fabrics] == [f.name for f in t431.fabrics] == ["SITE1", "SITE2", "ISN"]
+    assert [f.name for f in t421.fabrics] == [f.name for f in t431.fabrics] == ["SITE1", "SITE2", "ISN", "CAMPUS1"]
     assert t421.fabric_groups[0].members == t431.fabric_groups[0].members == ["SITE1", "SITE2", "ISN"]
     assert t421.switch_fabric("S1_BG1") == "SITE1" and t431.switch_fabric("S3_BG1") == "SITE1"
+    assert t421.switch_fabric("C1_LE1") == "CAMPUS1" and t431.switch_fabric("C3_LE1") == "CAMPUS1"
+    campus421, campus431 = t421.fabrics[3], t431.fabrics[3]
+    assert campus421.type == campus431.type == "vxlanCampus" and campus421.asn == campus431.asn == "65003"
+    assert campus421.settings == campus431.settings
+    assert [(s.role, s.platform) for s in campus421.switches] == [(s.role, s.platform) for s in campus431.switches] == [("leaf", "ios-xe")]
+    assert [s.ip for s in campus421.switches] == ["192.168.12.181"] and [s.ip for s in campus431.switches] == ["192.168.14.181"]
     assert len(t421.isn.links) == len(t431.isn.links) == 2
     assert t421.overlay.networks == t431.overlay.networks  # identical overlay objects, only attachments name different switches
 

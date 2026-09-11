@@ -100,33 +100,45 @@ def test_redact_masks_credentials_at_any_depth_without_mutating_input():
     assert body["password"] == "pw"  # ggignore: unit-test placeholder, not a credential
 
 
-def test_switch_password_uses_iosxe_for_external_connectivity(monkeypatch):
+def _fabric(name: str, ftype: str, asn: str, platform: str) -> Fabric:
+    return Fabric(name=name, type=ftype, asn=asn, switches=[Switch("SW", "10.0.0.1", "leaf", platform)])
+
+
+def test_switch_password_uses_iosxe_for_an_ios_xe_external_fabric(monkeypatch):
     monkeypatch.setenv("IOSXE_PASSWORD", "iosxe-pw")  # ggignore: unit-test placeholder, not a credential
     monkeypatch.setenv("NXOS_PASSWORD", "nxos-pw")  # ggignore: unit-test placeholder, not a credential
-    fab = Fabric(name="ISN", type="externalConnectivity", asn="65535")
-    assert _switch_password(fab) == "iosxe-pw"  # ggignore: unit-test placeholder, not a credential
+    assert _switch_password(_fabric("ISN", "externalConnectivity", "65535", "ios-xe")) == "iosxe-pw"  # ggignore: unit-test placeholder, not a credential
 
 
-def test_switch_password_uses_nxos_for_vxlan_fabric(monkeypatch):
+def test_switch_password_uses_iosxe_for_an_ios_xe_campus_fabric(monkeypatch):
     monkeypatch.setenv("IOSXE_PASSWORD", "iosxe-pw")  # ggignore: unit-test placeholder, not a credential
     monkeypatch.setenv("NXOS_PASSWORD", "nxos-pw")  # ggignore: unit-test placeholder, not a credential
-    fab = Fabric(name="SITE2", type="vxlanIbgp", asn="65002")
-    assert _switch_password(fab) == "nxos-pw"  # ggignore: unit-test placeholder, not a credential
+    assert _switch_password(_fabric("CAMPUS1", "vxlanCampus", "65003", "ios-xe")) == "iosxe-pw"  # ggignore: unit-test placeholder, not a credential
 
 
-def test_switch_password_raises_when_iosxe_unset_for_external_connectivity(monkeypatch):
+def test_switch_password_uses_nxos_for_an_nx_os_vxlan_fabric(monkeypatch):
+    monkeypatch.setenv("IOSXE_PASSWORD", "iosxe-pw")  # ggignore: unit-test placeholder, not a credential
+    monkeypatch.setenv("NXOS_PASSWORD", "nxos-pw")  # ggignore: unit-test placeholder, not a credential
+    assert _switch_password(_fabric("SITE2", "vxlanIbgp", "65002", "nx-os")) == "nxos-pw"  # ggignore: unit-test placeholder, not a credential
+
+
+def test_switch_password_uses_nxos_for_a_fabric_with_no_switches(monkeypatch):
     monkeypatch.delenv("IOSXE_PASSWORD", raising=False)
     monkeypatch.setenv("NXOS_PASSWORD", "nxos-pw")  # ggignore: unit-test placeholder, not a credential
-    fab = Fabric(name="ISN", type="externalConnectivity", asn="65535")
+    assert _switch_password(Fabric(name="EMPTY", type="vxlanCampus", asn="1")) == "nxos-pw"  # ggignore: unit-test placeholder, not a credential
+
+
+def test_switch_password_raises_when_iosxe_unset_for_an_ios_xe_fabric(monkeypatch):
+    monkeypatch.delenv("IOSXE_PASSWORD", raising=False)
+    monkeypatch.setenv("NXOS_PASSWORD", "nxos-pw")  # ggignore: unit-test placeholder, not a credential
     with pytest.raises(SystemExit, match="IOSXE_PASSWORD"):
-        _switch_password(fab)
+        _switch_password(_fabric("CAMPUS1", "vxlanCampus", "65003", "ios-xe"))
 
 
-def test_switch_password_raises_when_nxos_unset_for_vxlan_fabric(monkeypatch):
+def test_switch_password_raises_when_nxos_unset_for_an_nx_os_fabric(monkeypatch):
     monkeypatch.delenv("NXOS_PASSWORD", raising=False)
-    fab = Fabric(name="SITE2", type="vxlanIbgp", asn="65002")
     with pytest.raises(SystemExit, match="NXOS_PASSWORD"):
-        _switch_password(fab)
+        _switch_password(_fabric("SITE2", "vxlanIbgp", "65002", "nx-os"))
 
 
 def test_link_payload_matches_the_known_good_isn_link():

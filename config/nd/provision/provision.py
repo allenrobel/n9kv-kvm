@@ -4,7 +4,7 @@
     provision.py --topology topology_nd431.yaml [--nd-ip 10.10.20.20] [--phase all] [--dry-run]
 
 Phases (each safe to re-run; --phase all runs them in order):
-  fabrics   create SITE1/SITE2/ISN if absent, then merge `settings` into each fabric object (GET/update/PUT)
+  fabrics   create SITE1/SITE2/ISN/CAMPUS1 if absent, then merge `settings` into each fabric object (GET/update/PUT)
   msd       create the MSD fabric group if absent, add members one at a time (ND rejects batches)
   switches  shallowDiscovery per fabric (serial/model), add the manageable ones, wait until they list, set roles, recalculate + deploy
   vpc       pair the vPC leaf pairs (ND's default template generates the peer-link port-channel), then recalculate + deploy
@@ -124,10 +124,10 @@ def switch_add_payload(fabric: Fabric, discovered: dict[str, dict], password: st
 
 
 def _switch_password(fabric: Fabric) -> str:
-    """IOSXE_PASSWORD for externalConnectivity fabrics (they hold the ios-xe WAN router); NXOS_PASSWORD for
-    every other (NX-OS) fabric. Fail loud: an unset password must not silently fall back or add switches ND
-    can never SSH into."""
-    if fabric.type == "externalConnectivity":
+    """IOSXE_PASSWORD when the fabric's switches are ios-xe (the WAN router in ISN, the Catalyst leaf in CAMPUS1);
+    NXOS_PASSWORD otherwise. Keyed on the switch platform, not the fabric type: a vxlanCampus fabric holds Catalyst
+    switches. Fail loud: an unset password must not silently fall back or add switches ND can never SSH into."""
+    if fabric.switches and _platform(fabric) == "ios-xe":
         value = os.environ.get("IOSXE_PASSWORD")
         if not value:
             raise SystemExit(f"IOSXE_PASSWORD is not set; it is required to add IOS-XE switches to fabric {fabric.name}")

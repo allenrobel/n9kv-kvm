@@ -1,0 +1,32 @@
+hostname {{ hostname }}
+!
+vrf definition Mgmt-vrf
+ address-family ipv4
+ exit-address-family
+!
+username admin privilege 15 secret 0 {{ admin_password }}
+!
+ip domain name lab.local
+ip ssh version 2
+!
+interface GigabitEthernet0/0
+ vrf forwarding Mgmt-vrf
+ ip address {{ mgmt_ip_addr }} {{ mgmt_netmask }}
+ no shutdown
+!
+ip route vrf Mgmt-vrf 0.0.0.0 0.0.0.0 {{ mgmt_gw }}
+!
+line vty 0 15
+ login local
+ transport input ssh
+!
+event manager applet GENERATE_RSA_KEYS
+ event timer countdown time 60
+ action 1.0 cli command "enable"
+ action 2.0 cli command "crypto key generate rsa modulus 2048"
+ action 3.0 cli command "configure terminal"
+ action 4.0 cli command "no event manager applet GENERATE_RSA_KEYS"
+ action 5.0 cli command "end"
+ action 6.0 cli command "write memory"
+!
+end

@@ -51,6 +51,26 @@ fabrics:
     switches:
       - {hostname: WAN2, ip: 192.168.14.112, role: coreRouter, platform: ios-xe}   # live ND 4.3.1 role (snapshot 2026-09-08)
 
+  - name: CAMPUS1
+    type: vxlanCampus           # Campus VXLAN EVPN (Easy_Fabric_IOS_XE): the only fabric type that takes Catalyst 9000
+    asn: "65003"
+    settings:
+      management:               # 10.4x pools, disjoint from SITE1 (10.1x), SITE2 (10.2x) and ND's campus default vrfLite pool 10.33.0.0/16
+        bgpLoopbackIpRange: 10.41.0.0/22
+        nveLoopbackIpRange: 10.42.0.0/22
+        anycastRendezvousPointIpRange: 10.43.0.0/24
+        intraFabricSubnetRange: 10.44.0.0/22
+        vrfLiteSubnetRange: 10.45.0.0/16
+        # The Cat9kv parser takes `system mtu` and per-port `mtu` only in 1500-8978 (a real 9300 goes to 9198), and a per-port
+        # `mtu` above `system mtu` is rejected. ND's campus defaults (systemMtu 1500, l2HostInterfaceMtu 9216 -> 9198) therefore
+        # fail every host port deploy with "Command mtu 9198 is invalid". 8978 is the platform ceiling; the 1500 per-port
+        # default keeps `mtu` lines out of the generated trunkHost policy and is what the cisco.nd XE tests expect after a replace.
+        systemMtu: 8978
+        l2HostInterfaceMtu: 1500
+    switches:
+      # One Catalyst 9000v leaf, no fabric links: GigabitEthernet1/0/1 must stay free for the cisco.nd IOS-XE interface tests.
+      - {hostname: C3_LE1, ip: 192.168.14.181, role: leaf, platform: ios-xe}
+
 fabric_groups:
   - name: MSD
     settings:

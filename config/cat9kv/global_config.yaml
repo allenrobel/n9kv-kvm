@@ -1,0 +1,11 @@
+# global_config.yaml - Global settings for all Catalyst 9000v switches
+base_mac: "52:54:00"  # quoted to prevent YAML time parsing
+cdrom_path: /iso2/iosxe/config
+# CML 2.9 refplat image (beta, no TAC support). Boot disk is copied per VM; never launch the extracted file itself.
+default_image: cat9kv_prd.17.15.03.qcow2
+default_interface_type: e1000
+default_ram: 18432  # MB; the image does not boot with less
+default_vcpus: 4
+image_path: /iso1/cml/cat9kv-17.15.03
+# The image refuses to boot with fewer NICs than this; NICs beyond mgmt + isl_bridges are padded with unattached TAPs.
+min_nics: 9

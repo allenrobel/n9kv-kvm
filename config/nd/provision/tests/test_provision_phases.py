@@ -100,12 +100,13 @@ def test_phase_fabrics_creates_and_merges_settings_when_absent():
     Provisioner(client, topo).phase_fabrics()
 
     posts = _posts(client)
-    assert [p[2]["name"] for p in posts] == ["SITE1", "SITE2", "ISN"]
+    assert [p[2]["name"] for p in posts] == ["SITE1", "SITE2", "ISN", "CAMPUS1"]
     puts = _puts(client)
-    assert [p[1] for p in puts] == ["/fabrics/SITE1", "/fabrics/SITE2", "/fabrics/ISN"]
+    assert [p[1] for p in puts] == ["/fabrics/SITE1", "/fabrics/SITE2", "/fabrics/ISN", "/fabrics/CAMPUS1"]
     by_path = {p[1]: p[2] for p in puts}
     assert by_path["/fabrics/SITE1"]["management"]["vrfLiteAutoConfig"] == "back2BackAndToExternal"
     assert by_path["/fabrics/ISN"]["management"]["monitoredMode"] is False
+    assert by_path["/fabrics/CAMPUS1"]["management"]["bgpLoopbackIpRange"] == "10.41.0.0/22"
 
 
 def test_phase_fabrics_no_writes_when_already_present_and_merged():
@@ -164,7 +165,7 @@ def test_phase_fabrics_dry_run_logs_would_apply_when_fabrics_absent(capsys):
     assert _puts(client) == []
     out = capsys.readouterr().out
     create_lines = [line for line in out.splitlines() if line.startswith("[dry-run] POST /fabrics ")]
-    assert len(create_lines) == 3
+    assert len(create_lines) == 4
     for fabric in topo.fabrics:
         assert f"would apply settings to new fabric /fabrics/{fabric.name}" in out
 
@@ -196,7 +197,7 @@ def test_phase_fabrics_live_re_reads_after_create_then_puts_merged_settings():
     it yet), and the guarded re-read picks up the freshly-created object so settings still get merged/PUT."""
     topo = _topo()
     responses = {
-        ("/fabrics", ()): {"fabrics": [{"name": "SITE2"}, {"name": "ISN"}]},
+        ("/fabrics", ()): {"fabrics": [{"name": "SITE2"}, {"name": "ISN"}, {"name": "CAMPUS1"}]},
         ("/fabrics", (("category", "fabricGroup"),)): {"fabrics": []},
     }
     for fabric in topo.fabrics:
@@ -403,10 +404,11 @@ def test_phase_switches_live_discovers_then_adds_only_manageable_switches(monkey
     monkeypatch.setenv("NXOS_PASSWORD", "nxos-pw")  # ggignore: unit-test placeholder, not a credential
     monkeypatch.setenv("IOSXE_PASSWORD", "iosxe-pw")  # ggignore: unit-test placeholder, not a credential
     topo = _topo()
-    site1, isn = topo.fabrics[0], topo.fabrics[2]
+    site1, isn, campus = topo.fabrics[0], topo.fabrics[2], topo.fabrics[3]
     responses = {
         ("/fabrics/SITE1/switches", ()): _already_present(site1),
         ("/fabrics/ISN/switches", ()): _already_present(isn),
+        ("/fabrics/CAMPUS1/switches", ()): _already_present(campus),
         "/fabrics/SITE2/actions/shallowDiscovery": {
             "switches": [
                 {"ip": "192.168.12.132", "hostname": "S2_BG1", "serialNumber": "SN-BG1", "model": "N9K-C9300v", "softwareVersion": "10.6(2)", "status": "manageable"},
@@ -429,6 +431,8 @@ def test_phase_switches_live_discovers_then_adds_only_manageable_switches(monkey
         "/fabrics/SITE2/actions/deploy",
         "/fabrics/ISN/actions/configSave",
         "/fabrics/ISN/actions/deploy",
+        "/fabrics/CAMPUS1/actions/configSave",
+        "/fabrics/CAMPUS1/actions/deploy",
     ]
     discovery = next(p[2] for p in posts if p[1].endswith("shallowDiscovery"))
     assert discovery["seedIpCollection"] == ["192.168.12.132", "192.168.12.142", "192.168.12.153"] and discovery["maxHop"] == 0
@@ -754,6 +758,8 @@ def test_phase_deploy_dry_run_deploys_every_fabric_and_does_not_check_pending(ca
         "/fabrics/SITE2/actions/deploy",
         "/fabrics/ISN/actions/configSave",
         "/fabrics/ISN/actions/deploy",
+        "/fabrics/CAMPUS1/actions/configSave",
+        "/fabrics/CAMPUS1/actions/deploy",
         "/fabrics/MSD/actions/configSave",
         "/fabrics/MSD/actions/deploy",
     ]
@@ -784,12 +790,15 @@ def test_phase_deploy_live_prints_pending_config_for_every_switch(capsys):
         "/fabrics/SITE2/actions/deploy",
         "/fabrics/ISN/actions/configSave",
         "/fabrics/ISN/actions/deploy",
+        "/fabrics/CAMPUS1/actions/configSave",
+        "/fabrics/CAMPUS1/actions/deploy",
         "/fabrics/MSD/actions/configSave",
         "/fabrics/MSD/actions/deploy",
     ]
     out = capsys.readouterr().out
     assert "SITE1/S1_BG1: pendingConfig 0 line(s)" in out
     assert "ISN/WAN1: pendingConfig 0 line(s)" in out
+    assert "CAMPUS1/C1_LE1: pendingConfig 0 line(s)" in out
 
 
 def test_phase_deploy_live_prints_the_pending_lines_themselves_when_nonempty(capsys):

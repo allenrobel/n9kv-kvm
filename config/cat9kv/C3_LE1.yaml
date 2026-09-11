@@ -1,0 +1,10 @@
+---
+# C3_LE1.yaml - Catalyst 9000v campus leaf managed by ND 4.3.1 (fabric CAMPUS1, no fabric links); mirror of C1_LE1.
+name: C3_LE1
+role: Campus Leaf
+sid: 3701
+mgmt_bridge: BR_ND_DATA_14
+mgmt_ip: 192.168.14.181/24
+mgmt_gw: 192.168.14.1
+neighbors: []
+isl_bridges: []

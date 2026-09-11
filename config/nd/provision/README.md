@@ -61,3 +61,6 @@ uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 \
 - `CAMPUS1` is a `vxlanCampus` fabric (Campus VXLAN EVPN) holding one Catalyst 9000v leaf with no links; it exists so the `cisco.nd` IOS-XE interface
   tests have an ND-managed Catalyst. `_switch_password` picks `IOSXE_PASSWORD` by switch platform (`ios-xe`), so both `ISN` and `CAMPUS1` use it.
   The leaf is added with `preserveConfig: false` (ND owns its config, like the NX-OS fabrics).
+- Cat9kv MTU: the image takes `system mtu` / per-port `mtu` only in 1500-8978 and refuses a per-port value above `system mtu`, so ND's campus
+  defaults (`systemMtu` 1500, `l2HostInterfaceMtu` 9216 -> 9198) fail every host-port deploy with "Command mtu 9198 is invalid". The shipped
+  `CAMPUS1` settings pin `systemMtu: 8978` and `l2HostInterfaceMtu: 1500` (no `mtu` line in the generated `iosXeTrunkHost` policy).

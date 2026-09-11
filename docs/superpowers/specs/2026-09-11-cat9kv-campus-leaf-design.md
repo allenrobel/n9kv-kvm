@@ -57,10 +57,18 @@ Neither ND controller manages a Catalyst switch today. The only IOS-XE devices a
     anycastRendezvousPointIpRange: 10.43.0.0/24
     intraFabricSubnetRange: 10.44.0.0/22
     vrfLiteSubnetRange: 10.45.0.0/16
+    systemMtu: 8978
+    l2HostInterfaceMtu: 1500
   ```
 
   Follows the `SITE1` 10.1x / `SITE2` 10.2x pattern. ND's campus default `vrfLiteSubnetRange` is 10.33.0.0/16;
   setting it explicitly keeps the pools disjoint from every other fabric.
+- **MTU (lab finding, 2026-09-11).** The Cat9kv parser accepts `system mtu` and per-port `mtu` only in 1500-8978 (a real
+  9300 goes to 9198) and rejects a per-port `mtu` above `system mtu`. ND's campus defaults (`systemMtu` 1500,
+  `l2HostInterfaceMtu` 9216, clipped to 9198) therefore make every host-port deploy fail with "Command mtu 9198 is
+  invalid". `systemMtu: 8978` is the platform ceiling; `l2HostInterfaceMtu: 1500` keeps `mtu` lines out of the generated
+  `iosXeTrunkHost` policy and matches what the cisco.nd XE scenarios expect after a replace. Consequence for the
+  collection: the XE scenarios' `mtu: 9000` merge step exceeds 8978 and needs a value at or below it on this platform.
 - Memory: 2 x 18 GiB on top of the ~340 GiB used on glide (755 GiB physical, 415 GiB available on 2026-09-11).
 
 ## Files

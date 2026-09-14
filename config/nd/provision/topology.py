@@ -70,12 +70,29 @@ class VpcPair:
 @dataclass(frozen=True)
 class TorPair:
     """One ToR (access) switch associated with a leaf vPC pair. ND's ToR pairing creates the ToR-facing
-    vPC on both leafs and the uplink port-channel on the ToR; the leaf pair must be declared under vpc_pairs."""
+    vPC on both leafs and the uplink port-channel on the ToR; the leaf pair must be declared under vpc_pairs.
+    `tor_po` / `leaf_po` (and `vpc_id`, default `leaf_po`) are the ids to allocate when ND recommends none
+    (ND 4.2.1 answers every accessAssociations query with `resources: {}`); a recommendation from ND wins."""
 
     fabric: str
     tor: str
     leaf: str
     peer: str
+    tor_po: int | None = None
+    leaf_po: int | None = None
+    vpc_id: int | None = None
+
+    def resources(self) -> dict[str, int]:
+        """The `resources` block of the associate call, or {} when the file gives no ids. The peer leaf's
+        port-channel takes the same id as the leaf's (one vPC, one id on both members)."""
+        if self.tor_po is None or self.leaf_po is None:
+            return {}
+        return {
+            "accessOrTorPortChannelId": self.tor_po,
+            "aggregationOrLeafPortChannelId": self.leaf_po,
+            "aggregationOrLeafPeerPortChannelId": self.leaf_po,
+            "aggregationOrLeafVpcId": self.vpc_id if self.vpc_id is not None else self.leaf_po,
+        }
 
 
 @dataclass(frozen=True)
@@ -148,6 +165,8 @@ def _validate(topo: Topology) -> None:
                 raise ValueError(f"tor_pairs: {host} is not in fabric {tor_pair.fabric}")
         if frozenset((tor_pair.leaf, tor_pair.peer)) not in vpc_pairs:
             raise ValueError(f"tor_pairs: {tor_pair.leaf}/{tor_pair.peer} is not declared under vpc_pairs (ToR pairing needs the leaf vPC first)")
+        if (tor_pair.tor_po is None) != (tor_pair.leaf_po is None):
+            raise ValueError(f"tor_pairs: {tor_pair.tor}: tor_po and leaf_po must be given together")
     for att in topo.overlay.vrf_attachments + topo.overlay.network_attachments:
         switch_name = att.get("switch")
         if not switch_name:

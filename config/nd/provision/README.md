@@ -52,16 +52,21 @@ uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 \
   and the leaf vPC pair it uplinks to (both leafs must be a `vpc_pairs` entry, validated at load). Per ToR it reads
   `GET /fabrics/{f}/accessAssociations?aggregationOrLeafSwitchId=<LE1>&aggregationOrLeafPeerSwitchId=<LE2>` (400 without the leaf serial) and skips the
   ToR when its record carries a non-empty `resources` block, the mark of a real association: without `includeCandidates` ND still lists an unpaired ToR
-  as a recommendation with `isRecommended: true` and empty `resources`. Otherwise it re-reads with `includeCandidates=true`, takes the port-channel /
-  vPC ids ND recommends for that ToR and posts them back as a one-item list to `accessAssociationActions/associate`; using ND's ids keeps them clear
-  of the `port-channel500` peer-link and of whatever the leafs already allocated. The answer is HTTP 207 with per-item `status`; a `failed` item aborts
-  the phase before any deploy. No recommendation (the ToR is not a candidate, or `remarks` says its uplinks are not connected) also aborts rather than
-  guessing ids; under `--dry-run` the POST is logged with `<nd-recommended>` placeholders. It then recalculates and deploys the fabric: the association
+  as a recommendation with `isRecommended: true` and empty `resources`. Otherwise it re-reads with `includeCandidates=true` and posts a one-item list
+  to `accessAssociationActions/associate` whose `resources` are the port-channel / vPC ids ND recommends for that ToR if it recommends any, else the
+  `tor_po` / `leaf_po` / `vpc_id` pinned on the `tor_pairs` entry. ND 4.2.1 recommends none: every form of the GET (with/without `includeCandidates`,
+  with/without the peer serial) answers `resources: {}` (lab, 2026-09-14), so the shipped files pin port-channel1 / vpc1 on both sides, the GUI's
+  first free id, clear of the `port-channel500` peer-link and of vpc200/201/210 + Ethernet1/8-1/10 that the `cisco.nd` `nd_interface_vpc_*`
+  integration targets own on this leaf pair. The answer is HTTP 207 with per-item `status`; a `failed` item aborts the phase before any deploy. No
+  ids from either source (the ToR is not a candidate, or `remarks` says its uplinks are not connected, and the entry pins none) also aborts rather
+  than guessing; under `--dry-run` the POST is logged with the pinned ids or `<nd-recommended>` placeholders. It then recalculates and deploys the fabric: the association
   creates the ToR uplink port-channel on the ToR and a ToR-owned vPC (plus port-channels) on both leafs. Until it runs, every Recalculate on 4.2.1
   raises the `No leaf-tor pairing is found for the tor` anomaly (`Fabric_Template~configSave:handleTorLeafPairing`); 4.3.1 hides the same condition.
 - Pairing a ToR adds a vPC ND owns to the leaf pair. Before running the `cisco.nd` vPC integration targets against a paired fabric, check that vPC's
-  `policyType` against the modules' managed policy set: the `overridden` scenario treats its one vPC as the whole source of truth and deletes anything
-  it considers managed. Pair one controller first and run `nd_interface_vpc_trunk_host` there before pairing the other.
+  `policyType` against the modules' managed policy set (`trunkVpcHost` for `nd_interface_vpc_trunk_host`, `accessVpcHost` for `nd_interface_vpc_access`;
+  their `overridden` scenario queries the fabric's vPC interfaces and deletes every one of its managed type that it did not declare). Also run those
+  targets with `nd_test_manage_vpc_pairs=false`: their default setup unpairs and re-pairs LE1/LE2 with a virtual peer-link, which would drop the
+  ToR association with the pair. Pair one controller first and run `nd_interface_vpc_trunk_host` there before pairing the other.
 - The `deploy` phase recalculates and deploys the fabric group (MSD) after its child fabrics; that group deploy is what creates the multisite
   underlay/overlay links between the border gateways and their `ext_base_border_multisite` / `evpn_multisite_interface` policies.
 - `snapshot.py diff` maps hostnames with alphanumeric lookarounds (hostnames contain `_`), so per-switch files such as

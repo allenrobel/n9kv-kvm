@@ -147,9 +147,8 @@ def vpc_pair_payload(serial: str, peer_serial: str) -> dict:
 
 def tor_associate_payload(tor_serial: str, leaf_serial: str, peer_serial: str, resources: dict) -> list[dict]:
     """Body for POST /fabrics/{f}/accessAssociationActions/associate (a list; one ToR to one leaf vPC pair).
-    `resources` is the port-channel / vPC id block ND itself recommends in GET accessAssociations?includeCandidates=true
-    for this ToR; passing it back verbatim keeps the ids clear of the peer-link port-channel500 and of anything
-    already allocated on the leafs."""
+    `resources` is the port-channel / vPC id block: what ND recommends in GET accessAssociations?includeCandidates=true
+    when it recommends anything, else the ids from the topology's tor_pairs entry (ND 4.2.1 recommends none)."""
     return [{"accessOrTorSwitchId": tor_serial, "aggregationOrLeafSwitchId": leaf_serial, "aggregationOrLeafPeerSwitchId": peer_serial, "resources": resources}]
 
 
@@ -501,13 +500,18 @@ class Provisioner:
                 continue
             candidate = next((c for c in self._tor_associations(pair.fabric, leaf, peer, candidates=True) if c.get("accessOrTorSwitchId") == tor), {})
             resources = candidate.get("resources") or {}
-            if not (resources.get("accessOrTorPortChannelId") and resources.get("aggregationOrLeafPortChannelId")):
-                if not self.dry_run:
-                    raise RuntimeError(
-                        f"{pair.fabric}: {label}: ND recommends no port-channel ids (remarks: {candidate.get('remarks', '') or 'ToR not listed as a candidate'!r});"
-                        " the ToR must be discovered and its uplinks cabled to both leafs before pairing"
-                    )
+            if resources.get("accessOrTorPortChannelId") and resources.get("aggregationOrLeafPortChannelId"):
+                self._log(f"{pair.fabric}: {label}: using ND-recommended ids {json.dumps(resources)}")
+            elif pair.resources():
+                resources = pair.resources()
+                self._log(f"{pair.fabric}: {label}: using topology ids {json.dumps(resources)} (ND recommends none)")
+            elif self.dry_run:
                 resources = {key: self.TOR_RESOURCE_PLACEHOLDER for key in ("accessOrTorPortChannelId", "aggregationOrLeafPortChannelId")}
+            else:
+                raise RuntimeError(
+                    f"{pair.fabric}: {label}: no port-channel ids: ND recommends none (remarks: {candidate.get('remarks', '') or 'ToR not listed as a candidate'!r})"
+                    " and tor_pairs gives none; set tor_po/leaf_po in the topology, and check the ToR is discovered with its uplinks cabled to both leafs"
+                )
             result = self._post(f"/fabrics/{pair.fabric}/accessAssociationActions/associate", tor_associate_payload(tor, leaf, peer, resources))
             for item in (result or {}).get("associations", []):
                 if item.get("status") == "failed":

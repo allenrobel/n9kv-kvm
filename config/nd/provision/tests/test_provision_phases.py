@@ -971,7 +971,7 @@ def _tor_responses(topo, associations: list | None = None, candidates: list | No
     return responses
 
 
-def test_phase_tor_dry_run_logs_associate_with_placeholder_ids_then_recalculate_and_deploy(capsys):
+def test_phase_tor_dry_run_logs_associate_with_the_topology_ids_then_recalculate_and_deploy(capsys):
     topo = _topo()
     client = StubClient({("/fabrics/SITE1/switches", ()): _site1_present(topo)})
 
@@ -982,7 +982,9 @@ def test_phase_tor_dry_run_logs_associate_with_placeholder_ids_then_recalculate_
     posts = [line.split()[2] for line in out.splitlines() if line.startswith("[dry-run] POST")]
     assert posts == ["/fabrics/SITE1/accessAssociationActions/associate", "/fabrics/SITE1/actions/configSave", "/fabrics/SITE1/actions/deploy"]
     assert '"accessOrTorSwitchId": "SN-S1_TOR1", "aggregationOrLeafSwitchId": "SN-S1_LE1", "aggregationOrLeafPeerSwitchId": "SN-S1_LE2"' in out
-    assert "<nd-recommended>" in out
+    assert (
+        '"resources": {"accessOrTorPortChannelId": 1, "aggregationOrLeafPortChannelId": 1, "aggregationOrLeafPeerPortChannelId": 1, "aggregationOrLeafVpcId": 1}' in out
+    )
 
 
 def test_phase_tor_live_associates_with_nds_recommended_ids_then_recalculates_and_deploys(capsys):
@@ -1017,19 +1019,21 @@ def test_phase_tor_live_skips_a_tor_nd_already_associates(capsys):
 
 def test_phase_tor_live_raises_when_nd_recommends_no_port_channel_ids():
     topo = _topo()
+    topo = replace(topo, tor_pairs=[replace(topo.tor_pairs[0], tor_po=None, leaf_po=None, vpc_id=None)])
     candidate = {"accessOrTorSwitchId": "SN-S1_TOR1", "isRecommended": False, "remarks": "Switch(es) are not connected", "resources": {}}
     client = StubClient(_tor_responses(topo, associations=[], candidates=[candidate]))
 
-    with pytest.raises(RuntimeError, match=r"S1_TOR1 -> S1_LE1/S1_LE2: ND recommends no port-channel ids .*Switch\(es\) are not connected"):
+    with pytest.raises(RuntimeError, match=r"no port-channel ids: ND recommends none .*not connected.* and tor_pairs gives none"):
         Provisioner(client, topo, settle_seconds=0).phase_tor()
     assert _posts(client) == []
 
 
 def test_phase_tor_live_raises_when_the_tor_is_not_a_candidate_at_all():
     topo = _topo()
+    topo = replace(topo, tor_pairs=[replace(topo.tor_pairs[0], tor_po=None, leaf_po=None, vpc_id=None)])
     client = StubClient(_tor_responses(topo, associations=[], candidates=[]))
 
-    with pytest.raises(RuntimeError, match="S1_TOR1 -> S1_LE1/S1_LE2: ND recommends no port-channel ids"):
+    with pytest.raises(RuntimeError, match="S1_TOR1 -> S1_LE1/S1_LE2: no port-channel ids: ND recommends none"):
         Provisioner(client, topo, settle_seconds=0).phase_tor()
 
 
@@ -1049,3 +1053,43 @@ def test_phase_tor_live_raises_on_a_failed_multi_status_item_and_does_not_deploy
 
 def test_phase_order_runs_tor_after_vpc_and_before_isn():
     assert provision.PHASES == ["fabrics", "msd", "switches", "vpc", "tor", "isn", "overlay", "deploy"]
+
+
+def test_phase_tor_live_falls_back_to_the_topology_ids_when_nd_recommends_none(capsys):
+    """ND 4.2.1 answers every accessAssociations query with `resources: {}` (lab, 2026-09-14): the ids come from the YAML."""
+    topo = _topo()
+    candidate = {"accessOrTorSwitchId": "SN-S1_TOR1", "isRecommended": True, "resources": {}}
+    responses = _tor_responses(topo, associations=[candidate], candidates=[candidate])
+    responses["/fabrics/SITE1/accessAssociationActions/associate"] = {"associations": [{"accessOrTorSwitchId": "SN-S1_TOR1", "status": "success"}]}
+    client = StubClient(responses)
+
+    Provisioner(client, topo, settle_seconds=0).phase_tor()
+
+    posts = _posts(client)
+    assert [p[1] for p in posts] == ["/fabrics/SITE1/accessAssociationActions/associate", "/fabrics/SITE1/actions/configSave", "/fabrics/SITE1/actions/deploy"]
+    assert posts[0][2][0]["resources"] == topo.tor_pairs[0].resources() == _TOR_RESOURCES
+    assert "S1_TOR1 -> S1_LE1/S1_LE2: using topology ids" in capsys.readouterr().out
+
+
+def test_phase_tor_live_prefers_nds_recommended_ids_over_the_topology_ids():
+    topo = _topo()
+    recommended = {"accessOrTorPortChannelId": 5, "aggregationOrLeafPortChannelId": 6, "aggregationOrLeafPeerPortChannelId": 6, "aggregationOrLeafVpcId": 6}
+    candidate = {"accessOrTorSwitchId": "SN-S1_TOR1", "isRecommended": True, "resources": recommended}
+    responses = _tor_responses(topo, associations=[], candidates=[candidate])
+    responses["/fabrics/SITE1/accessAssociationActions/associate"] = {"associations": [{"accessOrTorSwitchId": "SN-S1_TOR1", "status": "success"}]}
+    client = StubClient(responses)
+
+    Provisioner(client, topo, settle_seconds=0).phase_tor()
+
+    assert _posts(client)[0][2][0]["resources"] == recommended
+
+
+def test_phase_tor_live_raises_when_neither_nd_nor_the_topology_supplies_ids():
+    topo = _topo()
+    topo = replace(topo, tor_pairs=[replace(topo.tor_pairs[0], tor_po=None, leaf_po=None, vpc_id=None)])
+    candidate = {"accessOrTorSwitchId": "SN-S1_TOR1", "isRecommended": False, "remarks": "Switch(es) are not connected", "resources": {}}
+    client = StubClient(_tor_responses(topo, associations=[], candidates=[candidate]))
+
+    with pytest.raises(RuntimeError, match=r"S1_TOR1 -> S1_LE1/S1_LE2: no port-channel ids: ND recommends none .*not connected.* and tor_pairs gives none"):
+        Provisioner(client, topo, settle_seconds=0).phase_tor()
+    assert _posts(client) == []

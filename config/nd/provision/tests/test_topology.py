@@ -84,6 +84,46 @@ def test_shipped_topologies_declare_the_site1_tor_pair():
     t431 = load(HERE / "topology_nd431.yaml")
     assert [(p.fabric, p.tor, p.leaf, p.peer) for p in t421.tor_pairs] == [("SITE1", "S1_TOR1", "S1_LE1", "S1_LE2")]
     assert [(p.fabric, p.tor, p.leaf, p.peer) for p in t431.tor_pairs] == [("SITE1", "S3_TOR1", "S3_LE1", "S3_LE2")]
+    # ND 4.2.1 recommends no ids (resources: {} in every query form, lab-verified 2026-09-14), so the files carry them.
+    assert (
+        t421.tor_pairs[0].resources()
+        == t431.tor_pairs[0].resources()
+        == {
+            "accessOrTorPortChannelId": 1,
+            "aggregationOrLeafPortChannelId": 1,
+            "aggregationOrLeafPeerPortChannelId": 1,
+            "aggregationOrLeafVpcId": 1,
+        }
+    )
+
+
+def test_tor_pair_without_ids_has_no_resources(tmp_path):
+    good = tmp_path / "t.yaml"
+    good.write_text(_TOR_FABRIC + "vpc_pairs:\n  - {fabric: SITE1, switch: LE1, peer: LE2}\ntor_pairs:\n  - {fabric: SITE1, tor: TOR1, leaf: LE1, peer: LE2}\n")
+    assert load(good).tor_pairs[0].resources() == {}
+
+
+def test_tor_pair_peer_po_and_vpc_id_default_to_the_leaf_po(tmp_path):
+    good = tmp_path / "t.yaml"
+    good.write_text(
+        _TOR_FABRIC
+        + "vpc_pairs:\n  - {fabric: SITE1, switch: LE1, peer: LE2}\ntor_pairs:\n  - {fabric: SITE1, tor: TOR1, leaf: LE1, peer: LE2, tor_po: 7, leaf_po: 8}\n"
+    )
+    assert load(good).tor_pairs[0].resources() == {
+        "accessOrTorPortChannelId": 7,
+        "aggregationOrLeafPortChannelId": 8,
+        "aggregationOrLeafPeerPortChannelId": 8,
+        "aggregationOrLeafVpcId": 8,
+    }
+
+
+def test_tor_pair_rejects_only_one_of_the_two_required_ids(tmp_path):
+    bad = tmp_path / "t.yaml"
+    bad.write_text(
+        _TOR_FABRIC + "vpc_pairs:\n  - {fabric: SITE1, switch: LE1, peer: LE2}\ntor_pairs:\n  - {fabric: SITE1, tor: TOR1, leaf: LE1, peer: LE2, tor_po: 7}\n"
+    )
+    with pytest.raises(ValueError, match="tor_pairs: TOR1: tor_po and leaf_po must be given together"):
+        load(bad)
 
 
 _TOR_FABRIC = (

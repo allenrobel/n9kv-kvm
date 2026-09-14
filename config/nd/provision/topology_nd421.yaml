@@ -102,9 +102,11 @@ vpc_pairs:
 
 tor_pairs:
   # ND ToR pairing (accessAssociationActions/associate): the ToR's Ethernet1/1-1/2 uplinks become a port-channel on
-  # the ToR and a ToR-owned vPC on the leaf pair. Port-channel/vPC ids come from ND's own recommendation
-  # (GET accessAssociations?includeCandidates=true), which avoids the peer-link port-channel500.
-  - {fabric: SITE1, tor: S1_TOR1, leaf: S1_LE1, peer: S1_LE2}
+  # the ToR and a ToR-owned vPC on the leaf pair. ND 4.2.1 recommends no ids (GET accessAssociations answers
+  # `resources: {}` in every form, 2026-09-14), so the ids are pinned here: port-channel1/vpc1 on both sides, the
+  # GUI's first free id, clear of the peer-link port-channel500 and of vpc200/201/210 + Ethernet1/8-1/10, which the
+  # cisco.nd nd_interface_vpc_* integration targets own on this leaf pair. A recommendation from ND, if any, wins.
+  - {fabric: SITE1, tor: S1_TOR1, leaf: S1_LE1, peer: S1_LE2, tor_po: 1, leaf_po: 1, vpc_id: 1}
 
 overlay:
   # One VRF and one VLAN-2 network, created at the MSD level so both sites share the L3/L2 VNIs (ND propagates

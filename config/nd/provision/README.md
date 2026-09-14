@@ -59,12 +59,17 @@ uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 \
   first free id, clear of the `port-channel500` peer-link and of vpc200/201/210 + Ethernet1/8-1/10 that the `cisco.nd` `nd_interface_vpc_*`
   integration targets own on this leaf pair. The answer is HTTP 207 with per-item `status`; a `failed` item aborts the phase before any deploy. No
   ids from either source (the ToR is not a candidate, or `remarks` says its uplinks are not connected, and the entry pins none) also aborts rather
-  than guessing; under `--dry-run` the POST is logged with the pinned ids or `<nd-recommended>` placeholders. It then recalculates and deploys the fabric: the association
-  creates the ToR uplink port-channel on the ToR and a ToR-owned vPC (plus port-channels) on both leafs. Until it runs, every Recalculate on 4.2.1
-  raises the `No leaf-tor pairing is found for the tor` anomaly (`Fabric_Template~configSave:handleTorLeafPairing`); 4.3.1 hides the same condition.
+  than guessing; under `--dry-run` the POST is logged with the pinned ids or `<nd-recommended>` placeholders. It then recalculates and deploys the fabric.
+  Verified on ND 4.2.1 (2026-09-14): the answer was `Associated successfully`; the deploy left nothing pending; the ToR got `port-channel1`
+  (`uplinkPo`, `tor-connected-to-vPC-leaf:S1_LE1~S1_LE2-vPC1`) with Ethernet1/1-1/2 as `uplinkPoMember`; each leaf got `vPC1` (`vpcUplink`,
+  member Ethernet1/3) and `port-channel1` (`vpcUplinkPo`); everything is `allowedVlans: none` until a network is attached. The association GET then
+  reports the ToR with `remarks: Already paired` and the ids in `resources`, which is what the skip keys on, and the
+  `No leaf-tor pairing is found for the tor` anomaly (`Fabric_Template~configSave:handleTorLeafPairing`, raised by every Recalculate on 4.2.1;
+  4.3.1 hides the same condition) cleared with that deploy.
 - Pairing a ToR adds a vPC ND owns to the leaf pair. Before running the `cisco.nd` vPC integration targets against a paired fabric, check that vPC's
   `policyType` against the modules' managed policy set (`trunkVpcHost` for `nd_interface_vpc_trunk_host`, `accessVpcHost` for `nd_interface_vpc_access`;
-  their `overridden` scenario queries the fabric's vPC interfaces and deletes every one of its managed type that it did not declare). Also run those
+  their `overridden` scenario queries the fabric's vPC interfaces and deletes every one of its managed type that it did not declare). ND 4.2.1 gives
+  the ToR-pairing vPC `policyType: vpcUplink`, outside both sets, so `overridden` leaves it alone. Also run those
   targets with `nd_test_manage_vpc_pairs=false`: their default setup unpairs and re-pairs LE1/LE2 with a virtual peer-link, which would drop the
   ToR association with the pair. Pair one controller first and run `nd_interface_vpc_trunk_host` there before pairing the other.
 - The `deploy` phase recalculates and deploys the fabric group (MSD) after its child fabrics; that group deploy is what creates the multisite

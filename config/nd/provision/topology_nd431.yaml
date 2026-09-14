@@ -100,11 +100,17 @@ vpc_pairs:
   - {fabric: SITE1, switch: S3_LE1, peer: S3_LE2}
   - {fabric: SITE1, switch: S3_LE3, peer: S3_LE4}
 
+tor_pairs:
+  # ND ToR pairing (accessAssociationActions/associate): the ToR's Ethernet1/1-1/2 uplinks become a port-channel on
+  # the ToR and a ToR-owned vPC on the leaf pair. Port-channel/vPC ids come from ND's own recommendation
+  # (GET accessAssociations?includeCandidates=true), which avoids the peer-link port-channel500.
+  - {fabric: SITE1, tor: S3_TOR1, leaf: S3_LE1, peer: S3_LE2}
+
 overlay:
   # One VRF and one VLAN-2 network, created at the MSD level so both sites share the L3/L2 VNIs (ND propagates
   # them to SITE1 and SITE2 as vxlanIbgp objects). Attached to the S1 vPC pair and to S2_LE1, whose Ethernet1/2
-  # is the S2_H1 host port (192.0.1.172/24, anycast gateway 192.0.1.1). S1_H1 sits behind S1_TOR1 and needs ND's
-  # ToR pairing, which the attachment API does not model; see the README.
+  # is the S2_H1 host port (192.0.1.172/24, anycast gateway 192.0.1.1). S1_H1 sits behind S1_TOR1: the `tor` phase pairs
+  # the ToR with the S1 leaf vPC, but the attachment API has no ToR-port concept, so that host port is not attached here yet.
   vrfs:
     - fabrics: [MSD]
       object: {vrfName: LAB, vrfType: vxlan, vrfId: 50001, vlanId: 2001}

@@ -77,3 +77,45 @@ def test_vpc_pair_must_reference_switches_of_its_own_fabric(tmp_path):
     )
     with pytest.raises(ValueError, match="B is not in fabric SITE1"):
         load(bad)
+
+
+def test_shipped_topologies_declare_the_site1_tor_pair():
+    t421 = load(HERE / "topology_nd421.yaml")
+    t431 = load(HERE / "topology_nd431.yaml")
+    assert [(p.fabric, p.tor, p.leaf, p.peer) for p in t421.tor_pairs] == [("SITE1", "S1_TOR1", "S1_LE1", "S1_LE2")]
+    assert [(p.fabric, p.tor, p.leaf, p.peer) for p in t431.tor_pairs] == [("SITE1", "S3_TOR1", "S3_LE1", "S3_LE2")]
+
+
+_TOR_FABRIC = (
+    "fabrics:\n  - name: SITE1\n    type: vxlanIbgp\n    asn: '65001'\n"
+    "    switches: [{hostname: LE1, ip: 10.0.0.1, role: leaf}, {hostname: LE2, ip: 10.0.0.2, role: leaf}, {hostname: TOR1, ip: 10.0.0.3, role: tor}]\n"
+    "  - name: SITE2\n    type: vxlanIbgp\n    asn: '65002'\n    switches: [{hostname: LE9, ip: 10.0.0.9, role: leaf}]\n"
+    "fabric_groups: []\nisn: {}\noverlay: {}\n"
+)
+
+
+def test_tor_pair_unknown_switch_is_rejected(tmp_path):
+    bad = tmp_path / "t.yaml"
+    bad.write_text(_TOR_FABRIC + "vpc_pairs:\n  - {fabric: SITE1, switch: LE1, peer: LE2}\ntor_pairs:\n  - {fabric: SITE1, tor: TOR9, leaf: LE1, peer: LE2}\n")
+    with pytest.raises(ValueError, match="tor_pairs: unknown switch TOR9"):
+        load(bad)
+
+
+def test_tor_pair_must_reference_switches_of_its_own_fabric(tmp_path):
+    bad = tmp_path / "t.yaml"
+    bad.write_text(_TOR_FABRIC + "vpc_pairs:\n  - {fabric: SITE1, switch: LE1, peer: LE2}\ntor_pairs:\n  - {fabric: SITE1, tor: TOR1, leaf: LE1, peer: LE9}\n")
+    with pytest.raises(ValueError, match="tor_pairs: LE9 is not in fabric SITE1"):
+        load(bad)
+
+
+def test_tor_pair_leafs_must_be_a_declared_vpc_pair(tmp_path):
+    bad = tmp_path / "t.yaml"
+    bad.write_text(_TOR_FABRIC + "vpc_pairs: []\ntor_pairs:\n  - {fabric: SITE1, tor: TOR1, leaf: LE1, peer: LE2}\n")
+    with pytest.raises(ValueError, match="tor_pairs: LE1/LE2 is not declared under vpc_pairs"):
+        load(bad)
+
+
+def test_tor_pair_accepts_the_vpc_pair_in_either_order(tmp_path):
+    good = tmp_path / "t.yaml"
+    good.write_text(_TOR_FABRIC + "vpc_pairs:\n  - {fabric: SITE1, switch: LE2, peer: LE1}\ntor_pairs:\n  - {fabric: SITE1, tor: TOR1, leaf: LE1, peer: LE2}\n")
+    assert load(good).tor_pairs[0].tor == "TOR1"

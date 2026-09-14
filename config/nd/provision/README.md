@@ -1,13 +1,13 @@
 # ND provisioning tool
 
-Provisions one lab testbed (fabrics, MSD, switches, ISN links, overlay, campus leaf) into one Nexus Dashboard from a declarative
+Provisions one lab testbed (fabrics, MSD, switches, vPC + ToR pairing, ISN links, overlay, campus leaf) into one Nexus Dashboard from a declarative
 topology file, and snapshots/diffs ND state to prove two testbeds mirror each other. Replaces the ad-hoc REST steps that
 used to live only in the `provision-isn` skill and `docs/nd4_fabrics_bringup.md`.
 
 ## Files
 
 - `topology_nd421.yaml` / `topology_nd431.yaml` - the two testbeds (SITE1/SITE2/ISN/MSD + the CAMPUS1 Cat9kv leaf per controller); differ only in hostnames and mgmt IPs
-- `provision.py` - phased, idempotent, `--dry-run` (phases: fabrics, msd, switches, vpc, isn, overlay, deploy)
+- `provision.py` - phased, idempotent, `--dry-run` (phases: fabrics, msd, switches, vpc, tor, isn, overlay, deploy)
 - `snapshot.py` - `dump` (read-only) and `diff` (normalized)
 - `nd_client.py`, `topology.py` - library code; `tests/` - pytest for the pure parts
 
@@ -18,7 +18,7 @@ source ~/repos/n9kv-kvm/env_prod/env.sh
 cd ~/repos/n9kv-kvm
 uv run config/nd/provision/provision.py --topology config/nd/provision/topology_nd431.yaml --nd-ip 10.10.20.20 --phase all --dry-run
 uv run config/nd/provision/provision.py --topology config/nd/provision/topology_nd431.yaml --nd-ip 10.10.20.20 --phase fabrics
-# ... msd, switches (waits for discovery), isn, overlay, deploy
+# ... msd, switches (waits for discovery), vpc, tor, isn, overlay, deploy
 uv run config/nd/provision/snapshot.py dump ~/tmp/snap_nd421 --nd-ip 10.10.20.10
 uv run config/nd/provision/snapshot.py dump ~/tmp/snap_nd431 --nd-ip 10.10.20.20
 uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 \
@@ -43,11 +43,25 @@ uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 \
   VRF/network names in the body). An access-mode attachment interface (`{mode: access, interfaceRange: Ethernet1/2}`) makes the tool first put that
   port into access mode (`accessHost` policy): every unused leaf port defaults to `trunkHost` and ND refuses an access attachment on a trunk port.
   The shipped overlay is VRF `LAB` (L3VNI 50001) + network `LAB_NET1` (VLAN 2, L2VNI 30001, anycast gateway 192.0.1.1/24) on the S1 vPC pair and
-  S2_LE1 (Ethernet1/2 = the S2_H1 host port). S1_H1 hangs off S1_TOR1 and is not reachable through this: the attachment API has no ToR-port
-  concept, so that leg needs ND's ToR pairing, which the tool does not model yet.
+  S2_LE1 (Ethernet1/2 = the S2_H1 host port). S1_H1 hangs off S1_TOR1 and is not reachable through this yet: the attachment API has no ToR-port
+  concept. The `tor` phase now pairs the ToR with its leaf vPC; attaching `LAB_NET1` to the ToR host port is the remaining step.
 - The `vpc` phase pairs the leaf pairs listed under `vpc_pairs:` with ND's default template (`PUT /fabrics/{f}/switches/{sn}/vpcPair`,
   `vpcAction: pair`); ND allocates the domain id in pairing order and generates the `port-channel500` peer-link over the discovered leaf link.
   It then recalculates and deploys the fabric. Pairs ND already lists (`GET /fabrics/{f}/vpcPairs`, either order) are skipped.
+- The `tor` phase runs after `vpc` and models ND's ToR pairing (GUI: *Leaf-ToR pairing*) for the entries under `tor_pairs:`; each names a ToR
+  and the leaf vPC pair it uplinks to (both leafs must be a `vpc_pairs` entry, validated at load). Per ToR it reads
+  `GET /fabrics/{f}/accessAssociations?aggregationOrLeafSwitchId=<LE1>&aggregationOrLeafPeerSwitchId=<LE2>` (400 without the leaf serial) and skips the
+  ToR when its record carries a non-empty `resources` block, the mark of a real association: without `includeCandidates` ND still lists an unpaired ToR
+  as a recommendation with `isRecommended: true` and empty `resources`. Otherwise it re-reads with `includeCandidates=true`, takes the port-channel /
+  vPC ids ND recommends for that ToR and posts them back as a one-item list to `accessAssociationActions/associate`; using ND's ids keeps them clear
+  of the `port-channel500` peer-link and of whatever the leafs already allocated. The answer is HTTP 207 with per-item `status`; a `failed` item aborts
+  the phase before any deploy. No recommendation (the ToR is not a candidate, or `remarks` says its uplinks are not connected) also aborts rather than
+  guessing ids; under `--dry-run` the POST is logged with `<nd-recommended>` placeholders. It then recalculates and deploys the fabric: the association
+  creates the ToR uplink port-channel on the ToR and a ToR-owned vPC (plus port-channels) on both leafs. Until it runs, every Recalculate on 4.2.1
+  raises the `No leaf-tor pairing is found for the tor` anomaly (`Fabric_Template~configSave:handleTorLeafPairing`); 4.3.1 hides the same condition.
+- Pairing a ToR adds a vPC ND owns to the leaf pair. Before running the `cisco.nd` vPC integration targets against a paired fabric, check that vPC's
+  `policyType` against the modules' managed policy set: the `overridden` scenario treats its one vPC as the whole source of truth and deletes anything
+  it considers managed. Pair one controller first and run `nd_interface_vpc_trunk_host` there before pairing the other.
 - The `deploy` phase recalculates and deploys the fabric group (MSD) after its child fabrics; that group deploy is what creates the multisite
   underlay/overlay links between the border gateways and their `ext_base_border_multisite` / `evpn_multisite_interface` policies.
 - `snapshot.py diff` maps hostnames with alphanumeric lookarounds (hostnames contain `_`), so per-switch files such as

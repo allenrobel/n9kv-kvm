@@ -68,6 +68,17 @@ class VpcPair:
 
 
 @dataclass(frozen=True)
+class TorPair:
+    """One ToR (access) switch associated with a leaf vPC pair. ND's ToR pairing creates the ToR-facing
+    vPC on both leafs and the uplink port-channel on the ToR; the leaf pair must be declared under vpc_pairs."""
+
+    fabric: str
+    tor: str
+    leaf: str
+    peer: str
+
+
+@dataclass(frozen=True)
 class Isn:
     links: list[Link] = field(default_factory=list)
     wan: Wan | None = None
@@ -88,6 +99,7 @@ class Topology:
     isn: Isn
     overlay: Overlay
     vpc_pairs: list[VpcPair] = field(default_factory=list)
+    tor_pairs: list[TorPair] = field(default_factory=list)
 
     def switches(self) -> dict[str, Switch]:
         return {s.hostname: s for f in self.fabrics for s in f.switches}
@@ -127,6 +139,15 @@ def _validate(topo: Topology) -> None:
                 raise ValueError(f"vpc_pairs: {host} is not in fabric {pair.fabric}")
         if pair.switch == pair.peer:
             raise ValueError(f"vpc_pairs: {pair.switch} cannot pair with itself")
+    vpc_pairs = {frozenset((p.switch, p.peer)) for p in topo.vpc_pairs}
+    for tor_pair in topo.tor_pairs:
+        for host in (tor_pair.tor, tor_pair.leaf, tor_pair.peer):
+            if host not in names:
+                raise ValueError(f"tor_pairs: unknown switch {host}")
+            if topo.switch_fabric(host) != tor_pair.fabric:
+                raise ValueError(f"tor_pairs: {host} is not in fabric {tor_pair.fabric}")
+        if frozenset((tor_pair.leaf, tor_pair.peer)) not in vpc_pairs:
+            raise ValueError(f"tor_pairs: {tor_pair.leaf}/{tor_pair.peer} is not declared under vpc_pairs (ToR pairing needs the leaf vPC first)")
     for att in topo.overlay.vrf_attachments + topo.overlay.network_attachments:
         switch_name = att.get("switch")
         if not switch_name:
@@ -146,6 +167,7 @@ def load(path: Path) -> Topology:
     isn = Isn(links=[Link(**item) for item in isn_raw.get("links", [])], wan=Wan(**isn_raw["wan"]) if isn_raw.get("wan") else None)
     overlay = Overlay(**(raw.get("overlay", {}) or {}))
     pairs = [VpcPair(**item) for item in raw.get("vpc_pairs", []) or []]
-    topo = Topology(fabrics=fabrics, fabric_groups=groups, isn=isn, overlay=overlay, vpc_pairs=pairs)
+    tor_pairs = [TorPair(**item) for item in raw.get("tor_pairs", []) or []]
+    topo = Topology(fabrics=fabrics, fabric_groups=groups, isn=isn, overlay=overlay, vpc_pairs=pairs, tor_pairs=tor_pairs)
     _validate(topo)
     return topo

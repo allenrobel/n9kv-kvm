@@ -159,3 +159,12 @@ def test_tor_pair_accepts_the_vpc_pair_in_either_order(tmp_path):
     good = tmp_path / "t.yaml"
     good.write_text(_TOR_FABRIC + "vpc_pairs:\n  - {fabric: SITE1, switch: LE2, peer: LE1}\ntor_pairs:\n  - {fabric: SITE1, tor: TOR1, leaf: LE1, peer: LE2}\n")
     assert load(good).tor_pairs[0].tor == "TOR1"
+
+
+def test_shipped_topologies_attach_lab_net1_to_the_tor_host_port_in_access_mode():
+    """S1_H1 / S3_H1 hang off the ToR's Ethernet1/3; the ToR is its own attachment row (no ToR-port field on the leaf row in ND 4.x)."""
+    for fn, tor in (("topology_nd421.yaml", "S1_TOR1"), ("topology_nd431.yaml", "S3_TOR1")):
+        topo = load(HERE / fn)
+        rows = [a for a in topo.overlay.network_attachments if a["switch"] == tor]
+        assert rows == [{"fabric": "SITE1", "network": "LAB_NET1", "switch": tor, "vlan": 2, "interfaces": [{"mode": "access", "interfaceRange": "Ethernet1/3"}]}]
+        assert any(p.tor == tor for p in topo.tor_pairs), f"{tor} must be paired before its host port is attached"

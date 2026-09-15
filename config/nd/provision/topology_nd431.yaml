@@ -111,8 +111,9 @@ tor_pairs:
 overlay:
   # One VRF and one VLAN-2 network, created at the MSD level so both sites share the L3/L2 VNIs (ND propagates
   # them to SITE1 and SITE2 as vxlanIbgp objects). Attached to the S1 vPC pair and to S2_LE1, whose Ethernet1/2
-  # is the S2_H1 host port (192.0.1.172/24, anycast gateway 192.0.1.1). S1_H1 sits behind S1_TOR1: the `tor` phase pairs
-  # the ToR with the S1 leaf vPC, but the attachment API has no ToR-port concept, so that host port is not attached here yet.
+  # is the S2_H1 host port (192.0.1.172/24, anycast gateway 192.0.1.1). S1_H1 (192.0.1.171/24) sits behind S1_TOR1
+  # Ethernet1/3: after the `tor` phase pairs the ToR with the S1 leaf vPC, the ToR gets its own attachment row (ND 4.x has
+  # no ToR-port field on the leaf row), listed last so the leaf rows are attached first.
   vrfs:
     - fabrics: [MSD]
       object: {vrfName: LAB, vrfType: vxlan, vrfId: 50001, vlanId: 2001}
@@ -134,3 +135,4 @@ overlay:
     - {fabric: SITE1, network: LAB_NET1, switch: S3_LE1, vlan: 2, interfaces: []}
     - {fabric: SITE1, network: LAB_NET1, switch: S3_LE2, vlan: 2, interfaces: []}
     - {fabric: SITE2, network: LAB_NET1, switch: S4_LE1, vlan: 2, interfaces: [{mode: access, interfaceRange: Ethernet1/2}]}
+    - {fabric: SITE1, network: LAB_NET1, switch: S3_TOR1, vlan: 2, interfaces: [{mode: access, interfaceRange: Ethernet1/3}]}

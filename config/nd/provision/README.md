@@ -43,8 +43,9 @@ uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 \
   VRF/network names in the body). An access-mode attachment interface (`{mode: access, interfaceRange: Ethernet1/2}`) makes the tool first put that
   port into access mode (`accessHost` policy): every unused leaf port defaults to `trunkHost` and ND refuses an access attachment on a trunk port.
   The shipped overlay is VRF `LAB` (L3VNI 50001) + network `LAB_NET1` (VLAN 2, L2VNI 30001, anycast gateway 192.0.1.1/24) on the S1 vPC pair and
-  S2_LE1 (Ethernet1/2 = the S2_H1 host port). S1_H1 hangs off S1_TOR1 and is not reachable through this yet: the attachment API has no ToR-port
-  concept. The `tor` phase now pairs the ToR with its leaf vPC; attaching `LAB_NET1` to the ToR host port is the remaining step.
+  S2_LE1 (Ethernet1/2 = the S2_H1 host port) and, once the `tor` phase has paired the ToR, S1_TOR1 (Ethernet1/3 = the S1_H1 host port). ND 4.x has
+  no ToR-port field on a leaf's attachment row; the ToR is an attachment target of its own (the attachment query lists it with `switchRole: tor`),
+  so the ToR host port is one more `network_attachments` entry in access mode, ordered after the leaf rows.
 - The `vpc` phase pairs the leaf pairs listed under `vpc_pairs:` with ND's default template (`PUT /fabrics/{f}/switches/{sn}/vpcPair`,
   `vpcAction: pair`); ND allocates the domain id in pairing order and generates the `port-channel500` peer-link over the discovered leaf link.
   It then recalculates and deploys the fabric. Pairs ND already lists (`GET /fabrics/{f}/vpcPairs`, either order) are skipped.

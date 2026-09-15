@@ -71,7 +71,8 @@ The repo is organized by **lab subsystem**, not by language. Each subdir is larg
 
 - **Switch identity is encoded in YAML `sid` + `base_mac`.** `nexus9000v.py` derives per-interface MAC addresses deterministically from `sid` (1–255) and the
   `52:54:00` OUI; bridges named in `mgmt_bridge` / `isl_bridges` must already exist on the host (see `config/bridges/`). The constraint
-  `len(neighbors) == len(isl_bridges)` is enforced — these are paired lists, not independent.
+  `len(neighbors) == len(isl_bridges)` is enforced — these are paired lists, not independent. `config/cat9kv/` only: an optional `isl_ports` gives the
+  front-panel port number for each `isl_bridges` entry (default `1..N`), letting a link land on a non-contiguous port instead of the first N.
 - **The startup-config flow is Python, sourced from the per-switch YAML.** The former Ansible flow (`startup_config_iso.yaml` + `nxos_startup_config.j2`)
   and the `cisco.dcnm` fabric playbooks have been fully removed — fabric config now lives in the separate `ansible-nd` repo. `config/nexus9000v/startup_config.py`
   reads `global_config.yaml` (`nxos_boot_image`) + a per-switch `S*.yaml` (`mgmt_ip`, `mgmt_gw`, `isl_bridges`), renders
@@ -85,8 +86,8 @@ The repo is organized by **lab subsystem**, not by language. Each subdir is larg
   (10.10.20.10, data on `BR_ND_DATA_12`); SITE3/SITE4/WAN2/S3_H1/S4_H1 are their exact mirror under ND 4.3.1
   (10.10.20.20, data on `BR_ND_DATA_14`), with identical fabric names, ASNs and pools. Only hostnames, sids and the
   third octet of the mgmt IPs (12 -> 14) differ. `9914-bridges.yaml` is the
-  SITE3/SITE4 bridge set including their management bridge `BR_ND_DATA_14`. Each controller also has a `CAMPUS1` campus fabric with one
-  Catalyst 9000v leaf (`C1_LE1` / `C3_LE1`, `.181`).
+  SITE3/SITE4 bridge set including their management bridge `BR_ND_DATA_14`. Each controller also has a `CAMPUS1` campus fabric with
+  a Catalyst 9000v leaf and spine (`C1_LE1`/`C1_SP1`, `C3_LE1`/`C3_SP1`, `.181`/`.182`) joined by one link on the leaf's `Gi1/0/8`.
 - **ND has multiple coexisting versions** (`nd_321e.sh`, `nd_411g.sh`, `nd-42-1-*-node*.sh`, …). Each is a distinct VM definition; the lab can run several
   ND clusters simultaneously on different bridges. The numeric suffixes (`.105`, `.119`, `.4`) are the management IP last octet, not version numbers.
 - **`n9kv-kvm/` subdirectory at the repo root** is a stray Python venv (note `pyvenv.cfg`, `bin/`, `lib/`), not source. The real venv is `.venv/`. Ignore
@@ -99,7 +100,8 @@ The repo is organized by **lab subsystem**, not by language. Each subdir is larg
 - Switch/host hostnames encode site explicitly: `S<site>_<role><idx>` (e.g. `S1_BG1`, `S2_SP1`, `S1_LE1`, `S1_H1`, `S1_TOR1`). Roles: `BG` (border gateway),
   `SP` (spine), `LE` (leaf), `TOR` (top-of-rack), `H` (host container). Indices renumber per-site starting at 1. Catalyst 9000v campus leaves use
   `C<n>_LE<idx>` (`C1_LE1` on ND 4.2.1, `C3_LE1` on the ND 4.3.1 mirror); their `sid` uses SRII role digit `7` (1701, 3701) and their mgmt IPs the
-  `.18x` block. Bridge names are subject to the Linux
+  `.18x` block. Campus spines use `C<n>_SP<idx>` (`C1_SP1`, `C3_SP1`); their `sid` uses the same role digit `7` with the `02` suffix (1702, 3702) and
+  mgmt `.182`. Bridge names are subject to the Linux
   IFNAMSIZ limit (15 chars), so they use shorter codes than hostnames: intra-site bridges follow `BR_S<site>_<upper>_<lower>_<n>` with the higher-tier
   endpoint first (BG > SP > LE > T) — note `TOR` is shortened to `T` in bridge names only (e.g. hostname `S1_TOR1` ↔ bridge `BR_S1_LE1_T1_1`). The
   link-index suffix `_<n>` is always present. Same-tier peer bridges sort endpoints alphabetically/numerically. Cross-site (ISN) bridges use

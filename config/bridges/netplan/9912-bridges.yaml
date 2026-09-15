@@ -27,6 +27,7 @@
 # S1_LE3_INTERFACE_2      S1_LE4_INTERFACE_2      BR_S1_LE3_LE4_1   (VPC peer-link)
 # WAN1_INTERFACE_2        S1_BG1_INTERFACE_3      BR_ISN_WAN_S1_1   (C8000V WAN/ISN router)
 # WAN1_INTERFACE_3        S2_BG1_INTERFACE_3      BR_ISN_WAN_S2_1   (C8000V WAN/ISN router)
+# C1_SP1_INTERFACE_1       C1_LE1_INTERFACE_8      BR_C1_SP1_LE1_1   (CAMPUS1 Cat9kv spine-leaf)
 # All mgmt0                                       BR_ND_DATA_12
 
 network:
@@ -190,6 +191,16 @@ network:
       interfaces: []
 
     BR_ISN_WAN_S2_1:
+      openvswitch: {}
+      dhcp4: false
+      dhcp6: false
+      mtu: 9216
+      accept-ra: false
+      parameters:
+        stp: false
+      interfaces: []
+
+    BR_C1_SP1_LE1_1:
       openvswitch: {}
       dhcp4: false
       dhcp6: false

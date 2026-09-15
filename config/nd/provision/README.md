@@ -18,12 +18,12 @@ source ~/repos/n9kv-kvm/env_prod/env.sh
 cd ~/repos/n9kv-kvm
 uv run config/nd/provision/provision.py --topology config/nd/provision/topology_nd431.yaml --nd-ip 10.10.20.20 --phase all --dry-run
 uv run config/nd/provision/provision.py --topology config/nd/provision/topology_nd431.yaml --nd-ip 10.10.20.20 --phase fabrics
-# ... msd, switches (waits for discovery), vpc, tor, isn, overlay, deploy
+# ... msd, switches (waits for discovery; also pins the Catalyst mgmt-port intent to iosXeMgmt/cdp:false in campus fabrics), vpc, tor, isn, overlay, deploy
 uv run config/nd/provision/snapshot.py dump ~/tmp/snap_nd421 --nd-ip 10.10.20.10
 uv run config/nd/provision/snapshot.py dump ~/tmp/snap_nd431 --nd-ip 10.10.20.20
 uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 \
   --map S1_BG1=S3_BG1 --map S1_SP1=S3_SP1 --map S1_LE1=S3_LE1 --map S1_LE2=S3_LE2 --map S1_LE3=S3_LE3 --map S1_LE4=S3_LE4 \
-  --map S1_TOR1=S3_TOR1 --map S2_BG1=S4_BG1 --map S2_SP1=S4_SP1 --map S2_LE1=S4_LE1 --map WAN1=WAN2 --map C1_LE1=C3_LE1
+  --map S1_TOR1=S3_TOR1 --map S2_BG1=S4_BG1 --map S2_SP1=S4_SP1 --map S2_LE1=S4_LE1 --map WAN1=WAN2 --map C1_LE1=C3_LE1 --map C1_SP1=C3_SP1
 ```
 
 ## Gotchas carried over from ND 4.2.1
@@ -110,9 +110,27 @@ uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 \
 - IOS-XE runs one BGP process: any stray `router bgp` on the WAN router other than the ISN ASN aborts the deploy mid-script.
 - `GET /links` needs `fabricName`; policy lists page at 10 - the client always walks pages.
 - ebgpVrfLite links put no IPs on parent interfaces; they appear on subinterfaces once a VRF is extended.
-- `CAMPUS1` is a `vxlanCampus` fabric (Campus VXLAN EVPN) holding one Catalyst 9000v leaf with no links; it exists so the `cisco.nd` IOS-XE interface
-  tests have an ND-managed Catalyst. `_switch_password` picks `IOSXE_PASSWORD` by switch platform (`ios-xe`), so both `ISN` and `CAMPUS1` use it.
-  The leaf is added with `preserveConfig: false` (ND owns its config, like the NX-OS fabrics).
+- `CAMPUS1` is a `vxlanCampus` fabric (Campus VXLAN EVPN) holding a Catalyst 9000v leaf and spine with one leaf-spine link (leaf
+  `GigabitEthernet1/0/8` to spine `GigabitEthernet1/0/1`), an `iosXeNumbered` link policy observed on both 4.2.1 and 4.3.1; the fabric pins
+  `fabricMtu: 8978`. Both switches' `GigabitEthernet0/0` management ports also share an ND data bridge, so IOS-XE's default CDP turns that
+  adjacency into a second intra-fabric link and Recalculate & Deploy un-configures the port; the fix is two halves: the Cat9kv day-0 config
+  disables CDP on `GigabitEthernet0/0`, and the `switches` phase pins ND's own `iosXeMgmt` intent for that port to `cdp: false`
+  (`_ensure_mgmt_cdp_off`) so a Recalculate cannot push `cdp enable` back onto it. `CAMPUS1` exists so the `cisco.nd` IOS-XE interface tests
+  have an ND-managed Catalyst and the fabric-link guard has a corruptible endpoint. `_switch_password` picks `IOSXE_PASSWORD` by switch
+  platform (`ios-xe`); both switches are added with `preserveConfig: false` (ND owns their config). ND refuses an intent-only policy-type
+  change on the link endpoint on both controllers: `PUT .../interfaces/GigabitEthernet1/0/8` with `iosXeAccess` answers HTTP 400
+  `Policy type change from iosXeNumbered to iosXeAccess is not allowed`; on 4.3.1 even re-putting the unchanged record is refused (`not
+  eligible for edit as it has read only parameters`), while 4.2.1 accepts it and adds `linkStateRoutingTag: UNDERLAY`. Recalculate & Deploy
+  (`--phase deploy`), not a record `PUT`, is the reliable way to restore any intent drift on that link. On 4.3.1 the per-interface path also
+  needs URL-encoded slashes (`.../interfaces/GigabitEthernet1%2F0%2F8`; the raw name 404s), while 4.2.1 accepts either form; the interface
+  list endpoint behaves the same on both.
+- Campus link endpoints: deleting the leaf-spine link reclassifies both endpoints. The management port `Gi0/0` - which ND lists as
+  `interfaceType management` with policy `iosXeMgmt` (`mode managed`, vrf/ip carried in `extraConfig`) - comes back as an ordinary
+  ethernet port with the role default (`iosXeTrunkHost` on the leaf, `iosXeRoutedHost` on the spine, `mtu 9198`); restoring `iosXeMgmt`
+  by `PUT` (with `cdp: false`) fixed it. Separately, the campus underlay does not come up on the beta Cat9kv image: link interfaces are
+  up/up with correct addressing, CDP crosses the wire, and the host TAP counters move both ways, but the leaf never answers the spine's
+  ARP, so OSPF has no neighbor and the BGP EVPN session stays Idle; ND intent, deploy and pending config are unaffected.
 - Cat9kv MTU: the image takes `system mtu` / per-port `mtu` only in 1500-8978 and refuses a per-port value above `system mtu`, so ND's campus
   defaults (`systemMtu` 1500, `l2HostInterfaceMtu` 9216 -> 9198) fail every host-port deploy with "Command mtu 9198 is invalid". The shipped
-  `CAMPUS1` settings pin `systemMtu: 8978` and `l2HostInterfaceMtu: 1500` (no `mtu` line in the generated `iosXeTrunkHost` policy).
+  `CAMPUS1` settings pin `systemMtu: 8978`, `fabricMtu: 8978` (intra-fabric link interfaces) and `l2HostInterfaceMtu: 1500` (no `mtu` line in
+  the generated `iosXeTrunkHost` policy).

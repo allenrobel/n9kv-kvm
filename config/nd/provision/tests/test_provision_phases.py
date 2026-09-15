@@ -359,6 +359,88 @@ def test_phase_switches_changes_wrong_role_when_switches_already_present():
     deploy_index = [p[1] for p in posts].index("/fabrics/SITE2/actions/deploy")
     role_index = [p[1] for p in posts].index("/fabrics/SITE2/switchActions/changeRoles")
     assert role_index < deploy_index
+    # SITE1/SITE2/ISN switches are nx-os, not campus: the mgmt-port CDP pin only ever applies to CAMPUS1.
+    assert not any(p[1].endswith("GigabitEthernet0%2F0") for p in _puts(client))
+
+
+def _campus_mgmt_puts(client: StubClient) -> list[tuple]:
+    return [p for p in _puts(client) if p[1].endswith("GigabitEthernet0%2F0")]
+
+
+def _all_present_responses(topo) -> dict:
+    """/fabrics/<name>/switches responses with every switch of every fabric already present, so phase_switches
+    never discovers/adds anything -- used by the campus mgmt-port-CDP tests, which only care about the
+    GigabitEthernet0%2F0 PUT."""
+    return {(f"/fabrics/{fabric.name}/switches", ()): _already_present(fabric) for fabric in topo.fabrics}
+
+
+def test_phase_switches_pins_campus_mgmt_port_cdp_off_when_nd_intent_has_cdp_on():
+    topo = _topo()
+    campus = next(f for f in topo.fabrics if f.name == "CAMPUS1")
+    responses = _all_present_responses(topo)
+    extra_config = " vrf forwarding Mgmt-vrf\n ip address 192.168.99.99 255.255.255.0"
+    for switch in campus.switches:
+        serial = f"SN-{switch.hostname}"
+        responses[(f"/fabrics/CAMPUS1/switches/{serial}/interfaces/GigabitEthernet0%2F0", ())] = {
+            "configData": {
+                "mode": "managed",
+                "networkOS": {"policy": {"policyType": "iosXeMgmt", "adminState": True, "cdp": True, "extraConfig": extra_config}},
+            }
+        }
+    client = StubClient(responses)
+
+    Provisioner(client, topo).phase_switches()
+
+    mgmt_puts = _campus_mgmt_puts(client)
+    assert len(mgmt_puts) == len(campus.switches)
+    for switch in campus.switches:
+        serial = f"SN-{switch.hostname}"
+        put = next(p for p in mgmt_puts if p[1] == f"/fabrics/CAMPUS1/switches/{serial}/interfaces/GigabitEthernet0%2F0")
+        body = put[2]
+        assert body["interfaceType"] == "management"
+        assert body["configData"]["mode"] == "managed"
+        assert body["configData"]["networkOS"]["policy"] == {
+            "policyType": "iosXeMgmt",
+            "adminState": True,
+            "cdp": False,
+            "extraConfig": extra_config,
+        }
+
+
+def test_phase_switches_leaves_campus_mgmt_port_alone_when_cdp_already_off():
+    topo = _topo()
+    campus = next(f for f in topo.fabrics if f.name == "CAMPUS1")
+    responses = _all_present_responses(topo)
+    for switch in campus.switches:
+        serial = f"SN-{switch.hostname}"
+        responses[(f"/fabrics/CAMPUS1/switches/{serial}/interfaces/GigabitEthernet0%2F0", ())] = {
+            "configData": {
+                "mode": "managed",
+                "networkOS": {"policy": {"policyType": "iosXeMgmt", "adminState": True, "cdp": False, "extraConfig": " vrf forwarding Mgmt-vrf"}},
+            }
+        }
+    client = StubClient(responses)
+
+    Provisioner(client, topo).phase_switches()
+
+    assert _campus_mgmt_puts(client) == []
+
+
+def test_phase_switches_builds_mgmt_extra_config_from_the_topology_ip_when_nd_has_no_record():
+    topo = _topo()
+    campus = next(f for f in topo.fabrics if f.name == "CAMPUS1")
+    responses = _all_present_responses(topo)  # deliberately no GigabitEthernet0%2F0 response -> HTTP 404
+    client = StubClient(responses)
+
+    Provisioner(client, topo).phase_switches()
+
+    mgmt_puts = _campus_mgmt_puts(client)
+    assert len(mgmt_puts) == len(campus.switches)
+    by_serial = {p[1]: p[2] for p in mgmt_puts}
+    le1 = by_serial[f"/fabrics/CAMPUS1/switches/SN-{campus.switches[0].hostname}/interfaces/GigabitEthernet0%2F0"]
+    sp1 = by_serial[f"/fabrics/CAMPUS1/switches/SN-{campus.switches[1].hostname}/interfaces/GigabitEthernet0%2F0"]
+    assert le1["configData"]["networkOS"]["policy"]["extraConfig"] == " vrf forwarding Mgmt-vrf\n ip address 192.168.12.181 255.255.255.0"
+    assert sp1["configData"]["networkOS"]["policy"]["extraConfig"] == " vrf forwarding Mgmt-vrf\n ip address 192.168.12.182 255.255.255.0"
 
 
 def test_phase_switches_isn_dry_run_is_ios_xe_and_never_logs_the_password(monkeypatch, capsys):

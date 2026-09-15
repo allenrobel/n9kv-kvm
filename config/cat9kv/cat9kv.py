@@ -20,7 +20,7 @@ bridge, so the image boots without a throwaway bridge.
 
 IOS-XE numbers the NICs in PCI order:
   index 0 -> GigabitEthernet0/0   = management (mgmt_bridge)
-  index i -> GigabitEthernet1/0/i = front-panel port i (isl_bridges[i-1], or padding)
+  index i -> GigabitEthernet1/0/i = front-panel port i (the isl_bridges entry whose isl_ports value is i, or padding)
 """
 
 import subprocess
@@ -75,6 +75,9 @@ class SwitchConfig:  # pylint: disable=too-many-instance-attributes
     mgmt_bridge: str
     neighbors: List[str] = field(default_factory=list)
     isl_bridges: List[str] = field(default_factory=list)
+    # Front-panel port number for each isl_bridges entry (GigabitEthernet1/0/<port>). Defaults to 1..N. Lets a link sit on a
+    # non-contiguous port (the campus leaf keeps 1/0/1..1/0/7 free for the cisco.nd tests and carries its spine link on 1/0/8).
+    isl_ports: List[int] = field(default_factory=list)
 
     # Day-0 management config. Consumed by startup_config.py (which renders the
     # IOS-XE day-0 config / boot ISO); accepted here so the launcher and the
@@ -96,6 +99,16 @@ class SwitchConfig:  # pylint: disable=too-many-instance-attributes
             raise ValueError(f"SID must be a 4-digit value between 1000-9999, got {self.sid}")
         if len(self.neighbors) != len(self.isl_bridges):
             raise ValueError("Number of neighbors must match number of ISL bridges")
+        if not self.isl_ports:
+            self.isl_ports = list(range(1, len(self.isl_bridges) + 1))
+        else:
+            self.isl_ports = [int(port) for port in self.isl_ports]  # YAML may hand back a string ("8"); coerce, don't reject
+        if len(self.isl_ports) != len(self.isl_bridges):
+            raise ValueError("Number of isl_ports must match number of ISL bridges")
+        if len(set(self.isl_ports)) != len(self.isl_ports) or any(port < 1 for port in self.isl_ports):
+            raise ValueError(f"isl_ports must be unique front-panel port numbers >= 1, got {self.isl_ports}")
+        if any(port > 48 for port in self.isl_ports):
+            raise ValueError(f"isl_ports must be <= 48 (highest front-panel port on any platform this launcher supports), got {self.isl_ports}")
 
     @property
     def telnet_port(self) -> int:
@@ -351,6 +364,24 @@ class OVSPortManager:
         cls._run(["ip", "link", "set", "dev", iface.tap, "up"])
 
     @classmethod
+    def attach_port(cls, iface: NetworkInterface) -> None:
+        """Attach an already-existing TAP (a running VM's NIC) to iface.bridge without recreating it.
+
+        Re-cables a live switch: a padding NIC that gains a bridge in the YAML is plugged in with no reload. Idempotent.
+        No-op for padding NICs (bridge None); error if the TAP or the bridge does not exist.
+        """
+        if iface.bridge is None:
+            return
+        if not iface.tap or cls._run(["ip", "link", "show", "dev", iface.tap], check=False).returncode != 0:
+            raise RuntimeError(f"TAP '{iface.tap}' does not exist; the VM is not running (launch it instead of attaching)")
+        if not cls.bridge_exists(iface.bridge):
+            raise RuntimeError(f"OVS bridge '{iface.bridge}' not found. Create it first via netplan / bridges_config_ovs.sh.")
+        cls._run(["ovs-vsctl", "--may-exist", "add-port", iface.bridge, iface.tap])
+        cls._run(["ovs-vsctl", "set", "int", iface.tap, f"mtu_request={cls.MTU}"])
+        cls.ensure_forward_bpdu(iface.bridge)
+        cls._run(["ip", "link", "set", "dev", iface.tap, "up"])
+
+    @classmethod
     def teardown_port(cls, iface: NetworkInterface) -> None:
         """Remove iface.tap from OVS (if attached) and delete it. Safe if already absent."""
         if not iface.tap:
@@ -487,8 +518,8 @@ class SwitchVMManager:
     def _generate_interfaces(self, config: SwitchConfig) -> List[NetworkInterface]:
         """Generate network interface configurations.
 
-        Index 0 is GigabitEthernet0/0 (management); index i is GigabitEthernet1/0/i. Front-panel slots beyond
-        isl_bridges are padded up to global_config.min_nics with TAPs attached to no bridge.
+        Index 0 is GigabitEthernet0/0 (management); index i is GigabitEthernet1/0/i. Front-panel slots not named in
+        isl_ports are padded up to `max(min_nics, highest port + 1)` with TAPs attached to no bridge.
         """
         interface_type = config.interface_type or self.global_config.default_interface_type
         base_mac = self.global_config.base_mac
@@ -501,21 +532,14 @@ class SwitchVMManager:
                 tap=self._tap_name(config.sid, 0),
             )
         ]
-        for i, bridge in enumerate(config.isl_bridges, 1):
+        by_port = dict(zip(config.isl_ports, config.isl_bridges))
+        nics = max(self.global_config.min_nics, max(by_port, default=0) + 1)
+        for i in range(1, nics):
+            bridge = by_port.get(i)
             interfaces.append(
                 NetworkInterface(
-                    name=f"FP_{i}",
+                    name=f"FP_{i}" if bridge else f"PAD_{i}",
                     bridge=bridge,
-                    mac=self.mac_generator.generate_ethernet_mac(config.sid, i, base_mac),
-                    interface_type=interface_type,
-                    tap=self._tap_name(config.sid, i),
-                )
-            )
-        for i in range(len(config.isl_bridges) + 1, self.global_config.min_nics):
-            interfaces.append(
-                NetworkInterface(
-                    name=f"PAD_{i}",
-                    bridge=None,
                     mac=self.mac_generator.generate_ethernet_mac(config.sid, i, base_mac),
                     interface_type=interface_type,
                     tap=self._tap_name(config.sid, i),
@@ -533,6 +557,14 @@ class SwitchVMManager:
         for iface in self._generate_interfaces(config):
             OVSPortManager.teardown_port(iface)
         print(f"Removed TAP interfaces for {config.name}")
+
+    def attach_switch(self, config: SwitchConfig) -> None:
+        """Attach a running switch's existing TAPs to the bridges the YAML names (re-cable without a reload).
+        Attaches only; it does not remove a TAP from a bridge that the YAML no longer names."""
+        for iface in self._generate_interfaces(config):
+            OVSPortManager.attach_port(iface)
+            if iface.bridge is not None:
+                print(f"{config.name} {iface.tap} -> {iface.bridge}")
 
     def _prepare_vm_disk(self, config: SwitchConfig) -> None:
         """Prepare the per-VM disk image."""
@@ -572,8 +604,8 @@ class SwitchVMManager:
             print(f"Role: {config.role}")
             print(f"SID: {config.sid}")
 
-            for i, neighbor in enumerate(config.neighbors, 1):
-                print(f"{config.name} {guest_interface(i)} -> {neighbor}: {config.isl_bridges[i - 1]}")
+            for port, neighbor, bridge in zip(config.isl_ports, config.neighbors, config.isl_bridges):
+                print(f"{config.name} {guest_interface(port)} -> {neighbor}: {bridge}")
 
             print(f"\nConsole access: telnet localhost {config.telnet_port}")
             print(f"Monitor access: telnet localhost {config.monitor_port}")
@@ -633,8 +665,9 @@ def create_sample_configs(force: bool = False):
             "mgmt_bridge": "BR_ND_DATA_12",
             "mgmt_ip": "192.168.12.181/24",
             "mgmt_gw": "192.168.12.1",
-            "neighbors": [],
-            "isl_bridges": [],
+            "neighbors": ["C1_SP1"],
+            "isl_bridges": ["BR_C1_SP1_LE1_1"],
+            "isl_ports": [8],
         },
     ]
 
@@ -651,6 +684,12 @@ def main():
     parser.add_argument("--global-config", type=Path, default=Path("global_config.yaml"), help="Global configuration file (default: global_config.yaml)")
     parser.add_argument("--dry-run", action="store_true", help="Show command without executing")
     parser.add_argument("--teardown", action="store_true", help="Remove the switch's TAP interfaces and exit")
+    parser.add_argument(
+        "--attach",
+        action="store_true",
+        help="Attach the running switch's existing TAPs to their bridges (re-cable live) and exit; attaches only, does not remove a TAP "
+        "from a bridge the YAML no longer names",
+    )
     parser.add_argument("--create-samples", action="store_true", help="Create sample config files")
     parser.add_argument("--force", action="store_true", help="Overwrite existing sample files (used with --create-samples)")
     parser.add_argument("--list-switches", action="store_true", help="List all switch config files in current directory")
@@ -677,6 +716,15 @@ def main():
         global_config = ConfigLoader.load_global_config(args.global_config)
         switch_config = ConfigLoader.load_switch_config(args.config)
         SwitchVMManager(global_config).teardown_switch(switch_config)
+        return
+
+    if args.attach:
+        if not args.config:
+            print("Error: --attach requires --config")
+            sys.exit(1)
+        global_config = ConfigLoader.load_global_config(args.global_config)
+        switch_config = ConfigLoader.load_switch_config(args.config)
+        SwitchVMManager(global_config).attach_switch(switch_config)
         return
 
     if not args.config:

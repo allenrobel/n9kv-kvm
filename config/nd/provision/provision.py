@@ -452,6 +452,10 @@ class Provisioner:
             ]
             if wrong:
                 self._post(f"/fabrics/{fabric.name}/switchActions/changeRoles", {"switchRoles": wrong})
+            if fabric.type == "vxlanCampus":
+                for s in fabric.switches:
+                    if s.platform == "ios-xe" and s.hostname in present:
+                        self._ensure_mgmt_cdp_off(fabric.name, present[s.hostname]["serialNumber"], s.ip)
             self.config_deploy(fabric.name)
 
     # -- phase: vpc ------------------------------------------------------------------------------------------
@@ -592,6 +596,32 @@ class Provisioner:
             },
         }
         self._put(f"/fabrics/{fabric}/switches/{serial}/interfaces/{interface.replace('/', '%2F')}", body)
+
+    def _ensure_mgmt_cdp_off(self, fabric: str, serial: str, mgmt_ip: str) -> None:
+        """Pin ND's intent for a Catalyst's GigabitEthernet0/0 to the iosXeMgmt policy with CDP off. ND discovers the
+        management port with `cdp: true`; with CDP on, the adjacency between two campus switches' management ports (they
+        share the ND data bridge) becomes a second iosXeNumbered fabric link whose deploy removes the management IP
+        (observed 2026-09-15 on 4.2.1 and 4.3.1, all four Cat9kv lost management). The day-0 config carries
+        `no cdp enable`; this keeps the ND side from pushing `cdp enable` back. Idempotent."""
+        path = f"/fabrics/{fabric}/switches/{serial}/interfaces/GigabitEthernet0%2F0"
+        current = self._read_one(path)
+        policy = ((current.get("configData") or {}).get("networkOS") or {}).get("policy") or {}
+        if policy.get("policyType") == "iosXeMgmt" and policy.get("cdp") is False:
+            return
+        extra = policy.get("extraConfig") or f" vrf forwarding Mgmt-vrf\n ip address {mgmt_ip} 255.255.255.0"
+        body = {
+            "switchId": serial,
+            "interfaceName": "GigabitEthernet0/0",
+            "interfaceType": "management",
+            "configData": {
+                "mode": "managed",
+                "networkOS": {
+                    "networkOSType": "ios-xe",
+                    "policy": {"policyType": "iosXeMgmt", "adminState": True, "cdp": False, "extraConfig": extra},
+                },
+            },
+        }
+        self._put(path, body)
 
     # -- phase: overlay --------------------------------------------------------------------------------------
     def phase_overlay(self) -> None:

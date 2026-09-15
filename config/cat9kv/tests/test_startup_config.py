@@ -18,13 +18,21 @@ def test_serial_for_matches_the_launcher_rule():
 def test_render_config_puts_mgmt_in_mgmt_vrf_with_dotted_mask():
     text = render_config(load_yaml(HERE / "C1_LE1.yaml"), "pw", startup_config._env())  # ggignore: unit-test placeholder, not a credential
     assert text.startswith("hostname C1_LE1\n")
-    assert "interface GigabitEthernet0/0\n vrf forwarding Mgmt-vrf\n ip address 192.168.12.181 255.255.255.0\n no shutdown\n" in text
+    assert "interface GigabitEthernet0/0\n vrf forwarding Mgmt-vrf\n ip address 192.168.12.181 255.255.255.0\n no cdp enable\n no shutdown\n" in text
     assert "ip route vrf Mgmt-vrf 0.0.0.0 0.0.0.0 192.168.12.1\n" in text
     assert "username admin privilege 15 secret 0 pw\n" in text  # ggignore: unit-test placeholder, not a credential
     assert "line vty 0 15\n login local\n transport input ssh\n" in text
     assert "crypto key generate rsa modulus 2048" in text
     assert "GigabitEthernet1/0/" not in text  # front-panel ports are left at their defaults
     assert text.endswith("end\n")
+
+
+def test_render_config_disables_cdp_on_the_management_port():
+    """ND models a CDP adjacency between two switches' Gi0/0 (same ND data bridge) as a fabric link and then
+    un-configures the management IP; the day-0 config must keep CDP off that port."""
+    text = render_config(load_yaml(HERE / "C1_LE1.yaml"), "pw", startup_config._env())  # ggignore: unit-test placeholder, not a credential
+    block = text.split("interface GigabitEthernet0/0\n", 1)[1].split("!\n", 1)[0]
+    assert " no cdp enable\n" in block
 
 
 def test_render_config_requires_a_prefix_length():

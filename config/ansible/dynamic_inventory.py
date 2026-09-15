@@ -32,7 +32,8 @@ and if not set, it uses the defaults defined in this script.
 Hostnames and env var prefixes follow `S<site>_<role><idx>` (per-site
 renumbering from 1). For example, the leaf in SITE1 is `S1_LE1`; the
 border gateway in SITE4 is `S4_BG1`. Catalyst 9000v campus leaves use
-`C<n>_LE<idx>` (`C1_LE1` on ND 4.2.1, `C3_LE1` on ND 4.3.1).
+`C<n>_LE<idx>` (`C1_LE1` on ND 4.2.1, `C3_LE1` on ND 4.3.1); campus
+spines use `C<n>_SP<idx>` (`C1_SP1` on ND 4.2.1, `C3_SP1` on ND 4.3.1).
 
 """
 import json
@@ -75,9 +76,11 @@ S4_LE1_IP4 = environ.get("S4_LE1_IP4", "192.168.14.153")
 S3_LE1_IP4_INTERFACE_2 = environ.get("S3_LE1_IP4_INTERFACE_2", "192.168.0.3")
 S4_LE1_IP4_INTERFACE_2 = environ.get("S4_LE1_IP4_INTERFACE_2", "192.168.0.4")
 
-# CAMPUS1 (Catalyst 9000v campus leaves, one per controller; .18x is the campus-leaf block)
+# CAMPUS1 (Catalyst 9000v campus leaf + spine per controller; .181 is the leaf, .182 the spine)
 C1_LE1_IP4 = environ.get("C1_LE1_IP4", "192.168.12.181")
 C3_LE1_IP4 = environ.get("C3_LE1_IP4", "192.168.14.181")
+C1_SP1_IP4 = environ.get("C1_SP1_IP4", "192.168.12.182")
+C3_SP1_IP4 = environ.get("C3_SP1_IP4", "192.168.14.182")
 
 # Fabric types
 SITE1_FABRIC = environ.get("ND_SITE1_FABRIC", "SITE1")
@@ -126,6 +129,8 @@ S4_LE1_HOSTNAME = environ.get("S4_LE1_HOSTNAME", "S4_LE1")
 # CAMPUS1
 C1_LE1_HOSTNAME = environ.get("C1_LE1_HOSTNAME", "C1_LE1")
 C3_LE1_HOSTNAME = environ.get("C3_LE1_HOSTNAME", "C3_LE1")
+C1_SP1_HOSTNAME = environ.get("C1_SP1_HOSTNAME", "C1_SP1")
+C3_SP1_HOSTNAME = environ.get("C3_SP1_HOSTNAME", "C3_SP1")
 
 # Links
 # Source                  Destination             Bridge
@@ -241,6 +246,12 @@ S3_LE3_INTERFACE_2 = environ.get("S3_LE3_INTERFACE_2", "Ethernet1/2")
 S3_LE4_INTERFACE_1 = environ.get("S3_LE4_INTERFACE_1", "Ethernet1/1")
 S3_LE4_INTERFACE_2 = environ.get("S3_LE4_INTERFACE_2", "Ethernet1/2")
 
+# CAMPUS1 link (Cat9kv spine-leaf): C1_SP1_INTERFACE_1  C1_LE1_INTERFACE_8  BR_C1_SP1_LE1_1  (C3_* mirror on BR_C3_SP1_LE1_1)
+C1_SP1_INTERFACE_1 = environ.get("C1_SP1_INTERFACE_1", "GigabitEthernet1/0/1")
+C1_LE1_INTERFACE_8 = environ.get("C1_LE1_INTERFACE_8", "GigabitEthernet1/0/8")
+C3_SP1_INTERFACE_1 = environ.get("C3_SP1_INTERFACE_1", "GigabitEthernet1/0/1")
+C3_LE1_INTERFACE_8 = environ.get("C3_LE1_INTERFACE_8", "GigabitEthernet1/0/8")
+
 # output is printed to STDOUT, where ansible-playbook -i reads it.
 # If you change any vars above, be sure to add them below.
 # We'll clean this up as the integration test vars are standardized.
@@ -284,6 +295,8 @@ output = {
             "S4_LE1_IP4": S4_LE1_IP4,
             "C1_LE1_IP4": C1_LE1_IP4,
             "C3_LE1_IP4": C3_LE1_IP4,
+            "C1_SP1_IP4": C1_SP1_IP4,
+            "C3_SP1_IP4": C3_SP1_IP4,
             "S1_BG1_HOSTNAME": S1_BG1_HOSTNAME,
             "S2_BG1_HOSTNAME": S2_BG1_HOSTNAME,
             "S1_SP1_HOSTNAME": S1_SP1_HOSTNAME,
@@ -306,6 +319,8 @@ output = {
             "S4_LE1_HOSTNAME": S4_LE1_HOSTNAME,
             "C1_LE1_HOSTNAME": C1_LE1_HOSTNAME,
             "C3_LE1_HOSTNAME": C3_LE1_HOSTNAME,
+            "C1_SP1_HOSTNAME": C1_SP1_HOSTNAME,
+            "C3_SP1_HOSTNAME": C3_SP1_HOSTNAME,
             "S1_BG1_INTERFACE_1": S1_BG1_INTERFACE_1,
             "S1_BG1_INTERFACE_2": S1_BG1_INTERFACE_2,
             "S1_BG1_INTERFACE_3": S1_BG1_INTERFACE_3,
@@ -368,6 +383,10 @@ output = {
             "S3_LE3_INTERFACE_2": S3_LE3_INTERFACE_2,
             "S3_LE4_INTERFACE_1": S3_LE4_INTERFACE_1,
             "S3_LE4_INTERFACE_2": S3_LE4_INTERFACE_2,
+            "C1_SP1_INTERFACE_1": C1_SP1_INTERFACE_1,
+            "C1_LE1_INTERFACE_8": C1_LE1_INTERFACE_8,
+            "C3_SP1_INTERFACE_1": C3_SP1_INTERFACE_1,
+            "C3_LE1_INTERFACE_8": C3_LE1_INTERFACE_8,
             "ND_PASSWORD": ND_PASSWORD,
             "ND_USERNAME": ND_USERNAME,
             "NXOS_USERNAME": NXOS_USERNAME,
@@ -428,7 +447,7 @@ output = {
         },
     },
     "iosxe": {
-        "children": ["C1_LE1", "C3_LE1"],
+        "children": ["C1_LE1", "C1_SP1", "C3_LE1", "C3_SP1"],
         "vars": {
             "ansible_become": "true",
             "ansible_become_method": "enable",

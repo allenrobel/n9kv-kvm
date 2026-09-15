@@ -19,8 +19,9 @@ def test_shipped_topologies_load_and_mirror():
     campus421, campus431 = t421.fabrics[3], t431.fabrics[3]
     assert campus421.type == campus431.type == "vxlanCampus" and campus421.asn == campus431.asn == "65003"
     assert campus421.settings == campus431.settings
-    assert [(s.role, s.platform) for s in campus421.switches] == [(s.role, s.platform) for s in campus431.switches] == [("leaf", "ios-xe")]
-    assert [s.ip for s in campus421.switches] == ["192.168.12.181"] and [s.ip for s in campus431.switches] == ["192.168.14.181"]
+    assert [(s.role, s.platform) for s in campus421.switches] == [(s.role, s.platform) for s in campus431.switches] == [("leaf", "ios-xe"), ("spine", "ios-xe")]
+    assert [s.ip for s in campus421.switches] == ["192.168.12.181", "192.168.12.182"]
+    assert [s.ip for s in campus431.switches] == ["192.168.14.181", "192.168.14.182"]
     assert len(t421.isn.links) == len(t431.isn.links) == 2
     assert t421.overlay.networks == t431.overlay.networks  # identical overlay objects, only attachments name different switches
 

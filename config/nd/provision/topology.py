@@ -68,6 +68,34 @@ class VpcPair:
 
 
 @dataclass(frozen=True)
+class TorPair:
+    """One ToR (access) switch associated with a leaf vPC pair. ND's ToR pairing creates the ToR-facing
+    vPC on both leafs and the uplink port-channel on the ToR; the leaf pair must be declared under vpc_pairs.
+    `tor_po` / `leaf_po` (and `vpc_id`, default `leaf_po`) are the ids to allocate when ND recommends none
+    (ND 4.2.1 answers every accessAssociations query with `resources: {}`); a recommendation from ND wins."""
+
+    fabric: str
+    tor: str
+    leaf: str
+    peer: str
+    tor_po: int | None = None
+    leaf_po: int | None = None
+    vpc_id: int | None = None
+
+    def resources(self) -> dict[str, int]:
+        """The `resources` block of the associate call, or {} when the file gives no ids. The peer leaf's
+        port-channel takes the same id as the leaf's (one vPC, one id on both members)."""
+        if self.tor_po is None or self.leaf_po is None:
+            return {}
+        return {
+            "accessOrTorPortChannelId": self.tor_po,
+            "aggregationOrLeafPortChannelId": self.leaf_po,
+            "aggregationOrLeafPeerPortChannelId": self.leaf_po,
+            "aggregationOrLeafVpcId": self.vpc_id if self.vpc_id is not None else self.leaf_po,
+        }
+
+
+@dataclass(frozen=True)
 class Isn:
     links: list[Link] = field(default_factory=list)
     wan: Wan | None = None
@@ -88,6 +116,7 @@ class Topology:
     isn: Isn
     overlay: Overlay
     vpc_pairs: list[VpcPair] = field(default_factory=list)
+    tor_pairs: list[TorPair] = field(default_factory=list)
 
     def switches(self) -> dict[str, Switch]:
         return {s.hostname: s for f in self.fabrics for s in f.switches}
@@ -127,6 +156,17 @@ def _validate(topo: Topology) -> None:
                 raise ValueError(f"vpc_pairs: {host} is not in fabric {pair.fabric}")
         if pair.switch == pair.peer:
             raise ValueError(f"vpc_pairs: {pair.switch} cannot pair with itself")
+    vpc_pairs = {frozenset((p.switch, p.peer)) for p in topo.vpc_pairs}
+    for tor_pair in topo.tor_pairs:
+        for host in (tor_pair.tor, tor_pair.leaf, tor_pair.peer):
+            if host not in names:
+                raise ValueError(f"tor_pairs: unknown switch {host}")
+            if topo.switch_fabric(host) != tor_pair.fabric:
+                raise ValueError(f"tor_pairs: {host} is not in fabric {tor_pair.fabric}")
+        if frozenset((tor_pair.leaf, tor_pair.peer)) not in vpc_pairs:
+            raise ValueError(f"tor_pairs: {tor_pair.leaf}/{tor_pair.peer} is not declared under vpc_pairs (ToR pairing needs the leaf vPC first)")
+        if (tor_pair.tor_po is None) != (tor_pair.leaf_po is None):
+            raise ValueError(f"tor_pairs: {tor_pair.tor}: tor_po and leaf_po must be given together")
     for att in topo.overlay.vrf_attachments + topo.overlay.network_attachments:
         switch_name = att.get("switch")
         if not switch_name:
@@ -146,6 +186,7 @@ def load(path: Path) -> Topology:
     isn = Isn(links=[Link(**item) for item in isn_raw.get("links", [])], wan=Wan(**isn_raw["wan"]) if isn_raw.get("wan") else None)
     overlay = Overlay(**(raw.get("overlay", {}) or {}))
     pairs = [VpcPair(**item) for item in raw.get("vpc_pairs", []) or []]
-    topo = Topology(fabrics=fabrics, fabric_groups=groups, isn=isn, overlay=overlay, vpc_pairs=pairs)
+    tor_pairs = [TorPair(**item) for item in raw.get("tor_pairs", []) or []]
+    topo = Topology(fabrics=fabrics, fabric_groups=groups, isn=isn, overlay=overlay, vpc_pairs=pairs, tor_pairs=tor_pairs)
     _validate(topo)
     return topo

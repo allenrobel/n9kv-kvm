@@ -77,3 +77,110 @@ def test_vpc_pair_must_reference_switches_of_its_own_fabric(tmp_path):
     )
     with pytest.raises(ValueError, match="B is not in fabric SITE1"):
         load(bad)
+
+
+def test_shipped_topologies_declare_the_site1_tor_pair():
+    t421 = load(HERE / "topology_nd421.yaml")
+    t431 = load(HERE / "topology_nd431.yaml")
+    assert [(p.fabric, p.tor, p.leaf, p.peer) for p in t421.tor_pairs] == [("SITE1", "S1_TOR1", "S1_LE1", "S1_LE2")]
+    assert [(p.fabric, p.tor, p.leaf, p.peer) for p in t431.tor_pairs] == [("SITE1", "S3_TOR1", "S3_LE1", "S3_LE2")]
+    # ND 4.2.1 recommends no ids (resources: {} in every query form, lab-verified 2026-09-14), so the files carry them.
+    assert (
+        t421.tor_pairs[0].resources()
+        == t431.tor_pairs[0].resources()
+        == {
+            "accessOrTorPortChannelId": 1,
+            "aggregationOrLeafPortChannelId": 1,
+            "aggregationOrLeafPeerPortChannelId": 1,
+            "aggregationOrLeafVpcId": 1,
+        }
+    )
+
+
+def test_tor_pair_without_ids_has_no_resources(tmp_path):
+    good = tmp_path / "t.yaml"
+    good.write_text(_TOR_FABRIC + "vpc_pairs:\n  - {fabric: SITE1, switch: LE1, peer: LE2}\ntor_pairs:\n  - {fabric: SITE1, tor: TOR1, leaf: LE1, peer: LE2}\n")
+    assert load(good).tor_pairs[0].resources() == {}
+
+
+def test_tor_pair_peer_po_and_vpc_id_default_to_the_leaf_po(tmp_path):
+    good = tmp_path / "t.yaml"
+    good.write_text(
+        _TOR_FABRIC
+        + "vpc_pairs:\n  - {fabric: SITE1, switch: LE1, peer: LE2}\ntor_pairs:\n  - {fabric: SITE1, tor: TOR1, leaf: LE1, peer: LE2, tor_po: 7, leaf_po: 8}\n"
+    )
+    assert load(good).tor_pairs[0].resources() == {
+        "accessOrTorPortChannelId": 7,
+        "aggregationOrLeafPortChannelId": 8,
+        "aggregationOrLeafPeerPortChannelId": 8,
+        "aggregationOrLeafVpcId": 8,
+    }
+
+
+def test_tor_pair_rejects_only_one_of_the_two_required_ids(tmp_path):
+    bad = tmp_path / "t.yaml"
+    bad.write_text(
+        _TOR_FABRIC + "vpc_pairs:\n  - {fabric: SITE1, switch: LE1, peer: LE2}\ntor_pairs:\n  - {fabric: SITE1, tor: TOR1, leaf: LE1, peer: LE2, tor_po: 7}\n"
+    )
+    with pytest.raises(ValueError, match="tor_pairs: TOR1: tor_po and leaf_po must be given together"):
+        load(bad)
+
+
+_TOR_FABRIC = (
+    "fabrics:\n  - name: SITE1\n    type: vxlanIbgp\n    asn: '65001'\n"
+    "    switches: [{hostname: LE1, ip: 10.0.0.1, role: leaf}, {hostname: LE2, ip: 10.0.0.2, role: leaf}, {hostname: TOR1, ip: 10.0.0.3, role: tor}]\n"
+    "  - name: SITE2\n    type: vxlanIbgp\n    asn: '65002'\n    switches: [{hostname: LE9, ip: 10.0.0.9, role: leaf}]\n"
+    "fabric_groups: []\nisn: {}\noverlay: {}\n"
+)
+
+
+def test_tor_pair_unknown_switch_is_rejected(tmp_path):
+    bad = tmp_path / "t.yaml"
+    bad.write_text(_TOR_FABRIC + "vpc_pairs:\n  - {fabric: SITE1, switch: LE1, peer: LE2}\ntor_pairs:\n  - {fabric: SITE1, tor: TOR9, leaf: LE1, peer: LE2}\n")
+    with pytest.raises(ValueError, match="tor_pairs: unknown switch TOR9"):
+        load(bad)
+
+
+def test_tor_pair_must_reference_switches_of_its_own_fabric(tmp_path):
+    bad = tmp_path / "t.yaml"
+    bad.write_text(_TOR_FABRIC + "vpc_pairs:\n  - {fabric: SITE1, switch: LE1, peer: LE2}\ntor_pairs:\n  - {fabric: SITE1, tor: TOR1, leaf: LE1, peer: LE9}\n")
+    with pytest.raises(ValueError, match="tor_pairs: LE9 is not in fabric SITE1"):
+        load(bad)
+
+
+def test_tor_pair_leafs_must_be_a_declared_vpc_pair(tmp_path):
+    bad = tmp_path / "t.yaml"
+    bad.write_text(_TOR_FABRIC + "vpc_pairs: []\ntor_pairs:\n  - {fabric: SITE1, tor: TOR1, leaf: LE1, peer: LE2}\n")
+    with pytest.raises(ValueError, match="tor_pairs: LE1/LE2 is not declared under vpc_pairs"):
+        load(bad)
+
+
+def test_tor_pair_accepts_the_vpc_pair_in_either_order(tmp_path):
+    good = tmp_path / "t.yaml"
+    good.write_text(_TOR_FABRIC + "vpc_pairs:\n  - {fabric: SITE1, switch: LE2, peer: LE1}\ntor_pairs:\n  - {fabric: SITE1, tor: TOR1, leaf: LE1, peer: LE2}\n")
+    assert load(good).tor_pairs[0].tor == "TOR1"
+
+
+def test_shipped_topologies_attach_lab_net1_to_the_tor_host_port_in_access_mode():
+    """S1_H1 / S3_H1 hang off the ToR's Ethernet1/3; the ToR is its own attachment row (no ToR-port field on the leaf row in ND 4.x)."""
+    for fn, tor in (("topology_nd421.yaml", "S1_TOR1"), ("topology_nd431.yaml", "S3_TOR1")):
+        topo = load(HERE / fn)
+        rows = [a for a in topo.overlay.network_attachments if a["switch"] == tor]
+        assert rows == [{"fabric": "SITE1", "network": "LAB_NET1", "switch": tor, "vlan": 2, "interfaces": [{"mode": "access", "interfaceRange": "Ethernet1/3"}]}]
+        assert any(p.tor == tor for p in topo.tor_pairs), f"{tor} must be paired before its host port is attached"
+
+
+def test_shipped_topologies_attach_the_overlay_to_both_border_gateways():
+    """An MSD stretches a VRF/network across sites only when it is attached to the border gateways too (that attachment
+    puts the VNIs with multisite ingress replication on the BGWs); without it the BGWs carry no VNI at all (lab, 2026-09-14)."""
+    for fn, bgs in (("topology_nd421.yaml", {"SITE1": "S1_BG1", "SITE2": "S2_BG1"}), ("topology_nd431.yaml", {"SITE1": "S3_BG1", "SITE2": "S4_BG1"})):
+        topo = load(HERE / fn)
+        for fabric, bg in bgs.items():
+            assert {"fabric": fabric, "vrf": "LAB", "switch": bg} in topo.overlay.vrf_attachments, f"{fn}: VRF LAB not attached to {bg}"
+            assert {
+                "fabric": fabric,
+                "network": "LAB_NET1",
+                "switch": bg,
+                "vlan": 2,
+                "interfaces": [],
+            } in topo.overlay.network_attachments, f"{fn}: LAB_NET1 not attached to {bg}"

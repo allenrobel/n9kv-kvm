@@ -8,6 +8,7 @@ Phases (each safe to re-run; --phase all runs them in order):
   msd       create the MSD fabric group if absent, add members one at a time (ND rejects batches)
   switches  shallowDiscovery per fabric (serial/model), add the manageable ones, wait until they list, set roles, recalculate + deploy
   vpc       pair the vPC leaf pairs (ND's default template generates the peer-link port-channel), then recalculate + deploy
+  tor       ToR pairing: associate each ToR with its leaf vPC pair using ND's recommended port-channel ids, then recalculate + deploy
   isn       WAN loopback + router-id policy, ebgpVrfLite links, CDP policies, deploy ISN/SITE1/SITE2
   overlay   VRFs + networks in each fabric, attachments per switch, vrfActions/networkActions deploy
   deploy    recalculate + deploy every fabric, then every fabric group (MSD), and print any non-empty pendingConfig
@@ -26,7 +27,7 @@ from typing import Any
 from nd_client import NDClient, NDCredentials
 from topology import Fabric, FabricGroup, Link, Topology, load
 
-PHASES = ["fabrics", "msd", "switches", "vpc", "isn", "overlay", "deploy"]
+PHASES = ["fabrics", "msd", "switches", "vpc", "tor", "isn", "overlay", "deploy"]
 
 LOG_BODY_LIMIT = 2000
 # configSave (Recalculate) and deploy are synchronous and take minutes on a 7-switch fabric.
@@ -142,6 +143,13 @@ def vpc_pair_payload(serial: str, peer_serial: str) -> dict:
     """Body for PUT /fabrics/{f}/switches/{serial}/vpcPair with ND's default pairing template (no vpcPairDetails):
     ND picks the domain id, the keep-alive over mgmt0 and the peer-link port-channel from the discovered leaf link."""
     return {"vpcAction": "pair", "switchId": serial, "peerSwitchId": peer_serial, "useVirtualPeerLink": False}
+
+
+def tor_associate_payload(tor_serial: str, leaf_serial: str, peer_serial: str, resources: dict) -> list[dict]:
+    """Body for POST /fabrics/{f}/accessAssociationActions/associate (a list; one ToR to one leaf vPC pair).
+    `resources` is the port-channel / vPC id block: what ND recommends in GET accessAssociations?includeCandidates=true
+    when it recommends anything, else the ids from the topology's tor_pairs entry (ND 4.2.1 recommends none)."""
+    return [{"accessOrTorSwitchId": tor_serial, "aggregationOrLeafSwitchId": leaf_serial, "aggregationOrLeafPeerSwitchId": peer_serial, "resources": resources}]
 
 
 def link_payload(link: Link, src_serial: str, dst_serial: str) -> dict:
@@ -461,6 +469,56 @@ class Provisioner:
                 self._put(f"/fabrics/{fabric_name}/switches/{serial}/vpcPair", vpc_pair_payload(serial, peer_serial))
                 if fabric_name not in touched:
                     touched.append(fabric_name)
+        for fabric_name in touched:
+            self.config_deploy(fabric_name)
+
+    # -- phase: tor ------------------------------------------------------------------------------------------
+    TOR_RESOURCE_PLACEHOLDER = "<nd-recommended>"
+
+    def _tor_associations(self, fabric: str, leaf: str, peer: str, candidates: bool = False) -> list[dict]:
+        """GET accessAssociations for one leaf vPC pair. ND answers 400 without aggregationOrLeafSwitchId. Without
+        includeCandidates the ToR still shows up as a recommendation record (isRecommended, empty `resources`);
+        a real association is the record whose `resources` carries port-channel ids. With includeCandidates
+        ND fills `resources` with the ids it would allocate and `remarks` with why it would not."""
+        params = {"aggregationOrLeafSwitchId": leaf, "aggregationOrLeafPeerSwitchId": peer}
+        if candidates:
+            params["includeCandidates"] = "true"
+        return self._read(f"/fabrics/{fabric}/accessAssociations", "associations", params=params)
+
+    def phase_tor(self) -> None:
+        """ND ToR pairing: associate each ToR under `tor_pairs:` with its leaf vPC pair (ND creates the uplink
+        port-channel on the ToR and a ToR-owned vPC on both leafs), then recalculate + deploy every fabric that
+        gained an association. Every Recalculate on a fabric with an unpaired ToR raises the
+        "No leaf-tor pairing is found for the tor" anomaly on 4.2.1 (4.3.1 hides it)."""
+        touched: list[str] = []
+        for pair in self.topo.tor_pairs:
+            label = f"{pair.tor} -> {pair.leaf}/{pair.peer}"
+            tor, leaf, peer = self.serial(pair.tor), self.serial(pair.leaf), self.serial(pair.peer)
+            existing = [a for a in self._tor_associations(pair.fabric, leaf, peer) if a.get("accessOrTorSwitchId") == tor and a.get("resources")]
+            if existing:
+                self._log(f"{pair.fabric}: {pair.tor} already paired with {pair.leaf}/{pair.peer} {json.dumps(existing[0].get('resources'))}")
+                continue
+            candidate = next((c for c in self._tor_associations(pair.fabric, leaf, peer, candidates=True) if c.get("accessOrTorSwitchId") == tor), {})
+            resources = candidate.get("resources") or {}
+            if resources.get("accessOrTorPortChannelId") and resources.get("aggregationOrLeafPortChannelId"):
+                self._log(f"{pair.fabric}: {label}: using ND-recommended ids {json.dumps(resources)}")
+            elif pair.resources():
+                resources = pair.resources()
+                self._log(f"{pair.fabric}: {label}: using topology ids {json.dumps(resources)} (ND recommends none)")
+            elif self.dry_run:
+                resources = {key: self.TOR_RESOURCE_PLACEHOLDER for key in ("accessOrTorPortChannelId", "aggregationOrLeafPortChannelId")}
+            else:
+                raise RuntimeError(
+                    f"{pair.fabric}: {label}: no port-channel ids: ND recommends none (remarks: {candidate.get('remarks', '') or 'ToR not listed as a candidate'!r})"
+                    " and tor_pairs gives none; set tor_po/leaf_po in the topology, and check the ToR is discovered with its uplinks cabled to both leafs"
+                )
+            result = self._post(f"/fabrics/{pair.fabric}/accessAssociationActions/associate", tor_associate_payload(tor, leaf, peer, resources))
+            for item in (result or {}).get("associations", []):
+                if item.get("status") == "failed":
+                    raise RuntimeError(f"{pair.fabric}: {label}: association failed: {item.get('message') or 'no message'}")
+                self._log(f"{pair.fabric}: {label}: {item.get('message') or item.get('status')}")
+            if pair.fabric not in touched:
+                touched.append(pair.fabric)
         for fabric_name in touched:
             self.config_deploy(fabric_name)
 

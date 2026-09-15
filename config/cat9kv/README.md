@@ -30,8 +30,8 @@ is done when the console shows `Press RETURN to get started!` or `%SSH-5-ENABLED
 IOS-XE numbers the NICs in PCI order:
 
 - `GigabitEthernet0/0` = management, attached to `mgmt_bridge` (vrf `Mgmt-vrf` in the day-0 config)
-- `GigabitEthernet1/0/1..N` = one per `isl_bridges` entry (front-panel ports)
-- `GigabitEthernet1/0/N+1..8` = padding: the image refuses to boot with fewer than nine NICs
+- `GigabitEthernet1/0/<port>` = the `isl_bridges` entry whose `isl_ports` value is `<port>` (`isl_ports` defaults to `1..N`)
+- every other front-panel slot = padding, up to `max(min_nics, highest isl_port + 1)`: the image refuses to boot with fewer than nine NICs
   (`min_nics` in `global_config.yaml`), so the launcher creates TAPs for them but attaches them to no bridge
 
 The campus leaves carry one fabric link, to the campus spine, on `GigabitEthernet1/0/8` (`isl_ports: [8]`), so

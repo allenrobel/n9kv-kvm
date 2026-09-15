@@ -101,10 +101,14 @@ class SwitchConfig:  # pylint: disable=too-many-instance-attributes
             raise ValueError("Number of neighbors must match number of ISL bridges")
         if not self.isl_ports:
             self.isl_ports = list(range(1, len(self.isl_bridges) + 1))
+        else:
+            self.isl_ports = [int(port) for port in self.isl_ports]  # YAML may hand back a string ("8"); coerce, don't reject
         if len(self.isl_ports) != len(self.isl_bridges):
             raise ValueError("Number of isl_ports must match number of ISL bridges")
         if len(set(self.isl_ports)) != len(self.isl_ports) or any(port < 1 for port in self.isl_ports):
             raise ValueError(f"isl_ports must be unique front-panel port numbers >= 1, got {self.isl_ports}")
+        if any(port > 48 for port in self.isl_ports):
+            raise ValueError(f"isl_ports must be <= 48 (highest front-panel port on any platform this launcher supports), got {self.isl_ports}")
 
     @property
     def telnet_port(self) -> int:
@@ -555,7 +559,8 @@ class SwitchVMManager:
         print(f"Removed TAP interfaces for {config.name}")
 
     def attach_switch(self, config: SwitchConfig) -> None:
-        """Attach a running switch's existing TAPs to the bridges the YAML names (re-cable without a reload)."""
+        """Attach a running switch's existing TAPs to the bridges the YAML names (re-cable without a reload).
+        Attaches only; it does not remove a TAP from a bridge that the YAML no longer names."""
         for iface in self._generate_interfaces(config):
             OVSPortManager.attach_port(iface)
             if iface.bridge is not None:
@@ -660,8 +665,9 @@ def create_sample_configs(force: bool = False):
             "mgmt_bridge": "BR_ND_DATA_12",
             "mgmt_ip": "192.168.12.181/24",
             "mgmt_gw": "192.168.12.1",
-            "neighbors": [],
-            "isl_bridges": [],
+            "neighbors": ["C1_SP1"],
+            "isl_bridges": ["BR_C1_SP1_LE1_1"],
+            "isl_ports": [8],
         },
     ]
 
@@ -678,7 +684,12 @@ def main():
     parser.add_argument("--global-config", type=Path, default=Path("global_config.yaml"), help="Global configuration file (default: global_config.yaml)")
     parser.add_argument("--dry-run", action="store_true", help="Show command without executing")
     parser.add_argument("--teardown", action="store_true", help="Remove the switch's TAP interfaces and exit")
-    parser.add_argument("--attach", action="store_true", help="Attach the running switch's existing TAPs to their bridges (re-cable live) and exit")
+    parser.add_argument(
+        "--attach",
+        action="store_true",
+        help="Attach the running switch's existing TAPs to their bridges (re-cable live) and exit; attaches only, does not remove a TAP "
+        "from a bridge the YAML no longer names",
+    )
     parser.add_argument("--create-samples", action="store_true", help="Create sample config files")
     parser.add_argument("--force", action="store_true", help="Overwrite existing sample files (used with --create-samples)")
     parser.add_argument("--list-switches", action="store_true", help="List all switch config files in current directory")

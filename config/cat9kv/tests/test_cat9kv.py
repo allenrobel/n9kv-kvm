@@ -124,6 +124,10 @@ def test_isl_ports_must_pair_with_isl_bridges_and_be_unique_front_panel_ports():
         SwitchConfig(name="X", role="r", sid=1702, mgmt_bridge="B", neighbors=["A", "B"], isl_bridges=["BR_A", "BR_B"], isl_ports=[3, 3])
     with pytest.raises(ValueError, match="isl_ports"):
         SwitchConfig(name="X", role="r", sid=1702, mgmt_bridge="B", neighbors=["A"], isl_bridges=["BR_A"], isl_ports=[0])
+    cfg = SwitchConfig(name="X", role="r", sid=1702, mgmt_bridge="B", neighbors=["A"], isl_bridges=["BR_A"], isl_ports=["8"])
+    assert cfg.isl_ports == [8]
+    with pytest.raises(ValueError, match="isl_ports"):
+        SwitchConfig(name="X", role="r", sid=1702, mgmt_bridge="B", neighbors=["A"], isl_bridges=["BR_A"], isl_ports=[80])
 
 
 def test_attach_port_adds_an_existing_tap_to_its_bridge_without_recreating_it(monkeypatch):

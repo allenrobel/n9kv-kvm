@@ -32,7 +32,8 @@ and if not set, it uses the defaults defined in this script.
 Hostnames and env var prefixes follow `S<site>_<role><idx>` (per-site
 renumbering from 1). For example, the leaf in SITE1 is `S1_LE1`; the
 border gateway in SITE4 is `S4_BG1`. Catalyst 9000v campus leaves use
-`C<n>_LE<idx>` (`C1_LE1` on ND 4.2.1, `C3_LE1` on ND 4.3.1).
+`C<n>_LE<idx>` (`C1_LE1` on ND 4.2.1, `C3_LE1` on ND 4.3.1); campus
+spines use `C<n>_SP<idx>` (`C1_SP1` on ND 4.2.1, `C3_SP1` on ND 4.3.1).
 
 """
 import json

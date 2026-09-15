@@ -72,7 +72,24 @@ uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 \
   their `overridden` scenario queries the fabric's vPC interfaces and deletes every one of its managed type that it did not declare). ND 4.2.1 gives
   the ToR-pairing vPC `policyType: vpcUplink`, outside both sets, so `overridden` leaves it alone. Also run those
   targets with `nd_test_manage_vpc_pairs=false`: their default setup unpairs and re-pairs LE1/LE2 with a virtual peer-link, which would drop the
-  ToR association with the pair. Pair one controller first and run `nd_interface_vpc_trunk_host` there before pairing the other.
+  ToR association with the pair. Verified 2026-09-14 on both controllers: every state scenario of `nd_interface_vpc_trunk_host` and
+  `nd_interface_vpc_access` passes with the ToR vPC present and leaves `vPC1` / `port-channel1` / `port-channel500` and the association
+  byte-for-byte unchanged (the orchestrator drops vPC records whose `policyType` is outside its managed set before validation). Only the
+  `multi_pair` precondition fails, which is the develop-side `nd_manage_vpc_pair` gathered bug (cisco.nd issue #565), unrelated and
+  expected as the last line of both targets. How they are run, from the collection root on the Mac (the nd-dev container cannot reach
+  the lab; `ansible-test network-integration` takes no `-e`, so the flag lives in the committed inventories):
+
+  ```bash
+  export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+  cd ~/ansible_collections/cisco/nd
+  for t in nd_interface_vpc_trunk_host nd_interface_vpc_access; do
+    .venv-Darwin-arm64/bin/ansible-test network-integration "$t" --inventory "$HOME/ansible_collections/cisco/inventory.$t"
+  done
+  ```
+
+  For ND 4.3.1 copy each inventory, change `ansible_host` to 10.10.20.20 and every `192.168.12.` to `192.168.14.`, and pass the copy.
+  The ethernet targets run on the border gateway (`Ethernet1/31`-`1/34`, `1/41`-`1/50`), so nothing in the collection touches the
+  ToR-pairing ports (`Ethernet1/3` on LE1/LE2, `Ethernet1/1`-`1/2` on the ToR) or ids (`port-channel1` / `vpc1`).
 - The `deploy` phase recalculates and deploys the fabric group (MSD) after its child fabrics; that group deploy is what creates the multisite
   underlay/overlay links between the border gateways and their `ext_base_border_multisite` / `evpn_multisite_interface` policies.
 - `snapshot.py diff` maps hostnames with alphanumeric lookarounds (hostnames contain `_`), so per-switch files such as

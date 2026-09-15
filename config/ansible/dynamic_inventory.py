@@ -75,7 +75,7 @@ S4_LE1_IP4 = environ.get("S4_LE1_IP4", "192.168.14.153")
 S3_LE1_IP4_INTERFACE_2 = environ.get("S3_LE1_IP4_INTERFACE_2", "192.168.0.3")
 S4_LE1_IP4_INTERFACE_2 = environ.get("S4_LE1_IP4_INTERFACE_2", "192.168.0.4")
 
-# CAMPUS1 (Catalyst 9000v campus leaves, one per controller; .18x is the campus-leaf block)
+# CAMPUS1 (Catalyst 9000v campus leaf + spine per controller; .181 is the leaf, .182 the spine)
 C1_LE1_IP4 = environ.get("C1_LE1_IP4", "192.168.12.181")
 C3_LE1_IP4 = environ.get("C3_LE1_IP4", "192.168.14.181")
 C1_SP1_IP4 = environ.get("C1_SP1_IP4", "192.168.12.182")

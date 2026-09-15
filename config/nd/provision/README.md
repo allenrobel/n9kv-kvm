@@ -116,7 +116,19 @@ uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 \
   adjacency into a second intra-fabric link and Recalculate & Deploy un-configures the port; the Cat9kv day-0 config disables CDP on
   `GigabitEthernet0/0` to prevent it. `CAMPUS1` exists so the `cisco.nd` IOS-XE interface tests have an ND-managed Catalyst and the
   fabric-link guard has a corruptible endpoint. `_switch_password` picks `IOSXE_PASSWORD` by switch platform (`ios-xe`); both switches are
-  added with `preserveConfig: false` (ND owns their config).
+  added with `preserveConfig: false` (ND owns their config). ND refuses an intent-only policy-type change on the link endpoint on both
+  controllers: `PUT .../interfaces/GigabitEthernet1/0/8` with `iosXeAccess` answers HTTP 400 `Policy type change from iosXeNumbered to
+  iosXeAccess is not allowed`; on 4.3.1 even re-putting the unchanged record is refused (`not eligible for edit as it has read only
+  parameters`), while 4.2.1 accepts it and adds `linkStateRoutingTag: UNDERLAY`. Recalculate & Deploy (`--phase deploy`), not a record
+  `PUT`, is the reliable way to restore any intent drift on that link. On 4.3.1 the per-interface path also needs URL-encoded slashes
+  (`.../interfaces/GigabitEthernet1%2F0%2F8`; the raw name 404s), while 4.2.1 accepts either form; the interface list endpoint behaves
+  the same on both.
+- Campus link endpoints: deleting the leaf-spine link reclassifies both endpoints. The management port `Gi0/0` - which ND lists as
+  `interfaceType management` with policy `iosXeMgmt` (`mode managed`, vrf/ip carried in `extraConfig`) - comes back as an ordinary
+  ethernet port with the role default (`iosXeTrunkHost` on the leaf, `iosXeRoutedHost` on the spine, `mtu 9198`); restoring `iosXeMgmt`
+  by `PUT` (with `cdp: false`) fixed it. Separately, the campus underlay does not come up on the beta Cat9kv image: link interfaces are
+  up/up with correct addressing, CDP crosses the wire, and the host TAP counters move both ways, but the leaf never answers the spine's
+  ARP, so OSPF has no neighbor and the BGP EVPN session stays Idle; ND intent, deploy and pending config are unaffected.
 - Cat9kv MTU: the image takes `system mtu` / per-port `mtu` only in 1500-8978 and refuses a per-port value above `system mtu`, so ND's campus
   defaults (`systemMtu` 1500, `l2HostInterfaceMtu` 9216 -> 9198) fail every host-port deploy with "Command mtu 9198 is invalid". The shipped
   `CAMPUS1` settings pin `systemMtu: 8978` and `l2HostInterfaceMtu: 1500` (no `mtu` line in the generated `iosXeTrunkHost` policy).

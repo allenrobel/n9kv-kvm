@@ -70,10 +70,10 @@ fabrics:
         fabricMtu: 8978
         l2HostInterfaceMtu: 1500
     switches:
-      # Catalyst 9000v leaf + spine, one intra-fabric link (C3_SP1 Gi1/0/1 -- C3_LE1 Gi1/0/8). ND models the leaf-spine CDP
-      # adjacency as an iosXeNumbered link (observed on 4.2.1 and 4.3.1). Gi1/0/1..1/0/7 on the leaf must stay free for the
-      # cisco.nd IOS-XE interface tests; the link exists so the fabric-link ownership guard (PR #558) has a corruptible,
-      # rebuildable endpoint.
+      # Catalyst 9000v leaf + spine, one intra-fabric link (C3_SP1 Gi1/0/1 -- C3_LE1 Gi1/0/8). ND creates the
+      # Gi1/0/8--Gi1/0/1 link itself from the CDP adjacency and gives it the `iosXeNumbered` policy (observed on 4.2.1
+      # and 4.3.1). Gi1/0/1..1/0/7 on the leaf must stay free for the cisco.nd IOS-XE interface tests; the link exists
+      # so the fabric-link ownership guard (PR #558) has a corruptible, rebuildable endpoint.
       - {hostname: C3_LE1, ip: 192.168.14.181, role: leaf, platform: ios-xe}
       - {hostname: C3_SP1, ip: 192.168.14.182, role: spine, platform: ios-xe}
 

@@ -85,8 +85,10 @@ sudo -E python3 startup_config.py --all             # build day-0 ISOs for every
 ## ND placement
 
 Each `CAMPUS1` (ND 4.2.1: `C1_LE1`/`C1_SP1`; ND 4.3.1: `C3_LE1`/`C3_SP1`) holds a leaf and a spine joined by
-one intra-fabric link, an `iosXeNumbered` link policy (observed on both 4.2.1 and 4.3.1); `config/nd/provision/`
+one intra-fabric link carrying the `iosXeNumbered` link policy (observed on both 4.2.1 and 4.3.1); `config/nd/provision/`
 creates the fabric and adds both switches. The link exists so the fabric-link ownership guard (PR #558) has a
 corruptible, rebuildable endpoint to test against, without touching the leaf's `GigabitEthernet1/0/1..7`, which
 the cisco.nd IOS-XE interface tests need free. Catalyst switches cannot join the NX-OS `vxlanIbgp` fabrics
-(SITE1/SITE2).
+(SITE1/SITE2). Once the spine is in the fabric, the leaf's `GigabitEthernet1/0/8` becomes `mode routed` under the
+`iosXeNumbered` policy. The campus underlay does not converge on this Cat9kv image (the leaf never answers the
+spine's ARP, so OSPF and BGP EVPN stay down), so the link exists for ND-intent testing only.

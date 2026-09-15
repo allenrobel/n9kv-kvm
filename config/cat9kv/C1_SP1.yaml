@@ -1,0 +1,11 @@
+---
+# C1_SP1.yaml - Catalyst 9000v campus spine managed by ND 4.2.1 (fabric CAMPUS1). Exists so CAMPUS1 has one
+# intra-fabric link (to C1_LE1 GigabitEthernet1/0/8) that the cisco.nd fabric-link ownership guard can be tested against.
+name: C1_SP1
+role: Campus Spine
+sid: 1702
+mgmt_bridge: BR_ND_DATA_12
+mgmt_ip: 192.168.12.182/24
+mgmt_gw: 192.168.12.1
+neighbors: [C1_LE1]
+isl_bridges: [BR_C1_SP1_LE1_1]

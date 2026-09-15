@@ -1,11 +1,14 @@
 ---
-# C1_LE1.yaml - Catalyst 9000v campus leaf managed by ND 4.2.1 (fabric CAMPUS1, no fabric links).
+# C1_LE1.yaml - Catalyst 9000v campus leaf managed by ND 4.2.1 (fabric CAMPUS1).
 # C<n> marks the campus fabric; n follows the odd-site = ND 4.2.1 rule (S1/S2 are ND 4.2.1, S3/S4 the ND 4.3.1 mirror).
+# One fabric link to the campus spine on the highest port the 9-NIC launch provides (GigabitEthernet1/0/8), so
+# 1/0/1..1/0/7 stay free for the cisco.nd IOS-XE interface tests. The link was cabled live (`cat9kv.py --attach`).
 name: C1_LE1
 role: Campus Leaf
 sid: 1701
 mgmt_bridge: BR_ND_DATA_12
 mgmt_ip: 192.168.12.181/24
 mgmt_gw: 192.168.12.1
-neighbors: []
-isl_bridges: []
+neighbors: [C1_SP1]
+isl_bridges: [BR_C1_SP1_LE1_1]
+isl_ports: [8]

@@ -1,0 +1,10 @@
+---
+# C3_SP1.yaml - Catalyst 9000v campus spine managed by ND 4.3.1 (fabric CAMPUS1); mirror of C1_SP1.
+name: C3_SP1
+role: Campus Spine
+sid: 3702
+mgmt_bridge: BR_ND_DATA_14
+mgmt_ip: 192.168.14.182/24
+mgmt_gw: 192.168.14.1
+neighbors: [C3_LE1]
+isl_bridges: [BR_C3_SP1_LE1_1]

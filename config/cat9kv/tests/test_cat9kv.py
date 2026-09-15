@@ -22,6 +22,14 @@ def test_shipped_yamls_load_with_the_expected_identity():
     c1, c3 = _c1_le1(), ConfigLoader.load_switch_config(HERE / "C3_LE1.yaml")
     assert (c1.sid, c1.mgmt_bridge, c1.mgmt_ip, c1.mgmt_gw) == (1701, "BR_ND_DATA_12", "192.168.12.181/24", "192.168.12.1")
     assert (c3.sid, c3.mgmt_bridge, c3.mgmt_ip, c3.mgmt_gw) == (3701, "BR_ND_DATA_14", "192.168.14.181/24", "192.168.14.1")
+    assert (c1.neighbors, c1.isl_bridges, c1.isl_ports) == (["C1_SP1"], ["BR_C1_SP1_LE1_1"], [8])
+    assert (c3.neighbors, c3.isl_bridges, c3.isl_ports) == (["C3_SP1"], ["BR_C3_SP1_LE1_1"], [8])
+    s1, s3 = ConfigLoader.load_switch_config(HERE / "C1_SP1.yaml"), ConfigLoader.load_switch_config(HERE / "C3_SP1.yaml")
+    assert (s1.sid, s1.serial, s1.mgmt_bridge, s1.mgmt_ip, s1.mgmt_gw) == (1702, "CAT9KV1702", "BR_ND_DATA_12", "192.168.12.182/24", "192.168.12.1")
+    assert (s3.sid, s3.serial, s3.mgmt_bridge, s3.mgmt_ip, s3.mgmt_gw) == (3702, "CAT9KV3702", "BR_ND_DATA_14", "192.168.14.182/24", "192.168.14.1")
+    assert (s1.neighbors, s1.isl_bridges, s1.isl_ports) == (["C1_LE1"], ["BR_C1_SP1_LE1_1"], [1])
+    assert (s3.neighbors, s3.isl_bridges, s3.isl_ports) == (["C3_LE1"], ["BR_C3_SP1_LE1_1"], [1])
+    assert all(len(b) <= 15 for b in s1.isl_bridges + s3.isl_bridges)  # IFNAMSIZ
 
 
 def test_serial_and_ports_derive_from_sid():
@@ -48,7 +56,9 @@ def test_interfaces_are_padded_to_min_nics_with_unattached_taps():
     assert len(interfaces) == 9
     assert interfaces[0].name == "MGMT" and interfaces[0].bridge == "BR_ND_DATA_12" and interfaces[0].tap == "tap1701-0"
     assert interfaces[0].mac == "52:54:00:11:00:01"
-    assert all(iface.bridge is None for iface in interfaces[1:])
+    # C1_LE1 carries a real fabric link on port 8 (GigabitEthernet1/0/8); ports 1-7 stay unattached padding.
+    assert all(iface.bridge is None for iface in interfaces[1:8])
+    assert interfaces[8].bridge == "BR_C1_SP1_LE1_1" and interfaces[8].name == "FP_8"
     assert [iface.tap for iface in interfaces[1:]] == [f"tap1701-{i}" for i in range(1, 9)]
     assert interfaces[3].mac == "52:54:00:11:03:01"
     assert all(iface.interface_type == "e1000" for iface in interfaces)

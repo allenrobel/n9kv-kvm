@@ -37,6 +37,8 @@ BRIDGES=(
     BR_S2_LE1_H1_1
     BR_ISN_WAN_S1_1
     BR_ISN_WAN_S2_1
+    # CAMPUS1 Cat9kv spine-leaf
+    BR_C1_SP1_LE1_1
     # SITE3/SITE4 mirror (canonical, from 9914-bridges.yaml); BR_ND_DATA_14 is their management bridge.
     BR_ND_DATA_14
     BR_ISN_S3_S4_1
@@ -55,6 +57,8 @@ BRIDGES=(
     BR_S4_LE1_H1_1
     BR_ISN_WAN_S3_1
     BR_ISN_WAN_S4_1
+    # CAMPUS1 Cat9kv spine-leaf
+    BR_C3_SP1_LE1_1
 )
 
 if [[ $EUID -ne 0 ]]; then

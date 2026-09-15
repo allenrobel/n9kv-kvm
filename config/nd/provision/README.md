@@ -49,6 +49,12 @@ uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 \
   attached to `S1_BG1` and `S2_BG1` with no interfaces: an MSD stretches an overlay across sites only through the border gateways, and it is the
   BGW attachment that generates the VNI membership (with multisite ingress replication) there. Found the hard way on 2026-09-14: with the BGWs
   unattached, `show nve vni` on both was empty, S1_H1 could ping its anycast gateway but not S2_H1, and ND reported no anomaly at all.
+  Two things to know when checking the result: the BGW NVE peers take about a minute to come up after the `overlay` deploy (a host ping
+  right after the phase returns still fails; the leaves then show the remote host MAC via BGP with the `RS` flag and `show nve vni` on the BGWs
+  shows `MS-IR`), and a ping sourced from a leaf is not a valid cross-site test, because it is sourced from the anycast gateway address that
+  the far-side leaf also owns. Test from the host containers (`sudo virsh -c lxc:/// console S1_H1`, then `ping 192.0.1.172`).
+  Also note the overlay attach of an interface change (the ToR host port flip to `accessHost`) leaves the port's own lines pending until the
+  `deploy` phase recalculates the fabric; `networkActions/deploy` pushes only the VLAN/attachment.
 - The `vpc` phase pairs the leaf pairs listed under `vpc_pairs:` with ND's default template (`PUT /fabrics/{f}/switches/{sn}/vpcPair`,
   `vpcAction: pair`); ND allocates the domain id in pairing order and generates the `port-channel500` peer-link over the discovered leaf link.
   It then recalculates and deploys the fabric. Pairs ND already lists (`GET /fabrics/{f}/vpcPairs`, either order) are skipped.

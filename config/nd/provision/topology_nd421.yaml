@@ -66,11 +66,14 @@ fabrics:
         # fail every host port deploy with "Command mtu 9198 is invalid". 8978 is the platform ceiling; the 1500 per-port
         # default keeps `mtu` lines out of the generated trunkHost policy and is what the cisco.nd XE tests expect after a replace.
         systemMtu: 8978
+        # Intra-fabric link MTU (ND default 9198): the Cat9kv rejects a per-port mtu above 8978, so the leaf-spine link uses the ceiling.
+        fabricMtu: 8978
         l2HostInterfaceMtu: 1500
     switches:
-      # Catalyst 9000v leaf + spine, one intra-fabric link (C1_SP1 Gi1/0/1 -- C1_LE1 Gi1/0/8; ND stamps iosXeNumbered on the CDP
-      # adjacency at Recalculate). Gi1/0/1..1/0/7 on the leaf must stay free for the cisco.nd IOS-XE interface tests; the link
-      # exists so the fabric-link ownership guard (PR #558) has a corruptible, rebuildable endpoint.
+      # Catalyst 9000v leaf + spine, one intra-fabric link (C1_SP1 Gi1/0/1 -- C1_LE1 Gi1/0/8). ND models the leaf-spine CDP
+      # adjacency as an iosXeNumbered link (observed on 4.2.1 and 4.3.1). Gi1/0/1..1/0/7 on the leaf must stay free for the
+      # cisco.nd IOS-XE interface tests; the link exists so the fabric-link ownership guard (PR #558) has a corruptible,
+      # rebuildable endpoint.
       - {hostname: C1_LE1, ip: 192.168.12.181, role: leaf, platform: ios-xe}
       - {hostname: C1_SP1, ip: 192.168.12.182, role: spine, platform: ios-xe}
 

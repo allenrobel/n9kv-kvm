@@ -111,9 +111,12 @@ uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 \
 - `GET /links` needs `fabricName`; policy lists page at 10 - the client always walks pages.
 - ebgpVrfLite links put no IPs on parent interfaces; they appear on subinterfaces once a VRF is extended.
 - `CAMPUS1` is a `vxlanCampus` fabric (Campus VXLAN EVPN) holding a Catalyst 9000v leaf and spine with one leaf-spine link (leaf
-  `GigabitEthernet1/0/8` to spine `GigabitEthernet1/0/1`, expected link policy `iosXeNumbered` -- to be confirmed on the lab); it exists so the
-  `cisco.nd` IOS-XE interface tests have an ND-managed Catalyst and the fabric-link guard has a corruptible endpoint. `_switch_password` picks
-  `IOSXE_PASSWORD` by switch platform (`ios-xe`); both switches are added with `preserveConfig: false` (ND owns their config).
+  `GigabitEthernet1/0/8` to spine `GigabitEthernet1/0/1`), an `iosXeNumbered` link policy observed on both 4.2.1 and 4.3.1; the fabric pins
+  `fabricMtu: 8978`. Both switches' `GigabitEthernet0/0` management ports also share an ND data bridge, so IOS-XE's default CDP turns that
+  adjacency into a second intra-fabric link and Recalculate & Deploy un-configures the port; the Cat9kv day-0 config disables CDP on
+  `GigabitEthernet0/0` to prevent it. `CAMPUS1` exists so the `cisco.nd` IOS-XE interface tests have an ND-managed Catalyst and the
+  fabric-link guard has a corruptible endpoint. `_switch_password` picks `IOSXE_PASSWORD` by switch platform (`ios-xe`); both switches are
+  added with `preserveConfig: false` (ND owns their config).
 - Cat9kv MTU: the image takes `system mtu` / per-port `mtu` only in 1500-8978 and refuses a per-port value above `system mtu`, so ND's campus
   defaults (`systemMtu` 1500, `l2HostInterfaceMtu` 9216 -> 9198) fail every host-port deploy with "Command mtu 9198 is invalid". The shipped
   `CAMPUS1` settings pin `systemMtu: 8978` and `l2HostInterfaceMtu: 1500` (no `mtu` line in the generated `iosXeTrunkHost` policy).

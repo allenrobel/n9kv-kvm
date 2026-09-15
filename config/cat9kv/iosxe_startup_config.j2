@@ -12,6 +12,7 @@ ip ssh version 2
 interface GigabitEthernet0/0
  vrf forwarding Mgmt-vrf
  ip address {{ mgmt_ip_addr }} {{ mgmt_netmask }}
+ no cdp enable
  no shutdown
 !
 ip route vrf Mgmt-vrf 0.0.0.0 0.0.0.0 {{ mgmt_gw }}

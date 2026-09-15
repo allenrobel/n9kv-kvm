@@ -53,7 +53,8 @@ regardless of NIC count). Pinning the serial keeps ND's switch identity stable a
 
 The rendered config puts `GigabitEthernet0/0` in `Mgmt-vrf` with a vrf default route, creates the `admin`
 user, enables SSH, and installs a one-shot EEM applet that generates the RSA keypair 60 seconds after boot
-and then removes itself.
+and then removes itself. It also disables CDP on `GigabitEthernet0/0`: ND models a CDP adjacency between two
+managed switches' management ports as an intra-fabric link and un-configures the port, which cuts management.
 
 ## Bringup
 
@@ -84,7 +85,7 @@ sudo -E python3 startup_config.py --all             # build day-0 ISOs for every
 ## ND placement
 
 Each `CAMPUS1` (ND 4.2.1: `C1_LE1`/`C1_SP1`; ND 4.3.1: `C3_LE1`/`C3_SP1`) holds a leaf and a spine joined by
-one intra-fabric link, which ND stamps as an `iosXeNumbered` link policy at Recalculate; `config/nd/provision/`
+one intra-fabric link, an `iosXeNumbered` link policy (observed on both 4.2.1 and 4.3.1); `config/nd/provision/`
 creates the fabric and adds both switches. The link exists so the fabric-link ownership guard (PR #558) has a
 corruptible, rebuildable endpoint to test against, without touching the leaf's `GigabitEthernet1/0/1..7`, which
 the cisco.nd IOS-XE interface tests need free. Catalyst switches cannot join the NX-OS `vxlanIbgp` fabrics

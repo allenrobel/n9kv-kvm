@@ -68,8 +68,11 @@ fabrics:
         systemMtu: 8978
         l2HostInterfaceMtu: 1500
     switches:
-      # One Catalyst 9000v leaf, no fabric links: GigabitEthernet1/0/1 must stay free for the cisco.nd IOS-XE interface tests.
+      # Catalyst 9000v leaf + spine, one intra-fabric link (C1_SP1 Gi1/0/1 -- C1_LE1 Gi1/0/8; ND stamps iosXeNumbered on the CDP
+      # adjacency at Recalculate). Gi1/0/1..1/0/7 on the leaf must stay free for the cisco.nd IOS-XE interface tests; the link
+      # exists so the fabric-link ownership guard (PR #558) has a corruptible, rebuildable endpoint.
       - {hostname: C1_LE1, ip: 192.168.12.181, role: leaf, platform: ios-xe}
+      - {hostname: C1_SP1, ip: 192.168.12.182, role: spine, platform: ios-xe}
 
 fabric_groups:
   - name: MSD

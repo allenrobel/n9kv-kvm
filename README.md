@@ -227,14 +227,15 @@ names/ASNs/pools):
   - SITE1 (VxLAN) - Border Gateway (S1_BG1), Spine (S1_SP1), 4x Leaf (S1_LE1-4), TOR (S1_TOR1), Host (S1_H1)
   - SITE2 (VxLAN) - Border Gateway (S2_BG1), Spine (S2_SP1), Leaf (S2_LE1), Host (S2_H1)
   - ISN (External Connectivity) - WAN router (WAN1)
-  - CAMPUS1 (Campus VXLAN EVPN) - Catalyst 9000v leaf (C1_LE1), no fabric links; exists for the cisco.nd IOS-XE interface tests
+  - CAMPUS1 (Campus VXLAN EVPN) - Catalyst 9000v leaf (C1_LE1) + spine (C1_SP1), one leaf-spine link; exists for the cisco.nd IOS-XE interface
+    tests and the fabric-link ownership guard
 - **ND 4.3.1** (10.10.20.20, data on `BR_ND_DATA_14`) - exact mirror of ND 4.2.1: same fabric names, ASNs and pools,
   only hostnames and the third octet of the mgmt IPs (12 -> 14) differ
   - MSD (Multi Site Domain) - contains SITE1, SITE2 and ISN
   - SITE1 (VxLAN) - Border Gateway (S3_BG1), Spine (S3_SP1), 4x Leaf (S3_LE1-4), TOR (S3_TOR1), Host (S3_H1)
   - SITE2 (VxLAN) - Border Gateway (S4_BG1), Spine (S4_SP1), Leaf (S4_LE1), Host (S4_H1)
   - ISN (External Connectivity) - WAN router (WAN2)
-  - CAMPUS1 (Campus VXLAN EVPN) - Catalyst 9000v leaf (C3_LE1), mirror of C1_LE1
+  - CAMPUS1 (Campus VXLAN EVPN) - Catalyst 9000v leaf (C3_LE1) + spine (C3_SP1), one leaf-spine link; mirror of C1_LE1/C1_SP1
 
 ```mermaid
 graph TD
@@ -283,6 +284,10 @@ graph TD
         end
         subgraph CAMPUS1_421["CAMPUS1 Fabric (Campus VXLAN EVPN)"]
             C1_LE1[Campus Leaf - C1_LE1]
+            C1_SP1[Campus Spine - C1_SP1]
+
+            %% CAMPUS1 fabric connection
+            C1_SP1 --- C1_LE1
         end
     end
 
@@ -331,6 +336,10 @@ graph TD
         end
         subgraph CAMPUS1_431["CAMPUS1 Fabric (Campus VXLAN EVPN)"]
             C3_LE1[Campus Leaf - C3_LE1]
+            C3_SP1[Campus Spine - C3_SP1]
+
+            %% CAMPUS1 fabric connection
+            C3_SP1 --- C3_LE1
         end
     end
 
@@ -343,7 +352,7 @@ graph TD
     classDef host fill:#e8f2a0,stroke:#558b2f,stroke-width:2px,color:#000000
 
     class S1_BG1,S2_BG1,S3_BG1,S4_BG1,WAN1,WAN2 borderGateway
-    class S1_SP1,S2_SP1,S3_SP1,S4_SP1 spine
+    class S1_SP1,S2_SP1,S3_SP1,S4_SP1,C1_SP1,C3_SP1 spine
     class S1_LE1,S1_LE2,S1_LE3,S1_LE4,S1_TOR1,S2_LE1,S3_LE1,S3_LE2,S3_LE3,S3_LE4,S3_TOR1,S4_LE1,C1_LE1,C3_LE1 leaf
     class S1_H1,S2_H1,S3_H1,S4_H1 host
 ```
@@ -405,15 +414,21 @@ graph TD
 │   │       └── 9915-bridges.yaml
 │   ├── cat9kv
 │   │   ├── C1_LE1.yaml
+│   │   ├── C1_SP1.yaml
 │   │   ├── C3_LE1.yaml
+│   │   ├── C3_SP1.yaml
 │   │   ├── cat9kv.py
 │   │   ├── con_c1_le1
+│   │   ├── con_c1_sp1
 │   │   ├── con_c3_le1
+│   │   ├── con_c3_sp1
 │   │   ├── global_config.yaml
 │   │   ├── iosxe_startup_config.j2
 │   │   ├── README.md
 │   │   ├── ssh_c1_le1
+│   │   ├── ssh_c1_sp1
 │   │   ├── ssh_c3_le1
+│   │   ├── ssh_c3_sp1
 │   │   ├── startup_config.py
 │   │   ├── tests
 │   │   └── vswitch.xml

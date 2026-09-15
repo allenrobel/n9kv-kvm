@@ -23,7 +23,7 @@ uv run config/nd/provision/snapshot.py dump ~/tmp/snap_nd421 --nd-ip 10.10.20.10
 uv run config/nd/provision/snapshot.py dump ~/tmp/snap_nd431 --nd-ip 10.10.20.20
 uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 \
   --map S1_BG1=S3_BG1 --map S1_SP1=S3_SP1 --map S1_LE1=S3_LE1 --map S1_LE2=S3_LE2 --map S1_LE3=S3_LE3 --map S1_LE4=S3_LE4 \
-  --map S1_TOR1=S3_TOR1 --map S2_BG1=S4_BG1 --map S2_SP1=S4_SP1 --map S2_LE1=S4_LE1 --map WAN1=WAN2 --map C1_LE1=C3_LE1
+  --map S1_TOR1=S3_TOR1 --map S2_BG1=S4_BG1 --map S2_SP1=S4_SP1 --map S2_LE1=S4_LE1 --map WAN1=WAN2 --map C1_LE1=C3_LE1 --map C1_SP1=C3_SP1
 ```
 
 ## Gotchas carried over from ND 4.2.1
@@ -110,9 +110,10 @@ uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 \
 - IOS-XE runs one BGP process: any stray `router bgp` on the WAN router other than the ISN ASN aborts the deploy mid-script.
 - `GET /links` needs `fabricName`; policy lists page at 10 - the client always walks pages.
 - ebgpVrfLite links put no IPs on parent interfaces; they appear on subinterfaces once a VRF is extended.
-- `CAMPUS1` is a `vxlanCampus` fabric (Campus VXLAN EVPN) holding one Catalyst 9000v leaf with no links; it exists so the `cisco.nd` IOS-XE interface
-  tests have an ND-managed Catalyst. `_switch_password` picks `IOSXE_PASSWORD` by switch platform (`ios-xe`), so both `ISN` and `CAMPUS1` use it.
-  The leaf is added with `preserveConfig: false` (ND owns its config, like the NX-OS fabrics).
+- `CAMPUS1` is a `vxlanCampus` fabric (Campus VXLAN EVPN) holding a Catalyst 9000v leaf and spine with one leaf-spine link (leaf
+  `GigabitEthernet1/0/8` to spine `GigabitEthernet1/0/1`, expected link policy `iosXeNumbered` -- to be confirmed on the lab); it exists so the
+  `cisco.nd` IOS-XE interface tests have an ND-managed Catalyst and the fabric-link guard has a corruptible endpoint. `_switch_password` picks
+  `IOSXE_PASSWORD` by switch platform (`ios-xe`); both switches are added with `preserveConfig: false` (ND owns their config).
 - Cat9kv MTU: the image takes `system mtu` / per-port `mtu` only in 1500-8978 and refuses a per-port value above `system mtu`, so ND's campus
   defaults (`systemMtu` 1500, `l2HostInterfaceMtu` 9216 -> 9198) fail every host-port deploy with "Command mtu 9198 is invalid". The shipped
   `CAMPUS1` settings pin `systemMtu: 8978` and `l2HostInterfaceMtu: 1500` (no `mtu` line in the generated `iosXeTrunkHost` policy).

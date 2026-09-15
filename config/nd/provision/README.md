@@ -45,7 +45,10 @@ uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 \
   The shipped overlay is VRF `LAB` (L3VNI 50001) + network `LAB_NET1` (VLAN 2, L2VNI 30001, anycast gateway 192.0.1.1/24) on the S1 vPC pair and
   S2_LE1 (Ethernet1/2 = the S2_H1 host port) and, once the `tor` phase has paired the ToR, S1_TOR1 (Ethernet1/3 = the S1_H1 host port). ND 4.x has
   no ToR-port field on a leaf's attachment row; the ToR is an attachment target of its own (the attachment query lists it with `switchRole: tor`),
-  so the ToR host port is one more `network_attachments` entry in access mode, ordered after the leaf rows.
+  so the ToR host port is one more `network_attachments` entry in access mode, ordered after the leaf rows. The VRF and the network are also
+  attached to `S1_BG1` and `S2_BG1` with no interfaces: an MSD stretches an overlay across sites only through the border gateways, and it is the
+  BGW attachment that generates the VNI membership (with multisite ingress replication) there. Found the hard way on 2026-09-14: with the BGWs
+  unattached, `show nve vni` on both was empty, S1_H1 could ping its anycast gateway but not S2_H1, and ND reported no anomaly at all.
 - The `vpc` phase pairs the leaf pairs listed under `vpc_pairs:` with ND's default template (`PUT /fabrics/{f}/switches/{sn}/vpcPair`,
   `vpcAction: pair`); ND allocates the domain id in pairing order and generates the `port-channel500` peer-link over the discovered leaf link.
   It then recalculates and deploys the fabric. Pairs ND already lists (`GET /fabrics/{f}/vpcPairs`, either order) are skipped.

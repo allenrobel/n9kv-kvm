@@ -127,12 +127,19 @@ overlay:
         vlanId: 2
         networkMode: layer3
         l3Data: {gatewayIpv4Address: 192.0.1.1/24}
+  # The border gateways are attached too (no interfaces): an MSD stretches a VRF/network across sites only through
+  # the BGWs, and it is this attachment that puts the VNIs (with multisite ingress replication) on them. Without it
+  # both BGWs carry no VNI at all and same-subnet hosts in SITE1 and SITE2 cannot reach each other (lab, 2026-09-14).
   vrf_attachments:
     - {fabric: SITE1, vrf: LAB, switch: S1_LE1}
     - {fabric: SITE1, vrf: LAB, switch: S1_LE2}
+    - {fabric: SITE1, vrf: LAB, switch: S1_BG1}
     - {fabric: SITE2, vrf: LAB, switch: S2_LE1}
+    - {fabric: SITE2, vrf: LAB, switch: S2_BG1}
   network_attachments:
     - {fabric: SITE1, network: LAB_NET1, switch: S1_LE1, vlan: 2, interfaces: []}
     - {fabric: SITE1, network: LAB_NET1, switch: S1_LE2, vlan: 2, interfaces: []}
+    - {fabric: SITE1, network: LAB_NET1, switch: S1_BG1, vlan: 2, interfaces: []}
     - {fabric: SITE2, network: LAB_NET1, switch: S2_LE1, vlan: 2, interfaces: [{mode: access, interfaceRange: Ethernet1/2}]}
+    - {fabric: SITE2, network: LAB_NET1, switch: S2_BG1, vlan: 2, interfaces: []}
     - {fabric: SITE1, network: LAB_NET1, switch: S1_TOR1, vlan: 2, interfaces: [{mode: access, interfaceRange: Ethernet1/3}]}

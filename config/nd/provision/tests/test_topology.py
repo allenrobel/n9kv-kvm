@@ -168,3 +168,19 @@ def test_shipped_topologies_attach_lab_net1_to_the_tor_host_port_in_access_mode(
         rows = [a for a in topo.overlay.network_attachments if a["switch"] == tor]
         assert rows == [{"fabric": "SITE1", "network": "LAB_NET1", "switch": tor, "vlan": 2, "interfaces": [{"mode": "access", "interfaceRange": "Ethernet1/3"}]}]
         assert any(p.tor == tor for p in topo.tor_pairs), f"{tor} must be paired before its host port is attached"
+
+
+def test_shipped_topologies_attach_the_overlay_to_both_border_gateways():
+    """An MSD stretches a VRF/network across sites only when it is attached to the border gateways too (that attachment
+    puts the VNIs with multisite ingress replication on the BGWs); without it the BGWs carry no VNI at all (lab, 2026-09-14)."""
+    for fn, bgs in (("topology_nd421.yaml", {"SITE1": "S1_BG1", "SITE2": "S2_BG1"}), ("topology_nd431.yaml", {"SITE1": "S3_BG1", "SITE2": "S4_BG1"})):
+        topo = load(HERE / fn)
+        for fabric, bg in bgs.items():
+            assert {"fabric": fabric, "vrf": "LAB", "switch": bg} in topo.overlay.vrf_attachments, f"{fn}: VRF LAB not attached to {bg}"
+            assert {
+                "fabric": fabric,
+                "network": "LAB_NET1",
+                "switch": bg,
+                "vlan": 2,
+                "interfaces": [],
+            } in topo.overlay.network_attachments, f"{fn}: LAB_NET1 not attached to {bg}"

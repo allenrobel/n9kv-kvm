@@ -13,8 +13,8 @@ from dataclasses import dataclass, replace
 from typing import Any, Literal
 
 from golden_live import LiveFabric, free_ports, interface_path
-from provision import link_payload
-from topology import TOOL_LINK_POLICIES, Fabric, FabricLink, InterfaceIntent, Link, Topology, endpoint_key
+from provision import attachment_payload, link_payload, merge_settings, tor_associate_payload, vpc_pair_payload
+from topology import TOOL_LINK_POLICIES, Fabric, FabricLink, FabricGroup, InterfaceIntent, Link, Topology, TorPair, endpoint_key
 
 Kind = Literal["missing", "different", "extra"]
 
@@ -36,7 +36,7 @@ INTERFACES = "interfaces"
 @dataclass(frozen=True)
 class Op:
     """One controller call. action is one of put_link, clear_link, put_interface, reset_interface, delete_interface, attach, detach, create_vrf,
-    create_network, delete_vrf, delete_network, pair_vpc, unpair_vpc, pair_tor, unpair_tor, add_switch, set_role, put_settings, deploy_owner."""
+    create_network, delete_vrf, delete_network, deploy_overlay, pair_vpc, unpair_vpc, pair_tor, unpair_tor, add_switch, set_role, put_settings, deploy_owner."""
 
     action: str
     fabric: str
@@ -62,7 +62,7 @@ class Drift:
     golden: str
     live: str
     fix: Op | None
-    delete: Op | None
+    delete: Op | list[Op] | None  # a list is an ordered sequence (detach, deploy, DELETE)
     adopt: Adoption | None
 
 
@@ -537,6 +537,390 @@ def drift_interfaces(topo: Topology, fabric: Fabric, live: dict[str, LiveFabric]
                 continue
             if not _is_generated_logical(intf, vlans, endpoints, switch.hostname):
                 drifts.append(_extra_interface_drift(fabric, fab_live, switch.hostname, intf, None))
+    return drifts
+
+
+# ---------------------------------------------------------------- settings
+
+SETTINGS = "settings"
+
+
+def _leaves(settings: dict, prefix: tuple = ()) -> list[tuple[tuple, Any]]:
+    out: list[tuple[tuple, Any]] = []
+    for key, value in settings.items():
+        if isinstance(value, dict):
+            out.extend(_leaves(value, (*prefix, key)))
+        else:
+            out.append(((*prefix, key), value))
+    return out
+
+
+def _dig(settings: Any, path: tuple) -> Any:
+    for key in path:
+        if not isinstance(settings, dict):
+            return None
+        settings = settings.get(key)
+    return settings
+
+
+def drift_settings(topo: Topology, live: dict[str, LiveFabric]) -> list[Drift]:
+    """Every leaf of a golden fabric's or group's `settings` whose live value differs (compared as strings); one `different` drift per key,
+    subject `management.<key>`. All drifts of one fabric share one `put_settings` fix, the live settings merged with golden's. Keys the
+    live object has beyond golden are never drift."""
+    drifts: list[Drift] = []
+    owners: list[Fabric | FabricGroup] = [*topo.fabrics, *topo.fabric_groups]
+    for item in owners:
+        if item.name not in live:
+            continue
+        current = live[item.name].settings
+        fix: Op | None = None
+        for path, wanted in _leaves(item.settings):
+            found = _dig(current, path)
+            if _norm(wanted) == _norm(found):
+                continue
+            if fix is None:
+                fix = Op("put_settings", item.name, "PUT", f"/fabrics/{item.name}", merge_settings(current, item.settings))
+            drifts.append(Drift(SETTINGS, item.name, "different", ".".join(path), _norm(wanted) or "none", _norm(found) or "none", fix, None, None))
+    return drifts
+
+
+# ---------------------------------------------------------------- switches
+
+SWITCHES = "switches"
+
+
+def drift_switches(topo: Topology, live: dict[str, LiveFabric]) -> list[Drift]:
+    """Switch membership and role per golden fabric. A golden switch absent from its fabric is `missing` (fix add_switch; the body is a
+    marker, the applier runs the switch phase), one with another role is `different` (fix set_role), one found only in another fabric is
+    `different` without a fix, and a live switch golden does not list anywhere is `extra`: adoptable, never deletable."""
+    golden_hosts = {s.hostname for f in topo.fabrics for s in f.switches}
+    drifts: list[Drift] = []
+    for fabric in topo.fabrics:
+        if fabric.name not in live:
+            continue
+        fab_live = live[fabric.name]
+        for switch in fabric.switches:
+            found = fab_live.switches.get(switch.hostname)
+            if found is None:
+                elsewhere = next((n for n, lf in live.items() if n != fabric.name and switch.hostname in lf.switches), None)
+                if elsewhere:
+                    drifts.append(Drift(SWITCHES, fabric.name, "different", switch.hostname, f"in {fabric.name}", f"in {elsewhere}", None, None, None))
+                else:
+                    fix = Op("add_switch", fabric.name, "POST", f"/fabrics/{fabric.name}/switches", None)
+                    drifts.append(Drift(SWITCHES, fabric.name, "missing", switch.hostname, switch.role, "none", fix, None, None))
+            elif found.get("switchRole") != switch.role:
+                path = f"/fabrics/{fabric.name}/switches/{found['serialNumber']}"
+                fix = Op("set_role", fabric.name, "PUT", path, {"switchRole": switch.role})
+                drifts.append(Drift(SWITCHES, fabric.name, "different", switch.hostname, switch.role, str(found.get("switchRole")), fix, None, None))
+        listed = {s.hostname for s in fabric.switches}
+        for hostname, found in fab_live.switches.items():
+            if hostname in listed or hostname in golden_hosts:
+                continue
+            entry = {"hostname": hostname, "ip": found.get("fabricManagementIp", ""), "role": found.get("switchRole", "")}
+            drifts.append(Drift(SWITCHES, fabric.name, "extra", hostname, "none", entry["role"], None, None, Adoption(("fabrics", fabric.name, SWITCHES), entry)))
+    return drifts
+
+
+# ---------------------------------------------------------------- vrfs, networks, attachments
+
+VRFS = "vrfs"
+NETWORKS = "networks"
+ATTACHMENTS = "attachments"
+VRF_KEYS = (("vrfName",), ("vrfId",), ("vlanId",))
+NETWORK_KEYS = (("networkName",), ("networkId",), ("vlanId",), ("vrfName",), ("l3Data", "gatewayIpv4Address"))
+ADOPT_EXTRA_KEYS = {VRFS: (("vrfType",),), NETWORKS: (("networkType",), ("networkMode",))}
+BUILT_IN_VRFS = {"default"}  # ND's own VRF (the externalConnectivity fabrics list it); never an extra, never deleted
+
+
+def _overlay_text(obj: dict, keys: tuple) -> str:
+    return " ".join(f"{'.'.join(k)}={_norm(_dig(obj, k))}" for k in keys if _norm(_dig(obj, k)))
+
+
+def _overlay_differs(golden: dict, live_obj: dict, keys: tuple) -> bool:
+    return any(_norm(_dig(live_obj, k)) != _norm(_dig(golden, k)) for k in keys if _dig(golden, k) is not None)
+
+
+def _adopt_object(live_obj: dict, keys: tuple, extra: tuple) -> dict:
+    out: dict = {}
+    for path in (*keys, *extra):
+        value = _dig(live_obj, path)
+        if value is None:
+            continue
+        target = out
+        for key in path[:-1]:
+            target = target.setdefault(key, {})
+        target[path[-1]] = value
+    return out
+
+
+def _attachment_rows(fab_live: LiveFabric, kind: str) -> list[dict]:
+    return fab_live.vrf_attachments if kind == "vrf" else fab_live.network_attachments
+
+
+def _row_host(fab_live: LiveFabric, row: dict) -> str:
+    name = row.get("switchName")
+    if name:
+        return name
+    return next((h for h, s in fab_live.switches.items() if s.get("serialNumber") == row.get("switchId")), row.get("switchId", ""))
+
+
+def _extra_overlay_drift(kind: str, fabric: str, fab_live: LiveFabric, obj: dict) -> Drift:
+    """Extra VRF/network: delete = detach every attached switch, deploy them, then DELETE the object."""
+    name = obj["vrfName" if kind == "vrf" else "networkName"]
+    key = "vrfName" if kind == "vrf" else "networkName"
+    rows = [r for r in _attachment_rows(fab_live, kind) if r.get(key) == name]
+    ops: list[Op] = []
+    for row in rows:
+        att = {"vrf": name} if kind == "vrf" else {"network": name, "vlan": row.get("vlanId"), "interfaces": row.get("interfaces") or []}
+        body = attachment_payload(kind, att, row["switchId"])
+        body["attachments"][0]["attach"] = False
+        ops.append(Op("detach", fabric, "POST", f"/fabrics/{fabric}/{kind}Attachments", body))
+    if rows:
+        names_key = "vrfNames" if kind == "vrf" else "networkNames"
+        ops.append(
+            Op("deploy_overlay", fabric, "POST", f"/fabrics/{fabric}/{kind}Actions/deploy", {names_key: [name], "switchIds": sorted({r["switchId"] for r in rows})})
+        )
+    plural = "vrfs" if kind == "vrf" else "networks"
+    ops.append(Op(f"delete_{kind}", fabric, "DELETE", f"/fabrics/{fabric}/{plural}/{name}", None))
+    keys = VRF_KEYS if kind == "vrf" else NETWORK_KEYS
+    entry = {"fabrics": [fabric], "object": _adopt_object(obj, keys, ADOPT_EXTRA_KEYS[plural])}
+    return Drift(plural, fabric, "extra", name, "none", _overlay_text(obj, keys), None, ops, Adoption(("overlay", plural), entry))
+
+
+def _group_copies(topo: Topology, live: dict[str, LiveFabric], group: str, kind: str, name: str) -> list[dict] | None:
+    """The live copies of a group-level object: the group's own object, else the propagated copy in every member that can hold one (all
+    but externalConnectivity fabrics); None when neither exists. The dumps hold no group objects, so this is how a snapshot shows them."""
+    key = "vrfName" if kind == "vrf" else "networkName"
+    attr = "vrfs" if kind == "vrf" else "networks"
+    own = [o for o in getattr(live[group], attr) if o.get(key) == name] if group in live else []
+    if own:
+        return own
+    types = {f.name: f.type for f in topo.fabrics}
+    members = [m for g in topo.fabric_groups if g.name == group for m in g.members if m in live and types.get(m) != "externalConnectivity"]
+    copies = [o for m in members for o in getattr(live[m], attr) if o.get(key) == name]
+    return copies if members and len(copies) == len(members) else None
+
+
+def _overlay_object_drifts(topo: Topology, live: dict[str, LiveFabric], kind: str) -> list[Drift]:
+    items = topo.overlay.vrfs if kind == "vrf" else topo.overlay.networks
+    key, attr, plural = ("vrfName", "vrfs", VRFS) if kind == "vrf" else ("networkName", "networks", NETWORKS)
+    keys = VRF_KEYS if kind == "vrf" else NETWORK_KEYS
+    groups = {g.name: g for g in topo.fabric_groups}
+    expected: dict[str, set[str]] = {}
+    for item in items:
+        name = item["object"][key]
+        for fabric in item["fabrics"]:
+            expected.setdefault(fabric, set()).add(name)
+            for member in groups[fabric].members if fabric in groups else []:
+                expected.setdefault(member, set()).add(name)  # the propagated copy
+    drifts: list[Drift] = []
+    for item in items:
+        golden = item["object"]
+        name = golden[key]
+        for fabric in item["fabrics"]:
+            if fabric not in live:
+                continue
+            copies = _group_copies(topo, live, fabric, kind, name) if fabric in groups else [o for o in getattr(live[fabric], attr) if o.get(key) == name] or None
+            create = Op(f"create_{kind}", fabric, "POST", f"/fabrics/{fabric}/{plural}", {plural: [dict(golden, fabricName=fabric)]})
+            text = _overlay_text(golden, keys)
+            if not copies:
+                drifts.append(Drift(plural, fabric, "missing", name, text, "none", create, None, None))
+                continue
+            bad = next((c for c in copies if _overlay_differs(golden, c, keys)), None)
+            if bad is not None:
+                drifts.append(Drift(plural, fabric, "different", name, text, _overlay_text(bad, keys), None, None, None))
+    for fabric in [f.name for f in topo.fabrics] + [g.name for g in topo.fabric_groups]:
+        if fabric not in live:
+            continue
+        for obj in getattr(live[fabric], attr):
+            name = obj.get(key)
+            if name in expected.get(fabric, set()) or (kind == "vrf" and name in BUILT_IN_VRFS):
+                continue
+            drifts.append(_extra_overlay_drift(kind, fabric, live[fabric], obj))
+    return drifts
+
+
+def _norm_interfaces(value: Any) -> list[tuple[str, str]]:
+    return sorted((str(i.get("interfaceRange", "")), str(i.get("mode", ""))) for i in (value or []))
+
+
+def _attachment_text(kind: str, vlan: Any, interfaces: Any) -> str:
+    if kind == "vrf":
+        return "attached"
+    ranges = ",".join(f"{r}:{m}" for r, m in _norm_interfaces(interfaces)) or "none"
+    return f"vlan={_norm(vlan)} interfaces={ranges}"
+
+
+def _attachment_drifts(topo: Topology, live: dict[str, LiveFabric], kind: str) -> list[Drift]:
+    rows = topo.overlay.vrf_attachments if kind == "vrf" else topo.overlay.network_attachments
+    key = "vrfName" if kind == "vrf" else "networkName"
+    gkey = "vrf" if kind == "vrf" else "network"
+    drifts: list[Drift] = []
+    wanted: set[tuple[str, str, str]] = set()
+    for att in rows:
+        fabric, name, switch = att["fabric"], att[gkey], att["switch"]
+        wanted.add((fabric, name, switch))
+        if fabric not in live:
+            continue
+        fab_live = live[fabric]
+        found = next((r for r in _attachment_rows(fab_live, kind) if r.get(key) == name and _row_host(fab_live, r) == switch), None)
+        golden_text = _attachment_text(kind, att.get("vlan"), att.get("interfaces"))
+        if found is not None and (
+            kind == "vrf"
+            or (_norm(found.get("vlanId")) == _norm(att.get("vlan")) and _norm_interfaces(found.get("interfaces")) == _norm_interfaces(att.get("interfaces")))
+        ):
+            continue
+        serial = (fab_live.switches.get(switch) or {}).get("serialNumber", "")
+        fix = Op("attach", fabric, "POST", f"/fabrics/{fabric}/{kind}Attachments", attachment_payload(kind, att, serial)) if serial else None
+        live_text = "none" if found is None else _attachment_text(kind, found.get("vlanId"), found.get("interfaces"))
+        drifts.append(Drift(ATTACHMENTS, fabric, "missing" if found is None else "different", f"{name} {switch}", golden_text, live_text, fix, None, None))
+    for fabric in [f.name for f in topo.fabrics]:
+        if fabric not in live:
+            continue
+        fab_live = live[fabric]
+        for row in _attachment_rows(fab_live, kind):
+            host = _row_host(fab_live, row)
+            name = row.get(key, "")
+            if (fabric, name, host) in wanted:
+                continue
+            att = {"vrf": name} if kind == "vrf" else {"network": name, "vlan": row.get("vlanId"), "interfaces": row.get("interfaces") or []}
+            body = attachment_payload(kind, att, row["switchId"])
+            body["attachments"][0]["attach"] = False
+            delete = Op("detach", fabric, "POST", f"/fabrics/{fabric}/{kind}Attachments", body)
+            entry = {"fabric": fabric, gkey: name, "switch": host, **({} if kind == "vrf" else {"vlan": row.get("vlanId"), "interfaces": row.get("interfaces") or []})}
+            adopt = Adoption(("overlay", f"{kind}_attachments"), entry)
+            drifts.append(
+                Drift(ATTACHMENTS, fabric, "extra", f"{name} {host}", "none", _attachment_text(kind, row.get("vlanId"), row.get("interfaces")), None, delete, adopt)
+            )
+    return drifts
+
+
+def drift_overlay(topo: Topology, live: dict[str, LiveFabric]) -> list[Drift]:
+    """VRFs, networks, then VRF and network attachments. Objects compare on the identity keys only (never vrfType/networkType, which differ
+    between a group's object and its propagated copies); a group-level golden object is present when the group or all its member fabrics
+    hold it, and propagated copies are never extras. Attachments compare `vlanId` and `interfaces` (any order) of rows with attach true."""
+    return [
+        *_overlay_object_drifts(topo, live, "vrf"),
+        *_overlay_object_drifts(topo, live, "network"),
+        *_attachment_drifts(topo, live, "vrf"),
+        *_attachment_drifts(topo, live, "network"),
+    ]
+
+
+# ---------------------------------------------------------------- vPC and ToR pairs
+
+PAIRS = "pairs"
+
+
+def _vpc_drifts(topo: Topology, fabric: Fabric, fab_live: LiveFabric) -> list[Drift]:
+    drifts: list[Drift] = []
+    golden = [p for p in topo.vpc_pairs if p.fabric == fabric.name]
+    listed = {frozenset((p.switch, p.peer)) for p in golden}
+    present = {frozenset((p.get("switchName"), p.get("peerSwitchName"))) for p in fab_live.vpc_pairs}
+    for pair in golden:
+        if frozenset((pair.switch, pair.peer)) in present:
+            continue
+        serial, peer = _serial(fab_live, pair.switch), _serial(fab_live, pair.peer)
+        fix = Op("pair_vpc", fabric.name, "PUT", f"/fabrics/{fabric.name}/switches/{serial}/vpcPair", vpc_pair_payload(serial, peer)) if serial and peer else None
+        drifts.append(Drift(PAIRS, fabric.name, "missing", f"{pair.switch} <-> {pair.peer}", "paired", "none", fix, None, None))
+    for entry in fab_live.vpc_pairs:
+        if frozenset((entry.get("switchName"), entry.get("peerSwitchName"))) in listed:
+            continue
+        name, peer = entry.get("switchName", ""), entry.get("peerSwitchName", "")
+        serial, peer_serial = entry.get("switchId", ""), entry.get("peerSwitchId", "")
+        delete = Op(
+            "unpair_vpc", fabric.name, "PUT", f"/fabrics/{fabric.name}/switches/{serial}/vpcPair", {**vpc_pair_payload(serial, peer_serial), "vpcAction": "unpair"}
+        )
+        adopt = Adoption(("vpc_pairs",), {"fabric": fabric.name, "switch": name, "peer": peer})
+        drifts.append(Drift(PAIRS, fabric.name, "extra", f"{name} <-> {peer}", "none", "paired", None, delete, adopt))
+    return drifts
+
+
+def _tor_key(tor: str, leaf: str, peer: str) -> tuple[str, frozenset]:
+    return (tor, frozenset((leaf, peer)))
+
+
+def _tor_adoption(fabric: str, tor: str, leaf: str, peer: str, resources: dict) -> Adoption:
+    entry: dict = {"fabric": fabric, "tor": tor, "leaf": leaf, "peer": peer}
+    for field_name, key in (("tor_po", "accessOrTorPortChannelId"), ("leaf_po", "aggregationOrLeafPortChannelId"), ("vpc_id", "aggregationOrLeafVpcId")):
+        if resources.get(key) is not None:
+            entry[field_name] = resources[key]
+    return Adoption(("tor_pairs",), entry)
+
+
+def _tor_drifts(topo: Topology, fabric: Fabric, fab_live: LiveFabric) -> list[Drift]:
+    drifts: list[Drift] = []
+    golden: list[TorPair] = [p for p in topo.tor_pairs if p.fabric == fabric.name]
+    live_assocs = [a for a in fab_live.tor_associations if a.get("resources")]  # a record without ids is only ND's recommendation
+    present = {_tor_key(a.get("accessOrTorSwitchId", ""), a.get("aggregationOrLeafSwitchId", ""), a.get("aggregationOrLeafPeerSwitchId", "")) for a in live_assocs}
+    listed: set = set()
+    for pair in golden:
+        tor, leaf, peer = _serial(fab_live, pair.tor), _serial(fab_live, pair.leaf), _serial(fab_live, pair.peer)
+        listed.add(_tor_key(tor, leaf, peer))
+        if _tor_key(tor, leaf, peer) in present:
+            continue
+        resources = pair.resources()
+        fix = Op("pair_tor", fabric.name, "POST", f"/fabrics/{fabric.name}/accessAssociationActions/associate", tor_associate_payload(tor, leaf, peer, resources))
+        drifts.append(
+            Drift(
+                PAIRS,
+                fabric.name,
+                "missing",
+                f"{pair.tor} -> {pair.leaf}/{pair.peer}",
+                "associated",
+                "none",
+                fix if tor and leaf and peer and resources else None,
+                None,
+                None,
+            )
+        )
+    names = {s.get("serialNumber"): h for h, s in fab_live.switches.items()}
+    for assoc in live_assocs:
+        tor, leaf, peer = assoc.get("accessOrTorSwitchId", ""), assoc.get("aggregationOrLeafSwitchId", ""), assoc.get("aggregationOrLeafPeerSwitchId", "")
+        if _tor_key(tor, leaf, peer) in listed:
+            continue
+        body = tor_associate_payload(tor, leaf, peer, assoc["resources"])
+        delete = Op("unpair_tor", fabric.name, "POST", f"/fabrics/{fabric.name}/accessAssociationActions/disassociate", body)
+        n_tor, n_leaf, n_peer = names.get(tor, tor), names.get(leaf, leaf), names.get(peer, peer)
+        drifts.append(
+            Drift(
+                PAIRS,
+                fabric.name,
+                "extra",
+                f"{n_tor} -> {n_leaf}/{n_peer}",
+                "none",
+                "associated",
+                None,
+                delete,
+                _tor_adoption(fabric.name, n_tor, n_leaf, n_peer, assoc["resources"]),
+            )
+        )
+    return drifts
+
+
+def drift_pairs(topo: Topology, live: dict[str, LiveFabric]) -> list[Drift]:
+    """vPC pairs (either switch order matches), then ToR associations. Missing pairs fix with the phase_vpc / phase_tor call; extras unpair
+    or disassociate with the same body and are adoptable. A ToR pair without port-channel ids in the topology has no fix."""
+    fabrics = [f for f in topo.fabrics if f.name in live]
+    return [*(d for f in fabrics for d in _vpc_drifts(topo, f, live[f.name])), *(d for f in fabrics for d in _tor_drifts(topo, f, live[f.name]))]
+
+
+# ---------------------------------------------------------------- everything
+
+
+def compute(topo: Topology, live: dict[str, LiveFabric]) -> list[Drift]:
+    """All drift classes in a stable order: settings, switches, links, generated links, interfaces, vrfs, networks, attachments, pairs."""
+    all_links = [link for fab in live.values() for link in fab.links]
+    seen: set = set()
+    drifts = [*drift_settings(topo, live), *drift_switches(topo, live)]
+    for fabric in topo.fabrics:
+        drifts.extend(drift_links(topo, fabric, live, seen))
+    for fabric in topo.fabrics:
+        drifts.extend(drift_generated_links(topo, fabric, live))
+    for fabric in topo.fabrics:
+        drifts.extend(drift_interfaces(topo, fabric, live, all_links))
+    drifts.extend(drift_overlay(topo, live))
+    drifts.extend(drift_pairs(topo, live))
     return drifts
 
 

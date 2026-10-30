@@ -6,8 +6,25 @@ from pathlib import Path
 
 import pytest
 
-from golden_drift import Adoption, Drift, Op, default_body, drift_generated_links, drift_interfaces, drift_links, format_report, interface_body, numbered_link_body
+from golden_drift import (
+    Adoption,
+    Drift,
+    Op,
+    compute,
+    default_body,
+    drift_generated_links,
+    drift_interfaces,
+    drift_links,
+    drift_overlay,
+    drift_pairs,
+    drift_settings,
+    drift_switches,
+    format_report,
+    interface_body,
+    numbered_link_body,
+)
 from golden_live import read_live_from_snapshot
+from provision import vpc_pair_payload
 from topology import FabricLink, GeneratedLink, InterfaceIntent, Topology, load
 
 HERE = Path(__file__).resolve().parents[1]
@@ -441,3 +458,228 @@ def test_bodies_follow_the_access_port_shape():
     }
     reset = default_body("SER", "Ethernet1/4", {"policyType": "trunkHost", "allowedVlans": "none"})
     assert reset["configData"]["mode"] == "trunk" and reset["configData"]["networkOS"]["policy"] == {"policyType": "trunkHost", "allowedVlans": "none"}
+
+
+# ---------------------------------------------------------------- overlay, pairs, switches, settings
+
+
+def _with_tor_associations(topo: Topology, live) -> None:
+    """The dumps carry no accessAssociations_*.json, so give the live fabric the association the golden ToR pair describes."""
+    for pair in topo.tor_pairs:
+        serials = {h: live[pair.fabric].switches[h]["serialNumber"] for h in (pair.tor, pair.leaf, pair.peer)}
+        live[pair.fabric].tor_associations.append(
+            {
+                "accessOrTorSwitchId": serials[pair.tor],
+                "aggregationOrLeafSwitchId": serials[pair.leaf],
+                "aggregationOrLeafPeerSwitchId": serials[pair.peer],
+                "resources": pair.resources(),
+            }
+        )
+
+
+@pytest.fixture
+def full_lab(lab):
+    topo, live = lab
+    _with_tor_associations(topo, live)
+    return topo, live
+
+
+def _non_link(topo: Topology, live) -> list[Drift]:
+    return [*drift_settings(topo, live), *drift_switches(topo, live), *drift_overlay(topo, live), *drift_pairs(topo, live)]
+
+
+def test_no_overlay_pair_switch_or_settings_drift_on_the_golden_lab(full_lab):
+    topo, live = full_lab
+    assert _non_link(topo, live) == []
+
+
+def test_missing_tor_attachment_fixes_with_attach_payload_including_interfaces(nd421):
+    topo, live = nd421
+    live["SITE1"].network_attachments = [a for a in live["SITE1"].network_attachments if a["switchName"] != "S1_TOR1"]
+    drifts = [d for d in drift_overlay(topo, live) if d.cls == "attachments"]
+    assert [(d.kind, d.subject) for d in drifts] == [("missing", "LAB_NET1 S1_TOR1")]
+    serial = live["SITE1"].switches["S1_TOR1"]["serialNumber"]
+    body = {
+        "attachments": [
+            {"networkName": "LAB_NET1", "switchId": serial, "vlanId": 2, "interfaces": [{"interfaceRange": "Ethernet1/3", "mode": "access"}], "attach": True}
+        ]
+    }
+    assert drifts[0].fix == Op("attach", "SITE1", "POST", "/fabrics/SITE1/networkAttachments", body)
+
+
+def test_attachment_interfaces_compare_order_insensitively_and_difference_is_reported(nd421):
+    topo, live = nd421
+    row = next(a for a in live["SITE2"].network_attachments if a["switchName"] == "S2_LE1")
+    row["interfaces"] = [{"mode": "access", "interfaceRange": "Ethernet1/2"}]
+    assert drift_overlay(topo, live) == []  # same range and mode in another key order is no drift
+    row["interfaces"] = [{"interfaceRange": "Ethernet1/9", "mode": "access"}]
+    drifts = drift_overlay(topo, live)
+    assert [(d.kind, d.fabric) for d in drifts] == [("different", "SITE2")]
+    assert drifts[0].fix is not None and drifts[0].fix.action == "attach"
+
+
+def test_extra_attachment_offers_adopt_or_detach(nd421):
+    topo, live = nd421
+    row = next(a for a in live["SITE1"].network_attachments if a["switchName"] == "S1_LE1")
+    live["SITE1"].network_attachments.append({**row, "switchName": "S1_LE3", "switchId": live["SITE1"].switches["S1_LE3"]["serialNumber"]})
+    drifts = drift_overlay(topo, live)
+    assert [d.kind for d in drifts] == ["extra"]
+    assert drifts[0].adopt == Adoption(("overlay", "network_attachments"), {"fabric": "SITE1", "network": "LAB_NET1", "switch": "S1_LE3", "vlan": 2, "interfaces": []})
+    delete = drifts[0].delete
+    assert isinstance(delete, Op) and delete.action == "detach" and delete.path == "/fabrics/SITE1/networkAttachments"
+    assert delete.body["attachments"][0]["attach"] is False and delete.body["attachments"][0]["networkName"] == "LAB_NET1"
+
+
+def test_extra_network_offers_adopt_or_delete_after_detach(nd421):
+    topo, live = nd421
+    live["SITE2"].networks.append({"networkName": "STRAY", "networkId": 30009, "vlanId": 9, "vrfName": "LAB", "l3Data": {"gatewayIpv4Address": "10.9.9.1/24"}})
+    switch = live["SITE2"].switches["S2_LE1"]
+    live["SITE2"].network_attachments.append(
+        {"networkName": "STRAY", "switchName": "S2_LE1", "switchId": switch["serialNumber"], "attach": True, "vlanId": 9, "interfaces": []}
+    )
+    drifts = [d for d in drift_overlay(topo, live) if d.cls == "networks"]
+    assert [(d.kind, d.subject) for d in drifts] == [("extra", "STRAY")]
+    drift = drifts[0]
+    obj = {"networkName": "STRAY", "networkId": 30009, "vlanId": 9, "vrfName": "LAB", "l3Data": {"gatewayIpv4Address": "10.9.9.1/24"}}
+    assert drift.adopt == Adoption(("overlay", "networks"), {"fabrics": ["SITE2"], "object": obj})
+    ops = drift.delete
+    assert isinstance(ops, list)
+    assert [o.action for o in ops] == ["detach", "deploy_overlay", "delete_network"]
+    assert ops[0].path == "/fabrics/SITE2/networkAttachments" and ops[0].body["attachments"][0]["attach"] is False
+    assert ops[1] == Op("deploy_overlay", "SITE2", "POST", "/fabrics/SITE2/networkActions/deploy", {"networkNames": ["STRAY"], "switchIds": [switch["serialNumber"]]})
+    assert ops[2] == Op("delete_network", "SITE2", "DELETE", "/fabrics/SITE2/networks/STRAY", None)
+
+
+def test_extra_vrf_without_attachments_deletes_directly(nd421):
+    topo, live = nd421
+    live["SITE1"].vrfs.append({"vrfName": "STRAY", "vrfId": 50009, "vlanId": 2009, "vrfType": "vxlanIbgp"})
+    drifts = drift_overlay(topo, live)
+    assert [(d.cls, d.kind, d.subject) for d in drifts] == [("vrfs", "extra", "STRAY")]
+    assert drifts[0].delete == [Op("delete_vrf", "SITE1", "DELETE", "/fabrics/SITE1/vrfs/STRAY", None)]
+    assert drifts[0].adopt is not None and drifts[0].adopt.section == ("overlay", "vrfs")
+
+
+def test_msd_propagated_network_in_site1_is_not_extra(nd421):
+    topo, live = nd421
+    assert any(n["networkName"] == "LAB_NET1" for n in live["SITE1"].networks)  # the propagated copy
+    assert [d for d in drift_overlay(topo, live) if d.cls in ("vrfs", "networks")] == []
+
+
+def test_msd_object_missing_everywhere_is_missing_with_the_overlay_post(nd421):
+    topo, live = nd421
+    for name in ("SITE1", "SITE2"):
+        live[name].networks = []
+    drifts = drift_overlay(topo, live)
+    assert [(d.cls, d.kind, d.fabric) for d in drifts] == [("networks", "missing", "MSD")]
+    fix = drifts[0].fix
+    assert fix is not None and (fix.action, fix.method, fix.path) == ("create_network", "POST", "/fabrics/MSD/networks")
+    assert fix.body["networks"][0]["networkName"] == "LAB_NET1" and fix.body["networks"][0]["fabricName"] == "MSD"
+
+
+def test_overlay_object_key_difference_ignores_type_fields(nd421):
+    topo, live = nd421
+    live["SITE1"].networks[0]["l3Data"]["gatewayIpv4Address"] = "192.0.1.254/24"
+    drifts = drift_overlay(topo, live)
+    assert [d.kind for d in drifts] == ["different"] and "192.0.1.1/24" in drifts[0].golden and "192.0.1.254/24" in drifts[0].live
+
+
+def test_vpc_pair_missing_and_extra(nd421):
+    topo, live = nd421
+    live["SITE1"].vpc_pairs = [p for p in live["SITE1"].vpc_pairs if p["switchName"] != "S1_LE3" and p["peerSwitchName"] != "S1_LE3"]
+    drifts = [d for d in drift_pairs(topo, live) if d.subject.startswith("S1_LE")]
+    assert [(d.kind, d.subject) for d in drifts] == [("missing", "S1_LE3 <-> S1_LE4")]
+    serial, peer = live["SITE1"].switches["S1_LE3"]["serialNumber"], live["SITE1"].switches["S1_LE4"]["serialNumber"]
+    assert drifts[0].fix == Op("pair_vpc", "SITE1", "PUT", f"/fabrics/SITE1/switches/{serial}/vpcPair", vpc_pair_payload(serial, peer))
+    live["SITE1"].vpc_pairs.append({"switchName": "S1_LE2", "switchId": "X2", "peerSwitchName": "S1_BG1", "peerSwitchId": "X1", "type": "discoveredPairs"})
+    extra = [d for d in drift_pairs(topo, live) if d.kind == "extra"]
+    assert len(extra) == 1 and extra[0].adopt == Adoption(("vpc_pairs",), {"fabric": "SITE1", "switch": "S1_LE2", "peer": "S1_BG1"})
+    assert extra[0].delete == Op("unpair_vpc", "SITE1", "PUT", "/fabrics/SITE1/switches/X2/vpcPair", {**vpc_pair_payload("X2", "X1"), "vpcAction": "unpair"})
+
+
+def test_tor_pair_missing_and_extra(full_lab):
+    topo, live = full_lab
+    stored = live["SITE1"].tor_associations
+    live["SITE1"].tor_associations = []
+    drifts = [d for d in drift_pairs(topo, live) if d.kind == "missing" and "TOR" in d.subject]
+    assert len(drifts) == 1
+    fix = drifts[0].fix
+    assert fix is not None and fix.action == "pair_tor" and fix.path == "/fabrics/SITE1/accessAssociationActions/associate"
+    assert fix.body == stored
+    live["SITE1"].tor_associations = [{**stored[0], "accessOrTorSwitchId": "OTHER"}]
+    result = [d for d in drift_pairs(topo, live) if "TOR" in d.subject or d.cls == "pairs" and d.adopt and d.adopt.section == ("tor_pairs",)]
+    assert sorted(d.kind for d in result) == ["extra", "missing"]
+    extra = next(d for d in result if d.kind == "extra")
+    assert isinstance(extra.delete, Op) and extra.delete.action == "unpair_tor"
+    assert extra.delete.path == "/fabrics/SITE1/accessAssociationActions/disassociate" and extra.adopt is not None and extra.adopt.section == ("tor_pairs",)
+
+
+def test_wrong_switch_role_fixes_with_set_role(nd421):
+    topo, live = nd421
+    live["SITE1"].switches["S1_LE1"]["switchRole"] = "spine"
+    drifts = drift_switches(topo, live)
+    assert [(d.kind, d.subject) for d in drifts] == [("different", "S1_LE1")]
+    serial = live["SITE1"].switches["S1_LE1"]["serialNumber"]
+    assert drifts[0].fix == Op("set_role", "SITE1", "PUT", f"/fabrics/SITE1/switches/{serial}", {"switchRole": "leaf"})
+    assert drifts[0].golden == "leaf" and drifts[0].live == "spine"
+
+
+def test_missing_switch_and_switch_in_another_fabric(nd421):
+    topo, live = nd421
+    del live["SITE1"].switches["S1_LE4"]
+    drifts = {d.subject: d for d in drift_switches(topo, live)}
+    assert drifts["S1_LE4"].kind == "missing" and drifts["S1_LE4"].fix == Op("add_switch", "SITE1", "POST", "/fabrics/SITE1/switches", None)
+    live["SITE1"].switches["S2_BG1"] = live["SITE2"].switches.pop("S2_BG1")
+    elsewhere = next(d for d in drift_switches(topo, live) if d.subject == "S2_BG1" and d.fabric == "SITE2")
+    assert elsewhere.kind == "different" and elsewhere.fix is None and "SITE1" in elsewhere.live
+    assert not [d for d in drift_switches(topo, live) if d.subject == "S2_BG1" and d.kind == "extra"]
+
+
+def test_extra_switch_is_reported_with_no_delete(nd421):
+    topo, live = nd421
+    live["SITE1"].switches["S1_NEW"] = {"hostname": "S1_NEW", "serialNumber": "SN9", "switchRole": "leaf", "fabricManagementIp": "192.168.12.99"}
+    drifts = drift_switches(topo, live)
+    assert [(d.kind, d.subject) for d in drifts] == [("extra", "S1_NEW")]
+    assert drifts[0].delete is None and drifts[0].fix is None
+    assert drifts[0].adopt == Adoption(("fabrics", "SITE1", "switches"), {"hostname": "S1_NEW", "ip": "192.168.12.99", "role": "leaf"})
+
+
+def test_settings_difference_fixes_with_one_merged_put(nd421):
+    topo, live = nd421
+    live["SITE1"].settings["management"]["bgpLoopbackIpRange"] = "10.99.0.0/22"
+    live["SITE1"].settings["management"]["nveLoopbackIpRange"] = "10.98.0.0/22"
+    drifts = drift_settings(topo, live)
+    assert [(d.fabric, d.kind, d.subject) for d in drifts] == [
+        ("SITE1", "different", "management.bgpLoopbackIpRange"),
+        ("SITE1", "different", "management.nveLoopbackIpRange"),
+    ]
+    assert drifts[0].fix is drifts[1].fix and drifts[0].fix is not None
+    assert drifts[0].fix.action == "put_settings" and drifts[0].fix.path == "/fabrics/SITE1"
+    body = drifts[0].fix.body
+    assert body["management"]["bgpLoopbackIpRange"] == "10.11.0.0/22" and body["name"] == live["SITE1"].settings["name"]
+    assert drifts[0].golden == "10.11.0.0/22" and drifts[0].live == "10.99.0.0/22"
+
+
+def test_settings_key_outside_golden_is_not_drift(nd421):
+    topo, live = nd421
+    live["SITE1"].settings["management"]["someLiveOnlyKey"] = "x"
+    live["SITE1"].settings["management"]["cdp"] = not live["SITE1"].settings["management"].get("cdp", False)
+    assert drift_settings(topo, live) == []
+
+
+def test_compute_orders_classes_stably(nd421):
+    topo, live = nd421
+    live["SITE1"].settings["management"]["bgpLoopbackIpRange"] = "10.99.0.0/22"
+    live["SITE1"].switches["S1_NEW"] = {"hostname": "S1_NEW", "serialNumber": "SN9", "switchRole": "leaf", "fabricManagementIp": "1.1.1.1"}
+    _link(live, "SITE1", "LINK-UUID-6000")["configData"] = None
+    live["SITE1"].vrfs.append({"vrfName": "STRAY", "vrfId": 50009, "vlanId": 2009})
+    live["SITE1"].networks.append({"networkName": "STRAY", "networkId": 30009, "vlanId": 9, "vrfName": "LAB"})
+    live["SITE1"].network_attachments = [a for a in live["SITE1"].network_attachments if a["switchName"] != "S1_TOR1"]
+    live["SITE1"].vpc_pairs = live["SITE1"].vpc_pairs[:1]
+    _iface(live, "SITE1", "S1_BG1", "Ethernet1/5")["configData"]["networkOS"]["policy"]["description"] = "residue"
+    topo = _with_interfaces(topo)
+    drifts = compute(topo, live)
+    order = ["settings", "switches", "links", "genlinks", "interfaces", "vrfs", "networks", "attachments", "pairs"]
+    seen_cls = list(dict.fromkeys(d.cls for d in drifts))
+    assert [c for c in order if c in seen_cls] == seen_cls
+    assert {"settings", "switches", "links", "interfaces", "vrfs", "networks", "attachments", "pairs"} <= set(seen_cls)
+    assert compute(topo, live) == drifts

@@ -13,12 +13,17 @@ GOLDEN = HERE / "golden"
 
 
 class StubClient:
-    def __init__(self, responses: dict | None = None, error: str | None = None) -> None:
+    def __init__(self, responses: dict | None = None, error: str | None = None, errors: dict | None = None) -> None:
+        self.calls: list[tuple] = []
+        self.errors = errors or {}
         self.creds = SimpleNamespace(ip="192.0.2.1")
         self.responses = responses or {}
         self.error = error
 
     def get(self, path: str, params: dict | None = None):
+        self.calls.append((path, params))
+        if path in self.errors:
+            raise RuntimeError(self.errors[path])
         if self.error:
             raise RuntimeError(self.error)
         return self.responses.get(path, {})
@@ -64,3 +69,32 @@ def test_read_live_fails_loud_when_a_golden_fabric_is_missing():
     client = StubClient({"/fabrics": []})
     with pytest.raises(LiveReadError, match="SITE1"):
         read_live(client, load(HERE / "topology_nd421.yaml"))
+
+
+def _tor_stub(**kwargs):
+    topo = load(HERE / "topology_nd421.yaml")
+    site1 = next(f for f in topo.fabrics if f.name == "SITE1")
+    switches = [{"hostname": s.hostname, "serialNumber": f"SN_{s.hostname}"} for s in site1.switches]
+    responses = {
+        "/fabrics": [{"name": n} for n in [*(f.name for f in topo.fabrics), *(g.name for g in topo.fabric_groups)]],
+        "/fabrics/SITE1/switches": {"switches": switches},
+    }
+    responses.update(kwargs.pop("responses", {}))
+    return topo, StubClient(responses, **kwargs)
+
+
+def test_read_live_reads_tor_associations_per_golden_pair():
+    path = "/fabrics/SITE1/accessAssociations"
+    topo, client = _tor_stub(responses={path: {"associations": [{"id": 1}]}})
+    pair = next(p for p in topo.tor_pairs if p.fabric == "SITE1")
+    live = read_live(client, topo)
+    assert live["SITE1"].tor_associations == [{"id": 1}]
+    assert (path, {"aggregationOrLeafSwitchId": f"SN_{pair.leaf}", "aggregationOrLeafPeerSwitchId": f"SN_{pair.peer}"}) in client.calls
+
+
+def test_tor_association_400_reads_as_empty():
+    path = "/fabrics/SITE1/accessAssociations"
+    topo, client = _tor_stub(errors={path: "HTTP 400 aggregationOrLeafSwitchId is required"})
+    assert read_live(client, topo)["SITE1"].tor_associations == []
+    with pytest.raises(LiveReadError):
+        read_live(StubClient(error="HTTP 500 boom"), topo)

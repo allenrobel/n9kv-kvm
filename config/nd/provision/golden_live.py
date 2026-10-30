@@ -98,7 +98,17 @@ def read_live(client: NDClient, topo: Topology) -> dict[str, LiveFabric]:
         live.vpc_pairs = _items(get(f"/fabrics/{name}/vpcPairs"), "vpcPairs")
         live.vrfs = _items(get(f"/fabrics/{name}/vrfs"), "vrfs")
         live.networks = _items(get(f"/fabrics/{name}/networks"), "networks")
-        live.tor_associations = _items(get(f"/fabrics/{name}/accessAssociations"), "accessAssociations")
+        by_host = live.switches
+        for pair in (p for p in topo.tor_pairs if p.fabric == name):
+            if pair.leaf not in by_host or pair.peer not in by_host:
+                continue
+            params = {"aggregationOrLeafSwitchId": by_host[pair.leaf]["serialNumber"], "aggregationOrLeafPeerSwitchId": by_host[pair.peer]["serialNumber"]}
+            try:
+                live.tor_associations.extend(_items(client.get(f"/fabrics/{name}/accessAssociations", params=params), "associations"))
+            except RuntimeError as exc:
+                # A fabric with no pairings answers 400/404; anything else is a real failure.
+                if not str(exc).startswith(("HTTP 400", "HTTP 404")):
+                    raise LiveReadError(f"GET /fabrics/{name}/accessAssociations: {exc}") from exc
         serials = [s["serialNumber"] for s in switch_list]
         if serials:
             live.vrf_attachments = query("vrf", name, serials)
@@ -146,7 +156,7 @@ def read_live_from_snapshot(snapshot_dir: Path, topo: Topology) -> dict[str, Liv
             vrf_attachments=_attached(load(f"vrf_attachments_{name}")),
             network_attachments=_attached(load(f"network_attachments_{name}")),
             vpc_pairs=_items(load(f"vpcPairs_{name}"), "vpcPairs"),
-            tor_associations=_items(load(f"accessAssociations_{name}"), "accessAssociations"),
+            tor_associations=_items(load(f"accessAssociations_{name}"), "associations"),
         )
     return result
 

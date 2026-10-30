@@ -1,0 +1,32 @@
+{
+  "meta": {
+    "counts": {
+      "remaining": 0,
+      "total": 2
+    }
+  },
+  "vpcPairs": [
+    {
+      "description": "",
+      "domainId": 1,
+      "peerSwitchId": "9AGC12AFO2L",
+      "peerSwitchName": "S3_LE2",
+      "peerSwitchVpcRole": "secondary",
+      "switchId": "92L279NT6MM",
+      "switchName": "S3_LE1",
+      "switchVpcRole": "primary",
+      "type": "discoveredPairs"
+    },
+    {
+      "description": "",
+      "domainId": 2,
+      "peerSwitchId": "9DW2FBC2ZXD",
+      "peerSwitchName": "S3_LE4",
+      "peerSwitchVpcRole": "secondary",
+      "switchId": "9E54N8V7ZA9",
+      "switchName": "S3_LE3",
+      "switchVpcRole": "primary",
+      "type": "discoveredPairs"
+    }
+  ]
+}

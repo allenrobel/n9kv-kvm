@@ -1,0 +1,2290 @@
+{
+  "interfaces": [
+    {
+      "configData": {
+        "mode": "routed",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "fec": "auto",
+            "policyType": "l3PoMember",
+            "portChannelId": "Port-channel10",
+            "portChannelMode": "active",
+            "ptp": false
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/62",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "routed",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": 10,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "routed",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "copyDescription": false,
+            "description": "subinterface test parent",
+            "ipRedirects": false,
+            "mtu": 9216,
+            "netflow": false,
+            "pfc": false,
+            "pimDrPriority": 1,
+            "pimSparse": false,
+            "policyType": "l3Po",
+            "portChannelId": "Port-channel10",
+            "portChannelMode": "active",
+            "ports": [
+              "Ethernet1/62"
+            ],
+            "qos": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "port-channel10",
+      "interfaceType": "portChannel",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "routed",
+        "mtu": 9216,
+        "operationalDescription": "No operational members",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "100Mb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "routed",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "description": "subinterface test parent",
+            "fec": "auto",
+            "ipRedirects": false,
+            "mtu": 9216,
+            "netflow": false,
+            "pfc": false,
+            "pimDrPriority": 1,
+            "pimSparse": false,
+            "policyType": "routedHost",
+            "ptp": false,
+            "qos": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/63",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "routed",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "disable",
+            "description": "tor-connected-to-vPC-leaf:S1_LE1~S1_LE2-vPC1",
+            "mtu": "jumbo",
+            "nbrInterfaceName": "vPC1",
+            "nbrSwitchId": "9UDEG98YLEY~9C68L63CT9E",
+            "policyType": "uplinkPo",
+            "portChannelId": "port-channel1",
+            "portChannelMode": "active",
+            "ports": [
+              "Ethernet1/2",
+              "Ethernet1/1"
+            ],
+            "speed": "auto",
+            "switchRole": "tor"
+          }
+        }
+      },
+      "interfaceName": "port-channel1",
+      "interfaceType": "portChannel",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "neighbors": [
+          {
+            "fabricName": "SITE1",
+            "interfaceName": "Port-channel1",
+            "switchName": "S1_LE1"
+          },
+          {
+            "fabricName": "SITE1",
+            "interfaceName": "Port-channel1",
+            "switchName": "S1_LE2"
+          }
+        ],
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "2Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/29",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/27",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/28",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/25",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/26",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/23",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/24",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/21",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/22",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/9",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/8",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/64",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/20",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/7",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/61",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/6",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/5",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/60",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/38",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/39",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/36",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/37",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/34",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/35",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/32",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/33",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/30",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/31",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/49",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/47",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/48",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/45",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/46",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/43",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/44",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/41",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/42",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/40",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/18",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/19",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/16",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/17",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/58",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/14",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/59",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/15",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/12",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/56",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/57",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/13",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/10",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/54",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/11",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/55",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/52",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/53",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/50",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/51",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/4",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "managed",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "cdp": false,
+            "extraConfig": "  ip address 192.168.12.161/24",
+            "policyType": "mgmt"
+          }
+        }
+      },
+      "interfaceName": "mgmt0",
+      "interfaceType": "management",
+      "operData": {
+        "adminStatus": "up",
+        "ipAddress": "192.168.12.161/24",
+        "mtu": 1500,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1",
+        "vrfName": "management"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "access",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "bpduFilter": "default",
+            "bpduGuard": "default",
+            "cdp": true,
+            "debounceTimer": 100,
+            "description": "S1_H1 host port",
+            "duplexMode": "auto",
+            "errorDetectionAcl": true,
+            "fec": "auto",
+            "linkType": "auto",
+            "monitor": false,
+            "mtu": "jumbo",
+            "negotiateAuto": true,
+            "netflow": false,
+            "orphanPort": false,
+            "pfc": false,
+            "policyType": "accessHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "qos": false,
+            "speed": "auto",
+            "stormControl": false,
+            "stormControlAction": "default"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/3",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "access",
+        "mtu": 9216,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "policyType": "uplinkPoMember",
+            "portChannelId": "port-channel1",
+            "portChannelMode": "active",
+            "ptp": false
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/2",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "neighbors": [
+          {
+            "fabricName": "SITE1",
+            "interfaceName": "Ethernet1/3",
+            "switchName": "S1_LE2"
+          }
+        ],
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": 1,
+        "speed": "1Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "policyType": "uplinkPoMember",
+            "portChannelId": "port-channel1",
+            "portChannelMode": "active",
+            "ptp": false
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/1",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "neighbors": [
+          {
+            "fabricName": "SITE1",
+            "interfaceName": "Ethernet1/3",
+            "switchName": "S1_LE1"
+          }
+        ],
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": 1,
+        "speed": "1Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9WO9329PPCP"
+    },
+    {
+      "configData": {
+        "mode": "unknown",
+        "networkOS": {
+          "networkOSType": "nx-os"
+        }
+      },
+      "interfaceName": "Vlan1",
+      "interfaceType": "svi",
+      "operData": {
+        "adminStatus": "up",
+        "ipAddress": "192.168.12.161/24",
+        "mtu": 1500,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "S1_TOR1",
+        "vlanRange": "-1",
+        "vrfName": "management"
+      },
+      "switchId": "9WO9329PPCP"
+    }
+  ],
+  "meta": {
+    "counts": {
+      "remaining": 0,
+      "total": 68
+    }
+  }
+}

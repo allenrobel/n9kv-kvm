@@ -1,0 +1,43 @@
+{
+  "fabrics": [
+    {
+      "category": "fabricGroup",
+      "management": {
+        "anycastGatewayMac": "2020.0000.00aa",
+        "autoConfigureCloudSec": false,
+        "autoMultisiteUnderlayInterConnect": true,
+        "bgpBfd": false,
+        "bgpLogNeighborChange": false,
+        "bgpSendCommunity": true,
+        "borderGatewayRoutingTag": 54321,
+        "downstreamVni": false,
+        "enableMsOverlayIfcBgpDesc": true,
+        "l2VniRange": "30000-49000",
+        "l3VniRange": "50000-59000",
+        "multisiteDelayRestore": 300,
+        "multisiteInterConnectBgpAuthentication": false,
+        "multisiteLoopbackId": 100,
+        "multisiteLoopbackIpRange": "10.10.0.0/24",
+        "multisiteOverlayInterConnectType": "directPeering",
+        "multisiteUnderlaySubnetRange": "10.10.1.0/24",
+        "multisiteUnderlaySubnetTargetMask": 30,
+        "name": "MSD",
+        "networkExtensionTemplate": "Default_Network_Extension_Universal",
+        "networkTemplate": "Default_Network_Universal",
+        "privateVlan": false,
+        "routeServerCollection": [],
+        "securityGroupTag": "off",
+        "tenantRoutedMulticastV4V6": false,
+        "type": "vxlan",
+        "underlayIpv6": false,
+        "vrfExtensionTemplate": "Default_VRF_Extension_Universal",
+        "vrfTemplate": "Default_VRF_Universal"
+      },
+      "name": "MSD"
+    }
+  ],
+  "meta": {
+    "remaining": 0,
+    "total": 1
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "alertSuspend": "disabled",
+  "category": "fabric",
+  "externalStreamingSettings": {
+    "email": [],
+    "messageBus": [],
+    "syslog": {
+      "collectionSettings": {
+        "anomalies": []
+      },
+      "facility": "",
+      "servers": []
+    },
+    "webhooks": []
+  },
+  "licenseTier": "premier",
+  "location": {
+    "latitude": 37.33939,
+    "longitude": -121.89496
+  },
+  "management": {
+    "advancedSshOption": false,
+    "allowSameLoopbackIpOnSwitches": false,
+    "allowSmartSwitchOnboarding": false,
+    "bgpAsn": "65535",
+    "bootstrapSubnetCollection": [],
+    "cdp": false,
+    "coppPolicy": "manual",
+    "createBgpConfig": true,
+    "day0Bootstrap": false,
+    "inbandManagement": false,
+    "localDhcpServer": false,
+    "monitoredMode": false,
+    "mplsHandoff": false,
+    "name": "ISN",
+    "netflowSettings": {
+      "netflow": false
+    },
+    "nxapi": false,
+    "nxapiHttp": false,
+    "nxapiHttpPort": 80,
+    "nxapiHttpsPort": 443,
+    "performanceMonitoring": false,
+    "powerRedundancyMode": "redundant",
+    "ptp": false,
+    "realTimeInterfaceStatisticsCollection": false,
+    "snmpTrap": true,
+    "subInterfaceDot1qRange": "2-511",
+    "type": "externalConnectivity"
+  },
+  "name": "ISN",
+  "securityDomain": "all",
+  "telemetryCollection": false
+}

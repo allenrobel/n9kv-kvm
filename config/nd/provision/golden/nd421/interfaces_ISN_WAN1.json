@@ -1,0 +1,124 @@
+{
+  "interfaces": [
+    {
+      "configData": {
+        "mode": "routed",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "description": "connected-to-S1_BG1-Ethernet1/3",
+            "inheritTtag": true,
+            "mtu": 9000,
+            "policyType": "iosXeRoutedHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet2",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "access",
+        "mtu": 9000,
+        "neighbors": [
+          {
+            "fabricName": "SITE1",
+            "interfaceName": "Ethernet1/3",
+            "switchName": "S1_BG1"
+          }
+        ],
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "WAN1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9S3F1H79UZU"
+    },
+    {
+      "configData": {
+        "mode": "managed",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "extraConfig": " vrf forwarding MGMT\n ip address 192.168.12.112 255.255.255.0\n negotiation auto",
+            "policyType": "iosXeGigEthernetMgmt"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "ipAddress": "192.168.12.112/24",
+        "mode": "access",
+        "mtu": 1500,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "WAN1",
+        "vlanRange": "-1",
+        "vrfName": "MGMT"
+      },
+      "switchId": "9S3F1H79UZU"
+    },
+    {
+      "configData": {
+        "mode": "unknown",
+        "networkOS": {
+          "networkOSType": "ios-xe"
+        }
+      },
+      "interfaceName": "GigabitEthernet3",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "ipAddress": "192.168.12.112/24",
+        "mode": "access",
+        "mtu": 1500,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "WAN1",
+        "vlanRange": "-1",
+        "vrfName": "MGMT"
+      },
+      "switchId": "9S3F1H79UZU"
+    },
+    {
+      "configData": {
+        "mode": "unknown",
+        "networkOS": {
+          "networkOSType": "ios-xe"
+        }
+      },
+      "interfaceName": "Loopback0",
+      "interfaceType": "loopback",
+      "operData": {
+        "adminStatus": "up",
+        "ipAddress": "192.168.12.112/24",
+        "mode": "access",
+        "mtu": 1500,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "WAN1",
+        "vlanRange": "-1",
+        "vrfName": "MGMT"
+      },
+      "switchId": "9S3F1H79UZU"
+    }
+  ],
+  "meta": {
+    "counts": {
+      "remaining": 0,
+      "total": 4
+    }
+  }
+}

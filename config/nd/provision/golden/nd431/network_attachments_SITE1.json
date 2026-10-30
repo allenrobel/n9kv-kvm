@@ -1,0 +1,107 @@
+{
+  "attachments": [
+    {
+      "attach": true,
+      "displayName": "LAB_NET1",
+      "extraConfig": "",
+      "instanceValues": {},
+      "interfaces": [],
+      "networkId": 30001,
+      "networkName": "LAB_NET1",
+      "peerSwitchId": "9AGC12AFO2L",
+      "status": "deployed",
+      "switchFabricName": "SITE1",
+      "switchId": "92L279NT6MM",
+      "switchName": "S3_LE1",
+      "switchRole": "leaf",
+      "vlanId": 2
+    },
+    {
+      "attach": true,
+      "displayName": "LAB_NET1",
+      "extraConfig": "",
+      "instanceValues": {},
+      "interfaces": [],
+      "networkId": 30001,
+      "networkName": "LAB_NET1",
+      "status": "deployed",
+      "switchFabricName": "SITE1",
+      "switchId": "99JQH3UGNC0",
+      "switchName": "S3_BG1",
+      "switchRole": "borderGateway",
+      "vlanId": 2
+    },
+    {
+      "attach": true,
+      "displayName": "LAB_NET1",
+      "extraConfig": "",
+      "instanceValues": {},
+      "interfaces": [
+        {
+          "interfaceRange": "Ethernet1/3",
+          "mode": "access"
+        }
+      ],
+      "networkId": 30001,
+      "networkName": "LAB_NET1",
+      "status": "deployed",
+      "switchFabricName": "SITE1",
+      "switchId": "9CI1GK5JJ65",
+      "switchName": "S3_TOR1",
+      "switchRole": "tor",
+      "vlanId": 2
+    },
+    {
+      "attach": true,
+      "displayName": "LAB_NET1",
+      "extraConfig": "",
+      "instanceValues": {},
+      "interfaces": [],
+      "networkId": 30001,
+      "networkName": "LAB_NET1",
+      "peerSwitchId": "92L279NT6MM",
+      "status": "deployed",
+      "switchFabricName": "SITE1",
+      "switchId": "9AGC12AFO2L",
+      "switchName": "S3_LE2",
+      "switchRole": "leaf",
+      "vlanId": 2
+    },
+    {
+      "attach": false,
+      "displayName": "LAB_NET1",
+      "extraConfig": "",
+      "instanceValues": {},
+      "interfaces": [],
+      "networkId": 30001,
+      "networkName": "LAB_NET1",
+      "peerSwitchId": "9E54N8V7ZA9",
+      "status": "notApplicable",
+      "switchFabricName": "SITE1",
+      "switchId": "9DW2FBC2ZXD",
+      "switchName": "S3_LE4",
+      "switchRole": "leaf"
+    },
+    {
+      "attach": false,
+      "displayName": "LAB_NET1",
+      "extraConfig": "",
+      "instanceValues": {},
+      "interfaces": [],
+      "networkId": 30001,
+      "networkName": "LAB_NET1",
+      "peerSwitchId": "9DW2FBC2ZXD",
+      "status": "notApplicable",
+      "switchFabricName": "SITE1",
+      "switchId": "9E54N8V7ZA9",
+      "switchName": "S3_LE3",
+      "switchRole": "leaf"
+    }
+  ],
+  "meta": {
+    "counts": {
+      "remaining": 0,
+      "total": 6
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "meta": {
+    "counts": {
+      "remaining": 0,
+      "total": 1
+    }
+  },
+  "switches": [
+    {
+      "additionalData": {
+        "configSyncStatus": "inSync",
+        "discoveredSystemMode": "normal",
+        "discoveryStatus": "ok",
+        "domainName": "",
+        "hypershieldConnectivityStatus": "notApplicable",
+        "hypershieldTenant": "",
+        "intendedSystemMode": "normal",
+        "meta": {
+          "switchDbId": 158020,
+          "switchUuid": "DCNM-UUID-78470"
+        },
+        "platformType": "ios-xe",
+        "remoteCredentialStore": "local",
+        "scalableUnit": "",
+        "smartSwitch": false,
+        "sourceInterfaceName": "Gi1",
+        "sourceVrfName": "MGMT",
+        "systemMode": "normal",
+        "usage": "others",
+        "username": "admin",
+        "vendor": "Cisco Systems Inc."
+      },
+      "advisoryLevel": "none",
+      "alertSuspend": "disabled",
+      "anomalyLevel": "healthy",
+      "fabricManagementIp": "192.168.12.112",
+      "fabricName": "ISN",
+      "fabricType": "externalConnectivity",
+      "hostname": "WAN1",
+      "model": "C8000V",
+      "serialNumber": "9S3F1H79UZU",
+      "softwareVersion": "17.15.5",
+      "switchId": "9S3F1H79UZU",
+      "switchRole": "coreRouter",
+      "systemUpTime": "02:30:04",
+      "vpcConfigured": false
+    }
+  ]
+}

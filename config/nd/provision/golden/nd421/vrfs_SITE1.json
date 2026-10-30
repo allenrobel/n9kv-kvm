@@ -1,0 +1,42 @@
+{
+  "meta": {
+    "counts": {
+      "remaining": 0,
+      "total": 1
+    }
+  },
+  "vrfs": [
+    {
+      "fabricData": {
+        "advertiseDefaultRoute": true,
+        "advertiseHostRoute": false,
+        "bgpAllowAsIn": false,
+        "bgpAllowAsInNum": 3,
+        "bgpAsOverride": false,
+        "bgpBestPathRelax": false,
+        "bgpDisablePeerAsCheck": false,
+        "bgpLogNeighborChange": false,
+        "bgpSoftReconfigAlways": false,
+        "configureStaticDefaultRoute": true,
+        "l3VniWithoutVlan": false,
+        "netflow": false,
+        "trmData": {
+          "ipv4Trm": false,
+          "ipv6Trm": false,
+          "mvpnInterAs": false,
+          "trmOnBgw": false,
+          "v4RpAbsent": false,
+          "v4RpExternal": false,
+          "v6RpAbsent": false,
+          "v6RpExternal": false
+        }
+      },
+      "fabricName": "SITE1",
+      "vlanId": 2001,
+      "vrfId": 50001,
+      "vrfName": "LAB",
+      "vrfStatus": "deployed",
+      "vrfType": "vxlanIbgp"
+    }
+  ]
+}

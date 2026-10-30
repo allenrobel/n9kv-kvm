@@ -1,0 +1,411 @@
+[
+  {
+    "createTimestamp": "2026-09-09T19:54:26.683Z",
+    "description": null,
+    "entityName": "SWITCH",
+    "entityType": "switch",
+    "generatedConfig": "router bgp 65535\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-18460",
+    "priority": 100,
+    "source": "",
+    "switchId": "9OX4DZTCYJM",
+    "templateInputs": {
+      "BGP_AS": "65535"
+    },
+    "templateName": "base_bgp_external",
+    "updateTimestamp": "2026-09-09T19:54:26.683Z"
+  },
+  {
+    "createTimestamp": "2026-09-09T19:40:47.345Z",
+    "description": null,
+    "entityName": "GigabitEthernet1",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet1\n vrf forwarding MGMT\n ip address 192.168.14.112 255.255.255.0\n negotiation auto\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-18340",
+    "priority": 350,
+    "source": "GigabitEthernet1",
+    "switchId": "9OX4DZTCYJM",
+    "templateInputs": {
+      "CONF": " vrf forwarding MGMT\n ip address 192.168.14.112 255.255.255.0\n negotiation auto",
+      "INTF_NAME": "GigabitEthernet1"
+    },
+    "templateName": "int_eth",
+    "updateTimestamp": "2026-09-09T19:40:47.345Z"
+  },
+  {
+    "createTimestamp": "2026-09-09T19:54:31.593Z",
+    "description": null,
+    "entityName": "GigabitEthernet3",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet3\n mtu 9000\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-18560",
+    "priority": 352,
+    "source": "LINK-UUID-15510",
+    "switchId": "9OX4DZTCYJM",
+    "templateInputs": {
+      "INTF_NAME": "GigabitEthernet3",
+      "MTU": "9000"
+    },
+    "templateName": "ios_xe_interface_mtu",
+    "updateTimestamp": "2026-09-09T19:54:31.593Z"
+  },
+  {
+    "createTimestamp": "2026-09-09T19:54:31.6Z",
+    "description": null,
+    "entityName": "GigabitEthernet3",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet3\n negotiation auto\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-18570",
+    "priority": 352,
+    "source": "LINK-UUID-15510",
+    "switchId": "9OX4DZTCYJM",
+    "templateInputs": {
+      "INTF_NAME": "GigabitEthernet3"
+    },
+    "templateName": "ios_xe_interface_nego_auto",
+    "updateTimestamp": "2026-09-09T19:54:31.6Z"
+  },
+  {
+    "createTimestamp": "2026-09-09T19:54:31.61Z",
+    "description": null,
+    "entityName": "GigabitEthernet3",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet3\n description connected-to-S4_BG1-Ethernet1/3\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-18580",
+    "priority": 352,
+    "source": "LINK-UUID-15510",
+    "switchId": "9OX4DZTCYJM",
+    "templateInputs": {
+      "DESC": "connected-to-S4_BG1-Ethernet1/3",
+      "INTF_NAME": "GigabitEthernet3"
+    },
+    "templateName": "ios_xe_interface_desc",
+    "updateTimestamp": "2026-09-09T19:54:31.61Z"
+  },
+  {
+    "createTimestamp": "2026-09-09T19:40:47.336Z",
+    "description": null,
+    "entityName": "GigabitEthernet1",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet1\n no shutdown\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-18330",
+    "priority": 352,
+    "source": "GigabitEthernet1",
+    "switchId": "9OX4DZTCYJM",
+    "templateInputs": {
+      "INTF_NAME": "GigabitEthernet1"
+    },
+    "templateName": "ios_xe_noshut_interface",
+    "updateTimestamp": "2026-09-09T19:40:47.336Z"
+  },
+  {
+    "createTimestamp": "2026-10-21T19:46:53.198Z",
+    "description": null,
+    "entityName": "GigabitEthernet2",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet2\n negotiation auto\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-118250",
+    "priority": 450,
+    "source": "GigabitEthernet2",
+    "switchId": "9OX4DZTCYJM",
+    "templateInputs": {
+      "INTF_NAME": "GigabitEthernet2"
+    },
+    "templateName": "ios_xe_interface_nego_auto",
+    "updateTimestamp": "2026-10-21T19:46:53.198Z"
+  },
+  {
+    "createTimestamp": "2026-10-21T19:46:53.229Z",
+    "description": null,
+    "entityName": "GigabitEthernet2",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet2\n description connected-to-S3_BG1-Ethernet1/3\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-118280",
+    "priority": 454,
+    "source": "GigabitEthernet2",
+    "switchId": "9OX4DZTCYJM",
+    "templateInputs": {
+      "DESC": "connected-to-S3_BG1-Ethernet1/3",
+      "INTF_NAME": "GigabitEthernet2"
+    },
+    "templateName": "ios_xe_interface_desc",
+    "updateTimestamp": "2026-10-21T19:46:53.229Z"
+  },
+  {
+    "createTimestamp": "2026-10-21T19:46:53.21Z",
+    "description": null,
+    "entityName": "GigabitEthernet2",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet2\n no ip address\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-118260",
+    "priority": 454,
+    "source": "GigabitEthernet2",
+    "switchId": "9OX4DZTCYJM",
+    "templateInputs": {
+      "INTF_NAME": "GigabitEthernet2"
+    },
+    "templateName": "ios_xe_interface_no_ipv4_addr",
+    "updateTimestamp": "2026-10-21T19:46:53.21Z"
+  },
+  {
+    "createTimestamp": "2026-10-21T19:46:53.222Z",
+    "description": null,
+    "entityName": "GigabitEthernet2",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet2\n mtu 9000\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-118270",
+    "priority": 454,
+    "source": "GigabitEthernet2",
+    "switchId": "9OX4DZTCYJM",
+    "templateInputs": {
+      "INTF_NAME": "GigabitEthernet2",
+      "MTU": "9000"
+    },
+    "templateName": "ios_xe_interface_mtu",
+    "updateTimestamp": "2026-10-21T19:46:53.222Z"
+  },
+  {
+    "createTimestamp": "2026-10-21T19:46:53.24Z",
+    "description": null,
+    "entityName": "GigabitEthernet2",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet2\n no shutdown\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-118290",
+    "priority": 458,
+    "source": "GigabitEthernet2",
+    "switchId": "9OX4DZTCYJM",
+    "templateInputs": {
+      "INTF_NAME": "GigabitEthernet2"
+    },
+    "templateName": "ios_xe_noshut_interface",
+    "updateTimestamp": "2026-10-21T19:46:53.24Z"
+  },
+  {
+    "createTimestamp": "2026-10-21T19:46:53.156Z",
+    "description": null,
+    "entityName": "GigabitEthernet2",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet2\n negotiation auto\n description connected-to-S3_BG1-Ethernet1/3\n no ip address\n mtu 9000\n no shutdown",
+    "markDeleted": false,
+    "policyId": "POLICY-118240",
+    "priority": 500,
+    "source": "",
+    "switchId": "9OX4DZTCYJM",
+    "templateInputs": {
+      "ADMIN_STATE": "true",
+      "AUTO_VRF_LITE_FLAG": "true",
+      "CONF": "",
+      "DESC": "connected-to-S3_BG1-Ethernet1/3",
+      "INTF_NAME": "GigabitEthernet2",
+      "INTF_VRF": "",
+      "IP": "",
+      "MTU": "9000",
+      "POLICY_DESC": "",
+      "POLICY_ID": "POLICY-18470",
+      "PREFIX": "",
+      "PRIORITY": "500",
+      "ROUTING_TAG": "",
+      "SOURCE": "",
+      "SPEED": "Auto",
+      "inheritTtagFabricSetting": "true",
+      "ttag": "false"
+    },
+    "templateName": "ios_xe_int_routed_host",
+    "updateTimestamp": "2026-10-21T19:46:53.156Z"
+  },
+  {
+    "createTimestamp": "2026-09-09T19:54:22.482Z",
+    "description": null,
+    "entityName": "GigabitEthernet3",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet3\n cdp enable\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-18440",
+    "priority": 500,
+    "source": "",
+    "switchId": "9OX4DZTCYJM",
+    "templateInputs": {
+      "FABRIC_NAME": "ISN",
+      "INTF_NAME": "GigabitEthernet3"
+    },
+    "templateName": "ios_xe_cdp_enable_interface",
+    "updateTimestamp": "2026-09-09T19:54:22.482Z"
+  },
+  {
+    "createTimestamp": "2026-09-09T19:54:20.991Z",
+    "description": null,
+    "entityName": "SWITCH",
+    "entityType": "switch",
+    "generatedConfig": "router bgp 65535\n bgp router-id 10.35.0.1\n bgp log-neighbor-changes\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-18410",
+    "priority": 500,
+    "source": "",
+    "switchId": "9OX4DZTCYJM",
+    "templateInputs": {
+      "BGP_AS": "65535",
+      "FABRIC_NAME": "ISN",
+      "LOOPBACK_IP": "10.35.0.1"
+    },
+    "templateName": "ios_xe_bgp_router_id",
+    "updateTimestamp": "2026-09-09T19:54:20.991Z"
+  },
+  {
+    "createTimestamp": "2026-09-09T19:40:47.35Z",
+    "description": null,
+    "entityName": "SWITCH",
+    "entityType": "switch",
+    "generatedConfig": "",
+    "markDeleted": false,
+    "policyId": "POLICY-18350",
+    "priority": 500,
+    "source": "",
+    "switchId": "9OX4DZTCYJM",
+    "templateInputs": {
+      "POLICY_DESC": "",
+      "POLICY_ID": "POLICY-18350",
+      "PRIORITY": "500"
+    },
+    "templateName": "csr_import_completion",
+    "updateTimestamp": "2026-09-09T19:40:47.35Z"
+  },
+  {
+    "createTimestamp": "2026-09-09T19:54:21.439Z",
+    "description": null,
+    "entityName": "SWITCH",
+    "entityType": "switch",
+    "generatedConfig": "cdp run\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-18420",
+    "priority": 500,
+    "source": "",
+    "switchId": "9OX4DZTCYJM",
+    "templateInputs": {
+      "DUMMY": "",
+      "FABRIC_NAME": "ISN"
+    },
+    "templateName": "ios_xe_cdp_run",
+    "updateTimestamp": "2026-09-09T19:54:21.439Z"
+  },
+  {
+    "createTimestamp": "2026-09-09T19:54:31.565Z",
+    "description": null,
+    "entityName": "GigabitEthernet3",
+    "entityType": "interface",
+    "generatedConfig": "",
+    "markDeleted": false,
+    "policyId": "POLICY-18550",
+    "priority": 500,
+    "source": "LINK-UUID-15510",
+    "switchId": "9OX4DZTCYJM",
+    "templateInputs": {
+      "ADMIN_STATE": "true",
+      "AUTO_VRF_LITE_FLAG": "true",
+      "CONF": "",
+      "DESC": "connected-to-S4_BG1-Ethernet1/3",
+      "INTF_NAME": "GigabitEthernet3",
+      "INTF_VRF": "",
+      "IP": "",
+      "MTU": "9000",
+      "POLICY_DESC": "",
+      "POLICY_ID": "POLICY-18550",
+      "PREFIX": "",
+      "PRIORITY": "500",
+      "ROUTING_TAG": "",
+      "SOURCE": "LINK-UUID-15510",
+      "SPEED": "Auto",
+      "inheritTtagFabricSetting": "true",
+      "ttag": "false"
+    },
+    "templateName": "ios_xe_ext_int_routed_host",
+    "updateTimestamp": "2026-09-09T19:54:31.565Z"
+  },
+  {
+    "createTimestamp": "2026-09-09T19:54:31.631Z",
+    "description": null,
+    "entityName": "GigabitEthernet3",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet3\n no shutdown\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-18590",
+    "priority": 500,
+    "source": "LINK-UUID-15510",
+    "switchId": "9OX4DZTCYJM",
+    "templateInputs": {
+      "INTF_NAME": "GigabitEthernet3"
+    },
+    "templateName": "ios_xe_noshut_interface",
+    "updateTimestamp": "2026-09-09T19:54:31.631Z"
+  },
+  {
+    "createTimestamp": "2026-09-09T19:54:21.938Z",
+    "description": null,
+    "entityName": "GigabitEthernet2",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet2\n cdp enable\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-18430",
+    "priority": 500,
+    "source": "",
+    "switchId": "9OX4DZTCYJM",
+    "templateInputs": {
+      "FABRIC_NAME": "ISN",
+      "INTF_NAME": "GigabitEthernet2"
+    },
+    "templateName": "ios_xe_cdp_enable_interface",
+    "updateTimestamp": "2026-09-09T19:54:21.938Z"
+  },
+  {
+    "createTimestamp": "2026-09-09T19:40:47.313Z",
+    "description": null,
+    "entityName": "GigabitEthernet1",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet1\n vrf forwarding MGMT\n ip address 192.168.14.112 255.255.255.0\n negotiation auto\n no shutdown",
+    "markDeleted": false,
+    "policyId": "POLICY-18320",
+    "priority": 900,
+    "source": "",
+    "switchId": "9OX4DZTCYJM",
+    "templateInputs": {
+      "ADMIN_STATE": "true",
+      "CONF": " vrf forwarding MGMT\n ip address 192.168.14.112 255.255.255.0\n negotiation auto",
+      "INTF_NAME": "GigabitEthernet1",
+      "POLICY_DESC": "",
+      "POLICY_ID": "POLICY-18320",
+      "PRIORITY": "900"
+    },
+    "templateName": "GigabitEthernet_mgmt",
+    "updateTimestamp": "2026-09-09T19:40:47.313Z"
+  },
+  {
+    "createTimestamp": "2026-09-09T19:40:47.059Z",
+    "description": null,
+    "entityName": "SWITCH",
+    "entityType": "switch",
+    "generatedConfig": "",
+    "markDeleted": false,
+    "policyId": "POLICY-18250",
+    "priority": 2000,
+    "source": "",
+    "switchId": "9OX4DZTCYJM",
+    "templateInputs": {
+      "DEVICE_TYPE": "iosxe",
+      "POLICY_DESC": "",
+      "POLICY_ID": "POLICY-18250",
+      "PRIORITY": "2000"
+    },
+    "templateName": "device_type",
+    "updateTimestamp": "2026-09-09T19:40:47.059Z"
+  }
+]

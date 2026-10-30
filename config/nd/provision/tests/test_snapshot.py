@@ -3,7 +3,7 @@
 
 import json
 
-from snapshot import dump, normalize
+from snapshot import dump, normalize, scrub
 
 
 def test_normalize_maps_hostnames_and_drops_volatile_keys():
@@ -79,3 +79,30 @@ def test_normalize_maps_hostnames_adjacent_to_underscores_but_not_longer_names()
     name_map = {"S1_BG1": "S3_BG1", "S1_LE1": "S3_LE1"}
     assert normalize("interfaces_SITE1_S1_BG1.json", name_map) == "interfaces_SITE1_S3_BG1.json"
     assert normalize("tap_S1_LE1 S1_BG1 S1_BG10", name_map) == "tap_S3_LE1 S3_BG1 S1_BG10"
+
+
+def test_scrub_redacts_hash_values_and_config_lines():
+    src = {
+        "SECRET_ENCRYPTD": "$9$abc",
+        "cfg": "username admin password 5 $5$xyz\nusername admin privilege 15 secret 9 $9$qqq",
+        "bgpPassword": "",
+        "nested": [{"PASSWORD_ENCRYPT": "$5$k"}],
+    }
+    out = scrub(src)
+    assert out.keys() == src.keys()
+    assert out["SECRET_ENCRYPTD"] == "<redacted>"
+    assert out["nested"] == [{"PASSWORD_ENCRYPT": "<redacted>"}]
+    assert "$5$" not in out["cfg"] and "$9$" not in out["cfg"]
+    assert "password 5 <redacted>" in out["cfg"] and "secret 9 <redacted>" in out["cfg"]
+    assert out["bgpPassword"] == ""
+    assert src["SECRET_ENCRYPTD"] == "$9$abc"
+
+
+def test_dump_writes_scrubbed_json(tmp_path):
+    responses = {
+        ("/fabrics", ()): {"fabrics": [{"name": "SITE1", "cfg": "hash is $5$xyz"}]},
+    }
+    dump(_StubClient(responses, set()), tmp_path)
+    text = (tmp_path / "fabrics.json").read_text()
+    assert "$REDACTED$" in text
+    assert "$5$" not in text

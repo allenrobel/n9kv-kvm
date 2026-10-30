@@ -80,8 +80,27 @@ def normalize(obj: Any, name_map: dict[str, str]) -> Any:
     return obj
 
 
+SECRET_KEYS = {"SECRET_ENCRYPTD", "PASSWORD_ENCRYPT"}
+_HASH_RE = re.compile(r"\$[0-9]\$[^\s\"'\\]+")
+_CRED_RE = re.compile(r"(\b(?:password|secret)\s+\d+\s+)\S+")
+
+
+def scrub(obj: Any) -> Any:
+    """Return a deep copy of obj with credential hashes redacted, keeping keys, list lengths and types.
+
+    Values of SECRET_KEYS become "<redacted>"; inside strings, `$<digit>$...` hashes become "$REDACTED$" and the token after
+    `password|secret <type>` becomes "<redacted>". Empty/boolean settings such as `bgpPassword: ""` are untouched."""
+    if isinstance(obj, dict):
+        return {k: "<redacted>" if k in SECRET_KEYS else scrub(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [scrub(v) for v in obj]
+    if isinstance(obj, str):
+        return _CRED_RE.sub(r"\1<redacted>", _HASH_RE.sub("$REDACTED$", obj))
+    return obj
+
+
 def _write(out_dir: Path, name: str, data: Any) -> None:
-    (out_dir / f"{name}.json").write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    (out_dir / f"{name}.json").write_text(json.dumps(scrub(data), indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def _fetch(name: str, fn: Callable[[], Any]) -> Any:

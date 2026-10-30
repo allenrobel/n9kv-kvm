@@ -1,0 +1,881 @@
+{
+  "interfaces": [
+    {
+      "configData": {
+        "mode": "routed",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "mtu": 1500,
+            "policyType": "iosXeRoutedHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/1",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "routed",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/21",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/24",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/10",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/11",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/12",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/13",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/18",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/19",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/14",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/15",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/16",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/17",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/9",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/20",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/23",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/6",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/7",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/5",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/22",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/4",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/2",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": 1500,
+            "policyType": "iosXeTrunkHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/3",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 8978,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "routed",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "bfd": "false",
+            "bfdAuthKeyId": "100",
+            "bfdEchoDisable": "false",
+            "description": "connected-to-C3_SP1-GigabitEthernet1/0/1",
+            "ip": "10.44.0.5",
+            "isType": "level1",
+            "mtu": 8978,
+            "ospfAreaId": "0.0.0.0",
+            "ospfAuthKeyId": "127",
+            "policyType": "iosXeNumbered",
+            "prefix": "255.255.255.252",
+            "ptp": "false",
+            "replicationMode": "multicast",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1/0/8",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "ipAddress": "10.44.0.5/30",
+        "mode": "routed",
+        "mtu": 8978,
+        "neighbors": [
+          {
+            "fabricName": "CAMPUS1",
+            "interfaceName": "GigabitEthernet1/0/1",
+            "switchName": "C3_SP1"
+          }
+        ],
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "managed",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "ip": "10.41.0.1",
+            "policyType": "iosXeUnderlayLoopback"
+          }
+        }
+      },
+      "interfaceName": "Loopback0",
+      "interfaceType": "loopback",
+      "operData": {
+        "adminStatus": "up",
+        "ipAddress": "10.41.0.1/32",
+        "mode": "access",
+        "mtu": 1514,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "8Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "managed",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "ip": "10.42.0.1",
+            "policyType": "iosXeUnderlayLoopback"
+          }
+        }
+      },
+      "interfaceName": "Loopback1",
+      "interfaceType": "loopback",
+      "operData": {
+        "adminStatus": "up",
+        "ipAddress": "10.42.0.1/32",
+        "mode": "access",
+        "mtu": 1514,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "8Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "managed",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "cdp": false,
+            "extraConfig": " vrf forwarding Mgmt-vrf\n ip address 192.168.14.181 255.255.255.0\n speed 1000\n no negotiation auto",
+            "policyType": "iosXeMgmt"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet0/0",
+      "interfaceType": "management",
+      "operData": {
+        "adminStatus": "up",
+        "ipAddress": "192.168.14.181/24",
+        "mode": "access",
+        "mtu": 1500,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1",
+        "vrfName": "Mgmt-vrf"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "managed",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "policyType": "iosXeNve",
+            "sourceInterfaceName": "Loopback1"
+          }
+        }
+      },
+      "interfaceName": "nve1",
+      "interfaceType": "nve",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "access",
+        "mtu": 9216,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "CAT9KV3701"
+    },
+    {
+      "configData": {
+        "mode": "unknown",
+        "networkOS": {
+          "networkOSType": "ios-xe"
+        }
+      },
+      "interfaceName": "Vlan1",
+      "interfaceType": "svi",
+      "operData": {
+        "adminStatus": "up",
+        "ipAddress": "192.168.14.181/24",
+        "mode": "access",
+        "mtu": 1500,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "C3_LE1",
+        "vlanRange": "-1",
+        "vrfName": "Mgmt-vrf"
+      },
+      "switchId": "CAT9KV3701"
+    }
+  ],
+  "meta": {
+    "counts": {
+      "remaining": 0,
+      "total": 29
+    }
+  }
+}

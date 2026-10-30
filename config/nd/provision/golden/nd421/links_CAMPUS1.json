@@ -1,0 +1,52 @@
+[
+  {
+    "configData": {
+      "policyType": "iosXeNumbered",
+      "templateInputs": {
+        "dstInterfaceConfig": "",
+        "dstInterfaceDescription": "connected-to-C1_LE1-GigabitEthernet1/0/8",
+        "dstIp": "10.44.0.6",
+        "interfaceAdminState": true,
+        "mtu": 8978,
+        "srcInterfaceConfig": "",
+        "srcInterfaceDescription": "connected-to-C1_SP1-GigabitEthernet1/0/1",
+        "srcIp": "10.44.0.5"
+      }
+    },
+    "displayName": "IOS-XE numbered",
+    "dstFabricName": "CAMPUS1",
+    "dstInterfaceName": "GigabitEthernet1/0/1",
+    "dstSwitchId": "CAT9KV1702",
+    "dstSwitchInfo": {
+      "interfaceAdminStatus": "up",
+      "interfaceOperReason": "",
+      "interfaceOperStatus": "up",
+      "switchModelName": "C9KV-UADP-8P",
+      "switchRole": "spine",
+      "vdc": false,
+      "vdcId": 0
+    },
+    "dstSwitchName": "C1_SP1",
+    "ipMtu": 9198,
+    "linkDiscovered": false,
+    "linkId": "LINK-UUID-226450",
+    "linkPlanned": false,
+    "linkPresent": true,
+    "linkType": "ethisl",
+    "memberLink": false,
+    "portChannel": false,
+    "srcFabricName": "CAMPUS1",
+    "srcInterfaceName": "GigabitEthernet1/0/8",
+    "srcSwitchId": "CAT9KV1701",
+    "srcSwitchInfo": {
+      "interfaceAdminStatus": "up",
+      "interfaceOperReason": "",
+      "interfaceOperStatus": "up",
+      "switchModelName": "C9KV-UADP-8P",
+      "switchRole": "leaf",
+      "vdc": false,
+      "vdcId": 0
+    },
+    "srcSwitchName": "C1_LE1"
+  }
+]

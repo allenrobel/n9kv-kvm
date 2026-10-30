@@ -10,7 +10,7 @@ import yaml
 
 from golden_adopt import bootstrap_adoptions, bootstrap_conflicts, write_adoptions
 from golden_drift import Adoption, compute
-from golden_live import read_live_from_snapshot
+from golden_live import free_ports, read_live_from_snapshot
 from topology import load
 
 HERE = Path(__file__).resolve().parents[1]
@@ -100,6 +100,7 @@ def test_bootstrap_adoptions_capture_generated_links_and_defaults():
     assert len(generated) == 3
     underlay = next(e for e in generated if e["policy"] == "multisiteUnderlay")
     assert underlay["owner"] == "MSD"
+    assert (underlay["src"], underlay["src_if"], underlay["dst"], underlay["dst_if"]) == ("S1_BG1", "Ethernet1/1", "S2_BG1", "Ethernet1/1")
     assert {(underlay["src"], underlay["src_if"]), (underlay["dst"], underlay["dst_if"])} == {("S1_BG1", "Ethernet1/1"), ("S2_BG1", "Ethernet1/1")}
     assert next(e for e in generated if e["policy"] == "multisiteOverlay")["owner"] == "MSD"
     campus = next(e for e in generated if e["policy"] == "iosXeNumbered")
@@ -148,3 +149,56 @@ def test_defaults_use_the_majority_signature_not_the_first_port():
     topo_one = replace(topo, fabrics=[replace(fabric, switches=[s for s in fabric.switches if s.hostname == leaf])])
     result = bootstrap_adoptions(topo_one, synthetic, [])
     assert result[-1].entry["leaf"] == {"policyType": "trunkHost", "description": "x"}
+
+
+def test_defaults_policy_type_comes_from_the_table_not_the_vote():
+    topo = load(HERE / "topology_nd431.yaml")
+    live = read_live_from_snapshot(GOLDEN / "nd431", topo)
+    spine = next(s.hostname for s in topo.fabrics[0].switches if s.role == "spine")
+    all_links = [link for fab in live.values() for link in fab.links]
+    ports = free_ports(live["SITE1"], spine, all_links)
+    assert ports and {p["configData"]["networkOS"]["policy"]["policyType"] for p in ports} == {"trunkHost"}  # the residue the vote used to pick
+    defaults = {a.section[1]: a.entry for a in bootstrap_adoptions(topo, live, []) if a.section[-1] == "defaults"}
+    assert defaults["SITE1"]["spine"] == {"policyType": "routedHost"}  # no free spine port carries routedHost: no inputs to copy
+    assert defaults["SITE1"]["borderGateway"] == {"policyType": "routedHost", "adminState": "true", "mtu": "9216"}
+    assert defaults["SITE1"]["leaf"] == {"policyType": "trunkHost", "adminState": "true", "allowedVlans": "none", "mtu": "jumbo"}
+    assert defaults["SITE1"]["tor"]["policyType"] == "trunkHost"
+    assert defaults["SITE2"]["spine"] == {"policyType": "routedHost", "adminState": "true", "mtu": "9216"}
+    assert defaults["CAMPUS1"]["spine"]["policyType"] == "iosXeRoutedHost"
+    assert defaults["CAMPUS1"]["leaf"]["policyType"] == "iosXeTrunkHost"
+
+
+def test_bootstrap_adopts_interface_residue_in_the_same_run():
+    topo = load(HERE / "topology_nd421.yaml")
+    live = read_live_from_snapshot(GOLDEN / "nd421", topo)
+    interfaces = [a.entry for a in bootstrap_adoptions(topo, live, compute(topo, live)) if a.section[-1] == "interfaces"]
+    access = {(e["switch"], e["interface"]) for e in interfaces if e["policy"] == "accessHost"}
+    assert {("S1_TOR1", "Ethernet1/3"), ("S2_LE1", "Ethernet1/2")} <= access
+    assert sum(1 for e in interfaces if e["switch"] == "S1_BG1" and e["policy"] == "trunkHost") >= 19
+
+
+def test_links_are_written_spine_first_and_sorted(tmp_path):
+    path = tmp_path / "t.yaml"
+    path.write_text(
+        "fabrics:\n  - name: F1\n    type: vxlanIbgp\n    asn: '1'\n    switches:\n"
+        "      - {hostname: SP1, ip: 1.1.1.1, role: spine}\n      - {hostname: LE1, ip: 1.1.1.2, role: leaf}\n      - {hostname: LE2, ip: 1.1.1.3, role: leaf}\n"
+        "    links:\n      - {src: SP1, src_if: Ethernet1/9, dst: LE1, dst_if: Ethernet1/9, policy: numbered, src_ip: 9.9.9.1, dst_ip: 9.9.9.2}\n",
+        encoding="utf-8",
+    )
+    adoptions = [
+        Adoption(
+            ("fabrics", "F1", "links"),
+            {"src": "LE2", "src_if": "Ethernet1/1", "dst": "SP1", "dst_if": "Ethernet1/3", "policy": "numbered", "src_ip": "10.0.0.6", "dst_ip": "10.0.0.5"},
+        ),
+        Adoption(
+            ("fabrics", "F1", "links"),
+            {"src": "LE1", "src_if": "Ethernet1/1", "dst": "SP1", "dst_if": "Ethernet1/2", "policy": "numbered", "src_ip": "10.0.0.2", "dst_ip": "10.0.0.1"},
+        ),
+    ]
+    assert write_adoptions(path, adoptions) == 2
+    links = yaml.safe_load(path.read_text(encoding="utf-8"))["fabrics"][0]["links"]
+    assert links[0]["src_if"] == "Ethernet1/9"  # hand-written entry first and untouched
+    assert links[1:] == [
+        {"src": "SP1", "src_if": "Ethernet1/2", "dst": "LE1", "dst_if": "Ethernet1/1", "policy": "numbered", "src_ip": "10.0.0.1", "dst_ip": "10.0.0.2"},
+        {"src": "SP1", "src_if": "Ethernet1/3", "dst": "LE2", "dst_if": "Ethernet1/1", "policy": "numbered", "src_ip": "10.0.0.5", "dst_ip": "10.0.0.6"},
+    ]

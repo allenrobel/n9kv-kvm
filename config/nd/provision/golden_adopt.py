@@ -8,6 +8,7 @@ one, and only those differences are applied to the original text, so every line 
 from __future__ import annotations
 
 import io
+from dataclasses import replace
 from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any
@@ -15,7 +16,7 @@ from typing import Any
 from ruamel.yaml import YAML  # type: ignore[import-untyped]
 from ruamel.yaml.comments import CommentedMap, CommentedSeq  # type: ignore[import-untyped]
 
-from golden_drift import COMPARED_INPUTS, Adoption, Drift, _if_policy, _live_key, _norm, _policy
+from golden_drift import COMPARED_INPUTS, Adoption, Drift, compute, _if_policy, _live_key, _norm, _policy
 from golden_live import LiveFabric, free_ports
 from topology import GENERATED_LINK_POLICIES, Topology, endpoint_key
 
@@ -94,8 +95,36 @@ def _container(doc: CommentedMap, section: tuple[str, ...]) -> tuple[CommentedMa
     raise ValueError(f"unknown adoption section {section}")
 
 
+ROLE_ORDER = ("spine", "borderSpine", "borderGateway", "leaf", "tor", "coreRouter")
+_SWAPPED = {"src": "dst", "dst": "src", "src_if": "dst_if", "dst_if": "src_if", "src_ip": "dst_ip", "dst_ip": "src_ip"}
+_LINK_KEY_ORDER = ("src", "src_if", "dst", "dst_if", "policy", "src_ip", "dst_ip", "owner")
+
+
+def _rank(roles: dict[str, str], hostname: str) -> tuple[int, str]:
+    role = roles.get(hostname)
+    return (ROLE_ORDER.index(role) if role in ROLE_ORDER else len(ROLE_ORDER), hostname)
+
+
+def _canonical_link(entry: dict, roles: dict[str, str]) -> dict:
+    """The link with `src` the endpoint whose role ranks first (tie: hostname), addresses travelling with their endpoint."""
+    if _rank(roles, entry["src"]) <= _rank(roles, entry["dst"]):
+        return entry
+    swapped = {_SWAPPED.get(k, k): v for k, v in entry.items()}
+    ordered = {k: swapped[k] for k in _LINK_KEY_ORDER if k in swapped}
+    ordered.update({k: v for k, v in swapped.items() if k not in ordered})
+    return ordered
+
+
+_SORT_KEYS = {"links": ("src", "src_if"), "generated_links": ("src", "src_if"), "interfaces": ("switch", "interface")}
+
+
 def _apply(doc: CommentedMap, adoptions: list[Adoption]) -> int:
+    """New list entries of one section are canonicalised and sorted among themselves, then appended after what the file already has."""
+    roles = {s["hostname"]: s.get("role", "") for f in doc.get("fabrics") or [] for s in f.get("switches") or []}
     written = 0
+    pending: dict[tuple[str, ...], list[dict]] = {}
+    keys_seen: dict[tuple[str, ...], set] = {}
+    targets: dict[tuple[str, ...], tuple[CommentedMap, str]] = {}
     for adoption in adoptions:
         parent, key = _container(doc, adoption.section)
         if key == "defaults":
@@ -106,13 +135,25 @@ def _apply(doc: CommentedMap, adoptions: list[Adoption]) -> int:
                     parent["defaults"][role] = _flow(default)
                     written += 1
             continue
+        targets[adoption.section] = (parent, key)
+        if adoption.section not in keys_seen:
+            keys_seen[adoption.section] = {_entry_key(adoption.section, item) for item in parent.get(key) or []}
+        entry_key = _entry_key(adoption.section, adoption.entry)
+        if entry_key in keys_seen[adoption.section]:
+            continue
+        keys_seen[adoption.section].add(entry_key)
+        entry = _canonical_link(adoption.entry, roles) if key in ("links", "generated_links") else adoption.entry
+        pending.setdefault(adoption.section, []).append(entry)
+    for section, entries in pending.items():
+        parent, key = targets[section]
         if parent.get(key) is None:
             parent[key] = CommentedSeq()
-        existing = {_entry_key(adoption.section, item) for item in parent[key]}
-        if _entry_key(adoption.section, adoption.entry) in existing:
-            continue
-        parent[key].append(_flow(adoption.entry))
-        written += 1
+        if key in _SORT_KEYS:
+            first, second = _SORT_KEYS[key]
+            entries.sort(key=lambda e: (e[first], e[second]))
+        for entry in entries:
+            parent[key].append(_flow(entry))
+            written += 1
     return written
 
 
@@ -199,47 +240,65 @@ def _generated_scan(topo: Topology, live: dict[str, LiveFabric]) -> tuple[list[A
     return adoptions, conflicts
 
 
-def _role_default(intf: dict) -> dict:
+ROLE_DEFAULT_POLICY = {
+    "vxlanIbgp": {"spine": "routedHost", "borderGateway": "routedHost", "borderSpine": "routedHost", "leaf": "trunkHost", "tor": "trunkHost"},
+    "vxlanCampus": {"spine": "iosXeRoutedHost", "leaf": "iosXeTrunkHost"},
+}
+
+
+def _port_inputs(intf: dict) -> dict:
     policy = _if_policy(intf)
-    default = {"policyType": policy.get("policyType") or ""}
-    for key in COMPARED_INPUTS:
-        if key in policy and _norm(policy[key]):
-            default[key] = _norm(policy[key])
-    return default
+    return {key: _norm(policy[key]) for key in COMPARED_INPUTS if key in policy and _norm(policy[key])}
 
 
-def _majority_default(ports: list[dict]) -> dict:
-    """The most common signature among `ports`; a tie goes to the signature with the fewest keys (then first seen)."""
-    signatures = [_role_default(p) for p in ports]
-    keys = [tuple(sorted(sig.items())) for sig in signatures]
-    counts = {k: keys.count(k) for k in dict.fromkeys(keys)}
-    best = min(counts, key=lambda k: (-counts[k], len(k)))
-    return dict(best)
+def _role_default(policy_type: str, ports: list[dict]) -> dict:
+    """`policy_type` plus the most common input signature among `ports` (ties go to the signature with the fewest keys, then first seen)."""
+    signatures = [tuple(sorted(_port_inputs(p).items())) for p in ports]
+    inputs: tuple = ()
+    if signatures:
+        counts = {sig: signatures.count(sig) for sig in dict.fromkeys(signatures)}
+        inputs = min(counts, key=lambda sig: (-counts[sig], len(sig)))
+    return {"policyType": policy_type, **dict(inputs)}
 
 
 def _defaults_adoptions(topo: Topology, live: dict[str, LiveFabric]) -> list[Adoption]:
+    """The policy type of a role default comes from ROLE_DEFAULT_POLICY (the controller may hold test residue on its free ports); only the
+    input values are read from the controller, from free ports of that role that already carry the policy type."""
     all_links = [link for fab in live.values() for link in fab.links]
     adoptions: list[Adoption] = []
     for fabric in topo.fabrics:
-        if fabric.type == "externalConnectivity" or fabric.name not in live:
+        table = ROLE_DEFAULT_POLICY.get(fabric.type, {})
+        if fabric.name not in live:
             continue
         entry: dict = {}
         for role in dict.fromkeys(s.role for s in fabric.switches):
-            if role == "coreRouter" or role in fabric.defaults:
+            if role not in table or role in fabric.defaults:
                 continue
-            ports = [p for s in fabric.switches if s.role == role for p in free_ports(live[fabric.name], s.hostname, all_links)]
-            if ports:
-                entry[role] = _majority_default(ports)
+            ports = [
+                p
+                for s in fabric.switches
+                if s.role == role
+                for p in free_ports(live[fabric.name], s.hostname, all_links)
+                if _if_policy(p).get("policyType") == table[role]
+            ]
+            entry[role] = _role_default(table[role], ports)
         if entry:
             adoptions.append(Adoption(("fabrics", fabric.name, "defaults"), entry))
     return adoptions
 
 
 def bootstrap_adoptions(topo: Topology, live: dict[str, LiveFabric], drifts: list[Drift]) -> list[Adoption]:
-    """Everything needed to make the live controller the baseline: each drift's adoption, then the generated links ND made itself, then a
-    per-fabric `defaults` map taken from the majority signature of each role's free ports."""
-    adopted = _dedupe([d.adopt for d in drifts if d.adopt])
-    return [*adopted, *_generated_scan(topo, live)[0], *_defaults_adoptions(topo, live)]
+    """Everything needed to make the live controller the baseline, in two passes. Pass one builds the per-fabric `defaults`; pass two recomputes
+    drift against the topology with those defaults applied in memory, so free-port residue shows up as interface extras. Result: the
+    adoptions of `drifts` (interfaces taken from pass two), the generated links ND made itself, then the `defaults`."""
+    defaults = _defaults_adoptions(topo, live)
+    merged = {a.section[1]: a.entry for a in defaults}
+    with_defaults = replace(topo, fabrics=[replace(f, defaults={**f.defaults, **merged.get(f.name, {})}) for f in topo.fabrics])
+    second = compute(with_defaults, live)
+    others = [d for d in drifts if not (d.adopt and d.adopt.section[-1] == "interfaces")]
+    interfaces = [d for d in second if d.adopt and d.adopt.section[-1] == "interfaces"]
+    adopted = _dedupe([d.adopt for d in (*others, *interfaces) if d.adopt])
+    return [*adopted, *_generated_scan(topo, live)[0], *defaults]
 
 
 def bootstrap_conflicts(topo: Topology, live: dict[str, LiveFabric]) -> list[str]:

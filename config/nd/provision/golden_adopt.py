@@ -263,7 +263,8 @@ def _role_default(policy_type: str, ports: list[dict]) -> dict:
 
 def _defaults_adoptions(topo: Topology, live: dict[str, LiveFabric]) -> list[Adoption]:
     """The policy type of a role default comes from ROLE_DEFAULT_POLICY (the controller may hold test residue on its free ports); only the
-    input values are read from the controller, from free ports of that role that already carry the policy type."""
+    input values are read from the controller, from free ports of that role that already carry the policy type (this fabric's, else a sibling fabric of the same type).
+    """
     all_links = [link for fab in live.values() for link in fab.links]
     adoptions: list[Adoption] = []
     for fabric in topo.fabrics:
@@ -274,13 +275,17 @@ def _defaults_adoptions(topo: Topology, live: dict[str, LiveFabric]) -> list[Ado
         for role in dict.fromkeys(s.role for s in fabric.switches):
             if role not in table or role in fabric.defaults:
                 continue
-            ports = [
-                p
-                for s in fabric.switches
-                if s.role == role
-                for p in free_ports(live[fabric.name], s.hostname, all_links)
-                if _if_policy(p).get("policyType") == table[role]
-            ]
+            # This fabric's ports first; failing that, the same role in the other fabrics of the same type.
+            for source in (fabric, *(f for f in topo.fabrics if f is not fabric and f.type == fabric.type and f.name in live)):
+                ports = [
+                    p
+                    for s in source.switches
+                    if s.role == role
+                    for p in free_ports(live[source.name], s.hostname, all_links)
+                    if _if_policy(p).get("policyType") == table[role]
+                ]
+                if ports:
+                    break
             entry[role] = _role_default(table[role], ports)
         if entry:
             adoptions.append(Adoption(("fabrics", fabric.name, "defaults"), entry))

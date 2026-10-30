@@ -159,7 +159,7 @@ def test_defaults_policy_type_comes_from_the_table_not_the_vote():
     ports = free_ports(live["SITE1"], spine, all_links)
     assert ports and {p["configData"]["networkOS"]["policy"]["policyType"] for p in ports} == {"trunkHost"}  # the residue the vote used to pick
     defaults = {a.section[1]: a.entry for a in bootstrap_adoptions(topo, live, []) if a.section[-1] == "defaults"}
-    assert defaults["SITE1"]["spine"] == {"policyType": "routedHost"}  # no free spine port carries routedHost: no inputs to copy
+    assert defaults["SITE1"]["spine"] == {"policyType": "routedHost", "adminState": "true", "mtu": "9216"}  # inputs from sibling SITE2
     assert defaults["SITE1"]["borderGateway"] == {"policyType": "routedHost", "adminState": "true", "mtu": "9216"}
     assert defaults["SITE1"]["leaf"] == {"policyType": "trunkHost", "adminState": "true", "allowedVlans": "none", "mtu": "jumbo"}
     assert defaults["SITE1"]["tor"]["policyType"] == "trunkHost"
@@ -202,3 +202,12 @@ def test_links_are_written_spine_first_and_sorted(tmp_path):
         {"src": "SP1", "src_if": "Ethernet1/2", "dst": "LE1", "dst_if": "Ethernet1/1", "policy": "numbered", "src_ip": "10.0.0.1", "dst_ip": "10.0.0.2"},
         {"src": "SP1", "src_if": "Ethernet1/3", "dst": "LE2", "dst_if": "Ethernet1/1", "policy": "numbered", "src_ip": "10.0.0.5", "dst_ip": "10.0.0.6"},
     ]
+
+
+def test_default_inputs_fall_back_to_a_sibling_fabric():
+    topo = load(HERE / "topology_nd431.yaml")
+    live = read_live_from_snapshot(GOLDEN / "nd431", topo)
+    defaults = {a.section[1]: a.entry for a in bootstrap_adoptions(topo, live, []) if a.section[-1] == "defaults"}
+    expected = {"policyType": "routedHost", "adminState": "true", "mtu": "9216"}
+    assert defaults["SITE1"]["spine"] == expected == defaults["SITE2"]["spine"]
+    assert defaults["SITE1"]["borderGateway"] == expected

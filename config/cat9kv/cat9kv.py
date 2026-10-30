@@ -452,7 +452,7 @@ class SwitchVMManager:
         self.qemu_builder = qemu_builder or Cat9kvQEMUBuilder()
         self.disk_manager = DiskManager()
 
-    def create_switch(self, config: SwitchConfig, dry_run: bool = False, debug: bool = False) -> Dict[str, Any]:
+    def create_switch(self, config: SwitchConfig, dry_run: bool = False, debug: bool = False, reuse_disk: bool = False) -> Dict[str, Any]:
         """Create and start a Cat9kv switch VM."""
 
         if debug:
@@ -484,7 +484,7 @@ class SwitchVMManager:
         interfaces = self._generate_interfaces(config)
 
         if not dry_run:
-            self._prepare_vm_disk(config)
+            self._prepare_vm_disk(config, reuse_disk=reuse_disk)
             self._setup_network(interfaces)
 
         qemu_cmd = self.qemu_builder.build_command(config, self.global_config, interfaces)
@@ -566,15 +566,21 @@ class SwitchVMManager:
             if iface.bridge is not None:
                 print(f"{config.name} {iface.tap} -> {iface.bridge}")
 
-    def _prepare_vm_disk(self, config: SwitchConfig) -> None:
-        """Prepare the per-VM disk image."""
+    def _prepare_vm_disk(self, config: SwitchConfig, reuse_disk: bool = False) -> None:
+        """Prepare the per-VM disk image: copy the base image, unless reuse_disk is set and the disk already exists."""
         image_name = config.image_name or self.global_config.default_image
         source_image = Path(self.global_config.image_path) / image_name
         dest_disk = Path(self.global_config.cdrom_path) / f"{config.name}.qcow2"
         disk_size = config.disk_size or self.global_config.default_disk_size
 
         dest_disk.parent.mkdir(parents=True, exist_ok=True)
-        self.disk_manager.create_vm_disk(source_image, dest_disk, disk_size)
+        if reuse_disk and dest_disk.exists():
+            # Relaunch after a host reboot: keep the saved startup-config instead of going back to day-0.
+            print(f"Reusing existing disk: {dest_disk}")
+        else:
+            if reuse_disk:
+                print(f"No existing disk for {config.name}; creating from base image")
+            self.disk_manager.create_vm_disk(source_image, dest_disk, disk_size)
 
     def _start_vm(self, qemu_cmd: List[str], config: SwitchConfig, debug: bool = False) -> subprocess.Popen[Any]:
         """Start the VM process."""
@@ -694,6 +700,12 @@ def main():
     parser.add_argument("--force", action="store_true", help="Overwrite existing sample files (used with --create-samples)")
     parser.add_argument("--list-switches", action="store_true", help="List all switch config files in current directory")
     parser.add_argument("--debug", action="store_true", help="Enable debug output and show QEMU command/output")
+    parser.add_argument(
+        "--reuse-disk",
+        action="store_true",
+        help="Keep the existing per-VM disk (skip the base-image copy) so the VM boots its saved startup-config instead of day-0; "
+        "falls back to the copy when no disk exists",
+    )
 
     args = parser.parse_args()
 
@@ -739,7 +751,7 @@ def main():
 
         manager = SwitchVMManager(global_config)
 
-        result = manager.create_switch(switch_config, dry_run=args.dry_run, debug=args.debug)
+        result = manager.create_switch(switch_config, dry_run=args.dry_run, debug=args.debug, reuse_disk=args.reuse_disk)
 
         if args.dry_run:
             print("QEMU Command:")

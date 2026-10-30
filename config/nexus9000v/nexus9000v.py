@@ -245,12 +245,14 @@ class NexusQEMUBuilder(QEMUCommandBuilder):  # pylint: disable=too-few-public-me
 
         if enable_external:
             external_disk = Path(global_config.cdrom_path) / f"{config.name}_external.qcow2"
-            args.extend([
-                "-drive",
-                f"file={external_disk},if=none,id=drive-sata-disk1,format=qcow2,cache=writethrough",
-                "-device",
-                "ide-hd,bus=ahci0.1,drive=drive-sata-disk1",
-            ])
+            args.extend(
+                [
+                    "-drive",
+                    f"file={external_disk},if=none,id=drive-sata-disk1,format=qcow2,cache=writethrough",
+                    "-device",
+                    "ide-hd,bus=ahci0.1,drive=drive-sata-disk1",
+                ]
+            )
 
         return args
 
@@ -378,10 +380,7 @@ class OVSPortManager:
         if not iface.tap:
             raise ValueError(f"Interface '{iface.name}' has no TAP name assigned")
         if not cls.bridge_exists(iface.bridge):
-            raise RuntimeError(
-                f"OVS bridge '{iface.bridge}' not found. "
-                f"Create it first via netplan / bridges_config_ovs.sh."
-            )
+            raise RuntimeError(f"OVS bridge '{iface.bridge}' not found. " f"Create it first via netplan / bridges_config_ovs.sh.")
         cls.teardown_port(iface)  # clear stale state from a prior run
         cls._run(["ip", "tuntap", "add", "dev", iface.tap, "mode", "tap"])
         cls._run(["ip", "link", "set", "dev", iface.tap, "mtu", str(cls.MTU)])
@@ -420,10 +419,7 @@ class DiskManager:
         """Create external storage disk."""
         try:
             # Create a new qcow2 image for external storage
-            subprocess.run(
-                ["qemu-img", "create", "-f", "qcow2", str(storage_path), size],
-                check=True
-            )
+            subprocess.run(["qemu-img", "create", "-f", "qcow2", str(storage_path), size], check=True)
             print(f"Created external storage: {storage_path} ({size})")
 
         except subprocess.CalledProcessError as e:
@@ -491,7 +487,7 @@ class SwitchVMManager:  # pylint: disable=too-few-public-methods
         self.qemu_builder = qemu_builder or NexusQEMUBuilder()
         self.disk_manager = DiskManager()
 
-    def create_switch(self, config: SwitchConfig, dry_run: bool = False, debug: bool = False) -> Dict[str, Any]:
+    def create_switch(self, config: SwitchConfig, dry_run: bool = False, debug: bool = False, reuse_disk: bool = False) -> Dict[str, Any]:
         """Create and start a Nexus switch VM."""
 
         if debug:
@@ -517,7 +513,7 @@ class SwitchVMManager:  # pylint: disable=too-few-public-methods
 
         # Prepare VM disk and host networking
         if not dry_run:
-            self._prepare_vm_disk(config)
+            self._prepare_vm_disk(config, reuse_disk=reuse_disk)
             self._setup_network(interfaces)
 
         # Build QEMU command
@@ -593,8 +589,8 @@ class SwitchVMManager:  # pylint: disable=too-few-public-methods
             OVSPortManager.teardown_port(iface)
         print(f"Removed TAP interfaces for {config.name}")
 
-    def _prepare_vm_disk(self, config: SwitchConfig) -> None:
-        """Prepare VM disk image."""
+    def _prepare_vm_disk(self, config: SwitchConfig, reuse_disk: bool = False) -> None:
+        """Prepare the VM disk image: copy the base image, unless reuse_disk is set and the per-VM disk already exists."""
         image_name = config.image_name or self.global_config.default_image
         source_image = Path(self.global_config.image_path) / image_name
         dest_disk = Path(self.global_config.cdrom_path) / f"{config.name}.qcow2"
@@ -604,7 +600,13 @@ class SwitchVMManager:  # pylint: disable=too-few-public-methods
         dest_disk.parent.mkdir(parents=True, exist_ok=True)
 
         # Create VM disk
-        self.disk_manager.create_vm_disk(source_image, dest_disk, disk_size)
+        if reuse_disk and dest_disk.exists():
+            # Relaunch after a host reboot: keep the saved startup-config instead of going back to day-0.
+            print(f"Reusing existing disk: {dest_disk}")
+        else:
+            if reuse_disk:
+                print(f"No existing disk for {config.name}; creating from base image")
+            self.disk_manager.create_vm_disk(source_image, dest_disk, disk_size)
 
         # Create external storage if enabled
         enable_external = config.enable_external_storage
@@ -787,6 +789,12 @@ def main():
     parser.add_argument("--force", action="store_true", help="Overwrite existing sample files (used with --create-samples)")
     parser.add_argument("--list-switches", action="store_true", help="List all switch config files in current directory")
     parser.add_argument("--debug", action="store_true", help="Enable debug output and show QEMU command/output")
+    parser.add_argument(
+        "--reuse-disk",
+        action="store_true",
+        help="Keep the existing per-VM disk (skip the base-image copy) so the VM boots its saved startup-config instead of day-0; "
+        "falls back to the copy when no disk exists",
+    )
 
     args = parser.parse_args()
 
@@ -826,7 +834,7 @@ def main():
         manager = SwitchVMManager(global_config)
 
         # Create switch
-        result = manager.create_switch(switch_config, dry_run=args.dry_run, debug=args.debug)
+        result = manager.create_switch(switch_config, dry_run=args.dry_run, debug=args.debug, reuse_disk=args.reuse_disk)
 
         if args.dry_run:
             print("QEMU Command:")

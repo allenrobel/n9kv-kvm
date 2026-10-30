@@ -1,6 +1,7 @@
 """golden_adopt: comment-preserving yaml writes of adoptions and the bootstrap adoption set, against the committed nd421 snapshot."""
 
 import re
+from dataclasses import replace
 import shutil
 from pathlib import Path
 
@@ -124,3 +125,26 @@ def test_round_trip_of_shipped_files_is_byte_identical_without_adoptions(tmp_pat
     existing = Adoption(("fabrics", "SITE1", "switches"), {"hostname": first.hostname, "ip": first.ip, "role": first.role})
     assert write_adoptions(path, [existing]) == 0
     assert path.read_bytes() == before
+
+
+def test_defaults_use_the_majority_signature_not_the_first_port():
+    topo = load(HERE / "topology_nd421.yaml")
+    live = read_live_from_snapshot(GOLDEN / "nd421", topo)
+    defaults = {a.section[1]: a.entry for a in bootstrap_adoptions(topo, live, []) if a.section[-1] == "defaults"}
+    assert defaults["SITE1"]["tor"]["policyType"] == "trunkHost"
+    assert "description" not in defaults["SITE1"]["tor"]
+    assert defaults["SITE1"]["spine"]["policyType"] == "routedHost"
+    assert defaults["SITE1"]["leaf"]["policyType"] == "trunkHost"
+
+    def port(name: str, description: str) -> dict:
+        policy = {"policyType": "trunkHost", "description": description}
+        return {"interfaceName": name, "interfaceType": "ethernet", "operData": {"portChannelId": -1}, "configData": {"networkOS": {"policy": policy}}}
+
+    fabric = next(f for f in topo.fabrics if f.name == "SITE1")
+    leaf = next(s.hostname for s in fabric.switches if s.role == "leaf")
+    synthetic = {
+        "SITE1": replace(live["SITE1"], interfaces={leaf: [port("Ethernet1/40", "x"), port("Ethernet1/41", ""), port("Ethernet1/42", "x"), port("Ethernet1/43", "x")]})
+    }
+    topo_one = replace(topo, fabrics=[replace(fabric, switches=[s for s in fabric.switches if s.hostname == leaf])])
+    result = bootstrap_adoptions(topo_one, synthetic, [])
+    assert result[-1].entry["leaf"] == {"policyType": "trunkHost", "description": "x"}

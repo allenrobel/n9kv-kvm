@@ -208,6 +208,15 @@ def _role_default(intf: dict) -> dict:
     return default
 
 
+def _majority_default(ports: list[dict]) -> dict:
+    """The most common signature among `ports`; a tie goes to the signature with the fewest keys (then first seen)."""
+    signatures = [_role_default(p) for p in ports]
+    keys = [tuple(sorted(sig.items())) for sig in signatures]
+    counts = {k: keys.count(k) for k in dict.fromkeys(keys)}
+    best = min(counts, key=lambda k: (-counts[k], len(k)))
+    return dict(best)
+
+
 def _defaults_adoptions(topo: Topology, live: dict[str, LiveFabric]) -> list[Adoption]:
     all_links = [link for fab in live.values() for link in fab.links]
     adoptions: list[Adoption] = []
@@ -218,11 +227,9 @@ def _defaults_adoptions(topo: Topology, live: dict[str, LiveFabric]) -> list[Ado
         for role in dict.fromkeys(s.role for s in fabric.switches):
             if role == "coreRouter" or role in fabric.defaults:
                 continue
-            for switch in (s for s in fabric.switches if s.role == role):
-                ports = free_ports(live[fabric.name], switch.hostname, all_links)
-                if ports:
-                    entry[role] = _role_default(ports[0])
-                    break
+            ports = [p for s in fabric.switches if s.role == role for p in free_ports(live[fabric.name], s.hostname, all_links)]
+            if ports:
+                entry[role] = _majority_default(ports)
         if entry:
             adoptions.append(Adoption(("fabrics", fabric.name, "defaults"), entry))
     return adoptions
@@ -230,7 +237,7 @@ def _defaults_adoptions(topo: Topology, live: dict[str, LiveFabric]) -> list[Ado
 
 def bootstrap_adoptions(topo: Topology, live: dict[str, LiveFabric], drifts: list[Drift]) -> list[Adoption]:
     """Everything needed to make the live controller the baseline: each drift's adoption, then the generated links ND made itself, then a
-    per-fabric `defaults` map taken from the first free port of each role."""
+    per-fabric `defaults` map taken from the majority signature of each role's free ports."""
     adopted = _dedupe([d.adopt for d in drifts if d.adopt])
     return [*adopted, *_generated_scan(topo, live)[0], *_defaults_adoptions(topo, live)]
 

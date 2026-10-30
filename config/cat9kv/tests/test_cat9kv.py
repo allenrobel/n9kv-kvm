@@ -158,3 +158,47 @@ def test_attach_port_skips_padding_and_rejects_a_missing_tap(monkeypatch):
     assert calls == []
     with pytest.raises(RuntimeError, match="tap1701-8"):
         OVSPortManager.attach_port(NetworkInterface(name="FP_8", bridge="BR_C1_SP1_LE1_1", mac="m", tap="tap1701-8"))
+
+
+def _disk_manager(tmp_path: Path, monkeypatch) -> tuple[SwitchVMManager, list]:
+    """A manager whose disks live under tmp_path; records create_vm_disk calls instead of copying anything."""
+    import dataclasses  # pylint: disable=import-outside-toplevel
+
+    from cat9kv import DiskManager  # pylint: disable=import-outside-toplevel
+
+    calls: list = []
+    monkeypatch.setattr(DiskManager, "create_vm_disk", staticmethod(lambda src, dst, size: calls.append(dst)))
+    return SwitchVMManager(dataclasses.replace(_globals(), cdrom_path=str(tmp_path))), calls
+
+
+def test_launch_rebuilds_the_disk_by_default_even_when_it_exists(tmp_path, monkeypatch):
+    manager, calls = _disk_manager(tmp_path, monkeypatch)
+    (tmp_path / "C1_LE1.qcow2").touch()
+    manager._prepare_vm_disk(_c1_le1())  # pylint: disable=protected-access
+    assert calls == [tmp_path / "C1_LE1.qcow2"]
+
+
+def test_reuse_disk_keeps_an_existing_disk(tmp_path, monkeypatch, capsys):
+    manager, calls = _disk_manager(tmp_path, monkeypatch)
+    (tmp_path / "C1_LE1.qcow2").touch()
+    manager._prepare_vm_disk(_c1_le1(), reuse_disk=True)  # pylint: disable=protected-access
+    assert calls == []
+    assert f"Reusing existing disk: {tmp_path / 'C1_LE1.qcow2'}" in capsys.readouterr().out
+
+
+def test_reuse_disk_falls_back_to_the_base_image_when_no_disk_exists(tmp_path, monkeypatch, capsys):
+    manager, calls = _disk_manager(tmp_path, monkeypatch)
+    manager._prepare_vm_disk(_c1_le1(), reuse_disk=True)  # pylint: disable=protected-access
+    assert calls == [tmp_path / "C1_LE1.qcow2"]
+    assert "No existing disk for C1_LE1; creating from base image" in capsys.readouterr().out
+
+
+def test_create_switch_passes_reuse_disk_through(tmp_path, monkeypatch):
+    manager, _ = _disk_manager(tmp_path, monkeypatch)
+    seen: list = []
+    monkeypatch.setattr(manager.qemu_builder, "validate_files", lambda config, global_config: [])
+    monkeypatch.setattr(manager, "_prepare_vm_disk", lambda config, reuse_disk=False: seen.append(reuse_disk))
+    monkeypatch.setattr(manager, "_setup_network", lambda interfaces: None)
+    monkeypatch.setattr(manager, "_start_vm", lambda cmd, config, debug=False: type("P", (), {"pid": 1})())
+    manager.create_switch(_c1_le1(), reuse_disk=True)
+    assert seen == [True]

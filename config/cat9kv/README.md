@@ -78,6 +78,7 @@ python3 cat9kv.py --list-switches                   # list switch YAMLs
 python3 cat9kv.py --create-samples                  # write samples to ./samples/ (skip existing)
 sudo python3 cat9kv.py --config C1_LE1.yaml --teardown  # remove TAPs after stopping the VM
 sudo python3 cat9kv.py --config C1_LE1.yaml --attach    # attach a running switch's existing TAPs to their bridges (re-cable live, no reload)
+sudo python3 cat9kv.py --config C1_LE1.yaml --reuse-disk  # relaunch after a host reboot keeping the saved config (no base-image copy)
 python3 startup_config.py --print C1_LE1.yaml       # render day-0 config to STDOUT
 sudo -E python3 startup_config.py --all             # build day-0 ISOs for every switch YAML
 ```

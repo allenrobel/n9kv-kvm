@@ -90,6 +90,9 @@ The repo is organized by **lab subsystem**, not by language. Each subdir is larg
   a Catalyst 9000v leaf and spine (`C1_LE1`/`C1_SP1`, `C3_LE1`/`C3_SP1`, `.181`/`.182`) joined by one link on the leaf's `Gi1/0/8`.
 - **ND has multiple coexisting versions** (`nd_321e.sh`, `nd_411g.sh`, `nd-42-1-*-node*.sh`, …). Each is a distinct VM definition; the lab can run several
   ND clusters simultaneously on different bridges. The numeric suffixes (`.105`, `.119`, `.4`) are the management IP last octet, not version numbers.
+- **Every launch rebuilds the per-VM disk from the base image** (`_prepare_vm_disk` in all three launchers), so a plain relaunch boots day-0 and
+  needs a full ND re-provision. After a host reboot relaunch with `--reuse-disk` (`site*.sh` pass it through), which keeps the existing qcow2 and
+  its saved startup-config; the launcher falls back to the copy only when no disk exists.
 - **`n9kv-kvm/` subdirectory at the repo root** is a stray Python venv (note `pyvenv.cfg`, `bin/`, `lib/`), not source. The real venv is `.venv/`. Ignore
   `n9kv-kvm/` for code reading.
 

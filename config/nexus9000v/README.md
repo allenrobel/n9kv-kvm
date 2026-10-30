@@ -43,6 +43,16 @@ python3 nexus9000v.py --config S1_LE1.yaml --dry-run
 
 python3 nexus9000v.py --config S1_LE1.yaml
 
+### Relaunch after a host reboot, keeping the saved config
+
+Every launch copies the base image over the per-switch disk (day-0 again) unless `--reuse-disk` is given, which keeps the existing
+`<cdrom_path>/<name>.qcow2` so the switch boots its saved startup-config and ND finds it back in sync. `site*.sh` pass extra arguments through.
+
+```bash
+sudo python3 nexus9000v.py --config S1_LE1.yaml --reuse-disk
+bash site1.sh --reuse-disk
+```
+
 ### Use custom global config
 
 python3 nexus9000v.py --config S1_LE1.yaml --global-config my_global.yaml

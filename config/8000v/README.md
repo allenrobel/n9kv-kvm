@@ -45,6 +45,7 @@ python3 8000v.py --list-routers                 # list router YAMLs
 python3 8000v.py --create-samples               # write samples to ./samples/ (skip existing)
 python3 8000v.py --create-samples --force        # overwrite existing samples
 sudo python3 8000v.py --config WAN1.yaml --teardown  # remove TAPs after stopping the VM
+sudo python3 8000v.py --config WAN1.yaml --reuse-disk  # relaunch after a host reboot keeping the saved config (no base-image copy)
 python3 startup_config.py --print WAN1.yaml     # render day-0 config to STDOUT
 sudo -E python3 startup_config.py --all         # build day-0 ISOs for every router YAML
 ```

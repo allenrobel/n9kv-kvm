@@ -7,6 +7,7 @@ report built from a half-read controller would be wrong. `read_live_from_snapsho
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -107,7 +108,7 @@ def read_live(client: NDClient, topo: Topology) -> dict[str, LiveFabric]:
                 live.tor_associations.extend(_items(client.get(f"/fabrics/{name}/accessAssociations", params=params), "associations"))
             except RuntimeError as exc:
                 # A fabric with no pairings answers 400/404; anything else is a real failure.
-                if not str(exc).startswith(("HTTP 400", "HTTP 404")):
+                if not re.search(r"-> HTTP (400|404)\b", str(exc)):
                     raise LiveReadError(f"GET /fabrics/{name}/accessAssociations: {exc}") from exc
         serials = [s["serialNumber"] for s in switch_list]
         if serials:
@@ -171,7 +172,7 @@ def free_ports(live: LiveFabric, hostname: str, all_links: list[dict]) -> list[d
         i
         for i in live.interfaces.get(hostname, [])
         if i.get("interfaceType") == "ethernet"
-        and not i["interfaceName"].startswith("mgmt")
+        and not i.get("interfaceName", "").startswith("mgmt")
         and (hostname, i["interfaceName"]) not in used
         and (i.get("operData") or {}).get("portChannelId") == -1
     ]

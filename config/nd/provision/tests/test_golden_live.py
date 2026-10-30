@@ -94,7 +94,7 @@ def test_read_live_reads_tor_associations_per_golden_pair():
 
 def test_tor_association_400_reads_as_empty():
     path = "/fabrics/SITE1/accessAssociations"
-    topo, client = _tor_stub(errors={path: "HTTP 400 aggregationOrLeafSwitchId is required"})
+    topo, client = _tor_stub(errors={path: f"GET {path} -> HTTP 400: aggregationOrLeafSwitchId is required"})
     assert read_live(client, topo)["SITE1"].tor_associations == []
     with pytest.raises(LiveReadError):
         read_live(StubClient(error="HTTP 500 boom"), topo)

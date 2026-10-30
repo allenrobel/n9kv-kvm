@@ -593,7 +593,7 @@ def test_vpc_pair_missing_and_extra(nd421):
     live["SITE1"].vpc_pairs.append({"switchName": "S1_LE2", "switchId": "X2", "peerSwitchName": "S1_BG1", "peerSwitchId": "X1", "type": "discoveredPairs"})
     extra = [d for d in drift_pairs(topo, live) if d.kind == "extra"]
     assert len(extra) == 1 and extra[0].adopt == Adoption(("vpc_pairs",), {"fabric": "SITE1", "switch": "S1_LE2", "peer": "S1_BG1"})
-    assert extra[0].delete == Op("unpair_vpc", "SITE1", "PUT", "/fabrics/SITE1/switches/X2/vpcPair", {**vpc_pair_payload("X2", "X1"), "vpcAction": "unpair"})
+    assert extra[0].delete == Op("unpair_vpc", "SITE1", "PUT", "/fabrics/SITE1/switches/X2/vpcPair", {"vpcAction": "unPair"})
 
 
 def test_tor_pair_missing_and_extra(full_lab):
@@ -619,7 +619,7 @@ def test_wrong_switch_role_fixes_with_set_role(nd421):
     drifts = drift_switches(topo, live)
     assert [(d.kind, d.subject) for d in drifts] == [("different", "S1_LE1")]
     serial = live["SITE1"].switches["S1_LE1"]["serialNumber"]
-    assert drifts[0].fix == Op("set_role", "SITE1", "PUT", f"/fabrics/SITE1/switches/{serial}", {"switchRole": "leaf"})
+    assert drifts[0].fix == Op("set_role", "SITE1", "POST", "/fabrics/SITE1/switchActions/changeRoles", {"switchRoles": [{"switchId": serial, "role": "leaf"}]})
     assert drifts[0].golden == "leaf" and drifts[0].live == "spine"
 
 
@@ -683,3 +683,30 @@ def test_compute_orders_classes_stably(nd421):
     assert [c for c in order if c in seen_cls] == seen_cls
     assert {"settings", "switches", "links", "interfaces", "vrfs", "networks", "attachments", "pairs"} <= set(seen_cls)
     assert compute(topo, live) == drifts
+
+
+def _stray_network(live, fabrics, attach_on="S1_LE1"):
+    for name in fabrics:
+        live[name].networks.append({"networkName": "TEST_NET", "networkId": 30777, "vlanId": 77, "vrfName": "LAB"})
+    serial = live["SITE1"].switches[attach_on]["serialNumber"]
+    live["SITE1"].network_attachments.append({"networkName": "TEST_NET", "switchName": attach_on, "switchId": serial, "attach": True, "vlanId": 77, "interfaces": []})
+    return serial
+
+
+def test_propagated_copy_of_an_extra_group_object_is_not_an_extra(nd421):
+    topo, live = nd421
+    serial = _stray_network(live, ["MSD", "SITE1", "SITE2"])
+    drifts = drift_overlay(topo, live)
+    assert [(d.cls, d.fabric, d.kind) for d in drifts] == [("networks", "MSD", "extra")]
+    ops = drifts[0].delete
+    assert isinstance(ops, list) and [o.action for o in ops] == ["detach", "deploy_overlay", "delete_network"]
+    assert ops[0].fabric == "SITE1" and ops[0].body["attachments"][0]["switchId"] == serial and ops[0].body["attachments"][0]["attach"] is False
+    assert ops[-1] == Op("delete_network", "MSD", "DELETE", "/fabrics/MSD/networks/TEST_NET", None)
+
+
+def test_snapshot_group_extra_held_by_all_members_is_one_extra(nd421):
+    topo, live = nd421
+    _stray_network(live, ["SITE1", "SITE2"])
+    drifts = drift_overlay(topo, live)
+    assert [(d.cls, d.fabric, d.kind) for d in drifts] == [("networks", "MSD", "extra")]
+    assert isinstance(drifts[0].delete, list) and drifts[0].delete[-1].path == "/fabrics/MSD/networks/TEST_NET"

@@ -43,17 +43,15 @@ class ApplyError(RuntimeError):
 
 
 def _failed_items(resp: Any) -> list[dict]:
-    """Items of a multi-status response whose `status` is present and not "success" (descends into `results`)."""
+    """Entries of the top-level `results` / `items` lists whose string `status` is not "success". A top-level `status` (a message string such as
+    "No switches pending for deployment.") and an empty body are never failures."""
+    if not isinstance(resp, dict):
+        return []
     found: list[dict] = []
-    if isinstance(resp, list):
-        for item in resp:
-            found.extend(_failed_items(item))
-    elif isinstance(resp, dict):
-        if "status" in resp and resp["status"] != "success":
-            found.append(resp)
-        for value in resp.values():
-            if isinstance(value, list):
-                found.extend(_failed_items(value))
+    for key in ("results", "items"):
+        value = resp.get(key)
+        if isinstance(value, list):
+            found.extend(i for i in value if isinstance(i, dict) and isinstance(i.get("status"), str) and i["status"] != "success")
     return found
 
 
@@ -75,23 +73,25 @@ class Applier:
 
     def _send(self, op: Op) -> Any:
         if op.method == "PUT":
-            return self.prov._put(op.path, op.body)
-        if op.method == "POST":
+            resp = self.prov._put(op.path, op.body)
+        elif op.method == "POST":
             resp = self.prov._post(op.path, op.body)
-            self._check(op, resp)
-            return resp
-        if op.method == "DELETE":
-            return self._delete(op.path)
-        raise ApplyError(f"{op.action}: unsupported method {op.method!r}")
+        elif op.method == "DELETE":
+            resp = self._delete(op.path)
+        else:
+            raise ApplyError(f"{op.action}: unsupported method {op.method!r}")
+        self._check(op, resp)
+        return resp
 
     # -- apply ---------------------------------------------------------------------------------------------
     def apply(self, ops: list[Op]) -> set[str]:
         touched: set[str] = set()
-        ordered = sorted(ops, key=lambda o: RANK.get(o.action, len(RANK)))
+        unknown = sorted({o.action for o in ops if o.action not in RANK})
+        if unknown:
+            raise ApplyError(f"unknown action(s) {unknown}; nothing was sent")
+        ordered = sorted(ops, key=lambda o: RANK[o.action])
         switches_added = False
         for op in ordered:
-            if op.action not in RANK:
-                raise ApplyError(f"unknown action {op.action!r}")
             touched.add(op.fabric)
             if op.action == "deploy_owner":
                 continue
@@ -117,25 +117,34 @@ class Applier:
     # -- interface policy-type change ----------------------------------------------------------------------
     def _put_interface(self, op: Op) -> None:
         try:
-            self.prov._put(op.path, op.body)
+            self._run(op, lambda: self._send(op))
             return
-        except RuntimeError as exc:
+        except ApplyError as exc:
             if "Policy type change" not in str(exc):
-                raise ApplyError(f"{op.action} {op.method} {op.path}: {exc}") from exc
+                raise
         rows = self._attached_on_port(op)
-        if not rows:
-            raise ApplyError(f"{op.action} {op.method} {op.path}: policy type change refused and no network is attached on the port")
         serial, port = self._serial_and_port(op)
+        if not rows:
+            raise ApplyError(f"{op.action} {op.method} {op.path}: policy type change refused and no network is attached on {port}")
         names = sorted({r["networkName"] for r in rows})
         deploy = {"networkNames": names, "switchIds": [serial]}
         attach_path = f"/fabrics/{op.fabric}/networkAttachments"
         deploy_path = f"/fabrics/{op.fabric}/networkActions/deploy"
         self.prov._log(f"{port}: policy type change refused; detaching {names} from the port, retrying, then re-attaching")
         detach = [{"networkName": r["networkName"], "switchId": r["switchId"], "vlanId": r.get("vlanId"), "interfaces": [], "attach": False} for r in rows]
-        self._run(op, lambda: self._check_post(op, attach_path, {"attachments": detach}))
-        self._run(op, lambda: self._check_post(op, deploy_path, deploy))
-        self._run(op, lambda: self.prov._put(op.path, op.body))
         reattach = [{**d, "interfaces": r.get("interfaces") or [], "attach": True} for d, r in zip(detach, rows)]
+        self._run(op, lambda: self._check_post(op, attach_path, {"attachments": detach}))
+        try:
+            self._run(op, lambda: self._check_post(op, deploy_path, deploy))
+            self._run(op, lambda: self._send(op))
+        except ApplyError as exc:
+            try:
+                self._run(op, lambda: self._check_post(op, attach_path, {"attachments": reattach}))
+                self._run(op, lambda: self._check_post(op, deploy_path, deploy))
+                outcome = "re-attached"
+            except ApplyError as again:
+                outcome = f"re-attach FAILED ({again})"
+            raise ApplyError(f"{exc}; networks {names} were detached from {port} and {outcome}") from exc
         self._run(op, lambda: self._check_post(op, attach_path, {"attachments": reattach}))
         self._run(op, lambda: self._check_post(op, deploy_path, deploy))
 

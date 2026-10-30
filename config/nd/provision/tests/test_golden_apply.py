@@ -130,3 +130,48 @@ def test_dry_run_writes_nothing():
     touched = applier.apply(ops)
     applier.deploy(touched, _topo())
     assert client.writes == []
+
+
+def test_unknown_action_is_rejected_before_anything_is_sent():
+    client = Stub()
+    ops = [Op("put_settings", "SITE1", "PUT", "/fabrics/SITE1", {}), Op("bogus", "SITE1", "PUT", "/x", {})]
+    with pytest.raises(ApplyError, match="bogus"):
+        _applier(client).apply(ops)
+    assert client.calls == []
+
+
+def test_failed_retry_reattaches_and_names_the_networks():
+    port = "/fabrics/SITE1/switches/S1/interfaces/Ethernet1%2F5"
+    rows = [{"networkName": "N1", "switchId": "S1", "vlanId": 10, "attach": True, "interfaces": [{"interfaceRange": "Ethernet1/5", "mode": "access"}]}]
+    client = Stub(
+        post_results={"/fabrics/SITE1/networkAttachments/query": {"attachments": rows}},
+        put_errors=[RuntimeError("HTTP 400 Policy type change x"), RuntimeError("HTTP 500 boom")],
+    )
+    with pytest.raises(ApplyError, match=r"N1.*Ethernet1/5.*re-attached"):
+        _applier(client).apply([Op("put_interface", "SITE1", "PUT", port, {"i": 1})])
+    assert [(c[0], c[1]) for c in client.calls[-3:]] == [
+        ("PUT", port),
+        ("POST", "/fabrics/SITE1/networkAttachments"),
+        ("POST", "/fabrics/SITE1/networkActions/deploy"),
+    ]
+    assert client.calls[-2][2]["attachments"][0]["attach"] is True
+
+
+def test_put_207_failed_item_raises():
+    class PutStub(Stub):
+        def put(self, path, json=None):
+            self.calls.append(("PUT", path, json))
+            return {"results": [{"status": "failed", "message": "x"}]}
+
+    client = PutStub()
+    ops = [Op("put_settings", "SITE1", "PUT", "/fabrics/SITE1", {}), Op("pair_vpc", "SITE1", "PUT", "/fabrics/SITE1/switches/S1/vpcPair", {})]
+    with pytest.raises(ApplyError, match="x"):
+        _applier(client).apply(ops)
+    assert [c[1] for c in client.writes] == ["/fabrics/SITE1"]
+
+
+def test_top_level_status_string_is_not_a_failure():
+    client = Stub(post_results={"/fabrics/SITE1/networkActions/deploy": {"status": "No switches pending for deployment."}})
+    ops = [Op("deploy_overlay", "SITE1", "POST", "/fabrics/SITE1/networkActions/deploy", {}), Op("put_settings", "SITE1", "PUT", "/fabrics/SITE1", {})]
+    _applier(client).apply(ops)
+    assert len(client.writes) == 2

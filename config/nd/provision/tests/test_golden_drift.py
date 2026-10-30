@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from golden_drift import Adoption, Drift, Op, drift_generated_links, drift_links, format_report, numbered_link_body
+from golden_drift import Adoption, Drift, Op, default_body, drift_generated_links, drift_interfaces, drift_links, format_report, interface_body, numbered_link_body
 from golden_live import read_live_from_snapshot
-from topology import FabricLink, GeneratedLink, Topology, load
+from topology import FabricLink, GeneratedLink, InterfaceIntent, Topology, load
 
 HERE = Path(__file__).resolve().parents[1]
 GOLDEN = HERE / "golden"
@@ -255,3 +255,189 @@ def test_isn_fix_keeps_live_orientation(nd421):
     assert inputs["srcIpAddressMask"] == "10.25.0.2/30" and inputs["dstIpAddress"] == "10.25.0.1"
     assert inputs["srcEbgpAsn"] == "65002" and inputs["dstEbgpAsn"] == "65535"
     assert inputs["srcInterfaceDescription"] == "connected-to-WAN1-GigabitEthernet3"
+
+
+# ---------------------------------------------------------------- interfaces
+
+ROLE_DEFAULTS = {
+    "leaf": {"policyType": "trunkHost", "adminState": True, "allowedVlans": "none"},
+    "tor": {"policyType": "trunkHost", "adminState": True, "allowedVlans": "none"},
+    "spine": {"policyType": "routedHost", "adminState": True},
+    "borderGateway": {"policyType": "routedHost", "adminState": True},
+}
+HOST_PORTS = {
+    "SITE1": [InterfaceIntent("S1_TOR1", "Ethernet1/3", "accessHost", description="S1_H1 host port")],
+    "SITE2": [InterfaceIntent("S2_LE1", "Ethernet1/2", "accessHost", description="LAB_NET1 host port")],
+}
+
+
+def _with_interfaces(topo: Topology, extra=()) -> Topology:
+    """The golden lab with the captured role defaults and the two host ports; `extra` adds (fabric, InterfaceIntent) entries."""
+    fabrics = []
+    for f in topo.fabrics:
+        if f.name in HOST_PORTS:
+            f = replace(f, defaults=ROLE_DEFAULTS, interfaces=[*HOST_PORTS[f.name], *(i for n, i in extra if n == f.name)])
+        fabrics.append(f)
+    return replace(topo, fabrics=fabrics)
+
+
+def _all_links(live) -> list[dict]:
+    return [link for fab in live.values() for link in fab.links]
+
+
+def _run_interfaces(topo: Topology, live, names=("SITE1", "SITE2", "CAMPUS1", "ISN")) -> list[Drift]:
+    links = _all_links(live)
+    return [d for name in names for d in drift_interfaces(topo, _fabric(topo, name), live, links)]
+
+
+def _iface(live, fabric: str, host: str, name: str) -> dict:
+    return next(i for i in live[fabric].interfaces[host] if i["interfaceName"] == name)
+
+
+def _adopted(topo: Topology, drifts: list[Drift]) -> Topology:
+    """Apply every drift's adoption entry to the topology, as the bootstrap does."""
+    extra = [(d.adopt.section[1], InterfaceIntent(**d.adopt.entry)) for d in drifts if d.adopt]
+    return _with_interfaces(topo, extra)
+
+
+def test_the_golden_lab_residue_is_what_the_dumps_hold(nd421):
+    topo, live = nd421
+    extras = [d for d in _run_interfaces(_with_interfaces(topo), live) if d.kind == "extra"]
+    bg1 = [d for d in extras if d.subject.startswith("S1_BG1 ") and d.delete.action == "reset_interface"]
+    assert len([d for d in bg1 if d.live.startswith("trunkHost")]) == 19
+    po10 = next(d for d in extras if d.subject == "S1_TOR1 port-channel10")
+    assert po10.delete.action == "delete_interface" and po10.adopt.entry == {
+        "switch": "S1_TOR1",
+        "interface": "port-channel10",
+        "policy": "l3Po",
+        "type": "portChannel",
+        "description": "subinterface test parent",
+    }
+
+
+def test_no_interface_drift_on_the_golden_lab(lab):
+    topo, live = lab
+    golden = _with_interfaces(topo)
+    drifts = _run_interfaces(golden, live)
+    assert drifts  # the known residue (S1_BG1 trunk ports, S1_TOR1 port-channel10, ...)
+    assert _run_interfaces(_adopted(topo, drifts), live) == []  # once the residue is adopted into golden, nothing is left
+
+
+def test_explicit_port_different_reports_compared_inputs_only(nd421):
+    topo, live = nd421
+    golden = _with_interfaces(topo)
+    policy = _iface(live, "SITE1", "S1_TOR1", "Ethernet1/3")["configData"]["networkOS"]["policy"]
+    policy["ptp"] = True
+    assert [d for d in _run_interfaces(golden, live) if d.subject == "S1_TOR1 Ethernet1/3"] == []
+    live_if = _iface(live, "SITE1", "S1_TOR1", "Ethernet1/3")
+    live_if["configData"]["mode"] = "trunk"
+    policy.update({"policyType": "trunkHost", "allowedVlans": "none"})
+    drift = next(d for d in _run_interfaces(golden, live) if d.subject == "S1_TOR1 Ethernet1/3")
+    assert drift.kind == "different" and "accessHost" in drift.golden
+    assert "trunkHost" in drift.live and "allowedVlans=none" in drift.live
+    assert drift.fix is not None and drift.fix.action == "put_interface" and drift.fix.method == "PUT"
+    assert drift.fix.path.endswith("/interfaces/Ethernet1%2F3")
+    assert drift.fix.body["configData"]["networkOS"]["policy"]["policyType"] == "accessHost"
+    assert drift.fix.body["configData"]["mode"] == "access"
+
+
+def test_explicit_port_missing_live_offers_put(nd421):
+    topo, live = nd421
+    live["SITE1"].interfaces["S1_TOR1"] = [i for i in live["SITE1"].interfaces["S1_TOR1"] if i["interfaceName"] != "Ethernet1/3"]
+    drift = next(d for d in _run_interfaces(_with_interfaces(topo), live) if d.subject == "S1_TOR1 Ethernet1/3")
+    assert drift.kind == "missing" and drift.live == "none" and drift.fix is not None and drift.fix.action == "put_interface"
+
+
+def test_accessvlan_compares_as_a_string(nd421):
+    topo, live = nd421
+    golden = _with_interfaces(topo, [("SITE1", InterfaceIntent("S1_TOR1", "Ethernet1/9", "trunkHost", inputs={"accessVlan": 1, "allowedVlans": "none"}))])
+    for value in (1, "1"):
+        _iface(live, "SITE1", "S1_TOR1", "Ethernet1/9")["configData"]["networkOS"]["policy"]["accessVlan"] = value
+        assert [d for d in _run_interfaces(golden, live) if d.subject == "S1_TOR1 Ethernet1/9"] == []
+
+
+def test_free_port_with_description_residue_is_extra_with_reset(nd421):
+    topo, live = nd421
+    _iface(live, "SITE1", "S1_BG1", "Ethernet1/5")["configData"]["networkOS"]["policy"]["description"] = "test"
+    drift = next(d for d in _run_interfaces(_with_interfaces(topo), live) if d.subject == "S1_BG1 Ethernet1/5")
+    assert drift.kind == "extra"
+    assert drift.delete is not None and drift.delete.action == "reset_interface" and drift.delete.method == "PUT"
+    assert drift.delete.body["configData"]["networkOS"]["policy"]["policyType"] == "routedHost"
+    assert drift.delete.body["configData"]["mode"] == "routed"
+    assert drift.adopt == Adoption(("fabrics", "SITE1", "interfaces"), {"switch": "S1_BG1", "interface": "Ethernet1/5", "policy": "routedHost", "description": "test"})
+
+
+def test_role_without_defaults_is_not_checked(nd421):
+    topo, live = nd421
+    _iface(live, "SITE1", "S1_BG1", "Ethernet1/5")["configData"]["networkOS"]["policy"]["description"] = "test"
+    fabrics = [replace(f, defaults={k: v for k, v in f.defaults.items() if k != "borderGateway"}) for f in _with_interfaces(topo).fabrics]
+    drifts = _run_interfaces(replace(topo, fabrics=fabrics), live)
+    assert not [d for d in drifts if d.subject.startswith("S1_BG1")]
+
+
+def test_link_endpoints_and_port_channel_members_are_never_extra(nd421):
+    topo, live = nd421
+    golden = _with_interfaces(topo)
+    baseline = _run_interfaces(golden, live)
+    for host, name in (("S1_SP1", "Ethernet1/2"), ("S1_LE1", "Ethernet1/2"), ("S1_LE1", "Ethernet1/1")):
+        policy = _iface(live, "SITE1", host, name)["configData"]["networkOS"]["policy"]
+        policy["description"] = "residue"
+        policy["policyType"] = "something"
+    assert _run_interfaces(golden, live) == baseline
+
+
+def test_extra_vpc_offers_real_delete(nd421):
+    topo, live = nd421
+    live["SITE1"].interfaces["S1_LE1"].append({"interfaceName": "vpc200", "interfaceType": "vpc", "switchId": "9UDEG98YLEY", "configData": None})
+    drift = next(d for d in _run_interfaces(_with_interfaces(topo), live) if d.subject == "S1_LE1 vpc200")
+    assert drift.kind == "extra" and drift.delete is not None and drift.delete.action == "delete_interface"
+    assert drift.delete.method == "DELETE" and drift.delete.path.endswith("/interfaces/vpc200") and drift.delete.body is None
+    assert drift.adopt is not None and drift.adopt.entry["type"] == "vpc"
+
+
+def test_generated_logical_interfaces_are_ignored(nd421):
+    topo, live = nd421
+    golden = _with_interfaces(topo)
+    baseline = _run_interfaces(golden, live)
+    live["SITE1"].interfaces["S1_LE1"].append({"interfaceName": "Ethernet1/1.2", "interfaceType": "subInterface", "switchId": "9UDEG98YLEY", "configData": None})
+    live["SITE1"].interfaces["S1_LE1"].append({"interfaceName": "Vlan2", "interfaceType": "svi", "switchId": "9UDEG98YLEY", "configData": None})
+    assert _run_interfaces(golden, live) == baseline
+    subjects = {d.subject for d in baseline}
+    assert not subjects & {"S1_LE1 port-channel500", "S1_LE1 port-channel1", "S1_LE1 vPC1", "S1_LE1 Vlan3600", "S1_LE1 Vlan1", "S1_LE1 Vlan2001"}
+
+
+def test_unrelated_svi_and_orphan_subinterface_are_extra(nd421):
+    topo, live = nd421
+    live["SITE1"].interfaces["S1_LE1"] += [
+        {"interfaceName": "Vlan777", "interfaceType": "svi", "switchId": "9UDEG98YLEY", "configData": None},
+        {"interfaceName": "Ethernet1/20.5", "interfaceType": "subInterface", "switchId": "9UDEG98YLEY", "configData": None},
+    ]
+    subjects = {d.subject for d in _run_interfaces(_with_interfaces(topo), live) if d.kind == "extra"}
+    assert {"S1_LE1 Vlan777", "S1_LE1 Ethernet1/20.5"} <= subjects
+
+
+def test_core_router_switches_are_skipped(nd421):
+    topo, live = nd421
+    live["ISN"].interfaces["WAN1"].append({"interfaceName": "vpc9", "interfaceType": "vpc", "switchId": "X", "configData": None})
+    fabrics = [replace(f, defaults={"coreRouter": {"policyType": "routedHost"}}) if f.name == "ISN" else f for f in topo.fabrics]
+    assert _run_interfaces(replace(topo, fabrics=fabrics), live, names=("ISN",)) == []
+    wan = next(f for f in topo.fabrics if f.name == "ISN")
+    explicit = replace(wan, type="vxlanIbgp", interfaces=[InterfaceIntent("WAN1", "GigabitEthernet9", "routedHost")])
+    assert drift_interfaces(topo, explicit, live, _all_links(live)) == []
+
+
+def test_bodies_follow_the_access_port_shape():
+    body = interface_body("SER", InterfaceIntent("S1", "Ethernet1/3", "accessHost", description="d", inputs={"mtu": 1500}), {})
+    policy = body["configData"]["networkOS"]["policy"]
+    assert body["switchId"] == "SER" and body["interfaceType"] == "ethernet" and body["configData"]["mode"] == "access"
+    assert policy == {
+        "policyType": "accessHost",
+        "adminState": True,
+        "mtu": 1500,
+        "speed": "auto",
+        "bpduGuard": "default",
+        "portTypeEdgeTrunk": True,
+        "description": "d",
+    }
+    reset = default_body("SER", "Ethernet1/4", {"policyType": "trunkHost", "allowedVlans": "none"})
+    assert reset["configData"]["mode"] == "trunk" and reset["configData"]["networkOS"]["policy"] == {"policyType": "trunkHost", "allowedVlans": "none"}

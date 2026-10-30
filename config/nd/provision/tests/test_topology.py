@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from topology import load
+from topology import FabricLink, endpoint_key, load
 
 HERE = Path(__file__).resolve().parents[1]
 
@@ -185,3 +185,64 @@ def test_shipped_topologies_attach_the_overlay_to_both_border_gateways():
                 "vlan": 2,
                 "interfaces": [],
             } in topo.overlay.network_attachments, f"{fn}: LAB_NET1 not attached to {bg}"
+
+
+def _golden_yaml(link_extra: str = "", link_policy: str = "numbered", dst: str = "S1_LE1", gen_owner: str = "MSD", iface_switch: str = "S1_TOR1") -> str:
+    return (
+        "fabrics:\n"
+        "  - name: SITE1\n    type: vxlanIbgp\n    asn: '65001'\n"
+        "    switches:\n"
+        "      - {hostname: S1_SP1, ip: 10.0.0.1, role: spine}\n"
+        "      - {hostname: S1_LE1, ip: 10.0.0.2, role: leaf}\n"
+        "      - {hostname: S1_BG1, ip: 10.0.0.3, role: border_gateway}\n"
+        "      - {hostname: S1_TOR1, ip: 10.0.0.4, role: tor}\n"
+        f"    links:\n      - {{src: S1_SP1, src_if: Ethernet1/2, dst: {dst}, dst_if: Ethernet1/1, policy: {link_policy}, {link_extra}dst_ip: 10.14.0.6}}\n"
+        f"    generated_links:\n      - {{src: S1_BG1, src_if: Ethernet1/1, dst: S2_BG1, dst_if: Ethernet1/1, policy: multisiteUnderlay, owner: {gen_owner}}}\n"
+        f"    interfaces:\n      - {{switch: {iface_switch}, interface: Ethernet1/3, policy: accessHost, description: S1_H1 host port}}\n"
+        "    defaults:\n      spine: {policyType: routedHost, adminState: false}\n"
+        "  - name: SITE2\n    type: vxlanIbgp\n    asn: '65002'\n"
+        "    switches:\n      - {hostname: S2_BG1, ip: 10.0.1.1, role: border_gateway}\n"
+        "fabric_groups:\n  - {name: MSD, members: [SITE1, SITE2]}\nisn: {}\noverlay: {}\n"
+    )
+
+
+def _write(tmp_path, text):
+    path = tmp_path / "t.yaml"
+    path.write_text(text)
+    return path
+
+
+def test_load_reads_links_generated_links_interfaces_and_defaults(tmp_path):
+    topo = load(_write(tmp_path, _golden_yaml(link_extra="src_ip: 10.14.0.5, ")))
+    f = topo.fabrics[0]
+    assert f.links[0] == FabricLink("S1_SP1", "Ethernet1/2", "S1_LE1", "Ethernet1/1", "numbered", "10.14.0.5", "10.14.0.6")
+    assert f.generated_links[0].owner == "MSD" and f.interfaces[0].type == "ethernet" and f.defaults["spine"]["policyType"] == "routedHost"
+
+
+def test_shipped_files_load_with_empty_golden_sections():  # until Task 9 bootstraps them
+    assert load(HERE / "topology_nd421.yaml").fabrics[0].links == []
+
+
+def test_validate_rejects_unknown_link_policy_and_unknown_endpoint(tmp_path):
+    with pytest.raises(ValueError, match="policy"):
+        load(_write(tmp_path, _golden_yaml(link_extra="src_ip: 10.14.0.5, ", link_policy="foo")))
+    with pytest.raises(ValueError, match="S9_X"):
+        load(_write(tmp_path, _golden_yaml(link_extra="src_ip: 10.14.0.5, ", dst="S9_X")))
+
+
+def test_validate_rejects_unknown_interface_switch_and_generated_owner(tmp_path):
+    with pytest.raises(ValueError, match="S9_X"):
+        load(_write(tmp_path, _golden_yaml(link_extra="src_ip: 10.14.0.5, ", iface_switch="S9_X")))
+    with pytest.raises(ValueError, match="NOPE"):
+        load(_write(tmp_path, _golden_yaml(link_extra="src_ip: 10.14.0.5, ", gen_owner="NOPE")))
+
+
+def test_validate_requires_link_ips_for_numbered(tmp_path):
+    with pytest.raises(ValueError, match="src_ip"):
+        load(_write(tmp_path, _golden_yaml()))  # src_ip missing
+    with pytest.raises(ValueError, match="src_ip"):
+        load(_write(tmp_path, _golden_yaml(link_extra="src_ip: '', ")))
+
+
+def test_endpoint_key_is_direction_free():
+    assert endpoint_key("S1_LE1", "Ethernet1/1", "S1_SP1", "Ethernet1/2") == endpoint_key("S1_SP1", "Ethernet1/2", "S1_LE1", "Ethernet1/1")

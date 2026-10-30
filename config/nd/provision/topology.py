@@ -17,6 +17,52 @@ class Switch:
     platform: str = "nx-os"
 
 
+TOOL_LINK_POLICIES = {"numbered", "unnumbered", "ebgpVrfLite"}
+GENERATED_LINK_POLICIES = {"multisiteUnderlay", "multisiteOverlay", "iosXeNumbered"}
+
+
+@dataclass(frozen=True)
+class FabricLink:
+    """A link the tool creates (golden baseline)."""
+
+    src: str
+    src_if: str
+    dst: str
+    dst_if: str
+    policy: str
+    src_ip: str
+    dst_ip: str
+    inputs: dict = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class GeneratedLink:
+    """A link ND generates itself; golden only checks that it exists."""
+
+    src: str
+    src_if: str
+    dst: str
+    dst_if: str
+    policy: str
+    owner: str
+
+
+@dataclass(frozen=True)
+class InterfaceIntent:
+    switch: str
+    interface: str
+    policy: str
+    type: str = "ethernet"
+    description: str = ""
+    inputs: dict = field(default_factory=dict)
+
+
+def endpoint_key(a: str, a_if: str, b: str, b_if: str) -> tuple[tuple[str, str], tuple[str, str]]:
+    """Direction-free identity of a link: the sorted pair of (switch, interface) endpoints."""
+    first, second = sorted([(a, a_if), (b, b_if)])
+    return first, second
+
+
 @dataclass(frozen=True)
 class Fabric:
     name: str
@@ -24,6 +70,10 @@ class Fabric:
     asn: str
     settings: dict = field(default_factory=dict)
     switches: list[Switch] = field(default_factory=list)
+    links: list[FabricLink] = field(default_factory=list)
+    generated_links: list[GeneratedLink] = field(default_factory=list)
+    interfaces: list[InterfaceIntent] = field(default_factory=list)
+    defaults: dict[str, dict] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -142,6 +192,29 @@ def _validate(topo: Topology) -> None:
         for member in group.members:
             if member not in fabrics:
                 raise ValueError(f"fabric group {group.name}: unknown member fabric {member}")
+    owners = fabrics | {g.name for g in topo.fabric_groups}
+    for fabric in topo.fabrics:
+        for fl in fabric.links:
+            for host in (fl.src, fl.dst):
+                if host not in names:
+                    raise ValueError(f"fabric {fabric.name}: link references unknown switch {host}")
+            if fl.policy not in TOOL_LINK_POLICIES:
+                raise ValueError(f"fabric {fabric.name}: link {fl.src}<->{fl.dst}: unknown policy {fl.policy}")
+            if fl.policy == "numbered":
+                for key in ("src_ip", "dst_ip"):
+                    if not getattr(fl, key):
+                        raise ValueError(f"fabric {fabric.name}: numbered link {fl.src}<->{fl.dst} requires {key}")
+        for gl in fabric.generated_links:
+            for host in (gl.src, gl.dst):
+                if host not in names:
+                    raise ValueError(f"fabric {fabric.name}: generated link references unknown switch {host}")
+            if gl.policy not in GENERATED_LINK_POLICIES:
+                raise ValueError(f"fabric {fabric.name}: generated link {gl.src}<->{gl.dst}: unknown policy {gl.policy}")
+            if gl.owner not in owners:
+                raise ValueError(f"fabric {fabric.name}: generated link {gl.src}<->{gl.dst}: unknown owner {gl.owner}")
+        for intent in fabric.interfaces:
+            if intent.switch not in names:
+                raise ValueError(f"fabric {fabric.name}: interface intent references unknown switch {intent.switch}")
     for link in topo.isn.links:
         for host in (link.src, link.dst):
             if host not in names:
@@ -178,7 +251,17 @@ def _validate(topo: Topology) -> None:
 def load(path: Path) -> Topology:
     raw: dict[str, Any] = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     fabrics = [
-        Fabric(name=f["name"], type=f["type"], asn=str(f["asn"]), settings=f.get("settings", {}), switches=[Switch(**s) for s in f.get("switches", [])])
+        Fabric(
+            name=f["name"],
+            type=f["type"],
+            asn=str(f["asn"]),
+            settings=f.get("settings", {}),
+            switches=[Switch(**s) for s in f.get("switches", [])],
+            links=[FabricLink(**{"src_ip": "", "dst_ip": "", **item}) for item in f.get("links", []) or []],
+            generated_links=[GeneratedLink(**item) for item in f.get("generated_links", []) or []],
+            interfaces=[InterfaceIntent(**item) for item in f.get("interfaces", []) or []],
+            defaults=f.get("defaults", {}) or {},
+        )
         for f in raw.get("fabrics", [])
     ]
     groups = [FabricGroup(**g) for g in raw.get("fabric_groups", [])]

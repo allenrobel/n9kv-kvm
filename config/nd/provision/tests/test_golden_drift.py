@@ -711,3 +711,29 @@ def test_snapshot_group_extra_held_by_all_members_is_one_extra(nd421):
     drifts = drift_overlay(topo, live)
     assert [(d.cls, d.fabric, d.kind) for d in drifts] == [("networks", "MSD", "extra")]
     assert isinstance(drifts[0].delete, list) and drifts[0].delete[-1].path == "/fabrics/MSD/networks/TEST_NET"
+
+
+def test_campus_reset_body_uses_ios_xe():
+    topo = load(HERE / "topology_nd421.yaml")
+    live = read_live_from_snapshot(HERE / "golden" / "nd421", topo)
+    resets = [d for d in compute(topo, live) if d.cls == "interfaces" and d.kind == "extra" and d.subject.startswith("C1_LE1 ") and isinstance(d.delete, Op)]
+    assert resets, "expected campus interface residue in the nd421 snapshot"
+    for d in resets:
+        assert d.delete.action == "reset_interface"
+        assert d.delete.body["configData"]["networkOS"]["networkOSType"] == "ios-xe"
+    gi = next((d for d in resets if d.subject == "C1_LE1 GigabitEthernet1/0/1"), None)
+    if gi:
+        policy = gi.delete.body["configData"]["networkOS"]["policy"]
+        assert policy["policyType"] == "iosXeTrunkHost" and gi.delete.body["configData"]["mode"] == "trunk"
+
+
+def test_explicit_interface_on_ios_xe_switch_uses_ios_xe():
+    topo = load(HERE / "topology_nd421.yaml")
+    live = read_live_from_snapshot(HERE / "golden" / "nd421", topo)
+    fab = next(f for f in topo.fabrics if f.name == "CAMPUS1")
+    intent = InterfaceIntent("C1_LE1", "GigabitEthernet1/0/9", "iosXeTrunkHost", description="x")
+    fab = replace(fab, interfaces=[intent])
+    drifts = drift_interfaces(topo, fab, live, [])
+    d = next(d for d in drifts if d.subject == "C1_LE1 GigabitEthernet1/0/9")
+    cfg = d.fix.body["configData"]
+    assert cfg["networkOS"]["networkOSType"] == "ios-xe" and cfg["mode"] == "trunk"

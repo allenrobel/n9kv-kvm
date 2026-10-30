@@ -64,8 +64,10 @@ def rec(monkeypatch):
     return r
 
 
-def prov_stub():
-    return SimpleNamespace(client=SimpleNamespace(creds=SimpleNamespace(ip="1.2.3.4")), pending=lambda fabric, serial: ["l1", "l2"])
+def prov_stub(rec=None):
+    """pending lines appear only once something was deployed (so the pre-apply check finds nothing from an earlier run)."""
+    deployed = lambda: rec is not None and any(c[0] == "deploy" for c in rec.calls)  # noqa: E731
+    return SimpleNamespace(client=SimpleNamespace(creds=SimpleNamespace(ip="1.2.3.4")), pending=lambda fabric, serial: ["l1", "l2"] if deployed() else [])
 
 
 def args(**kw):
@@ -89,7 +91,7 @@ def answers(*given):
 def restore(monkeypatch, drifts, a, ask, rec):
     monkeypatch.setattr(golden, "compute", lambda topo, live: drifts if not rec.calls or rec.calls[0][0] != "apply" else [])
     lines: list[str] = []
-    code = golden.run_restore(a, load(TOPO_PATH), rec.live, prov_stub(), ask, lines.append)
+    code = golden.run_restore(a, load(TOPO_PATH), rec.live, prov_stub(rec), ask, lines.append)
     return code, lines
 
 
@@ -223,3 +225,15 @@ def test_adopt_prints_conflicts_filters_classes_and_exits_1(monkeypatch):
     assert lines[0] == "CONFLICT: clash" and lines[-1] == f"adopt: 1 entries written to {TOPO_PATH}"
     monkeypatch.setattr(golden, "bootstrap_conflicts", lambda t, lv: [])
     assert golden.main(["adopt", "--topology", str(TOPO_PATH), "--snapshot", str(SNAP)], out=lambda m: None) == 0
+
+
+def test_restore_deploys_fabrics_with_pending_config_from_an_earlier_run(monkeypatch, rec):
+    prov = prov_stub()
+    prov.pending = lambda fabric, serial: ["l1"] if fabric == "SITE1" else []
+    topo = load(TOPO_PATH)
+    rec.live.update({f.name: LiveFabric(f.name, "fabric", switches={s.hostname: {"serialNumber": "S-" + s.hostname} for s in f.switches}) for f in topo.fabrics})
+    monkeypatch.setattr(golden, "compute", lambda t, lv: [drift("extra", "e", adopt=ADOPT)] if not rec.calls else [])
+    lines: list[str] = []
+    code = golden.run_restore(args(yes=True, extras="skip"), topo, rec.live, prov, answers(), lines.append)
+    assert code == 0 and rec.calls == [("deploy", ["SITE1"])]
+    assert any(line.startswith("restore: deploying 1 fabric(s) with pending config from an earlier run: SITE1") for line in lines)

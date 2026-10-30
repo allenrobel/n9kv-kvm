@@ -394,16 +394,16 @@ def _if_text(values: dict) -> str:
     return " ".join([values.get("policyType") or "none", *parts])
 
 
-def _if_body(serial: str, interface: str, interface_type: str, policy: dict) -> dict:
+def _if_body(serial: str, interface: str, interface_type: str, policy: dict, os_type: str = "nx-os") -> dict:
     body: dict = {"switchId": serial, "interfaceName": interface, "interfaceType": interface_type, "configData": {}}
     mode = _mode_for(policy.get("policyType", ""))
     if mode:
         body["configData"]["mode"] = mode
-    body["configData"]["networkOS"] = {"networkOSType": "nx-os", "policy": policy}
+    body["configData"]["networkOS"] = {"networkOSType": os_type, "policy": policy}
     return body
 
 
-def interface_body(serial: str, intent: InterfaceIntent, fabric_defaults: dict) -> dict:
+def interface_body(serial: str, intent: InterfaceIntent, fabric_defaults: dict, os_type: str = "nx-os") -> dict:
     """PUT body for an explicit `interfaces:` entry, in the shape of Provisioner._ensure_access_port; intent.inputs override the built-in
     values. `fabric_defaults` is the fabric's `defaults` (role -> policy); it is accepted for the caller's convenience and not consulted."""
     policy: dict = {
@@ -416,12 +416,20 @@ def interface_body(serial: str, intent: InterfaceIntent, fabric_defaults: dict) 
         "description": intent.description,
     }
     policy.update({key: value for key, value in intent.inputs.items() if key != "mode"})
-    return _if_body(serial, intent.interface, intent.type, policy)
+    return _if_body(serial, intent.interface, intent.type, policy, os_type)
 
 
-def default_body(serial: str, interface: str, role_default: dict) -> dict:
+def default_body(serial: str, interface: str, role_default: dict, os_type: str = "nx-os") -> dict:
     """PUT body that puts a port back to its role default (the default's policy dict verbatim)."""
-    return _if_body(serial, interface, "ethernet", dict(role_default))
+    return _if_body(serial, interface, "ethernet", dict(role_default), os_type)
+
+
+def _os_type(fabric: Fabric, hostname: str, intf: dict | None = None) -> str:
+    """networkOSType for an interface body: the live interface's own value when it has one, else the golden switch's platform."""
+    live_type = ((_config(intf).get("networkOS") or {}).get("networkOSType")) if intf else None
+    if live_type:
+        return str(live_type)
+    return next((s.platform for s in fabric.switches if s.hostname == hostname), "nx-os")
 
 
 def _serial(live: LiveFabric, hostname: str) -> str:
@@ -439,7 +447,7 @@ def _explicit_interface_drift(fabric: Fabric, live: LiveFabric, intent: Interfac
     if found and _if_policy(found) and not _if_differs(golden, live_values):
         return None
     kind: Kind = "different" if found and _if_policy(found) else "missing"
-    body = interface_body(serial, intent, fabric.defaults)
+    body = interface_body(serial, intent, fabric.defaults, _os_type(fabric, intent.switch, found))
     fix = Op("put_interface", fabric.name, "PUT", interface_path(fabric.name, serial, intent.interface), body)
     return Drift(INTERFACES, fabric.name, kind, subject, _if_text(golden), _if_text(live_values) if found else "none", fix, None, None)
 
@@ -471,7 +479,7 @@ def _extra_interface_drift(fabric: Fabric, live: LiveFabric, hostname: str, intf
     path = interface_path(fabric.name, serial, name)
     golden = _golden_values(default.get("policyType", ""), default.get("description", ""), default) if default is not None else None
     if default is not None:
-        delete = Op("reset_interface", fabric.name, "PUT", path, default_body(serial, name, default))
+        delete = Op("reset_interface", fabric.name, "PUT", path, default_body(serial, name, default, _os_type(fabric, hostname, intf)))
     else:
         delete = Op("delete_interface", fabric.name, "DELETE", path, None)
     adopt = Adoption(("fabrics", fabric.name, INTERFACES), _adoption_entry_for_interface(hostname, intf, golden))

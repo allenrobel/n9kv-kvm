@@ -127,6 +127,19 @@ def _pending_report(prov: Provisioner, topo: Topology, live: dict[str, LiveFabri
         out(f"{fabric.name}: {total} pending config line(s) remain")
 
 
+def _pending_fabrics(prov: Provisioner, topo: Topology, live: dict[str, LiveFabric]) -> set[str]:
+    """Golden fabrics in which some golden switch has undeployed config (e.g. left by an earlier run that stopped part way)."""
+    found: set[str] = set()
+    for fabric in topo.fabrics:
+        fab_live = live.get(fabric.name)
+        for sw in fabric.switches:
+            serial = ((fab_live.switches.get(sw.hostname) if fab_live else None) or {}).get("serialNumber")
+            if serial and prov.pending(fabric.name, serial):
+                found.add(fabric.name)
+                break
+    return found
+
+
 def run_restore(args: argparse.Namespace, topo: Topology, live: dict[str, LiveFabric], prov: Provisioner, ask: Ask, out: Out) -> int:
     drifts = run_drift(topo, live, out)
     if not drifts:
@@ -150,10 +163,14 @@ def run_restore(args: argparse.Namespace, topo: Topology, live: dict[str, LiveFa
     applier = Applier(prov)
     deployed: list[str] = []
     try:
+        pending_fabrics = set() if args.no_deploy else _pending_fabrics(prov, topo, live)
         touched = applier.apply(all_ops) if all_ops else set()
-        if not args.no_deploy and touched:
-            applier.deploy(touched, topo)
-            deployed = sorted(touched)
+        if not args.no_deploy and (touched or pending_fabrics):
+            earlier = sorted(pending_fabrics - touched)
+            if earlier:
+                out(f"restore: deploying {len(earlier)} fabric(s) with pending config from an earlier run: {', '.join(earlier)}")
+            applier.deploy(touched | pending_fabrics, topo)
+            deployed = sorted(touched | pending_fabrics)
     except ApplyError as exc:
         out(f"restore: apply failed: {exc}")
         return 4

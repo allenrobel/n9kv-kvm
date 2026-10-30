@@ -8,7 +8,7 @@ adopt it into the golden file (`adopt`).
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Literal
 
 from golden_live import LiveFabric
@@ -219,13 +219,31 @@ def _isn_text(link: Link) -> str:
     return f"ebgpVrfLite {link.src_ip} {link.dst_ip}"
 
 
+def _isn_oriented(link_obj: dict, link: Link) -> Link:
+    """The golden ISN link listed the way the live object lists it: endpoints, ASNs and addresses swapped when the live source is golden's
+    destination (the source address carries the mask, the destination one does not)."""
+    if _same_direction(link_obj, link.src):
+        return link
+    address, _, mask = link.src_ip.partition("/")
+    return replace(
+        link,
+        src_fabric=link.dst_fabric,
+        src=link.dst,
+        src_if=link.dst_if,
+        dst_fabric=link.src_fabric,
+        dst=link.src,
+        dst_if=link.src_if,
+        src_asn=link.dst_asn,
+        dst_asn=link.src_asn,
+        src_ip=f"{link.dst_ip}/{mask}" if mask else link.dst_ip,
+        dst_ip=address,
+    )
+
+
 def _isn_differs(link_obj: dict, link: Link) -> bool:
     live_inputs = _inputs(link_obj)
-    forward = _same_direction(link_obj, link.src)
-    src_key, dst_key = ("srcEbgpAsn", "dstEbgpAsn") if forward else ("dstEbgpAsn", "srcEbgpAsn")
-    wanted = {src_key: link.src_asn, dst_key: link.dst_asn}
-    if forward:
-        wanted.update({"srcIpAddressMask": link.src_ip, "dstIpAddress": link.dst_ip})
+    oriented = _isn_oriented(link_obj, link)
+    wanted = {"srcEbgpAsn": oriented.src_asn, "dstEbgpAsn": oriented.dst_asn, "srcIpAddressMask": oriented.src_ip, "dstIpAddress": oriented.dst_ip}
     return _policy(link_obj) != "ebgpVrfLite" or any(live_inputs.get(key) != value for key, value in wanted.items())
 
 
@@ -248,9 +266,7 @@ def _isn_drift(fabric: Fabric, link: Link, link_obj: dict | None) -> Drift | Non
         return Drift(LINKS, fabric.name, "missing", subject, _isn_text(link), "none", None, None, None)
     if not _isn_differs(link_obj, link):
         return None
-    forward = _same_direction(link_obj, link.src)
-    src_serial, dst_serial = (link_obj["srcSwitchId"], link_obj["dstSwitchId"]) if forward else (link_obj["dstSwitchId"], link_obj["srcSwitchId"])
-    body = link_payload(link, src_serial, dst_serial)["links"][0]
+    body = link_payload(_isn_oriented(link_obj, link), link_obj["srcSwitchId"], link_obj["dstSwitchId"])["links"][0]
     fix = Op("put_link", link.src_fabric, "PUT", f"/links/{link_obj['linkId']}", body)
     kind: Kind = "different" if _policy(link_obj) else "missing"
     return Drift(LINKS, fabric.name, kind, subject, _isn_text(link), _isn_live_text(link_obj, link), fix, None, None)
@@ -276,8 +292,6 @@ def drift_links(topo: Topology, fabric: Fabric, live: dict[str, LiveFabric], see
         if key in seen:
             continue
         link_obj = by_key.get(key)
-        if link_obj is None and isinstance(golden, Link) and golden.src_fabric != fabric.name:
-            continue  # the link's source fabric reports it as missing
         seen.add(key)
         drift = _isn_drift(fabric, golden, link_obj) if isinstance(golden, Link) else _tool_link_drift(fabric, golden, link_obj)
         if drift:
@@ -309,9 +323,9 @@ def drift_generated_links(topo: Topology, fabric: Fabric, live: dict[str, LiveFa
     for golden in fabric.generated_links:
         key = endpoint_key(golden.src, golden.src_if, golden.dst, golden.dst_if)
         found = [o for objs in _owner_link_lists(topo, live, golden.owner) for o in objs if _live_key(o) == key]
-        bad = next((o for o in found if _policy(o) != golden.policy), None)
-        if found and bad is None:
+        if any(_policy(o) == golden.policy for o in found):
             continue
+        bad = next((o for o in found if _policy(o)), found[0] if found else None)
         subject = _subject(golden.src, golden.src_if, golden.dst, golden.dst_if)
         live_policy = _policy(bad) if bad else ""
         kind: Kind = "different" if live_policy else "missing"

@@ -185,7 +185,8 @@ def test_generated_link_wrong_policy_and_absent(nd421):
     topo, live = nd421
     site = _site_topo(topo)
     assert drift_generated_links(site, _fabric(site, "SITE1"), live) == []
-    _link(live, "SITE2", "LINK-UUID-99850")["configData"]["policyType"] = "numbered"
+    for fabric in ("SITE1", "SITE2"):
+        _link(live, fabric, "LINK-UUID-99850")["configData"]["policyType"] = "numbered"
     (different,) = drift_generated_links(site, _fabric(site, "SITE1"), live)
     assert different.kind == "different" and different.live == "numbered"
     for fabric in ("SITE1", "SITE2"):
@@ -221,3 +222,36 @@ def test_format_report_lines_are_stable_and_hostname_based(nd421):
     drifts = _run(_site_topo(topo), live)
     assert format_report(drifts) == ("SITE1 links      MISSING policy  S1_SP1 Ethernet1/2 <-> S1_LE1 Ethernet1/1   golden=numbered 10.14.0.5/.6  live=none")
     assert format_report([]) == ""
+
+
+def test_generated_link_satisfied_if_any_list_has_the_policy(nd421):
+    topo, live = nd421
+    _link(live, "SITE2", "LINK-UUID-99850")["configData"] = None
+    site = _site_topo(topo)
+    assert drift_generated_links(site, _fabric(site, "SITE1"), live) == []
+
+
+def test_missing_isn_link_is_reported_once(nd421):
+    topo, live = nd421
+    for fabric in ("SITE1", "ISN"):
+        live[fabric].links = [o for o in live[fabric].links if o["linkId"] != "LINK-UUID-78520"]
+    seen: set = set()
+    drifts = [d for name in ("SITE1", "ISN") for d in drift_links(topo, _fabric(topo, name), live, seen)]
+    missing = [d for d in drifts if "GigabitEthernet2" in d.subject]
+    assert [(d.kind, d.fix) for d in missing] == [("missing", None)]
+
+
+def test_isn_fix_keeps_live_orientation(nd421):
+    topo, live = nd421
+    obj = _link(live, "SITE2", "LINK-UUID-122220")
+    for key in ("FabricName", "SwitchId", "InterfaceName", "SwitchName"):
+        obj["src" + key], obj["dst" + key] = obj["dst" + key], obj["src" + key]
+    obj["configData"] = None
+    drifts = _run(_site_topo(topo), live)
+    (drift,) = [d for d in drifts if "GigabitEthernet3" in d.subject]
+    body = drift.fix.body
+    inputs = body["configData"]["templateInputs"]
+    assert body["srcSwitchName"] == "S2_BG1" and body["dstSwitchName"] == "WAN1"
+    assert inputs["srcIpAddressMask"] == "10.25.0.2/30" and inputs["dstIpAddress"] == "10.25.0.1"
+    assert inputs["srcEbgpAsn"] == "65002" and inputs["dstEbgpAsn"] == "65535"
+    assert inputs["srcInterfaceDescription"] == "connected-to-WAN1-GigabitEthernet3"

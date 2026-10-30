@@ -737,3 +737,28 @@ def test_explicit_interface_on_ios_xe_switch_uses_ios_xe():
     d = next(d for d in drifts if d.subject == "C1_LE1 GigabitEthernet1/0/9")
     cfg = d.fix.body["configData"]
     assert cfg["networkOS"]["networkOSType"] == "ios-xe" and cfg["mode"] == "trunk"
+
+
+def test_interface_marked_for_deletion_is_not_drift(nd421):
+    topo, live = nd421
+    pending = {
+        "interfaceName": "Port-channel10",
+        "interfaceType": "portChannel",
+        "switchId": "X",
+        "configData": {"networkOS": {"policy": {"policyType": "userDefined", "templateConfig": {"ReadOnlyOnEdit": True}, "templateName": "interface_delete"}}},
+    }
+    live["SITE1"].interfaces["S1_TOR1"] = [i for i in live["SITE1"].interfaces["S1_TOR1"] if i["interfaceName"] != "port-channel10"] + [pending]
+    drifts = _run_interfaces(_with_interfaces(topo), live)
+    assert not [d for d in drifts if "hannel10" in d.subject]
+    listed = _with_interfaces(topo, [("SITE1", InterfaceIntent("S1_TOR1", "port-channel10", "l3Po", type="portChannel"))])
+    drift = next(d for d in _run_interfaces(listed, live) if "hannel10" in d.subject)
+    assert drift.kind == "different" and drift.live == "pending deletion" and drift.fix is None and drift.delete is None
+
+
+def test_logical_interface_names_compare_case_insensitively(nd421):
+    topo, live = nd421
+    golden = _with_interfaces(topo)
+    baseline = _run_interfaces(golden, live)
+    _iface(live, "SITE1", "S1_LE1", "port-channel500")["interfaceName"] = "Port-channel500"
+    _iface(live, "SITE1", "S1_LE1", "Vlan3600")["interfaceName"] = "vlan3600"
+    assert _run_interfaces(golden, live) == baseline

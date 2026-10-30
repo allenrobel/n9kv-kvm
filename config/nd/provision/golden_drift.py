@@ -355,6 +355,15 @@ def _if_policy(intf: dict) -> dict:
     return value if isinstance(value, dict) else {}
 
 
+def _pending_delete(intf: dict) -> bool:
+    """ND keeps a deleted interface (renamed, e.g. `Port-channel10`) until the next deploy, with the `interface_delete` template."""
+    return _if_policy(intf).get("templateName") == "interface_delete"
+
+
+def _same_name(a: str, b: str) -> bool:
+    return a.lower() == b.lower()
+
+
 def _if_values(intf: dict) -> dict:
     """The live interface as the comparable keys: policyType, mode and the COMPARED_INPUTS found in its policy."""
     policy = _if_policy(intf)
@@ -442,7 +451,9 @@ def _explicit_interface_drift(fabric: Fabric, live: LiveFabric, intent: Interfac
         return None
     subject = f"{intent.switch} {intent.interface}"
     golden = _golden_values(intent.policy, intent.description, intent.inputs)
-    found = next((i for i in live.interfaces.get(intent.switch, []) if i.get("interfaceName") == intent.interface), None)
+    found = next((i for i in live.interfaces.get(intent.switch, []) if _same_name(i.get("interfaceName", ""), intent.interface)), None)
+    if found and _pending_delete(found):
+        return Drift(INTERFACES, fabric.name, "different", subject, _if_text(golden), "pending deletion", None, None, None)
     live_values = _if_values(found) if found else {}
     if found and _if_policy(found) and not _if_differs(golden, live_values):
         return None
@@ -504,7 +515,7 @@ def _is_generated_logical(intf: dict, vlans: set[int], endpoints: set[tuple[str,
         match = re.fullmatch(r"[Vv]lan(\d+)", name)
         return match is not None and int(match.group(1)) in vlans
     if kind == "subInterface":
-        return (hostname, name.split(".")[0]) in endpoints
+        return (hostname, name.split(".")[0].lower()) in endpoints
     return False
 
 
@@ -519,8 +530,8 @@ def drift_interfaces(topo: Topology, fabric: Fabric, live: dict[str, LiveFabric]
         return []
     fab_live = live[fabric.name]
     vlans = _overlay_vlans(topo)
-    endpoints = {(link.get(f"{side}SwitchName", ""), link.get(f"{side}InterfaceName", "")) for link in all_links for side in ("src", "dst")}
-    listed = {(i.switch, i.interface) for i in fabric.interfaces}
+    endpoints = {(link.get(f"{side}SwitchName", ""), link.get(f"{side}InterfaceName", "").lower()) for link in all_links for side in ("src", "dst")}
+    listed = {(i.switch, i.interface.lower()) for i in fabric.interfaces}
     drifts: list[Drift] = []
     for intent in fabric.interfaces:
         role = next((s.role for s in fabric.switches if s.hostname == intent.switch), "")
@@ -536,12 +547,12 @@ def drift_interfaces(topo: Topology, fabric: Fabric, live: dict[str, LiveFabric]
         if default:
             golden = _golden_values(default.get("policyType", ""), default.get("description", ""), default)
             for intf in free_ports(fab_live, switch.hostname, all_links):
-                if (switch.hostname, intf["interfaceName"]) in listed:
+                if (switch.hostname, intf["interfaceName"].lower()) in listed or _pending_delete(intf):
                     continue
                 if _if_differs(golden, _if_values(intf)):
                     drifts.append(_extra_interface_drift(fabric, fab_live, switch.hostname, intf, default))
         for intf in fab_live.interfaces.get(switch.hostname, []):
-            if intf.get("interfaceType") not in LOGICAL_TYPES or (switch.hostname, intf["interfaceName"]) in listed:
+            if intf.get("interfaceType") not in LOGICAL_TYPES or (switch.hostname, intf["interfaceName"].lower()) in listed or _pending_delete(intf):
                 continue
             if not _is_generated_logical(intf, vlans, endpoints, switch.hostname):
                 drifts.append(_extra_interface_drift(fabric, fab_live, switch.hostname, intf, None))

@@ -106,3 +106,32 @@ def test_dump_writes_scrubbed_json(tmp_path):
     text = (tmp_path / "fabrics.json").read_text()
     assert "$REDACTED$" in text
     assert "$5$" not in text
+
+
+def test_dump_writes_access_associations_per_vpc_pair(tmp_path):
+    p1 = (("aggregationOrLeafPeerSwitchId", "P1"), ("aggregationOrLeafSwitchId", "L1"))
+    p2 = (("aggregationOrLeafPeerSwitchId", "P2"), ("aggregationOrLeafSwitchId", "L2"))
+    responses = {
+        ("/fabrics", ()): {"fabrics": [{"name": "SITE1"}]},
+        ("/fabrics/SITE1/vpcPairs", ()): {"vpcPairs": [{"switchId": "L1", "peerSwitchId": "P1"}, {"switchId": "L2", "peerSwitchId": "P2"}]},
+        ("/fabrics/SITE1/accessAssociations", p1): {"associations": [{"id": 1}]},
+        ("/fabrics/SITE1/accessAssociations", p2): {"associations": [{"id": 2}, {"id": 3}]},
+    }
+    client = _StubClient(responses, set())
+    seen: list = []
+    original = client.get
+
+    def spy(path, params=None):
+        if path.endswith("accessAssociations"):
+            seen.append(params)
+        return original(path, params)
+
+    client.get = spy  # type: ignore[method-assign]
+
+    dump(client, tmp_path)
+
+    assert json.loads((tmp_path / "accessAssociations_SITE1.json").read_text()) == {"associations": [{"id": 1}, {"id": 2}, {"id": 3}]}
+    assert seen == [
+        {"aggregationOrLeafSwitchId": "L1", "aggregationOrLeafPeerSwitchId": "P1"},
+        {"aggregationOrLeafSwitchId": "L2", "aggregationOrLeafPeerSwitchId": "P2"},
+    ]

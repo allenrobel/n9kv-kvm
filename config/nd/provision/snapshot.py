@@ -14,6 +14,7 @@ import argparse
 import difflib
 import json
 import re
+from functools import partial
 from pathlib import Path
 from typing import Any, Callable
 
@@ -113,6 +114,18 @@ def _fetch(name: str, fn: Callable[[], Any]) -> Any:
         return None
 
 
+def _access_associations(client: NDClient, fabric: str, vpc_pairs: Any) -> list[Any]:
+    """ToR associations of every dumped vPC pair (the endpoint is keyed by the pair's two switch ids); a pair whose read fails is skipped."""
+    found: list[Any] = []
+    pairs = vpc_pairs.get("vpcPairs", []) if isinstance(vpc_pairs, dict) else []
+    for pair in pairs:
+        params = {"aggregationOrLeafSwitchId": pair.get("switchId"), "aggregationOrLeafPeerSwitchId": pair.get("peerSwitchId")}
+        body = _fetch(f"accessAssociations_{fabric}", partial(client.get, f"/fabrics/{fabric}/accessAssociations", params=params))
+        if isinstance(body, dict):
+            found.extend(body.get("associations") or [])
+    return found
+
+
 def dump(client: NDClient, out_dir: Path) -> None:
     def _attach_query(kind: str, fabric: str, serials: list[str]) -> Any:
         return client.post(f"/fabrics/{fabric}/{kind}Attachments/query", json={"switchIds": serials})
@@ -135,7 +148,9 @@ def dump(client: NDClient, out_dir: Path) -> None:
         _write(out_dir, f"members_{name}", _fetch(f"members_{name}", lambda: client.get(f"/fabrics/{name}/members")))
         _write(out_dir, f"links_{name}", _fetch(f"links_{name}", lambda: client.paged("/links", "links", params={"fabricName": name})))
         _write(out_dir, f"policies_{name}", _fetch(f"policies_{name}", lambda: client.paged(f"/fabrics/{name}/policies", "policies")))
-        _write(out_dir, f"vpcPairs_{name}", _fetch(f"vpcPairs_{name}", lambda: client.get(f"/fabrics/{name}/vpcPairs")))
+        vpc_pairs = _fetch(f"vpcPairs_{name}", lambda: client.get(f"/fabrics/{name}/vpcPairs"))
+        _write(out_dir, f"vpcPairs_{name}", vpc_pairs)
+        _write(out_dir, f"accessAssociations_{name}", {"associations": _access_associations(client, name, vpc_pairs)})
         _write(out_dir, f"vrfs_{name}", _fetch(f"vrfs_{name}", lambda: client.get(f"/fabrics/{name}/vrfs")))
         _write(out_dir, f"networks_{name}", _fetch(f"networks_{name}", lambda: client.get(f"/fabrics/{name}/networks")))
         serials = [s["serialNumber"] for s in switches.get("switches", [])]

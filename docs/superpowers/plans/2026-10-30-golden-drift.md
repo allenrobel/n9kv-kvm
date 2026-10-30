@@ -60,7 +60,7 @@
 
 - Produces:
 
-  ```python
+```python
   @dataclass(frozen=True)
   class FabricLink:  src: str; src_if: str; dst: str; dst_if: str; policy: str; src_ip: str; dst_ip: str; inputs: dict = field(default_factory=dict)
   @dataclass(frozen=True)
@@ -72,7 +72,7 @@
   TOOL_LINK_POLICIES = {"numbered", "unnumbered", "ebgpVrfLite"}
   GENERATED_LINK_POLICIES = {"multisiteUnderlay", "multisiteOverlay", "iosXeNumbered"}
   def endpoint_key(a: str, a_if: str, b: str, b_if: str) -> tuple[tuple[str, str], tuple[str, str]]  # sorted pair, direction-free
-  ```
+```
 
 - [ ] **Step 1: Write the failing tests** in `tests/test_topology.py`:
 
@@ -91,7 +91,7 @@
   def test_validate_requires_link_ips_for_numbered(tmp_path):  # missing src_ip -> ValueError
   def test_endpoint_key_is_direction_free():
       assert endpoint_key("S1_LE1", "Ethernet1/1", "S1_SP1", "Ethernet1/2") == endpoint_key("S1_SP1", "Ethernet1/2", "S1_LE1", "Ethernet1/1")
-  ```
+```
 
 - [ ] **Step 2: Run** `uv run pytest config/nd/provision/tests/test_topology.py -q` → the new tests fail on import/attribute errors.
 - [ ] **Step 3: Implement** the dataclasses, the two policy sets, `endpoint_key`, the four new `Fabric` fields, their parsing in `load()` (`FabricLink(**item)` etc.), and in `_validate()`: link/interface endpoints must be golden switches (generated-link endpoints may be in any golden fabric), `policy` of a `FabricLink` in `TOOL_LINK_POLICIES`, of a `GeneratedLink` in `GENERATED_LINK_POLICIES`, `owner` a golden fabric or group name, `src_ip`/`dst_ip` non-empty for `numbered`.
@@ -126,13 +126,13 @@
   def read_live_from_snapshot(snapshot_dir: Path, topo: Topology) -> dict[str, LiveFabric]   # same shape from a snapshot.py dump (tests, offline drift)
   def free_ports(live: LiveFabric, hostname: str, all_links: list[dict]) -> list[dict]
   def interface_path(fabric: str, serial: str, interface: str) -> str   # "/fabrics/{f}/switches/{sn}/interfaces/Ethernet1%2F3"
-  ```
+```
 
 `free_ports`: physical interfaces (`interfaceType == "ethernet"`, name not starting with `mgmt`) whose `(hostname, interfaceName)` is not an endpoint of any link in `all_links` and whose `operData.portChannelId` is -1.
 
 - [ ] **Step 1: Write the failing tests** (data from `config/nd/provision/golden/nd421/`):
 
-  ```python
+```python
   def test_read_live_from_snapshot_loads_every_golden_fabric_and_group():
       live = read_live_from_snapshot(GOLDEN / "nd421", load(HERE / "topology_nd421.yaml"))
       assert set(live) == {"SITE1", "SITE2", "ISN", "CAMPUS1", "MSD"} and live["MSD"].category == "fabricGroup"
@@ -148,7 +148,7 @@
       # StubClient.get("/fabrics") raises RuntimeError("HTTP 500 Error communicating with fabric controller")
       with pytest.raises(LiveReadError, match="fabric controller"): read_live(client, topo)
   def test_read_live_fails_loud_when_a_golden_fabric_is_missing():  # /fabrics answers [] -> LiveReadError naming SITE1
-  ```
+```
 
 - [ ] **Step 2: Run** → ImportError.
 - [ ] **Step 3: Implement** `golden_live.py`: `read_live` issues the same reads as `snapshot.dump` (reuse its endpoint list; `_fetch`-style tolerance is NOT wanted here — any HTTP error raises `LiveReadError` with the ND message), `read_live_from_snapshot` maps the dump file names (`links_{f}.json`, `interfaces_{f}_{host}.json`, …) to the same structure.
@@ -165,7 +165,7 @@
 
 - Produces:
 
-  ```python
+```python
   Kind = Literal["missing", "different", "extra"]
   @dataclass(frozen=True)
   class Op:  action: str; fabric: str; method: str; path: str; body: Any   # action in {"put_link","clear_link","put_interface","reset_interface","delete_interface","attach","detach","create_vrf","create_network","delete_vrf","delete_network","pair_vpc","unpair_vpc","pair_tor","unpair_tor","add_switch","set_role","put_settings","deploy_owner"}
@@ -177,7 +177,7 @@
   def drift_links(fabric: Fabric, live: dict[str, LiveFabric], seen: set) -> list[Drift]
   def drift_generated_links(fabric: Fabric, live: dict[str, LiveFabric]) -> list[Drift]
   def format_report(drifts: list[Drift]) -> str    # "SITE1 links      MISSING policy  S1_SP1 Ethernet1/2 <-> S1_LE1 Ethernet1/1   golden=numbered 10.14.0.5/.6  live=none"
-  ```
+```
 
   Link matching is by `endpoint_key`; `seen` carries keys already reported so a cross-fabric link is reported once. `fix` for a missing/different tool link = `Op("put_link", fabric, "PUT", f"/links/{linkId}", numbered_link_body(...))`; `delete` for an extra tool-ownable link = `Op("clear_link", ..., "PUT", f"/links/{linkId}", {8 base fields, "configData": None})`; `adopt` = `Adoption(("fabrics", f, "links"), {...})`. Generated links: `fix = Op("deploy_owner", owner, "", "", None)`, never `delete`, never `adopt` via extras.
 
@@ -192,7 +192,7 @@
   def test_generated_link_missing_policy_fixes_via_owner_deploy():   # strip multisiteUnderlay -> fix.action == "deploy_owner", fix.fabric == "MSD", delete is None
   def test_discovered_links_without_policy_are_not_extras():          # peer-link / ToR port-channel rows -> not reported
   def test_format_report_lines_are_stable_and_hostname_based():       # exact line from the spec
-  ```
+```
 
 - [ ] **Step 2: Run** → ImportError. **Step 3: Implement** the module. **Step 4: Run** → PASS.
 - [ ] **Step 5: Commit** `"golden: drift model, link and generated-link classes"`.
@@ -208,13 +208,13 @@
 
 - Produces:
 
-  ```python
+```python
   COMPARED_INPUTS = ("adminState", "mode", "accessVlan", "allowedVlans", "nativeVlan", "description", "mtu")
   GENERATED_LOGICAL = {"port-channel500", "port-channel1"}     # plus any interface whose name matches r"Ethernet\d+/\d+\.\d+" (link subinterfaces)
   def interface_body(serial: str, intent: InterfaceIntent, fabric_defaults: dict) -> dict     # PUT body as in Provisioner._ensure_access_port
   def default_body(serial: str, interface: str, role_default: dict) -> dict
   def drift_interfaces(fabric: Fabric, live: dict[str, LiveFabric], all_links: list[dict]) -> list[Drift]
-  ```
+```
 
   Rules: explicit `interfaces:` entries → missing/different by `policyType` + `COMPARED_INPUTS` subset (`fix` = `put_interface`). Free physical ports (Task 2 `free_ports`) not matching the role default (same comparison) → `extra` with `delete` = `reset_interface` (PUT `default_body`) and `adopt` into `("fabrics", f, "interfaces")`. Logical interfaces (`interfaceType` in `{"portChannel", "vpc", "subInterface", "svi"}`) not in golden and not in `GENERATED_LOGICAL` → `extra` with `delete` = `delete_interface` (DELETE `interface_path`) and `adopt`. Switches whose golden role is `coreRouter` are skipped.
 
@@ -228,7 +228,7 @@
   def test_extra_vpc_offers_real_delete():                          # add an interface {interfaceName:"vpc200", interfaceType:"vpc"} on S1_LE1 -> extra; delete.method == "DELETE"; path ends "/interfaces/vpc200"
   def test_generated_logical_interfaces_are_ignored():              # port-channel500, port-channel1, Ethernet1/3.2 -> no drift
   def test_core_router_switches_are_skipped():                      # WAN1 interfaces never produce drift
-  ```
+```
 
 - [ ] **Step 2: Run** → fail. **Step 3: Implement.** **Step 4: Run** → PASS.
 - [ ] **Step 5: Commit** `"golden: interface drift (free physical ports, logical interfaces)"`.
@@ -244,13 +244,13 @@
 
 - Produces:
 
-  ```python
+```python
   def drift_overlay(topo: Topology, live: dict[str, LiveFabric]) -> list[Drift]     # vrfs, networks, vrf/network attachments
   def drift_pairs(topo: Topology, live: dict[str, LiveFabric]) -> list[Drift]       # vpc_pairs, tor_pairs
   def drift_switches(topo: Topology, live: dict[str, LiveFabric]) -> list[Drift]    # membership and role; extra switch has delete None
   def drift_settings(topo: Topology, live: dict[str, LiveFabric]) -> list[Drift]    # golden subset vs live; fix = put_settings with merge_settings()
   def compute(topo: Topology, live: dict[str, LiveFabric]) -> list[Drift]           # all classes, stable order: settings, switches, links, generated_links, interfaces, vrfs, networks, attachments, pairs
-  ```
+```
 
   Attachments compare `attach`, `vlanId` and the `interfaces` list; VRF/network objects compare the golden `object` keys only; MSD-propagated VRF/network copies in SITE1/SITE2 are not extras. Fix/delete bodies reuse `provision.attachment_payload`, `vpc_pair_payload`, `tor_associate_payload` and the POST paths `phase_overlay`/`phase_vpc`/`phase_tor` use today.
 
@@ -276,7 +276,7 @@
       def __init__(self, prov: Provisioner) -> None
       def apply(self, ops: list[Op]) -> set[str]            # returns touched fabric/group names; raises ApplyError on the first failed op (HTTP error or a 207 item with status != "success")
       def deploy(self, touched: set[str], topo: Topology) -> None   # config_deploy every touched fabric in topology order, then every touched group; "deploy_owner" ops only add to touched
-  ```
+```
 
 Ordering inside `apply`: settings, switches, links, interfaces, vrfs, networks, attachments, pairs; deletes before creates within a class. `put_interface` whose PUT fails with a message containing "Policy type change" → detach every network attached on that port (`networkAttachments` with `attach: false`, then `networkActions/deploy`), retry the PUT, re-attach with the original interfaces list, `networkActions/deploy`.
 
@@ -296,10 +296,10 @@ Ordering inside `apply`: settings, switches, links, interfaces, vrfs, networks, 
 
 - Produces:
 
-  ```python
+```python
   def write_adoptions(path: Path, adoptions: list[Adoption]) -> int     # returns entries written; ruamel round-trip; creates the section if absent; dedupes by endpoint_key / (switch, interface) / object name
   def bootstrap_adoptions(topo: Topology, live: dict[str, LiveFabric], drifts: list[Drift]) -> list[Adoption]
-  ```
+```
 
   `bootstrap_adoptions` = every `Drift.adopt` plus, per fabric: `generated_links` entries for live links whose policy is in `GENERATED_LINK_POLICIES` (owner: the group containing the fabric for `multisite*`, the fabric for `iosXeNumbered`), and a `defaults` map built from the first free port of each golden role (`policyType` + `COMPARED_INPUTS`).
 
@@ -318,12 +318,12 @@ Ordering inside `apply`: settings, switches, links, interfaces, vrfs, networks, 
 
 - Produces:
 
-  ```python
+```python
   def run_drift(topo: Topology, live: dict[str, LiveFabric], out: Callable[[str], None]) -> list[Drift]
   def choose_extras(drifts: list[Drift], mode: str | None, ask: Callable[[str], str]) -> tuple[list[Adoption], list[Op]]   # mode in {None,"adopt","delete","skip"}; prompt "[a]dopt / [d]elete / [s]kip / [A]ll adopt / [D]ll delete"
   def run_restore(args, topo, live, prov, ask, out) -> int
   def main(argv: list[str] | None = None) -> int     # exit codes: 0 ok / no drift, 1 drift (drift cmd), 2 refused (bad flags, user said no), 3 live read failed, 4 apply failed
-  ```
+```
 
   Subcommands and flags exactly as the spec: `drift|restore|adopt --topology --nd-ip`, `restore [--yes] [--extras adopt|delete|skip] [--no-deploy]`, `adopt [--classes ...]`, plus `--snapshot <dir>` on `drift` for offline use. Confirmation text: `Apply {n} create/overwrite operation(s) to {nd_ip}? [y/N]`. Final line: `restore: {n_ops} applied, {n_adopt} adopted, {n_del} deleted; deployed {fabrics}. Now run the restore-lab-topologies Step 4.6 fabric checks and container pings.`
 

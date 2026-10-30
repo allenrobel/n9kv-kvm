@@ -24,6 +24,22 @@ fabrics:
       - {hostname: S3_LE3, ip: 192.168.14.154, role: leaf}
       - {hostname: S3_LE4, ip: 192.168.14.155, role: leaf}
       - {hostname: S3_TOR1, ip: 192.168.14.161, role: tor}
+    defaults:
+      borderGateway: {policyType: routedHost, adminState: 'true', mtu: '9216'}
+      spine: {policyType: routedHost, adminState: 'true', mtu: '9216'}
+      leaf: {policyType: trunkHost, adminState: 'true', allowedVlans: none, mtu: jumbo}
+      tor: {policyType: trunkHost, adminState: 'true', allowedVlans: none, mtu: jumbo}
+    links:
+      - {src: S3_SP1, src_if: Ethernet1/1, dst: S3_BG1, dst_if: Ethernet1/2, policy: numbered, src_ip: 10.14.0.1, dst_ip: 10.14.0.2}
+      - {src: S3_SP1, src_if: Ethernet1/2, dst: S3_LE1, dst_if: Ethernet1/1, policy: numbered, src_ip: 10.14.0.5, dst_ip: 10.14.0.6}
+      - {src: S3_SP1, src_if: Ethernet1/3, dst: S3_LE2, dst_if: Ethernet1/1, policy: numbered, src_ip: 10.14.0.9, dst_ip: 10.14.0.10}
+      - {src: S3_SP1, src_if: Ethernet1/4, dst: S3_LE3, dst_if: Ethernet1/1, policy: numbered, src_ip: 10.14.0.13, dst_ip: 10.14.0.14}
+      - {src: S3_SP1, src_if: Ethernet1/5, dst: S3_LE4, dst_if: Ethernet1/1, policy: numbered, src_ip: 10.14.0.17, dst_ip: 10.14.0.18}
+    generated_links:
+      - {src: S3_BG1, src_if: Ethernet1/1, dst: S4_BG1, dst_if: Ethernet1/1, policy: multisiteUnderlay, owner: MSD}
+      - {src: S3_BG1, src_if: Loopback0, dst: S4_BG1, dst_if: Loopback0, policy: multisiteOverlay, owner: MSD}
+    interfaces:
+      - {switch: S3_TOR1, interface: Ethernet1/3, policy: accessHost, description: S3_H1 host port}
   - name: SITE2
     type: vxlanIbgp
     asn: "65002"
@@ -42,6 +58,15 @@ fabrics:
       - {hostname: S4_BG1, ip: 192.168.14.132, role: borderGateway}
       - {hostname: S4_SP1, ip: 192.168.14.142, role: spine}
       - {hostname: S4_LE1, ip: 192.168.14.153, role: leaf}
+    defaults:
+      borderGateway: {policyType: routedHost, adminState: 'true', mtu: '9216'}
+      spine: {policyType: routedHost, adminState: 'true', mtu: '9216'}
+      leaf: {policyType: trunkHost, adminState: 'true', allowedVlans: none, mtu: jumbo}
+    links:
+      - {src: S4_SP1, src_if: Ethernet1/1, dst: S4_BG1, dst_if: Ethernet1/2, policy: numbered, src_ip: 10.24.0.1, dst_ip: 10.24.0.2}
+      - {src: S4_SP1, src_if: Ethernet1/2, dst: S4_LE1, dst_if: Ethernet1/1, policy: numbered, src_ip: 10.24.0.5, dst_ip: 10.24.0.6}
+    interfaces:
+      - {switch: S4_LE1, interface: Ethernet1/2, policy: accessHost, description: S4_H1 host port}
   - name: ISN
     type: externalConnectivity
     asn: "65535"
@@ -77,6 +102,11 @@ fabrics:
       - {hostname: C3_LE1, ip: 192.168.14.181, role: leaf, platform: ios-xe}
       - {hostname: C3_SP1, ip: 192.168.14.182, role: spine, platform: ios-xe}
 
+    defaults:
+      leaf: {policyType: iosXeTrunkHost, adminState: 'true', allowedVlans: none, mtu: '1500'}
+      spine: {policyType: iosXeRoutedHost, adminState: 'true', mtu: '1500'}
+    generated_links:
+      - {src: C3_SP1, src_if: GigabitEthernet1/0/1, dst: C3_LE1, dst_if: GigabitEthernet1/0/8, policy: iosXeNumbered, owner: CAMPUS1}
 fabric_groups:
   - name: MSD
     settings:

@@ -219,8 +219,20 @@ def test_load_reads_links_generated_links_interfaces_and_defaults(tmp_path):
     assert f.generated_links[0].owner == "MSD" and f.interfaces[0].type == "ethernet" and f.defaults["spine"]["policyType"] == "routedHost"
 
 
-def test_shipped_files_load_with_empty_golden_sections():  # until Task 9 bootstraps them
-    assert load(HERE / "topology_nd421.yaml").fabrics[0].links == []
+def test_shipped_files_load_with_bootstrapped_golden_sections():
+    topo = load(HERE / "topology_nd421.yaml")
+    assert len(topo.fabrics[0].links) == 5 and len(topo.fabrics[1].links) == 2
+    assert topo.fabrics[0].defaults and topo.fabrics[0].generated_links
+
+
+def test_shipped_topologies_differ_only_in_hostnames_and_mgmt_ips():
+    import dataclasses
+    import json
+
+    dump = json.dumps(dataclasses.asdict(load(HERE / "topology_nd421.yaml")), sort_keys=True)
+    for old, new in (("S1_", "S3_"), ("S2_", "S4_"), ("WAN1", "WAN2"), ("C1_", "C3_"), ("192.168.12.", "192.168.14.")):
+        dump = dump.replace(old, new)
+    assert json.loads(dump) == json.loads(json.dumps(dataclasses.asdict(load(HERE / "topology_nd431.yaml")), sort_keys=True))
 
 
 def test_validate_rejects_unknown_link_policy_and_unknown_endpoint(tmp_path):

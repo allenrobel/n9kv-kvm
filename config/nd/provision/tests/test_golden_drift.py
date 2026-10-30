@@ -29,6 +29,7 @@ from topology import FabricLink, GeneratedLink, InterfaceIntent, Topology, load
 
 HERE = Path(__file__).resolve().parents[1]
 GOLDEN = HERE / "golden"
+BASE = Path(__file__).resolve().parent / "fixtures"  # pre-bootstrap copies of the shipped files (empty golden sections)
 
 SITE1_LINKS = [
     FabricLink("S1_SP1", "Ethernet1/1", "S1_BG1", "Ethernet1/2", "numbered", "10.14.0.1", "10.14.0.2"),
@@ -59,13 +60,13 @@ def _with(topo: Topology, site1_links=(), site2_links=(), generated=(), isn=None
 @pytest.fixture(params=["nd421", "nd431"])
 def lab(request):
     version = request.param
-    topo = load(HERE / f"topology_{version}.yaml")
+    topo = load(BASE / f"topology_{version}_base.yaml")
     return topo, read_live_from_snapshot(GOLDEN / version, topo)
 
 
 @pytest.fixture
 def nd421():
-    topo = load(HERE / "topology_nd421.yaml")
+    topo = load(BASE / "topology_nd421_base.yaml")
     return topo, read_live_from_snapshot(GOLDEN / "nd421", topo)
 
 

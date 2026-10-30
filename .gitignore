@@ -1,3 +1,6 @@
 __pycache__
 env_prod/
 .superpowers/
+
+# git worktrees for isolated feature work
+.worktrees/

@@ -13,7 +13,7 @@ used to live only in the `provision-isn` skill and `docs/nd4_fabrics_bringup.md`
 - `golden_drift.py` (pure compare), `golden_live.py` (live read), `golden_apply.py` (push),
   `golden_adopt.py` (bootstrap/adoption writer) - the modules behind `golden.py`
 - `golden/nd421/`, `golden/nd431/` - reference snapshots (`snapshot.py dump`, credential hashes scrubbed); the tool does not read them
-- `nd_client.py`, `topology.py` - library code; `tests/` - pytest for the pure parts; `tests/fixtures/` - snapshot dumps and base topologies the golden tests use
+- `nd_client.py`, `topology.py` - library code; `tests/` - pytest for the pure parts; `tests/fixtures/` - the two base topology files the golden tests use
 
 ## Usage (on the lab host, prod env sourced)
 
@@ -50,9 +50,11 @@ uv run config/nd/provision/golden.py adopt   --topology config/nd/provision/topo
   and prints the remaining drift and pending-config counts.
 - `adopt` is the bootstrap: it writes `links`, `generated_links`, `interfaces`, `defaults` and so on from the live ND (or a `--snapshot`) into the
   topology file. It prints `CONFLICT:` lines and exits 1 when a live generated link collides with a link the tool owns.
-- Exit codes: 0 ok / no drift, 1 drift (`drift`, `restore` leftovers) or conflicts (`adopt`), 2 refused or cancelled, 3 live read failed, 4 apply failed.
+- Exit codes: 0 ok / no drift, 1 drift (`drift`) or conflicts (`adopt`), 2 refused or cancelled, 3 live read failed, 4 apply failed; `restore` exits 0
+  even with leftovers, so read its remaining-drift line.
 - Extras are objects that exist live but not in golden. `--extras adopt` writes them into the yaml, `delete` removes them from ND, `skip` leaves them;
-  without the flag `restore` asks per object.
+  without the flag `restore` asks per object. With `--yes` and extras present but no `--extras`, `restore` exits 2 and asks for `--extras adopt|delete|skip`.
+  `restore` also Recalculate & Deploys any fabric whose switches still carry pending config from an earlier aborted run.
 
 Rules:
 
@@ -68,9 +70,8 @@ Rules:
 - `golden/{nd421,nd431}/` are reference snapshots only; the topology yaml is the golden.
 - Run it only when no tests are running: `restore` is disruptive by design (resets ports, deletes interfaces, deploys fabrics).
 
-How the 2026-10-30 bootstrap went: on glide the venv needed `uv pip install ruamel.yaml` until the branch was pulled. The first run against each
-controller found test residue (`trunkHost` on BGW and spine ports, an `l3Po` port-channel on the ToRs, a campus `Gi1/0/1`) and one ISN link converted to
-`multisiteUnderlay` by an MSD deploy; `restore --extras delete` handled all of it.
+The 2026-10-30 bootstrap found test residue (`trunkHost` on BGW and spine ports, an `l3Po` port-channel on the ToRs, a campus `Gi1/0/1`) and one ISN
+link converted to `multisiteUnderlay`; `restore --extras delete` handled all of it.
 
 ## Gotchas carried over from ND 4.2.1
 

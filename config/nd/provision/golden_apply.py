@@ -155,6 +155,10 @@ class Applier:
             except ApplyError as again:
                 outcome = f"re-attach FAILED ({again})"
             raise ApplyError(f"{exc}; networks {names} were detached from {port} and {outcome}") from exc
+        if op.action == "reset_interface":
+            # a free port's golden state has no network on it; the attachment fix later in this apply sets the golden attachment
+            self.prov._log(f"{port}: networks {names} stay detached; the port is being reset to its role default")
+            return
         self._run(op, lambda: self._check_post(op, attach_path, {"attachments": reattach}))
         self._run(op, lambda: self._check_post(op, deploy_path, deploy))
 

@@ -189,8 +189,9 @@ def test_failed_tor_association_item_stops_the_apply(action, path):
     assert [c[1] for c in client.writes] == [url]
 
 
-def test_reset_interface_retries_through_detach_on_policy_type_refusal():
-    """A free port carrying a network attachment (test residue) is reset to its role default through the same detach / retry / re-attach path."""
+def test_reset_interface_detaches_retries_and_leaves_the_network_detached():
+    """A free port carrying a network attachment (test residue) is reset to its role default through the detach / retry path; the
+    networks are not re-attached, since a free port's golden state has none (the attachment fix op sets the golden attachment)."""
     port = "/fabrics/SITE1/switches/S1/interfaces/Ethernet1%2F5"
     rows = [{"networkName": "N1", "switchId": "S1", "vlanId": 10, "attach": True, "interfaces": [{"interfaceRange": "Ethernet1/5", "mode": "access"}]}]
     client = Stub(
@@ -204,11 +205,26 @@ def test_reset_interface_retries_through_detach_on_policy_type_refusal():
         ("POST", "/fabrics/SITE1/networkAttachments"),
         ("POST", "/fabrics/SITE1/networkActions/deploy"),
         ("PUT", port),
+    ]
+    detach = [c[2] for c in client.calls if c[0] == "POST"][1]
+    assert detach == {"attachments": [{"networkName": "N1", "switchId": "S1", "vlanId": 10, "interfaces": [], "attach": False}]}
+
+
+def test_failed_reset_retry_reattaches_and_raises():
+    port = "/fabrics/SITE1/switches/S1/interfaces/Ethernet1%2F5"
+    rows = [{"networkName": "N1", "switchId": "S1", "vlanId": 10, "attach": True, "interfaces": [{"interfaceRange": "Ethernet1/5", "mode": "access"}]}]
+    client = Stub(
+        post_results={"/fabrics/SITE1/networkAttachments/query": {"attachments": rows}},
+        put_errors=[RuntimeError("HTTP 400 Policy type change x"), RuntimeError("HTTP 500 boom")],
+    )
+    with pytest.raises(ApplyError, match=r"boom.*N1.*Ethernet1/5.*re-attached"):
+        _applier(client).apply([Op("reset_interface", "SITE1", "PUT", port, {"i": 1})])
+    assert [(c[0], c[1]) for c in client.calls[-3:]] == [
+        ("PUT", port),
         ("POST", "/fabrics/SITE1/networkAttachments"),
         ("POST", "/fabrics/SITE1/networkActions/deploy"),
     ]
-    posts = [c[2] for c in client.calls if c[0] == "POST"]
-    assert posts[1]["attachments"][0]["attach"] is False and posts[3]["attachments"][0]["attach"] is True
+    assert client.calls[-2][2]["attachments"][0] == {**{k: rows[0][k] for k in ("networkName", "switchId", "vlanId", "interfaces")}, "attach": True}
 
 
 def test_transport_error_becomes_apply_error_and_stops_the_apply():

@@ -14,6 +14,7 @@ Exit codes: 0 ok / no drift, 1 drift (drift) or conflicts (adopt), 2 refused, 3 
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 from typing import Callable
 
@@ -248,4 +249,8 @@ def main(argv: list[str] | None = None, ask: Ask = _ask_default, out: Out = prin
 
 
 if __name__ == "__main__":
+    # line-buffer stdout even when piped (`| tee log`): a restore prints one line per REST call over many minutes, and the default
+    # 8 KB block buffer makes a running restore look hung for minutes at a time
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(line_buffering=True)
     raise SystemExit(main())

@@ -108,9 +108,9 @@ def read_live(client: NDClient, topo: Topology) -> dict[str, LiveFabric]:
             params = {"aggregationOrLeafSwitchId": by_host[pair.leaf]["serialNumber"], "aggregationOrLeafPeerSwitchId": by_host[pair.peer]["serialNumber"]}
             try:
                 live.tor_associations.extend(_items(client.get(f"/fabrics/{name}/accessAssociations", params=params), "associations"))
-            except RuntimeError as exc:
-                # A fabric with no pairings answers 400/404; anything else is a real failure.
-                if not re.search(r"-> HTTP (400|404)\b", str(exc)):
+            except (RuntimeError, requests.RequestException, OSError) as exc:
+                # A fabric with no pairings answers 400/404; anything else (HTTP 5xx, transport) is a real failure.
+                if not (isinstance(exc, RuntimeError) and re.search(r"-> HTTP (400|404)\b", str(exc))):
                     raise LiveReadError(f"GET /fabrics/{name}/accessAssociations: {exc}") from exc
         serials = [s["serialNumber"] for s in switch_list]
         if serials:

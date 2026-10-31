@@ -461,9 +461,9 @@ def interface_body(serial: str, intent: InterfaceIntent, fabric_defaults: dict, 
     the platform seed."""
     default = fabric_defaults.get(role) if role else None
     if default and _mode_for(str(default.get("policyType", ""))) == _mode_for(intent.policy):
-        policy: dict = dict(default)
+        policy: dict = {"policyType": intent.policy, **default}  # policyType first, as in every other body this tool sends
     else:
-        policy = dict(IOSXE_SEED if os_type == "ios-xe" else NXOS_SEED)
+        policy = {"policyType": intent.policy, **(IOSXE_SEED if os_type == "ios-xe" else NXOS_SEED)}
     policy["policyType"] = intent.policy
     if intent.description:
         policy["description"] = intent.description

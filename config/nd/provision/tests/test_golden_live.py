@@ -107,3 +107,21 @@ def test_free_ports_match_link_endpoints_case_insensitively():
     ]
     names = {p["interfaceName"] for p in free_ports(live["SITE1"], "S1_SP1", all_links)}
     assert "Ethernet1/1" not in names and "Ethernet1/6" in names
+
+
+def test_tor_association_transport_error_is_a_live_read_error():
+    """A dropped connection on the per-pair accessAssociations read maps to LiveReadError like every other live read."""
+    import requests
+
+    path = "/fabrics/SITE1/accessAssociations"
+    topo, client = _tor_stub()
+    original = client.get
+
+    def get(p, params=None):
+        if p == path:
+            raise requests.ConnectionError("boom")
+        return original(p, params)
+
+    client.get = get
+    with pytest.raises(LiveReadError, match="accessAssociations"):
+        read_live(client, topo)

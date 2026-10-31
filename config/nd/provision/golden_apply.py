@@ -101,7 +101,7 @@ class Applier:
                     self._run(op, self.prov.phase_switches)
                     switches_added = True
                 continue
-            if op.action == "put_interface":
+            if op.action in ("put_interface", "reset_interface"):  # both PUT a port policy; ND refuses a policy-type change under a network
                 self._put_interface(op)
                 continue
             self._run(op, lambda op=op: self._send(op))

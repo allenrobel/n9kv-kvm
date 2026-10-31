@@ -186,3 +186,25 @@ def test_failed_tor_association_item_stops_the_apply(action, path):
     with pytest.raises(ApplyError, match=f"{action}.*'failed'.*x"):
         _applier(client).apply(ops)
     assert [c[1] for c in client.writes] == [url]
+
+
+def test_reset_interface_retries_through_detach_on_policy_type_refusal():
+    """A free port carrying a network attachment (test residue) is reset to its role default through the same detach / retry / re-attach path."""
+    port = "/fabrics/SITE1/switches/S1/interfaces/Ethernet1%2F5"
+    rows = [{"networkName": "N1", "switchId": "S1", "vlanId": 10, "attach": True, "interfaces": [{"interfaceRange": "Ethernet1/5", "mode": "access"}]}]
+    client = Stub(
+        post_results={"/fabrics/SITE1/networkAttachments/query": {"attachments": rows}},
+        put_errors=[RuntimeError("HTTP 400 Policy type change from accessHost to trunkHost is not allowed")],
+    )
+    _applier(client).apply([Op("reset_interface", "SITE1", "PUT", port, {"i": 1})])
+    assert [(c[0], c[1]) for c in client.calls] == [
+        ("PUT", port),
+        ("POST", "/fabrics/SITE1/networkAttachments/query"),
+        ("POST", "/fabrics/SITE1/networkAttachments"),
+        ("POST", "/fabrics/SITE1/networkActions/deploy"),
+        ("PUT", port),
+        ("POST", "/fabrics/SITE1/networkAttachments"),
+        ("POST", "/fabrics/SITE1/networkActions/deploy"),
+    ]
+    posts = [c[2] for c in client.calls if c[0] == "POST"]
+    assert posts[1]["attachments"][0]["attach"] is False and posts[3]["attachments"][0]["attach"] is True

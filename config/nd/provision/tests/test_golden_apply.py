@@ -1,6 +1,7 @@
 """Tests for the golden drift Applier against a stub NDClient."""
 
 import pytest
+import requests
 
 import provision
 from golden_apply import ApplyError, Applier
@@ -208,3 +209,11 @@ def test_reset_interface_retries_through_detach_on_policy_type_refusal():
     ]
     posts = [c[2] for c in client.calls if c[0] == "POST"]
     assert posts[1]["attachments"][0]["attach"] is False and posts[3]["attachments"][0]["attach"] is True
+
+
+def test_transport_error_becomes_apply_error_and_stops_the_apply():
+    client = Stub(put_errors=[requests.ConnectionError("connection aborted")])
+    ops = [Op("put_settings", "SITE1", "PUT", "/fabrics/SITE1", {}), Op("put_link", "SITE1", "PUT", "/links/1", {})]
+    with pytest.raises(ApplyError, match="put_settings PUT /fabrics/SITE1: connection aborted"):
+        _applier(client).apply(ops)
+    assert [c[1] for c in client.writes] == ["/fabrics/SITE1"]

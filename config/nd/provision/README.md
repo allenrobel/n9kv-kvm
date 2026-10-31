@@ -50,8 +50,9 @@ uv run config/nd/provision/golden.py adopt   --topology config/nd/provision/topo
   and prints the remaining drift and pending-config counts.
 - `adopt` is the bootstrap: it writes `links`, `generated_links`, `interfaces`, `defaults` and so on from the live ND (or a `--snapshot`) into the
   topology file. It prints `CONFLICT:` lines and exits 1 when a live generated link collides with a link the tool owns.
-- Exit codes: 0 ok / no drift, 1 drift (`drift`) or conflicts (`adopt`), 2 refused or cancelled, 3 live read failed, 4 apply failed; `restore` exits 0
-  even with leftovers, so read its remaining-drift line.
+- Exit codes: 0 ok / no drift, 1 drift (`drift`) or conflicts (`adopt`), 2 refused or cancelled, 3 live read failed (HTTP error or
+  unreachable controller), 4 apply failed (a failed op, a dropped connection, or a failed Recalculate & Deploy); `restore` exits 0 even with leftovers, so
+  read its remaining-drift line.
 - Extras are objects that exist live but not in golden. `--extras adopt` writes them into the yaml, `delete` removes them from ND, `skip` leaves them;
   without the flag `restore` asks per object. With `--yes` and extras present but no `--extras`, `restore` exits 2 and asks for `--extras adopt|delete|skip`.
   `restore` also Recalculate & Deploys any fabric whose switches still carry pending config from an earlier aborted run.

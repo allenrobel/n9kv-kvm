@@ -13,6 +13,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
+import requests
+
 from nd_client import NDClient
 from topology import Topology
 
@@ -58,20 +60,20 @@ def read_live(client: NDClient, topo: Topology) -> dict[str, LiveFabric]:
     def get(path: str, params: dict | None = None) -> Any:
         try:
             return client.get(path, params=params)
-        except RuntimeError as exc:
+        except (RuntimeError, requests.RequestException, OSError) as exc:
             raise LiveReadError(f"GET {path}: {exc}") from exc
 
     def paged(path: str, key: str, params: dict | None = None) -> list[dict]:
         try:
             return client.paged(path, key, params=params)
-        except RuntimeError as exc:
+        except (RuntimeError, requests.RequestException, OSError) as exc:
             raise LiveReadError(f"GET {path}: {exc}") from exc
 
     def query(kind: str, fabric: str, serials: list[str]) -> list[dict]:
         path = f"/fabrics/{fabric}/{kind}Attachments/query"
         try:
             return _attached(client.post(path, json={"switchIds": serials}))
-        except RuntimeError as exc:
+        except (RuntimeError, requests.RequestException, OSError) as exc:
             raise LiveReadError(f"POST {path}: {exc}") from exc
 
     present = {f["name"] for f in _items(get("/fabrics"), "fabrics")}

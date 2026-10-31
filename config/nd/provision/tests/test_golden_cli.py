@@ -4,6 +4,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+import requests
 
 import golden
 from golden_apply import ApplyError
@@ -33,6 +34,7 @@ class Recorder:
     def __init__(self) -> None:
         self.calls: list[tuple] = []
         self.apply_error: Exception | None = None
+        self.deploy_error: Exception | None = None
 
 
 @pytest.fixture
@@ -52,6 +54,8 @@ def rec(monkeypatch):
 
         def deploy(self, touched, topo):
             r.calls.append(("deploy", sorted(touched)))
+            if r.deploy_error:
+                raise r.deploy_error
 
     def write(path, adoptions):
         r.calls.append(("write", list(adoptions)))
@@ -237,3 +241,49 @@ def test_restore_deploys_fabrics_with_pending_config_from_an_earlier_run(monkeyp
     code = golden.run_restore(args(yes=True, extras="skip"), topo, rec.live, prov, answers(), lines.append)
     assert code == 0 and rec.calls == [("deploy", ["SITE1"])]
     assert any(line.startswith("restore: deploying 1 fabric(s) with pending config from an earlier run: SITE1") for line in lines)
+
+
+def test_restore_transport_error_during_apply_exits_4(monkeypatch, rec):
+    rec.apply_error = requests.ConnectionError("connection reset by peer")
+    code, lines = restore(monkeypatch, [drift("missing", "m", fix=op("put_link"))], args(yes=True), answers(), rec)
+    assert code == 4 and lines[-1] == "restore: apply failed: connection reset by peer"
+
+
+def test_restore_deploy_runtime_error_exits_4_with_the_message(monkeypatch, rec):
+    rec.deploy_error = RuntimeError("POST /fabrics/SITE1/actions/configSave -> HTTP 500: boom")
+    code, lines = restore(monkeypatch, [drift("missing", "m", fix=op("put_link"))], args(yes=True), answers(), rec)
+    assert code == 4 and [c[0] for c in rec.calls] == ["apply", "deploy"]
+    assert lines[-1] == "restore: apply failed: POST /fabrics/SITE1/actions/configSave -> HTTP 500: boom"
+
+
+def test_restore_pre_apply_pending_read_error_exits_3_before_any_write(monkeypatch, rec):
+    prov = prov_stub(rec)
+
+    def pending(fabric, serial):
+        raise requests.ConnectionError("unreachable")
+
+    prov.pending = pending
+    monkeypatch.setattr(golden, "compute", lambda t, lv: [drift("missing", "m", fix=op("put_link"))])
+    lines: list[str] = []
+    code = golden.run_restore(args(yes=True), load(TOPO_PATH), rec.live, prov, answers(), lines.append)
+    assert code == 3 and rec.calls == [] and lines[-1] == "golden: cannot read 1.2.3.4: unreachable"
+
+
+@pytest.mark.parametrize("where", ["login", "get"])
+def test_drift_against_an_unreachable_controller_exits_3(monkeypatch, where):
+    class Client:
+        def __init__(self, creds):
+            self.creds = creds
+
+        def login(self):
+            if where == "login":
+                raise requests.ConnectionError("login: no route to host")
+
+        def get(self, path, params=None):
+            raise requests.ConnectionError("no route to host")
+
+    monkeypatch.setattr(golden, "NDCredentials", SimpleNamespace(from_env=lambda ip: SimpleNamespace(ip=ip)))
+    monkeypatch.setattr(golden, "NDClient", Client)
+    lines: list[str] = []
+    assert golden.main(["drift", "--topology", str(TOPO_PATH), "--nd-ip", "9.9.9.9"], out=lines.append) == 3
+    assert lines[0].startswith("golden: cannot read 9.9.9.9: ") and "no route to host" in lines[0]

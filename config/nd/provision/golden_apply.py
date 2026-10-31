@@ -7,6 +7,8 @@ import json
 from typing import Any
 from urllib.parse import unquote
 
+import requests
+
 from golden_drift import Op
 from provision import LOG_BODY_LIMIT, Provisioner, redact
 from topology import Topology
@@ -112,7 +114,7 @@ class Applier:
             return call()
         except ApplyError:
             raise
-        except (RuntimeError, ValueError, TimeoutError) as exc:
+        except (RuntimeError, ValueError, TimeoutError, requests.RequestException, OSError) as exc:  # HTTP error, connection drop, read timeout
             raise ApplyError(f"{op.action} {op.method} {op.path}: {exc}") from exc
 
     # -- interface policy-type change ----------------------------------------------------------------------

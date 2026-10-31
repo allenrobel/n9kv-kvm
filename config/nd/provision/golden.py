@@ -9,7 +9,8 @@
 missing or different, asks per EXTRA object whether to adopt it into the yaml or delete it from ND, writes the adoptions, applies, and
 deploys the touched fabrics. `adopt` writes the live state into the yaml (bootstrap of a golden file); live-only objects become entries.
 
-Exit codes: 0 ok / no drift, 1 drift (drift) or conflicts (adopt), 2 refused, 3 live read failed, 4 apply failed.
+Exit codes: 0 ok / no drift, 1 drift (drift) or conflicts (adopt), 2 refused, 3 live read failed (an HTTP error or an unreachable controller
+while reading), 4 apply failed (a failed op, a dropped connection or an HTTP error while `restore` writes or deploys).
 """
 from __future__ import annotations
 
@@ -17,6 +18,8 @@ import argparse
 import sys
 from pathlib import Path
 from typing import Callable
+
+import requests
 
 from golden_adopt import bootstrap_adoptions, bootstrap_conflicts, write_adoptions
 from golden_apply import ApplyError, Applier
@@ -31,6 +34,8 @@ Out = Callable[[str], None]
 
 PROMPT = "[a]dopt / [d]elete / [s]kip / [A]ll adopt / [D]ll delete: "
 MAX_TRIES = 3
+# what a controller read or write can raise: RuntimeError for an HTTP error (NDClient), RequestException (an OSError) for a dropped connection
+READ_ERRORS = (RuntimeError, requests.RequestException, OSError)
 
 
 def _ask_default(prompt: str) -> str:
@@ -123,7 +128,7 @@ def _pending_report(prov: Provisioner, topo: Topology, live: dict[str, LiveFabri
             if serial:
                 try:
                     total += len(prov.pending(fabric.name, serial))
-                except RuntimeError as exc:
+                except READ_ERRORS as exc:
                     out(f"{fabric.name} {sw.hostname}: pending config unreadable: {exc}")
         out(f"{fabric.name}: {total} pending config line(s) remain")
 
@@ -165,6 +170,10 @@ def run_restore(args: argparse.Namespace, topo: Topology, live: dict[str, LiveFa
     deployed: list[str] = []
     try:
         pending_fabrics = set() if args.no_deploy else _pending_fabrics(prov, topo, live)
+    except READ_ERRORS as exc:
+        out(f"golden: cannot read {nd_ip}: {exc}")
+        return 3
+    try:
         touched = applier.apply(all_ops) if all_ops else set()
         if not args.no_deploy and (touched or pending_fabrics):
             earlier = sorted(pending_fabrics - touched)
@@ -172,7 +181,7 @@ def run_restore(args: argparse.Namespace, topo: Topology, live: dict[str, LiveFa
                 out(f"restore: deploying {len(earlier)} fabric(s) with pending config from an earlier run: {', '.join(earlier)}")
             applier.deploy(touched | pending_fabrics, topo)
             deployed = sorted(touched | pending_fabrics)
-    except ApplyError as exc:
+    except (ApplyError, *READ_ERRORS) as exc:  # a failed op, or RuntimeError/RequestException from configSave/deploy
         out(f"restore: apply failed: {exc}")
         return 4
     try:
@@ -237,7 +246,7 @@ def main(argv: list[str] | None = None, ask: Ask = _ask_default, out: Out = prin
             client.login()
             where = args.nd_ip or client.creds.ip
             live = read_live(client, topo)
-    except LiveReadError as exc:
+    except (LiveReadError, requests.RequestException, OSError) as exc:  # login can fail on the connection before read_live wraps anything
         out(f"golden: cannot read {where}: {exc}")
         return 3
     if args.cmd == "drift":

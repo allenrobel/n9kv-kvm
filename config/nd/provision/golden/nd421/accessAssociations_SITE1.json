@@ -1,0 +1,29 @@
+{
+  "associations": [
+    {
+      "accessOrTorSwitchId": "9WO9329PPCP",
+      "accessOrTorSwitchName": "S1_TOR1",
+      "aggregationOrLeafPeerSwitchId": "9C68L63CT9E",
+      "aggregationOrLeafSwitchId": "9UDEG98YLEY",
+      "isRecommended": true,
+      "remarks": "Already paired",
+      "resources": {
+        "accessOrTorPortChannelId": 1,
+        "aggregationOrLeafPeerPortChannelId": 1,
+        "aggregationOrLeafPortChannelId": 1,
+        "aggregationOrLeafVpcId": 1
+      }
+    },
+    {
+      "accessOrTorSwitchId": "9WO9329PPCP",
+      "accessOrTorSwitchName": "S1_TOR1",
+      "aggregationOrLeafPeerSwitchId": "967H2HM3169",
+      "aggregationOrLeafSwitchId": "92615XPSM8T",
+      "isRecommended": false,
+      "remarks": "Already paired with (S1_LE2,S1_LE1)",
+      "resources": {
+        "accessOrTorPortChannelId": 1
+      }
+    }
+  ]
+}

@@ -66,7 +66,9 @@ Rules:
 - Removing a switch is never automatic: an extra switch is reported only.
 - A "delete" of an unlisted physical port is a reset to the role default (`defaults:` per fabric, policy type from ND's role table), because ND refuses to
   delete the port. A logical interface (port-channel, vPC, SVI, subinterface) that ND did not generate is a real DELETE.
-- Link /30s are pinned in the yaml and are identical in both topology files, which still differ only in hostnames and IPs.
+- Link /30s are pinned in the yaml. Pin them the way ND already allocated them (`adopt` does): ND refuses a `PUT` that swaps the two ends'
+  addresses on an existing numbered link (`IP/Subnet allocation failed: ... is allocated to ...`), so the only way to re-address a link
+  is to re-provision it. The two topology files therefore differ in one SITE2 /30 besides hostnames and IPs.
 - `golden/{nd421,nd431}/` are reference snapshots only; the topology yaml is the golden.
 - Run it only when no tests are running: `restore` is disruptive by design (resets ports, deletes interfaces, deploys fabrics).
 

@@ -226,13 +226,22 @@ def test_shipped_files_load_with_bootstrapped_golden_sections():
 
 
 def test_shipped_topologies_differ_only_in_hostnames_and_mgmt_ips():
+    """Besides names and mgmt IPs, only the SITE2 spine-BGW /30 differs: ND 4.3.1 allocated it the other way round and refuses to swap it."""
     import dataclasses
     import json
 
-    dump = json.dumps(dataclasses.asdict(load(HERE / "topology_nd421.yaml")), sort_keys=True)
+    t421, t431 = load(HERE / "topology_nd421.yaml"), load(HERE / "topology_nd431.yaml")
+    bgw_421 = next(link for link in t421.fabrics[1].links if link.dst == "S2_BG1")
+    bgw_431 = next(link for link in t431.fabrics[1].links if link.dst == "S4_BG1")
+    assert (bgw_421.src_ip, bgw_421.dst_ip) == ("10.24.0.1", "10.24.0.2")
+    assert (bgw_431.src_ip, bgw_431.dst_ip) == ("10.24.0.2", "10.24.0.1")
+    dump = json.dumps(dataclasses.asdict(t421), sort_keys=True)
     for old, new in (("S1_", "S3_"), ("S2_", "S4_"), ("WAN1", "WAN2"), ("C1_", "C3_"), ("192.168.12.", "192.168.14.")):
         dump = dump.replace(old, new)
-    assert json.loads(dump) == json.loads(json.dumps(dataclasses.asdict(load(HERE / "topology_nd431.yaml")), sort_keys=True))
+    expected = json.loads(dump)
+    bgw_expected = next(link for link in expected["fabrics"][1]["links"] if link["dst"] == "S4_BG1")
+    bgw_expected["src_ip"], bgw_expected["dst_ip"] = bgw_431.src_ip, bgw_431.dst_ip
+    assert expected == json.loads(json.dumps(dataclasses.asdict(t431), sort_keys=True))
 
 
 def test_validate_rejects_unknown_link_policy_and_unknown_endpoint(tmp_path):

@@ -403,12 +403,25 @@ def _if_text(values: dict) -> str:
     return " ".join([values.get("policyType") or "none", *parts])
 
 
+INTEGER_INPUTS = ("mtu", "accessVlan", "nativeVlan")  # integer in every ND 4.3.1 int_*_host template (mtu only when numeric; "jumbo" stays)
+
+
+def _native(key: str, value: Any) -> Any:
+    """ND's own type for a policy input: golden yaml and adopted defaults carry the lowercase strings the drift comparison uses
+    ('true', '9216'), but ND 4.3.1's schema validation rejects them (adminState must be a boolean, a numeric mtu an integer)."""
+    if isinstance(value, str) and value.lower() in ("true", "false"):
+        return value.lower() == "true"
+    if key in INTEGER_INPUTS and isinstance(value, str) and value.isdigit():
+        return int(value)
+    return value
+
+
 def _if_body(serial: str, interface: str, interface_type: str, policy: dict, os_type: str = "nx-os") -> dict:
     body: dict = {"switchId": serial, "interfaceName": interface, "interfaceType": interface_type, "configData": {}}
     mode = _mode_for(policy.get("policyType", ""))
     if mode:
         body["configData"]["mode"] = mode
-    body["configData"]["networkOS"] = {"networkOSType": os_type, "policy": policy}
+    body["configData"]["networkOS"] = {"networkOSType": os_type, "policy": {key: _native(key, value) for key, value in policy.items()}}
     return body
 
 

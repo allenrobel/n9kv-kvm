@@ -762,3 +762,14 @@ def test_logical_interface_names_compare_case_insensitively(nd421):
     _iface(live, "SITE1", "S1_LE1", "port-channel500")["interfaceName"] = "Port-channel500"
     _iface(live, "SITE1", "S1_LE1", "Vlan3600")["interfaceName"] = "vlan3600"
     assert _run_interfaces(golden, live) == baseline
+
+
+def test_bodies_send_nd_native_types_for_adopted_string_inputs():
+    """ND 4.3.1 rejects adminState 'true' and mtu '9216' (schema: boolean / integer); 'jumbo' and other strings pass through."""
+    reset = default_body("SER", "Ethernet1/4", {"policyType": "routedHost", "adminState": "true", "mtu": "9216"})
+    assert reset["configData"]["networkOS"]["policy"] == {"policyType": "routedHost", "adminState": True, "mtu": 9216}
+    trunk = default_body("SER", "Ethernet1/5", {"policyType": "trunkHost", "adminState": "false", "allowedVlans": "none", "mtu": "jumbo"})
+    assert trunk["configData"]["networkOS"]["policy"] == {"policyType": "trunkHost", "adminState": False, "allowedVlans": "none", "mtu": "jumbo"}
+    intent = InterfaceIntent(switch="S1_LE1", interface="Ethernet1/2", policy="accessHost", description="d", inputs={"mtu": "1500", "accessVlan": "2"})
+    policy = interface_body("SER", intent, {})["configData"]["networkOS"]["policy"]
+    assert policy["mtu"] == 1500 and policy["accessVlan"] == 2 and policy["adminState"] is True

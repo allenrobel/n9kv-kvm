@@ -69,6 +69,9 @@ Rules:
 - Link /30s are pinned in the yaml. Pin them the way ND already allocated them (`adopt` does): ND refuses a `PUT` that swaps the two ends'
   addresses on an existing numbered link (`IP/Subnet allocation failed: ... is allocated to ...`), so the only way to re-address a link
   is to re-provision it. The two topology files therefore differ in one SITE2 /30 besides hostnames and IPs.
+- Policy inputs in the yaml are the lowercase strings the comparison uses (`adminState: 'true'`, `mtu: '9216'`); the PUT bodies carry
+  ND's own types (boolean, integer for `mtu`/`accessVlan`/`nativeVlan` when numeric). Both OpenAPI specs type them that way; ND 4.3.1
+  validates request bodies against the schema and rejects the strings, ND 4.2.1 does not validate.
 - `golden/{nd421,nd431}/` are reference snapshots only; the topology yaml is the golden.
 - Run it only when no tests are running: `restore` is disruptive by design (resets ports, deletes interfaces, deploys fabrics).
 

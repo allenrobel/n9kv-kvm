@@ -775,3 +775,46 @@ def test_bodies_send_nd_native_types_for_adopted_string_inputs():
     intent = InterfaceIntent(switch="S1_LE1", interface="Ethernet1/2", policy="accessHost", description="d", inputs={"mtu": "1500", "accessVlan": "2"})
     policy = interface_body("SER", intent, {})["configData"]["networkOS"]["policy"]
     assert policy["mtu"] == 1500 and policy["accessVlan"] == 2 and policy["adminState"] is True
+
+
+def test_interface_body_ios_xe_has_no_nxos_only_keys_and_an_integer_mtu():
+    intent = InterfaceIntent("C1_LE1", "GigabitEthernet1/0/2", "iosXeAccess", description="campus host")
+    policy = interface_body("SER", intent, {}, "ios-xe", "leaf")["configData"]["networkOS"]["policy"]
+    assert not {"portTypeEdgeTrunk", "bpduGuard", "speed"} & policy.keys()
+    assert policy == {"adminState": True, "mtu": 1500, "policyType": "iosXeAccess", "description": "campus host"}
+    # a same-mode role default is the base (its adopted string mtu goes out as an integer); a different-mode default is not
+    defaults = {"leaf": {"policyType": "iosXeTrunkHost", "adminState": "true", "allowedVlans": "none", "mtu": "1500"}}
+    trunk = interface_body("SER", InterfaceIntent("C1_LE1", "GigabitEthernet1/0/3", "iosXeTrunkHost", inputs={"allowedVlans": "2"}), defaults, "ios-xe", "leaf")
+    assert trunk["configData"]["networkOS"] == {
+        "networkOSType": "ios-xe",
+        "policy": {"policyType": "iosXeTrunkHost", "adminState": True, "allowedVlans": "2", "mtu": 1500},
+    }
+    access = interface_body("SER", intent, defaults, "ios-xe", "leaf")["configData"]["networkOS"]["policy"]
+    assert "allowedVlans" not in access and access["mtu"] == 1500
+
+
+def test_interface_body_without_description_sends_no_description_key():
+    body = interface_body("SER", InterfaceIntent("S1", "Ethernet1/3", "accessHost"), {})
+    assert "description" not in body["configData"]["networkOS"]["policy"]
+    reset = default_body("SER", "Ethernet1/4", {"policyType": "trunkHost", "description": "", "allowedVlans": "none"})
+    assert reset["configData"]["networkOS"]["policy"] == {"policyType": "trunkHost", "allowedVlans": "none"}
+
+
+def test_nxos_host_port_body_is_unchanged_with_the_real_role_defaults():
+    """The golden host-port entries (accessHost on a leaf/ToR whose role default is trunkHost) keep the live-proven access-port shape."""
+    defaults = {"leaf": {"policyType": "trunkHost", "adminState": "true", "allowedVlans": "none", "mtu": "jumbo"}}
+    intent = InterfaceIntent("S4_LE1", "Ethernet1/2", "accessHost", description="S4_H1 host port")
+    policy = interface_body("SER", intent, defaults, "nx-os", "leaf")["configData"]["networkOS"]["policy"]
+    assert policy == {
+        "adminState": True,
+        "mtu": "jumbo",
+        "speed": "auto",
+        "bpduGuard": "default",
+        "portTypeEdgeTrunk": True,
+        "policyType": "accessHost",
+        "description": "S4_H1 host port",
+    }
+    routed = interface_body(
+        "SER", InterfaceIntent("S4_BG1", "Ethernet1/9", "routedHost"), {"borderGateway": {"policyType": "routedHost", "mtu": "9216"}}, "nx-os", "borderGateway"
+    )
+    assert routed["configData"]["networkOS"]["policy"] == {"policyType": "routedHost", "mtu": 9216}

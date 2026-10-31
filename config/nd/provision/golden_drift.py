@@ -417,26 +417,37 @@ def _native(key: str, value: Any) -> Any:
 
 
 def _if_body(serial: str, interface: str, interface_type: str, policy: dict, os_type: str = "nx-os") -> dict:
+    """Empty-string inputs are dropped: ND 4.3.1 declares string inputs such as `description` with minLength 1."""
     body: dict = {"switchId": serial, "interfaceName": interface, "interfaceType": interface_type, "configData": {}}
     mode = _mode_for(policy.get("policyType", ""))
     if mode:
         body["configData"]["mode"] = mode
-    body["configData"]["networkOS"] = {"networkOSType": os_type, "policy": {key: _native(key, value) for key, value in policy.items()}}
+    native = {key: _native(key, value) for key, value in policy.items() if value != ""}
+    body["configData"]["networkOS"] = {"networkOSType": os_type, "policy": native}
     return body
 
 
-def interface_body(serial: str, intent: InterfaceIntent, fabric_defaults: dict, os_type: str = "nx-os") -> dict:
-    """PUT body for an explicit `interfaces:` entry, in the shape of Provisioner._ensure_access_port; intent.inputs override the built-in
-    values. `fabric_defaults` is the fabric's `defaults` (role -> policy); it is accepted for the caller's convenience and not consulted."""
-    policy: dict = {
-        "policyType": intent.policy,
-        "adminState": True,
-        "mtu": "jumbo",
-        "speed": "auto",
-        "bpduGuard": "default",
-        "portTypeEdgeTrunk": True,
-        "description": intent.description,
-    }
+# Seed policy for an explicit `interfaces:` entry when the switch role's default cannot serve as the base. The NX-OS seed is the shape of
+# Provisioner._ensure_access_port (live-proven on both controllers); ND 4.3.1's iosXe*Host templates have no portTypeEdgeTrunk and no
+# bpduGuard on a trunk, and type mtu as an integer (1500-9216), so the IOS-XE seed carries only what every iosXe host template accepts.
+NXOS_SEED: dict = {"adminState": True, "mtu": "jumbo", "speed": "auto", "bpduGuard": "default", "portTypeEdgeTrunk": True}
+IOSXE_SEED: dict = {"adminState": True, "mtu": 1500}
+
+
+def interface_body(serial: str, intent: InterfaceIntent, fabric_defaults: dict, os_type: str = "nx-os", role: str = "") -> dict:
+    """PUT body for an explicit `interfaces:` entry: a base policy overlaid with the entry's policyType, its description (only when
+    non-empty) and its inputs. The base is the switch role's default (`fabric_defaults[role]`, the fabric's `defaults:`) when that default
+    is in the same port mode as the entry (both trunk, both routed, ...), since its inputs then belong to the same template family; otherwise
+    (no default, or e.g. a trunkHost leaf default under an accessHost entry, whose allowedVlans/numeric mtu the access template rejects)
+    the platform seed."""
+    default = fabric_defaults.get(role) if role else None
+    if default and _mode_for(str(default.get("policyType", ""))) == _mode_for(intent.policy):
+        policy: dict = dict(default)
+    else:
+        policy = dict(IOSXE_SEED if os_type == "ios-xe" else NXOS_SEED)
+    policy["policyType"] = intent.policy
+    if intent.description:
+        policy["description"] = intent.description
     policy.update({key: value for key, value in intent.inputs.items() if key != "mode"})
     return _if_body(serial, intent.interface, intent.type, policy, os_type)
 
@@ -471,7 +482,8 @@ def _explicit_interface_drift(fabric: Fabric, live: LiveFabric, intent: Interfac
     if found and _if_policy(found) and not _if_differs(golden, live_values):
         return None
     kind: Kind = "different" if found and _if_policy(found) else "missing"
-    body = interface_body(serial, intent, fabric.defaults, _os_type(fabric, intent.switch, found))
+    role = next((s.role for s in fabric.switches if s.hostname == intent.switch), "")
+    body = interface_body(serial, intent, fabric.defaults, _os_type(fabric, intent.switch, found), role)
     fix = Op("put_interface", fabric.name, "PUT", interface_path(fabric.name, serial, intent.interface), body)
     return Drift(INTERFACES, fabric.name, kind, subject, _if_text(golden), _if_text(live_values) if found else "none", fix, None, None)
 

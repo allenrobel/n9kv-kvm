@@ -1,0 +1,130 @@
+{
+  "meta": {
+    "counts": {
+      "remaining": 0,
+      "total": 3
+    }
+  },
+  "switches": [
+    {
+      "additionalData": {
+        "configSyncStatus": "inSync",
+        "discoveredSystemMode": "normal",
+        "discoveryStatus": "ok",
+        "discoveryStatusDetail": "Ok",
+        "domainName": "",
+        "hypershieldConnectivityStatus": "notApplicable",
+        "hypershieldTenant": "",
+        "intendedSystemMode": "normal",
+        "meta": {
+          "switchDbId": 7370,
+          "switchUuid": "DCNM-UUID-7120"
+        },
+        "platformType": "nx-os",
+        "remoteCredentialStore": "local",
+        "scalableUnit": "",
+        "smartSwitch": false,
+        "sourceInterfaceName": "mgmt0",
+        "sourceVrfName": "management",
+        "systemMode": "normal",
+        "usage": "others",
+        "username": "admin",
+        "vendor": "Cisco"
+      },
+      "advisoryLevel": "none",
+      "alertSuspend": "disabled",
+      "anomalyLevel": "healthy",
+      "fabricManagementIp": "192.168.14.132",
+      "fabricName": "SITE2",
+      "fabricType": "vxlanIbgp",
+      "hostname": "S4_BG1",
+      "model": "N9K-C9300v",
+      "serialNumber": "91NL39Q6LYP",
+      "softwareVersion": "10.6(2)",
+      "switchId": "91NL39Q6LYP",
+      "switchRole": "borderGateway",
+      "systemUpTime": "02:24:09",
+      "vpcConfigured": false
+    },
+    {
+      "additionalData": {
+        "configSyncStatus": "inSync",
+        "discoveredSystemMode": "normal",
+        "discoveryStatus": "ok",
+        "discoveryStatusDetail": "Ok",
+        "domainName": "",
+        "hypershieldConnectivityStatus": "notApplicable",
+        "hypershieldTenant": "",
+        "intendedSystemMode": "normal",
+        "meta": {
+          "switchDbId": 7410,
+          "switchUuid": "DCNM-UUID-7440"
+        },
+        "platformType": "nx-os",
+        "remoteCredentialStore": "local",
+        "scalableUnit": "",
+        "smartSwitch": false,
+        "sourceInterfaceName": "mgmt0",
+        "sourceVrfName": "management",
+        "systemMode": "normal",
+        "usage": "others",
+        "username": "admin",
+        "vendor": "Cisco"
+      },
+      "advisoryLevel": "none",
+      "alertSuspend": "disabled",
+      "anomalyLevel": "healthy",
+      "fabricManagementIp": "192.168.14.153",
+      "fabricName": "SITE2",
+      "fabricType": "vxlanIbgp",
+      "hostname": "S4_LE1",
+      "model": "N9K-C9300v",
+      "serialNumber": "9TNWE163CJY",
+      "softwareVersion": "10.6(2)",
+      "switchId": "9TNWE163CJY",
+      "switchRole": "leaf",
+      "systemUpTime": "02:24:09",
+      "vpcConfigured": false
+    },
+    {
+      "additionalData": {
+        "configSyncStatus": "inSync",
+        "discoveredSystemMode": "normal",
+        "discoveryStatus": "ok",
+        "discoveryStatusDetail": "Ok",
+        "domainName": "",
+        "hypershieldConnectivityStatus": "notApplicable",
+        "hypershieldTenant": "",
+        "intendedSystemMode": "normal",
+        "meta": {
+          "switchDbId": 7460,
+          "switchUuid": "DCNM-UUID-7490"
+        },
+        "platformType": "nx-os",
+        "remoteCredentialStore": "local",
+        "scalableUnit": "",
+        "smartSwitch": false,
+        "sourceInterfaceName": "mgmt0",
+        "sourceVrfName": "management",
+        "systemMode": "normal",
+        "usage": "others",
+        "username": "admin",
+        "vendor": "Cisco"
+      },
+      "advisoryLevel": "none",
+      "alertSuspend": "disabled",
+      "anomalyLevel": "healthy",
+      "fabricManagementIp": "192.168.14.142",
+      "fabricName": "SITE2",
+      "fabricType": "vxlanIbgp",
+      "hostname": "S4_SP1",
+      "model": "N9K-C9300v",
+      "serialNumber": "9PWZAIF2BFX",
+      "softwareVersion": "10.6(2)",
+      "switchId": "9PWZAIF2BFX",
+      "switchRole": "spine",
+      "systemUpTime": "02:24:42",
+      "vpcConfigured": false
+    }
+  ]
+}

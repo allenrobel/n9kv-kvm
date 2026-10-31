@@ -101,6 +101,13 @@ def test_redact_masks_credentials_at_any_depth_without_mutating_input():
     assert body["password"] == "pw"  # ggignore: unit-test placeholder, not a credential
 
 
+def test_redact_masks_any_password_secret_or_authkey_key_case_insensitively():
+    body = {"management": {"bgpPassword": "b", "ospfAuthKey": "o", "NTP_AUTH_KEY": "n", "ntpAuthKeyId": 3, "SECRET_ENCRYPTD": "s", "bgpAsn": "65001"}}  # ggignore
+    assert redact(body) == {
+        "management": {"bgpPassword": "***", "ospfAuthKey": "***", "NTP_AUTH_KEY": "***", "ntpAuthKeyId": "***", "SECRET_ENCRYPTD": "***", "bgpAsn": "65001"}
+    }
+
+
 def _fabric(name: str, ftype: str, asn: str, platform: str) -> Fabric:
     return Fabric(name=name, type=ftype, asn=asn, switches=[Switch("SW", "10.0.0.1", "leaf", platform)])
 

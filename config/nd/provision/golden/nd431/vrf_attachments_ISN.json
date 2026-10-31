@@ -1,0 +1,22 @@
+{
+  "attachments": [
+    {
+      "attach": false,
+      "errorMessage": null,
+      "instanceValues": {},
+      "showVlan": false,
+      "status": "notApplicable",
+      "switchFabricName": "ISN",
+      "switchId": "9OX4DZTCYJM",
+      "switchName": "WAN2",
+      "switchRole": "coreRouter",
+      "vrfName": "default"
+    }
+  ],
+  "meta": {
+    "counts": {
+      "remaining": 0,
+      "total": 1
+    }
+  }
+}

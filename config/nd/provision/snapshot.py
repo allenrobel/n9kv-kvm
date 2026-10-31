@@ -14,6 +14,7 @@ import argparse
 import difflib
 import json
 import re
+from functools import partial
 from pathlib import Path
 from typing import Any, Callable
 
@@ -80,8 +81,27 @@ def normalize(obj: Any, name_map: dict[str, str]) -> Any:
     return obj
 
 
+SECRET_KEYS = {"SECRET_ENCRYPTD", "PASSWORD_ENCRYPT"}
+_HASH_RE = re.compile(r"\$[0-9]\$[^\s\"'\\]+")
+_CRED_RE = re.compile(r"(\b(?:password|secret)\s+\d+\s+)\S+")
+
+
+def scrub(obj: Any) -> Any:
+    """Return a deep copy of obj with credential hashes redacted, keeping keys, list lengths and types.
+
+    Values of SECRET_KEYS become "<redacted>"; inside strings, `$<digit>$...` hashes become "$REDACTED$" and the token after
+    `password|secret <type>` becomes "<redacted>". Empty/boolean settings such as `bgpPassword: ""` are untouched."""
+    if isinstance(obj, dict):
+        return {k: "<redacted>" if k in SECRET_KEYS else scrub(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [scrub(v) for v in obj]
+    if isinstance(obj, str):
+        return _CRED_RE.sub(r"\1<redacted>", _HASH_RE.sub("$REDACTED$", obj))
+    return obj
+
+
 def _write(out_dir: Path, name: str, data: Any) -> None:
-    (out_dir / f"{name}.json").write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    (out_dir / f"{name}.json").write_text(json.dumps(scrub(data), indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def _fetch(name: str, fn: Callable[[], Any]) -> Any:
@@ -92,6 +112,18 @@ def _fetch(name: str, fn: Callable[[], Any]) -> Any:
     except RuntimeError as exc:
         print(f"skipped {name}: {exc}")
         return None
+
+
+def _access_associations(client: NDClient, fabric: str, vpc_pairs: Any) -> list[Any]:
+    """ToR associations of every dumped vPC pair (the endpoint is keyed by the pair's two switch ids); a pair whose read fails is skipped."""
+    found: list[Any] = []
+    pairs = vpc_pairs.get("vpcPairs", []) if isinstance(vpc_pairs, dict) else []
+    for pair in pairs:
+        params = {"aggregationOrLeafSwitchId": pair.get("switchId"), "aggregationOrLeafPeerSwitchId": pair.get("peerSwitchId")}
+        body = _fetch(f"accessAssociations_{fabric}", partial(client.get, f"/fabrics/{fabric}/accessAssociations", params=params))
+        if isinstance(body, dict):
+            found.extend(body.get("associations") or [])
+    return found
 
 
 def dump(client: NDClient, out_dir: Path) -> None:
@@ -116,7 +148,9 @@ def dump(client: NDClient, out_dir: Path) -> None:
         _write(out_dir, f"members_{name}", _fetch(f"members_{name}", lambda: client.get(f"/fabrics/{name}/members")))
         _write(out_dir, f"links_{name}", _fetch(f"links_{name}", lambda: client.paged("/links", "links", params={"fabricName": name})))
         _write(out_dir, f"policies_{name}", _fetch(f"policies_{name}", lambda: client.paged(f"/fabrics/{name}/policies", "policies")))
-        _write(out_dir, f"vpcPairs_{name}", _fetch(f"vpcPairs_{name}", lambda: client.get(f"/fabrics/{name}/vpcPairs")))
+        vpc_pairs = _fetch(f"vpcPairs_{name}", lambda: client.get(f"/fabrics/{name}/vpcPairs"))
+        _write(out_dir, f"vpcPairs_{name}", vpc_pairs)
+        _write(out_dir, f"accessAssociations_{name}", {"associations": _access_associations(client, name, vpc_pairs)})
         _write(out_dir, f"vrfs_{name}", _fetch(f"vrfs_{name}", lambda: client.get(f"/fabrics/{name}/vrfs")))
         _write(out_dir, f"networks_{name}", _fetch(f"networks_{name}", lambda: client.get(f"/fabrics/{name}/networks")))
         serials = [s["serialNumber"] for s in switches.get("switches", [])]

@@ -9,7 +9,11 @@ used to live only in the `provision-isn` skill and `docs/nd4_fabrics_bringup.md`
 - `topology_nd421.yaml` / `topology_nd431.yaml` - the two testbeds (SITE1/SITE2/ISN/MSD + the CAMPUS1 Cat9kv leaf per controller); differ only in hostnames and mgmt IPs
 - `provision.py` - phased, idempotent, `--dry-run` (phases: fabrics, msd, switches, vpc, tor, isn, overlay, deploy)
 - `snapshot.py` - `dump` (read-only) and `diff` (normalized)
-- `nd_client.py`, `topology.py` - library code; `tests/` - pytest for the pure parts
+- `golden.py` - `drift` / `restore` / `adopt` of the live ND against the topology files (see "Golden baseline" below)
+- `golden_drift.py` (pure compare), `golden_live.py` (live read), `golden_apply.py` (push),
+  `golden_adopt.py` (bootstrap/adoption writer) - the modules behind `golden.py`
+- `golden/nd421/`, `golden/nd431/` - reference snapshots (`snapshot.py dump`, credential hashes scrubbed); the tool does not read them
+- `nd_client.py`, `topology.py` - library code; `tests/` - pytest for the pure parts; `tests/fixtures/` - the two base topology files the golden tests use
 
 ## Usage (on the lab host, prod env sourced)
 
@@ -25,6 +29,55 @@ uv run config/nd/provision/snapshot.py diff ~/tmp/snap_nd421 ~/tmp/snap_nd431 \
   --map S1_BG1=S3_BG1 --map S1_SP1=S3_SP1 --map S1_LE1=S3_LE1 --map S1_LE2=S3_LE2 --map S1_LE3=S3_LE3 --map S1_LE4=S3_LE4 \
   --map S1_TOR1=S3_TOR1 --map S2_BG1=S4_BG1 --map S2_SP1=S4_SP1 --map S2_LE1=S4_LE1 --map WAN1=WAN2 --map C1_LE1=C3_LE1 --map C1_SP1=C3_SP1
 ```
+
+## Golden baseline (drift, restore, adopt)
+
+The two topology files are the golden baseline of a testbed. `golden.py` compares a live ND with them, pushes the live ND back to them, or
+writes the live state into them. One invocation targets one controller (`--nd-ip`), so run it once per testbed.
+
+```bash
+source ~/repos/n9kv-kvm/env_prod/env.sh
+cd ~/repos/n9kv-kvm
+uv run config/nd/provision/golden.py drift   --topology config/nd/provision/topology_nd421.yaml --nd-ip 10.10.20.10     # read-only, exit 1 on drift
+uv run config/nd/provision/golden.py drift   --topology config/nd/provision/topology_nd431.yaml --snapshot ~/tmp/snap_nd431   # offline
+uv run config/nd/provision/golden.py restore --topology config/nd/provision/topology_nd431.yaml --nd-ip 10.10.20.20 [--yes] [--extras adopt|delete|skip] [--no-deploy]
+uv run config/nd/provision/golden.py adopt   --topology config/nd/provision/topology_nd431.yaml --nd-ip 10.10.20.20 [--snapshot DIR] [--classes links,interfaces,defaults]
+```
+
+- `drift` prints one line per difference (MISSING, DIFFERENT, EXTRA) and changes nothing.
+- `restore` prints the drift, writes any adoptions to the topology file first, asks for confirmation (`--yes` skips it), creates or overwrites what is
+  missing or different, applies the chosen deletes, then Recalculate & Deploys the touched fabrics and then the groups (`--no-deploy` skips that), re-reads,
+  and prints the remaining drift and pending-config counts.
+- `adopt` is the bootstrap: it writes `links`, `generated_links`, `interfaces`, `defaults` and so on from the live ND (or a `--snapshot`) into the
+  topology file. It prints `CONFLICT:` lines and exits 1 when a live generated link collides with a link the tool owns.
+- Exit codes: 0 ok / no drift, 1 drift (`drift`) or conflicts (`adopt`), 2 refused or cancelled, 3 live read failed (HTTP error or
+  unreachable controller), 4 apply failed (a failed op, a dropped connection, or a failed Recalculate & Deploy); `restore` exits 0 even with leftovers, so
+  read its remaining-drift line.
+- Extras are objects that exist live but not in golden. `--extras adopt` writes them into the yaml, `delete` removes them from ND, `skip` leaves them;
+  without the flag `restore` asks per object. With `--yes` and extras present but no `--extras`, `restore` exits 2 and asks for `--extras adopt|delete|skip`.
+  `restore` also Recalculate & Deploys any fabric whose switches still carry pending config from an earlier aborted run.
+
+Rules:
+
+- Covered classes: tool-owned fabric and ISN links, ND-generated links listed under `generated_links`, physical interface policies, logical interfaces,
+  network/VRF attachments, VRFs and networks, vPC and ToR pairs, switch membership and role, fabric and group settings (golden settings are a subset;
+  extra keys in ND are not drift).
+- ND-generated links (`multisiteUnderlay`, `multisiteOverlay`, campus links, peer-link and ToR port-channels) are repaired by the owner's Recalculate &
+  Deploy and are never deleted or `PUT`. Propagated MSD copies of VRFs and networks are never extras.
+- Removing a switch is never automatic: an extra switch is reported only.
+- A "delete" of an unlisted physical port is a reset to the role default (`defaults:` per fabric, policy type from ND's role table), because ND refuses to
+  delete the port. A logical interface (port-channel, vPC, SVI, subinterface) that ND did not generate is a real DELETE.
+- Link /30s are pinned in the yaml. Pin them the way ND already allocated them (`adopt` does): ND refuses a `PUT` that swaps the two ends'
+  addresses on an existing numbered link (`IP/Subnet allocation failed: ... is allocated to ...`), so the only way to re-address a link
+  is to re-provision it. The two topology files therefore differ in one SITE2 /30 besides hostnames and IPs.
+- Policy inputs in the yaml are the lowercase strings the comparison uses (`adminState: 'true'`, `mtu: '9216'`); the PUT bodies carry
+  ND's own types (boolean, integer for `mtu`/`accessVlan`/`nativeVlan` when numeric). Both OpenAPI specs type them that way; ND 4.3.1
+  validates request bodies against the schema and rejects the strings, ND 4.2.1 does not validate.
+- `golden/{nd421,nd431}/` are reference snapshots only; the topology yaml is the golden.
+- Run it only when no tests are running: `restore` is disruptive by design (resets ports, deletes interfaces, deploys fabrics).
+
+The 2026-10-30 bootstrap found test residue (`trunkHost` on BGW and spine ports, an `l3Po` port-channel on the ToRs, a campus `Gi1/0/1`) and one ISN
+link converted to `multisiteUnderlay`; `restore --extras delete` handled all of it.
 
 ## Gotchas carried over from ND 4.2.1
 

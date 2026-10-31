@@ -1,0 +1,86 @@
+{
+  "attachments": [
+    {
+      "attach": true,
+      "errorMessage": null,
+      "extensionValues": [],
+      "extraConfig": "",
+      "instanceValues": {},
+      "showVlan": true,
+      "status": "deployed",
+      "switchFabricName": "SITE1",
+      "switchId": "92IAYR41NF3",
+      "switchName": "S1_BG1",
+      "switchRole": "borderGateway",
+      "vlanId": 2001,
+      "vrfId": 50001,
+      "vrfName": "LAB"
+    },
+    {
+      "attach": true,
+      "errorMessage": null,
+      "extraConfig": "",
+      "instanceValues": {},
+      "peerSwitchId": "9UDEG98YLEY",
+      "showVlan": true,
+      "status": "deployed",
+      "switchFabricName": "SITE1",
+      "switchId": "9C68L63CT9E",
+      "switchName": "S1_LE2",
+      "switchRole": "leaf",
+      "vlanId": 2001,
+      "vrfId": 50001,
+      "vrfName": "LAB"
+    },
+    {
+      "attach": true,
+      "errorMessage": null,
+      "extraConfig": "",
+      "instanceValues": {},
+      "peerSwitchId": "9C68L63CT9E",
+      "showVlan": true,
+      "status": "deployed",
+      "switchFabricName": "SITE1",
+      "switchId": "9UDEG98YLEY",
+      "switchName": "S1_LE1",
+      "switchRole": "leaf",
+      "vlanId": 2001,
+      "vrfId": 50001,
+      "vrfName": "LAB"
+    },
+    {
+      "attach": false,
+      "errorMessage": null,
+      "instanceValues": {},
+      "peerSwitchId": "967H2HM3169",
+      "showVlan": true,
+      "status": "notApplicable",
+      "switchFabricName": "SITE1",
+      "switchId": "92615XPSM8T",
+      "switchName": "S1_LE3",
+      "switchRole": "leaf",
+      "vrfId": 50001,
+      "vrfName": "LAB"
+    },
+    {
+      "attach": false,
+      "errorMessage": null,
+      "instanceValues": {},
+      "peerSwitchId": "92615XPSM8T",
+      "showVlan": true,
+      "status": "notApplicable",
+      "switchFabricName": "SITE1",
+      "switchId": "967H2HM3169",
+      "switchName": "S1_LE4",
+      "switchRole": "leaf",
+      "vrfId": 50001,
+      "vrfName": "LAB"
+    }
+  ],
+  "meta": {
+    "counts": {
+      "remaining": 0,
+      "total": 5
+    }
+  }
+}

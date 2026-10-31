@@ -1,0 +1,107 @@
+{
+  "attachments": [
+    {
+      "attach": true,
+      "displayName": "LAB_NET1",
+      "extraConfig": "",
+      "instanceValues": {},
+      "interfaces": [
+        {
+          "interfaceRange": "Ethernet1/3",
+          "mode": "access"
+        }
+      ],
+      "networkId": 30001,
+      "networkName": "LAB_NET1",
+      "status": "deployed",
+      "switchFabricName": "SITE1",
+      "switchId": "9WO9329PPCP",
+      "switchName": "S1_TOR1",
+      "switchRole": "tor",
+      "vlanId": 2
+    },
+    {
+      "attach": true,
+      "displayName": "LAB_NET1",
+      "extraConfig": "",
+      "instanceValues": {},
+      "interfaces": [],
+      "networkId": 30001,
+      "networkName": "LAB_NET1",
+      "status": "deployed",
+      "switchFabricName": "SITE1",
+      "switchId": "92IAYR41NF3",
+      "switchName": "S1_BG1",
+      "switchRole": "borderGateway",
+      "vlanId": 2
+    },
+    {
+      "attach": true,
+      "displayName": "LAB_NET1",
+      "extraConfig": "",
+      "instanceValues": {},
+      "interfaces": [],
+      "networkId": 30001,
+      "networkName": "LAB_NET1",
+      "peerSwitchId": "9UDEG98YLEY",
+      "status": "deployed",
+      "switchFabricName": "SITE1",
+      "switchId": "9C68L63CT9E",
+      "switchName": "S1_LE2",
+      "switchRole": "leaf",
+      "vlanId": 2
+    },
+    {
+      "attach": true,
+      "displayName": "LAB_NET1",
+      "extraConfig": "",
+      "instanceValues": {},
+      "interfaces": [],
+      "networkId": 30001,
+      "networkName": "LAB_NET1",
+      "peerSwitchId": "9C68L63CT9E",
+      "status": "deployed",
+      "switchFabricName": "SITE1",
+      "switchId": "9UDEG98YLEY",
+      "switchName": "S1_LE1",
+      "switchRole": "leaf",
+      "vlanId": 2
+    },
+    {
+      "attach": false,
+      "displayName": "LAB_NET1",
+      "extraConfig": "",
+      "instanceValues": {},
+      "interfaces": [],
+      "networkId": 30001,
+      "networkName": "LAB_NET1",
+      "peerSwitchId": "967H2HM3169",
+      "status": "notApplicable",
+      "switchFabricName": "SITE1",
+      "switchId": "92615XPSM8T",
+      "switchName": "S1_LE3",
+      "switchRole": "leaf"
+    },
+    {
+      "attach": false,
+      "displayName": "LAB_NET1",
+      "extraConfig": "",
+      "instanceValues": {},
+      "interfaces": [],
+      "networkId": 30001,
+      "networkName": "LAB_NET1",
+      "peerSwitchId": "92615XPSM8T",
+      "status": "notApplicable",
+      "switchFabricName": "SITE1",
+      "switchId": "967H2HM3169",
+      "switchName": "S1_LE4",
+      "switchRole": "leaf"
+    }
+  ],
+  "meta": {
+    "counts": {
+      "remaining": 0,
+      "total": 6
+    }
+  }
+}

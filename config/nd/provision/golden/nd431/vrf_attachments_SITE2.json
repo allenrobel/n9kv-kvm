@@ -1,0 +1,41 @@
+{
+  "attachments": [
+    {
+      "attach": true,
+      "errorMessage": null,
+      "extraConfig": "",
+      "instanceValues": {},
+      "showVlan": true,
+      "status": "deployed",
+      "switchFabricName": "SITE2",
+      "switchId": "9TNWE163CJY",
+      "switchName": "S4_LE1",
+      "switchRole": "leaf",
+      "vlanId": 2001,
+      "vrfId": 50001,
+      "vrfName": "LAB"
+    },
+    {
+      "attach": true,
+      "errorMessage": null,
+      "extensionValues": [],
+      "extraConfig": "",
+      "instanceValues": {},
+      "showVlan": true,
+      "status": "deployed",
+      "switchFabricName": "SITE2",
+      "switchId": "91NL39Q6LYP",
+      "switchName": "S4_BG1",
+      "switchRole": "borderGateway",
+      "vlanId": 2001,
+      "vrfId": 50001,
+      "vrfName": "LAB"
+    }
+  ],
+  "meta": {
+    "counts": {
+      "remaining": 0,
+      "total": 2
+    }
+  }
+}

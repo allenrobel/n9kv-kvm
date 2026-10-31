@@ -1,0 +1,151 @@
+# Declarative description of the ND 4.2.1 testbed. topology_nd431.yaml is the same file with only
+# hostnames and mgmt IPs changed -- `diff` the two to prove the mirror. Values that must match the
+# live ND 4.2.1 were captured with snapshot.py (fields noted per section).
+fabrics:
+  - name: SITE1
+    type: vxlanIbgp
+    asn: "65001"
+    settings:            # merged into the fabric object (GET -> update -> PUT) after create
+      management:
+        bgpLoopbackIpRange: 10.11.0.0/22
+        nveLoopbackIpRange: 10.12.0.0/22
+        anycastRendezvousPointIpRange: 10.13.0.0/24
+        intraFabricSubnetRange: 10.14.0.0/22
+        vrfLiteSubnetRange: 10.15.0.0/16
+        vrfLiteAutoConfig: back2BackAndToExternal
+        autoSymmetricVrfLite: true
+        autoVrfLiteDefaultVrf: true
+        autoSymmetricDefaultVrf: true
+    switches:
+      - {hostname: S1_BG1, ip: 192.168.12.131, role: borderGateway}
+      - {hostname: S1_SP1, ip: 192.168.12.141, role: spine}
+      - {hostname: S1_LE1, ip: 192.168.12.151, role: leaf}
+      - {hostname: S1_LE2, ip: 192.168.12.152, role: leaf}
+      - {hostname: S1_LE3, ip: 192.168.12.154, role: leaf}
+      - {hostname: S1_LE4, ip: 192.168.12.155, role: leaf}
+      - {hostname: S1_TOR1, ip: 192.168.12.161, role: tor}
+  - name: SITE2
+    type: vxlanIbgp
+    asn: "65002"
+    settings:
+      management:
+        bgpLoopbackIpRange: 10.21.0.0/22
+        nveLoopbackIpRange: 10.22.0.0/22
+        anycastRendezvousPointIpRange: 10.23.0.0/24
+        intraFabricSubnetRange: 10.24.0.0/22
+        vrfLiteSubnetRange: 10.25.0.0/16
+        vrfLiteAutoConfig: back2BackAndToExternal
+        autoSymmetricVrfLite: true
+        autoVrfLiteDefaultVrf: true
+        autoSymmetricDefaultVrf: true
+    switches:
+      - {hostname: S2_BG1, ip: 192.168.12.132, role: borderGateway}
+      - {hostname: S2_SP1, ip: 192.168.12.142, role: spine}
+      - {hostname: S2_LE1, ip: 192.168.12.153, role: leaf}
+  - name: ISN
+    type: externalConnectivity
+    asn: "65535"
+    settings:
+      management:
+        monitoredMode: false          # API-created external fabrics default to true; true silently blocks every deploy
+    switches:
+      - {hostname: WAN1, ip: 192.168.12.112, role: coreRouter, platform: ios-xe}   # live ND 4.2.1 role (snapshot 2026-09-08)
+
+  - name: CAMPUS1
+    type: vxlanCampus           # Campus VXLAN EVPN (Easy_Fabric_IOS_XE): the only fabric type that takes Catalyst 9000
+    asn: "65003"
+    settings:
+      management:               # 10.4x pools, disjoint from SITE1 (10.1x), SITE2 (10.2x) and ND's campus default vrfLite pool 10.33.0.0/16
+        bgpLoopbackIpRange: 10.41.0.0/22
+        nveLoopbackIpRange: 10.42.0.0/22
+        anycastRendezvousPointIpRange: 10.43.0.0/24
+        intraFabricSubnetRange: 10.44.0.0/22
+        vrfLiteSubnetRange: 10.45.0.0/16
+        # The Cat9kv parser takes `system mtu` and per-port `mtu` only in 1500-8978 (a real 9300 goes to 9198), and a per-port
+        # `mtu` above `system mtu` is rejected. ND's campus defaults (systemMtu 1500, l2HostInterfaceMtu 9216 -> 9198) therefore
+        # fail every host port deploy with "Command mtu 9198 is invalid". 8978 is the platform ceiling; the 1500 per-port
+        # default keeps `mtu` lines out of the generated trunkHost policy and is what the cisco.nd XE tests expect after a replace.
+        systemMtu: 8978
+        # Intra-fabric link MTU (ND default 9198): the Cat9kv rejects a per-port mtu above 8978, so the leaf-spine link uses the ceiling.
+        fabricMtu: 8978
+        l2HostInterfaceMtu: 1500
+    switches:
+      # Catalyst 9000v leaf + spine, one intra-fabric link (C1_SP1 Gi1/0/1 -- C1_LE1 Gi1/0/8). ND creates the
+      # Gi1/0/8--Gi1/0/1 link itself from the CDP adjacency and gives it the `iosXeNumbered` policy (observed on 4.2.1
+      # and 4.3.1). Gi1/0/1..1/0/7 on the leaf must stay free for the cisco.nd IOS-XE interface tests; the link exists
+      # so the fabric-link ownership guard (PR #558) has a corruptible, rebuildable endpoint.
+      - {hostname: C1_LE1, ip: 192.168.12.181, role: leaf, platform: ios-xe}
+      - {hostname: C1_SP1, ip: 192.168.12.182, role: spine, platform: ios-xe}
+
+fabric_groups:
+  - name: MSD
+    settings:
+      management:
+        type: vxlan
+        multisiteOverlayInterConnectType: directPeering
+        autoMultisiteUnderlayInterConnect: true
+        bgpSendCommunity: true
+    members: [SITE1, SITE2, ISN]
+
+isn:
+  links:
+    - {src_fabric: ISN, src: WAN1, src_if: GigabitEthernet2, dst_fabric: SITE1, dst: S1_BG1, dst_if: Ethernet1/3,
+       src_asn: "65535", dst_asn: "65001", src_ip: 10.15.0.1/30, dst_ip: 10.15.0.2, mtu: 9000}
+    - {src_fabric: ISN, src: WAN1, src_if: GigabitEthernet3, dst_fabric: SITE2, dst: S2_BG1, dst_if: Ethernet1/3,
+       src_asn: "65535", dst_asn: "65002", src_ip: 10.25.0.1/30, dst_ip: 10.25.0.2, mtu: 9000}
+  wan:
+    hostname: WAN1
+    fabric: ISN
+    cdp_interfaces: [GigabitEthernet2, GigabitEthernet3]
+    loopback: {ip: 10.35.0.1, description: "Routing loopback (router-id)"}
+    bgp_router_id: {BGP_AS: "65535", LOOPBACK_IP: 10.35.0.1}
+
+vpc_pairs:
+  # Paired in this order with ND's default template: ND allocates vPC domain ids 1 and 2 in pairing order and
+  # generates the peer-link port-channel500 over the discovered Ethernet1/2 <-> Ethernet1/2 leaf link.
+  - {fabric: SITE1, switch: S1_LE1, peer: S1_LE2}
+  - {fabric: SITE1, switch: S1_LE3, peer: S1_LE4}
+
+tor_pairs:
+  # ND ToR pairing (accessAssociationActions/associate): the ToR's Ethernet1/1-1/2 uplinks become a port-channel on
+  # the ToR and a ToR-owned vPC on the leaf pair. ND 4.2.1 recommends no ids (GET accessAssociations answers
+  # `resources: {}` in every form, 2026-09-14), so the ids are pinned here: port-channel1/vpc1 on both sides, the
+  # GUI's first free id, clear of the peer-link port-channel500 and of vpc200/201/210 + Ethernet1/8-1/10, which the
+  # cisco.nd nd_interface_vpc_* integration targets own on this leaf pair. A recommendation from ND, if any, wins.
+  - {fabric: SITE1, tor: S1_TOR1, leaf: S1_LE1, peer: S1_LE2, tor_po: 1, leaf_po: 1, vpc_id: 1}
+
+overlay:
+  # One VRF and one VLAN-2 network, created at the MSD level so both sites share the L3/L2 VNIs (ND propagates
+  # them to SITE1 and SITE2 as vxlanIbgp objects). Attached to the S1 vPC pair and to S2_LE1, whose Ethernet1/2
+  # is the S2_H1 host port (192.0.1.172/24, anycast gateway 192.0.1.1). S1_H1 (192.0.1.171/24) sits behind S1_TOR1
+  # Ethernet1/3: after the `tor` phase pairs the ToR with the S1 leaf vPC, the ToR gets its own attachment row (ND 4.x has
+  # no ToR-port field on the leaf row), listed last so the leaf rows are attached first.
+  vrfs:
+    - fabrics: [MSD]
+      object: {vrfName: LAB, vrfType: vxlan, vrfId: 50001, vlanId: 2001}
+  networks:
+    - fabrics: [MSD]
+      object:
+        networkName: LAB_NET1
+        networkType: vxlan
+        networkId: 30001
+        vrfName: LAB
+        vlanId: 2
+        networkMode: layer3
+        l3Data: {gatewayIpv4Address: 192.0.1.1/24}
+  # The border gateways are attached too (no interfaces): an MSD stretches a VRF/network across sites only through
+  # the BGWs, and it is this attachment that puts the VNIs (with multisite ingress replication) on them. Without it
+  # both BGWs carry no VNI at all and same-subnet hosts in SITE1 and SITE2 cannot reach each other (lab, 2026-09-14).
+  vrf_attachments:
+    - {fabric: SITE1, vrf: LAB, switch: S1_LE1}
+    - {fabric: SITE1, vrf: LAB, switch: S1_LE2}
+    - {fabric: SITE1, vrf: LAB, switch: S1_BG1}
+    - {fabric: SITE2, vrf: LAB, switch: S2_LE1}
+    - {fabric: SITE2, vrf: LAB, switch: S2_BG1}
+  network_attachments:
+    - {fabric: SITE1, network: LAB_NET1, switch: S1_LE1, vlan: 2, interfaces: []}
+    - {fabric: SITE1, network: LAB_NET1, switch: S1_LE2, vlan: 2, interfaces: []}
+    - {fabric: SITE1, network: LAB_NET1, switch: S1_BG1, vlan: 2, interfaces: []}
+    - {fabric: SITE2, network: LAB_NET1, switch: S2_LE1, vlan: 2, interfaces: [{mode: access, interfaceRange: Ethernet1/2}]}
+    - {fabric: SITE2, network: LAB_NET1, switch: S2_BG1, vlan: 2, interfaces: []}
+    - {fabric: SITE1, network: LAB_NET1, switch: S1_TOR1, vlan: 2, interfaces: [{mode: access, interfaceRange: Ethernet1/3}]}

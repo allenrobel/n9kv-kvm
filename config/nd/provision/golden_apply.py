@@ -43,12 +43,13 @@ class ApplyError(RuntimeError):
 
 
 def _failed_items(resp: Any) -> list[dict]:
-    """Entries of the top-level `results` / `items` lists whose string `status` is not "success". A top-level `status` (a message string such as
-    "No switches pending for deployment.") and an empty body are never failures."""
+    """Entries of the top-level `results` / `items` / `associations` lists whose string `status` is not "success" (networkAttachments answer
+    `results`, changeRoles `items`, accessAssociationActions associate/disassociate `associations`). A top-level `status` (a message string such
+    as "No switches pending for deployment.") and an empty body are never failures."""
     if not isinstance(resp, dict):
         return []
     found: list[dict] = []
-    for key in ("results", "items"):
+    for key in ("results", "items", "associations"):
         value = resp.get(key)
         if isinstance(value, list):
             found.extend(i for i in value if isinstance(i, dict) and isinstance(i.get("status"), str) and i["status"] != "success")

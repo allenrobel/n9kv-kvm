@@ -612,6 +612,8 @@ def test_tor_pair_missing_and_extra(full_lab):
     extra = next(d for d in result if d.kind == "extra")
     assert isinstance(extra.delete, Op) and extra.delete.action == "unpair_tor"
     assert extra.delete.path == "/fabrics/SITE1/accessAssociationActions/disassociate" and extra.adopt is not None and extra.adopt.section == ("tor_pairs",)
+    assert extra.delete.body == [{k: stored[0][k] for k in ("aggregationOrLeafSwitchId", "aggregationOrLeafPeerSwitchId")} | {"accessOrTorSwitchId": "OTHER"}]
+    assert all("resources" not in item for item in extra.delete.body)
 
 
 def test_wrong_switch_role_fixes_with_set_role(nd421):

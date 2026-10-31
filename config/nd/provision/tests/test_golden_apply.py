@@ -175,3 +175,14 @@ def test_top_level_status_string_is_not_a_failure():
     ops = [Op("deploy_overlay", "SITE1", "POST", "/fabrics/SITE1/networkActions/deploy", {}), Op("put_settings", "SITE1", "PUT", "/fabrics/SITE1", {})]
     _applier(client).apply(ops)
     assert len(client.writes) == 2
+
+
+@pytest.mark.parametrize("action,path", [("pair_tor", "associate"), ("unpair_tor", "disassociate")])
+def test_failed_tor_association_item_stops_the_apply(action, path):
+    url = f"/fabrics/SITE1/accessAssociationActions/{path}"
+    bad = {"associations": [{"accessOrTorSwitchId": "T", "aggregationOrLeafSwitchId": "L", "aggregationOrLeafPeerSwitchId": "P", "status": "failed", "message": "x"}]}
+    client = Stub(post_results={url: bad})
+    ops = [Op(action, "SITE1", "POST", url, [{}]), Op(action, "SITE2", "POST", url.replace("SITE1", "SITE2"), [{}])]
+    with pytest.raises(ApplyError, match=f"{action}.*'failed'.*x"):
+        _applier(client).apply(ops)
+    assert [c[1] for c in client.writes] == [url]

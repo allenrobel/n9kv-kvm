@@ -948,7 +948,8 @@ def _tor_drifts(topo: Topology, fabric: Fabric, fab_live: LiveFabric) -> list[Dr
         tor, leaf, peer = assoc.get("accessOrTorSwitchId", ""), assoc.get("aggregationOrLeafSwitchId", ""), assoc.get("aggregationOrLeafPeerSwitchId", "")
         if _tor_key(tor, leaf, peer) in listed:
             continue
-        body = tor_associate_payload(tor, leaf, peer, assoc["resources"])
+        # disassociate takes the three serial-number keys per item only (ND 4.3.1 schema); `resources` belongs to associate
+        body = [{"accessOrTorSwitchId": tor, "aggregationOrLeafSwitchId": leaf, "aggregationOrLeafPeerSwitchId": peer}]
         delete = Op("unpair_tor", fabric.name, "POST", f"/fabrics/{fabric.name}/accessAssociationActions/disassociate", body)
         n_tor, n_leaf, n_peer = names.get(tor, tor), names.get(leaf, leaf), names.get(peer, peer)
         drifts.append(

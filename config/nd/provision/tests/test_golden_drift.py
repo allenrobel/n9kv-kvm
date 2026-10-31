@@ -464,10 +464,25 @@ def test_bodies_follow_the_access_port_shape():
 # ---------------------------------------------------------------- overlay, pairs, switches, settings
 
 
+def _tor_record(pair, live) -> dict:
+    """The association record (and associate payload) the golden ToR pair describes."""
+    serials = {h: live[pair.fabric].switches[h]["serialNumber"] for h in (pair.tor, pair.leaf, pair.peer)}
+    return {
+        "accessOrTorSwitchId": serials[pair.tor],
+        "aggregationOrLeafSwitchId": serials[pair.leaf],
+        "aggregationOrLeafPeerSwitchId": serials[pair.peer],
+        "resources": pair.resources(),
+    }
+
+
 def _with_tor_associations(topo: Topology, live) -> None:
-    """The dumps carry no accessAssociations_*.json, so give the live fabric the association the golden ToR pair describes."""
+    """Give the live fabric the association each golden ToR pair describes, unless the snapshot already carries that pairing."""
     for pair in topo.tor_pairs:
         serials = {h: live[pair.fabric].switches[h]["serialNumber"] for h in (pair.tor, pair.leaf, pair.peer)}
+        if any(
+            a.get("accessOrTorSwitchId") == serials[pair.tor] and (a.get("resources") or {}).get("aggregationOrLeafVpcId") for a in live[pair.fabric].tor_associations
+        ):
+            continue
         live[pair.fabric].tor_associations.append(
             {
                 "accessOrTorSwitchId": serials[pair.tor],
@@ -599,7 +614,7 @@ def test_vpc_pair_missing_and_extra(nd421):
 
 def test_tor_pair_missing_and_extra(full_lab):
     topo, live = full_lab
-    stored = live["SITE1"].tor_associations
+    stored = [_tor_record(next(p for p in topo.tor_pairs if p.fabric == "SITE1"), live)]
     live["SITE1"].tor_associations = []
     drifts = [d for d in drift_pairs(topo, live) if d.kind == "missing" and "TOR" in d.subject]
     assert len(drifts) == 1
@@ -825,3 +840,26 @@ def test_native_converts_only_known_boolean_inputs():
     policy = interface_body("SER", intent, {})["configData"]["networkOS"]["policy"]
     assert policy["description"] == "true" and policy["extraConfig"] == "false"
     assert policy["cdp"] is False and policy["adminState"] is True
+
+
+def test_tor_recommendation_for_another_leaf_pair_is_not_a_pairing(nd421):
+    """ND answers the golden pair's accessAssociations query with a recommendation record when the ToR is paired elsewhere:
+    isRecommended false, remarks "Already paired with (...)", resources holding only the ToR port-channel id. That is a MISSING
+    pair, not a present one; and the same record seen for a non-golden pair is not an extra."""
+    topo, live = nd421
+    pair = next(p for p in topo.tor_pairs if p.fabric == "SITE1")
+    serial = {h: s["serialNumber"] for h, s in live["SITE1"].switches.items()}
+    recommendation = {
+        "accessOrTorSwitchId": serial[pair.tor],
+        "aggregationOrLeafSwitchId": serial[pair.leaf],
+        "aggregationOrLeafPeerSwitchId": serial[pair.peer],
+        "isRecommended": False,
+        "remarks": "Already paired with (S1_LE4,S1_LE3)",
+        "resources": {"accessOrTorPortChannelId": 1},
+    }
+    live["SITE1"].tor_associations = [recommendation]
+    assert [d.kind for d in drift_pairs(topo, live) if d.cls == "pairs"] == ["missing"]
+    live["SITE1"].tor_associations = []
+    _with_tor_associations(topo, live)
+    live["SITE1"].tor_associations.append({**recommendation, "aggregationOrLeafSwitchId": serial["S1_LE3"], "aggregationOrLeafPeerSwitchId": serial["S1_LE4"]})
+    assert [d for d in drift_pairs(topo, live) if d.cls == "pairs"] == []

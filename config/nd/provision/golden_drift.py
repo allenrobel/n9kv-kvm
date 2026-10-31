@@ -948,10 +948,17 @@ def _tor_adoption(fabric: str, tor: str, leaf: str, peer: str, resources: dict) 
     return Adoption(("tor_pairs",), entry)
 
 
+def _is_paired(assoc: dict) -> bool:
+    """True for a real ToR pairing. GET accessAssociations also answers recommendations: a record without `resources`, and (when the
+    ToR is paired with another leaf pair) one with `isRecommended: false`, remarks "Already paired with (...)" and a `resources`
+    block holding only the ToR port-channel id. Only an actual pairing carries the leaf-side vPC id."""
+    return bool((assoc.get("resources") or {}).get("aggregationOrLeafVpcId"))
+
+
 def _tor_drifts(topo: Topology, fabric: Fabric, fab_live: LiveFabric) -> list[Drift]:
     drifts: list[Drift] = []
     golden: list[TorPair] = [p for p in topo.tor_pairs if p.fabric == fabric.name]
-    live_assocs = [a for a in fab_live.tor_associations if a.get("resources")]  # a record without ids is only ND's recommendation
+    live_assocs = [a for a in fab_live.tor_associations if _is_paired(a)]
     present = {_tor_key(a.get("accessOrTorSwitchId", ""), a.get("aggregationOrLeafSwitchId", ""), a.get("aggregationOrLeafPeerSwitchId", "")) for a in live_assocs}
     listed: set = set()
     for pair in golden:

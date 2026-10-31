@@ -406,10 +406,29 @@ def _if_text(values: dict) -> str:
 INTEGER_INPUTS = ("mtu", "accessVlan", "nativeVlan")  # integer in every ND 4.3.1 int_*_host template (mtu only when numeric; "jumbo" stays)
 
 
+# boolean in the ND 4.3.1 interface policy templates; only these are converted, so a description that reads "true" stays a string
+BOOLEAN_INPUTS = (
+    "adminState",
+    "portTypeEdgeTrunk",
+    "cdp",
+    "netflow",
+    "pfc",
+    "qos",
+    "monitor",
+    "orphanPort",
+    "negotiateAuto",
+    "errorDetectionAcl",
+    "stormControl",
+    "ipRedirects",
+    "pimSparse",
+    "vlanMapping",
+)
+
+
 def _native(key: str, value: Any) -> Any:
     """ND's own type for a policy input: golden yaml and adopted defaults carry the lowercase strings the drift comparison uses
     ('true', '9216'), but ND 4.3.1's schema validation rejects them (adminState must be a boolean, a numeric mtu an integer)."""
-    if isinstance(value, str) and value.lower() in ("true", "false"):
+    if key in BOOLEAN_INPUTS and isinstance(value, str) and value.lower() in ("true", "false"):
         return value.lower() == "true"
     if key in INTEGER_INPUTS and isinstance(value, str) and value.isdigit():
         return int(value)

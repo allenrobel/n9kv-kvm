@@ -165,17 +165,18 @@ def read_live_from_snapshot(snapshot_dir: Path, topo: Topology) -> dict[str, Liv
 
 
 def free_ports(live: LiveFabric, hostname: str, all_links: list[dict]) -> list[dict]:
-    """Physical ethernet interfaces of `hostname` that no link uses and that are not port-channel members."""
+    """Physical ethernet interfaces of `hostname` that no link uses and that are not port-channel members. Interface names are compared
+    case-insensitively, as drift_interfaces does."""
     used: set[tuple[str, str]] = set()
     for link in all_links:
-        used.add((link.get("srcSwitchName", ""), link.get("srcInterfaceName", "")))
-        used.add((link.get("dstSwitchName", ""), link.get("dstInterfaceName", "")))
+        used.add((link.get("srcSwitchName", ""), link.get("srcInterfaceName", "").lower()))
+        used.add((link.get("dstSwitchName", ""), link.get("dstInterfaceName", "").lower()))
     return [
         i
         for i in live.interfaces.get(hostname, [])
         if i.get("interfaceType") == "ethernet"
         and not i.get("interfaceName", "").startswith("mgmt")
-        and (hostname, i["interfaceName"]) not in used
+        and (hostname, i["interfaceName"].lower()) not in used
         and (i.get("operData") or {}).get("portChannelId") == -1
     ]
 

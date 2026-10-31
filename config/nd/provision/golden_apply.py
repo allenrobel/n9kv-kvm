@@ -100,7 +100,7 @@ class Applier:
                 continue
             if op.action == "add_switch":
                 if not switches_added:
-                    self._run(op, self.prov.phase_switches)
+                    self._run(op, self._phase_switches)
                     switches_added = True
                 continue
             if op.action in ("put_interface", "reset_interface"):  # both PUT a port policy; ND refuses a policy-type change under a network
@@ -116,6 +116,13 @@ class Applier:
             raise
         except (RuntimeError, ValueError, TimeoutError, requests.RequestException, OSError) as exc:  # HTTP error, connection drop, read timeout
             raise ApplyError(f"{op.action} {op.method} {op.path}: {exc}") from exc
+
+    def _phase_switches(self) -> None:
+        """Provisioner.phase_switches exits (SystemExit) when NXOS_PASSWORD/IOSXE_PASSWORD is unset; report that as a failed op."""
+        try:
+            self.prov.phase_switches()
+        except SystemExit as exc:
+            raise ApplyError(f"add_switch: {exc}") from exc
 
     # -- interface policy-type change ----------------------------------------------------------------------
     def _put_interface(self, op: Op) -> None:

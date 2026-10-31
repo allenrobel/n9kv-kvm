@@ -98,3 +98,12 @@ def test_tor_association_400_reads_as_empty():
     assert read_live(client, topo)["SITE1"].tor_associations == []
     with pytest.raises(LiveReadError):
         read_live(StubClient(error="HTTP 500 boom"), topo)
+
+
+def test_free_ports_match_link_endpoints_case_insensitively():
+    live = _live()
+    all_links = [
+        {**link, "srcInterfaceName": link["srcInterfaceName"].lower(), "dstInterfaceName": link["dstInterfaceName"].upper()} for f in live.values() for link in f.links
+    ]
+    names = {p["interfaceName"] for p in free_ports(live["SITE1"], "S1_SP1", all_links)}
+    assert "Ethernet1/1" not in names and "Ethernet1/6" in names

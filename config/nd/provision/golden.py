@@ -190,10 +190,11 @@ def run_restore(args: argparse.Namespace, topo: Topology, live: dict[str, LiveFa
         out(f"golden: cannot read {nd_ip}: {exc}")
         return 3
     remaining = compute(topo, after)
+    resets = sum(1 for o in deletes if o.action == "reset_interface")  # a "delete" of a free physical port is a PUT back to its role default
     out(f"restore: {len(remaining)} drift item(s) remain")
     _pending_report(prov, topo, after, out)
     out(
-        f"restore: {len(ops)} applied, {len(adoptions)} adopted, {len(deletes)} deleted; deployed {', '.join(deployed) or 'nothing'}. "
+        f"restore: {len(ops)} applied, {len(adoptions)} adopted, {resets} reset, {len(deletes) - resets} deleted; deployed {', '.join(deployed) or 'nothing'}. "
         "Now run the restore-lab-topologies Step 4.6 fabric checks and container pings."
     )
     return 0

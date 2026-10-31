@@ -93,7 +93,8 @@ def answers(*given):
 
 
 def restore(monkeypatch, drifts, a, ask, rec):
-    monkeypatch.setattr(golden, "compute", lambda topo, live: drifts if not rec.calls or rec.calls[0][0] != "apply" else [])
+    answers_ = iter([drifts, []])  # run_restore computes twice: the report before applying, the remaining drift after
+    monkeypatch.setattr(golden, "compute", lambda topo, live: next(answers_))
     lines: list[str] = []
     code = golden.run_restore(a, load(TOPO_PATH), rec.live, prov_stub(rec), ask, lines.append)
     return code, lines
@@ -142,7 +143,9 @@ def test_restore_prompts_per_extra_and_honours_answers(monkeypatch, rec):
     assert rec.calls[0] == ("write", [ADOPT])
     assert [o.path for o in rec.calls[1][1]] == ["/fix", "/d2a", "/d2b"]
     assert rec.calls[2] == ("deploy", ["SITE1"])
-    assert lines[-1] == ("restore: 1 applied, 1 adopted, 2 deleted; deployed SITE1. Now run the restore-lab-topologies Step 4.6 fabric checks and container pings.")
+    assert lines[-1] == (
+        "restore: 1 applied, 1 adopted, 0 reset, 2 deleted; deployed SITE1. Now run the restore-lab-topologies Step 4.6 fabric checks and container pings."
+    )
     assert "SITE1: 2 pending config line(s) remain" in lines
 
 
@@ -183,7 +186,7 @@ def test_extras_delete_flag_takes_every_delete_op(monkeypatch, rec):
     assert code == 0
     assert [c[0] for c in rec.calls] == ["apply", "deploy"]
     assert [o.path for o in rec.calls[0][1]] == ["/1", "/2a", "/2b"]
-    assert "0 applied, 0 adopted, 3 deleted; deployed SITE1." in lines[-1]
+    assert "0 applied, 0 adopted, 0 reset, 3 deleted; deployed SITE1." in lines[-1]
 
 
 def test_adoptions_are_written_before_any_push(monkeypatch, rec):
@@ -287,3 +290,13 @@ def test_drift_against_an_unreachable_controller_exits_3(monkeypatch, where):
     lines: list[str] = []
     assert golden.main(["drift", "--topology", str(TOPO_PATH), "--nd-ip", "9.9.9.9"], out=lines.append) == 3
     assert lines[0].startswith("golden: cannot read 9.9.9.9: ") and "no route to host" in lines[0]
+
+
+def test_restore_summary_counts_role_default_resets_separately(monkeypatch, rec):
+    ds = [
+        drift("different", "m", fix=op("put_interface")),
+        drift("extra", "e1", delete=op("reset_interface", path="/p1"), adopt=ADOPT),
+        drift("extra", "e2", delete=op("delete_interface", path="/p2"), adopt=ADOPT),
+    ]
+    code, lines = restore(monkeypatch, ds, args(yes=True, extras="delete"), answers(), rec)
+    assert code == 0 and "restore: 1 applied, 0 adopted, 1 reset, 1 deleted; deployed SITE1." in lines[-1]

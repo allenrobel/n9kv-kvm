@@ -818,3 +818,10 @@ def test_nxos_host_port_body_is_unchanged_with_the_real_role_defaults():
         "SER", InterfaceIntent("S4_BG1", "Ethernet1/9", "routedHost"), {"borderGateway": {"policyType": "routedHost", "mtu": "9216"}}, "nx-os", "borderGateway"
     )
     assert routed["configData"]["networkOS"]["policy"] == {"policyType": "routedHost", "mtu": 9216}
+
+
+def test_native_converts_only_known_boolean_inputs():
+    intent = InterfaceIntent("S1", "Ethernet1/3", "accessHost", description="true", inputs={"cdp": "false", "extraConfig": "false"})
+    policy = interface_body("SER", intent, {})["configData"]["networkOS"]["policy"]
+    assert policy["description"] == "true" and policy["extraConfig"] == "false"
+    assert policy["cdp"] is False and policy["adminState"] is True

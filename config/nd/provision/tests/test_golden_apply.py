@@ -217,3 +217,17 @@ def test_transport_error_becomes_apply_error_and_stops_the_apply():
     with pytest.raises(ApplyError, match="put_settings PUT /fabrics/SITE1: connection aborted"):
         _applier(client).apply(ops)
     assert [c[1] for c in client.writes] == ["/fabrics/SITE1"]
+
+
+def test_add_switch_missing_password_is_an_apply_error():
+    client = Stub()
+    applier = _applier(client)
+
+    def phase_switches():
+        raise SystemExit("NXOS_PASSWORD is not set; it is required to add NX-OS switches to fabric SITE1")
+
+    applier.prov.phase_switches = phase_switches  # type: ignore[method-assign]
+    ops = [Op("add_switch", "SITE1", "POST", "/fabrics/SITE1/switches", None), Op("put_link", "SITE1", "PUT", "/links/1", {})]
+    with pytest.raises(ApplyError, match="add_switch: NXOS_PASSWORD is not set"):
+        applier.apply(ops)
+    assert client.writes == []

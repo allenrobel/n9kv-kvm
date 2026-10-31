@@ -20,6 +20,7 @@ import argparse
 import copy
 import json
 import os
+import re
 import time
 from pathlib import Path
 from typing import Any
@@ -66,6 +67,7 @@ DISCOVERY_PLACEHOLDER = "<from-discovery>"
 # optional with default md5; the GUI sends MD5. workaround: shallow-discovery-snmpv3-auth-required (ND vault)
 SNMPV3_AUTH_PROTOCOL = "md5"
 REDACTED_KEYS = {"password", "userPasswd", "secret"}
+REDACTED_KEY_RE = re.compile(r"password|secret|auth_?key", re.IGNORECASE)  # bgpPassword, ospfAuthKey..., ntpAuthKey..., SECRET_ENCRYPTD
 
 
 def _platform(fabric: Fabric) -> str:
@@ -78,7 +80,7 @@ def _platform(fabric: Fabric) -> str:
 def redact(body: Any) -> Any:
     """Copy of body with credential values replaced by *** (log lines must never carry switch/ND passwords)."""
     if isinstance(body, dict):
-        return {k: ("***" if k in REDACTED_KEYS else redact(v)) for k, v in body.items()}
+        return {k: ("***" if k in REDACTED_KEYS or REDACTED_KEY_RE.search(str(k)) else redact(v)) for k, v in body.items()}
     if isinstance(body, list):
         return [redact(v) for v in body]
     return body

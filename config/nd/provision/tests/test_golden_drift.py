@@ -548,6 +548,33 @@ def test_extra_attachment_offers_adopt_or_detach(nd421):
     assert delete.body["attachments"][0]["attach"] is False and delete.body["attachments"][0]["networkName"] == "LAB_NET1"
 
 
+def test_extra_attachment_detach_lists_no_ports(nd421):
+    """ND 4.2.1: a network detach that lists the row's ports only removes the ports and keeps the switch attached."""
+    topo, live = nd421
+    port = [{"interfaceRange": "Ethernet1/9", "mode": "access"}]
+    row = next(a for a in live["SITE1"].network_attachments if a["switchName"] == "S1_LE1")
+    live["SITE1"].network_attachments.append({**row, "switchName": "S1_LE3", "switchId": live["SITE1"].switches["S1_LE3"]["serialNumber"], "interfaces": port})
+    (drift,) = drift_overlay(topo, live)
+    assert drift.adopt is not None and drift.adopt.entry["interfaces"] == port  # adopting keeps the live ports
+    assert isinstance(drift.delete, Op) and drift.delete.body["attachments"] == [
+        {"networkName": "LAB_NET1", "switchId": live["SITE1"].switches["S1_LE3"]["serialNumber"], "vlanId": row["vlanId"], "interfaces": [], "attach": False}
+    ]
+
+
+def test_extra_network_delete_detaches_with_no_ports(nd421):
+    topo, live = nd421
+    live["SITE2"].networks.append({"networkName": "STRAY", "networkId": 30009, "vlanId": 9, "vrfName": "LAB"})
+    switch = live["SITE2"].switches["S2_LE1"]
+    port = [{"interfaceRange": "Ethernet1/2", "mode": "access"}]
+    live["SITE2"].network_attachments.append(
+        {"networkName": "STRAY", "switchName": "S2_LE1", "switchId": switch["serialNumber"], "attach": True, "vlanId": 9, "interfaces": port}
+    )
+    (drift,) = [d for d in drift_overlay(topo, live) if d.cls == "networks"]
+    assert isinstance(drift.delete, list) and drift.delete[0].body == {
+        "attachments": [{"networkName": "STRAY", "switchId": switch["serialNumber"], "vlanId": 9, "interfaces": [], "attach": False}]
+    }
+
+
 def test_extra_network_offers_adopt_or_delete_after_detach(nd421):
     topo, live = nd421
     live["SITE2"].networks.append({"networkName": "STRAY", "networkId": 30009, "vlanId": 9, "vrfName": "LAB", "l3Data": {"gatewayIpv4Address": "10.9.9.1/24"}})

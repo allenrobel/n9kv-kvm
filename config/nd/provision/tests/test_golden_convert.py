@@ -92,14 +92,14 @@ def _summary(ops) -> list[tuple[str, str, str]]:
     return [(o.action, o.method, o.path) for o in ops]
 
 
-GOLDEN_TEARDOWN = [  # one detach per golden attachment (SITE1: 4 network, 3 VRF; SITE2: 2 and 2), one deploy per fabric
-    *[("detach", "POST", "/fabrics/SITE1/networkAttachments")] * 4,
+GOLDEN_TEARDOWN = [  # one detach request per object per fabric (all its switches, so a vPC pair goes together), one deploy per fabric
+    ("detach", "POST", "/fabrics/SITE1/networkAttachments"),
     ("deploy_overlay", "POST", "/fabrics/SITE1/networkActions/deploy"),
-    *[("detach", "POST", "/fabrics/SITE2/networkAttachments")] * 2,
+    ("detach", "POST", "/fabrics/SITE2/networkAttachments"),
     ("deploy_overlay", "POST", "/fabrics/SITE2/networkActions/deploy"),
-    *[("detach", "POST", "/fabrics/SITE1/vrfAttachments")] * 3,
+    ("detach", "POST", "/fabrics/SITE1/vrfAttachments"),
     ("deploy_overlay", "POST", "/fabrics/SITE1/vrfActions/deploy"),
-    *[("detach", "POST", "/fabrics/SITE2/vrfAttachments")] * 2,
+    ("detach", "POST", "/fabrics/SITE2/vrfAttachments"),
     ("deploy_overlay", "POST", "/fabrics/SITE2/vrfActions/deploy"),
     ("delete_network", "DELETE", "/fabrics/MSD/networks/LAB_NET1"),
     ("delete_vrf", "DELETE", "/fabrics/MSD/vrfs/LAB"),
@@ -144,12 +144,9 @@ def test_plan_includes_non_golden_overlay_and_links():
         ("delete_vrf", "/fabrics/MSD/vrfs/TEST_VRF"),
     ]
     assert ("detach", "POST", "/fabrics/SITE1/networkAttachments") in _summary(p.overlay_ops)
-    assert [o.body["attachments"][0]["switchId"] for o in p.overlay_ops if o.action == "detach" and o.fabric == "SITE1" and "network" in o.path] == [
-        "SN-S1_LE1",
-        "SN-S1_LE2",
-        "SN-S1_BG1",
-        "SN-S1_TOR1",
-        "SN-S1_LE2",  # TEST_NET's
+    assert [[i["switchId"] for i in o.body["attachments"]] for o in p.overlay_ops if o.action == "detach" and o.fabric == "SITE1" and "network" in o.path] == [
+        ["SN-S1_LE1", "SN-S1_LE2", "SN-S1_BG1", "SN-S1_TOR1"],
+        ["SN-S1_LE2"],  # TEST_NET's
     ]
     assert p.link_ids == [*GOLDEN_LINKS[:1], ("SITE1", "LINK-X", "S1_BG1 Ethernet1/4 <-> WAN1 GigabitEthernet4 (not in golden)"), GOLDEN_LINKS[1]]
     assert p.intact_source  # residue does not make a testbed less intact
@@ -333,6 +330,22 @@ def test_run_converts_an_intact_multicast_testbed_in_order(monkeypatch):
     assert restore_live is rebuild_live and restore_topo.replication_mode == "ingress"
     assert restore_args.yes is True and restore_args.extras == "skip" and restore_args.no_deploy is False
     assert h.reads == [] and h.prompts == [] and "convert: done" in h.lines[-1]
+
+
+def test_run_teardown_detaches_each_object_once_per_fabric_and_frees_the_ports_with_the_switch(monkeypatch):
+    h = Harness(monkeypatch, [_testbed("multicast"), _testbed("ingress", overlay=False, members=False, links=False), _testbed("ingress"), _testbed("ingress")])
+    assert h.run() == 0
+    detaches = [(c[1], c[2]["attachments"]) for c in h.client.calls if c[0] == "POST" and c[1].endswith("Attachments")]
+    assert [(path, [i["switchId"] for i in items]) for path, items in detaches] == [
+        ("/fabrics/SITE1/networkAttachments", ["SN-S1_LE1", "SN-S1_LE2", "SN-S1_BG1", "SN-S1_TOR1"]),
+        ("/fabrics/SITE2/networkAttachments", ["SN-S2_LE1", "SN-S2_BG1"]),
+        ("/fabrics/SITE1/vrfAttachments", ["SN-S1_LE1", "SN-S1_LE2", "SN-S1_BG1"]),  # the vPC pair S1_LE1/S1_LE2 in one request
+        ("/fabrics/SITE2/vrfAttachments", ["SN-S2_LE1", "SN-S2_BG1"]),
+    ]
+    network_items = [i for path, items in detaches if "network" in path for i in items]
+    assert network_items and all(i["attach"] is False and i["interfaces"] == [] and i["networkName"] == "LAB_NET1" for i in network_items)
+    assert any(r["interfaces"] for r in _rows("SITE2", True))  # the live rows did list ports: the detach drops them on purpose
+    assert all(i["attach"] is False and "interfaces" not in i for path, items in detaches if "vrf" in path for i in items)
 
 
 def test_run_converts_an_intact_ingress_testbed_back_to_multicast(monkeypatch):

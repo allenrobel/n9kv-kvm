@@ -116,6 +116,26 @@ uv run config/nd/provision/golden.py convert --topology config/nd/provision/topo
 `--dry-run` prints the plan and the first step's calls and sends nothing. See "Replication modes" in `config/nd/provision/README.md` for the steps, the
 refusals and the exit codes.
 
+## Findings from the ND 4.2.1 lab runs
+
+The first `golden.py convert` run against ND 4.2.1 (2026-11-13) stopped in "remove overlay" on these two behaviours; the tool now handles both.
+
+- vPC peers must be attached and detached together. `POST /fabrics/SITE1/vrfAttachments` with
+  `{"attachments": [{"vrfName": "LAB", "switchId": "<LE2>", "attach": false}]}` (one peer alone) answered that item with status `failed`:
+  `Attach Response : Failed : VPC details not found for Peer Serial no: <LE1>`. ND had in fact detached both peers. Attaching one peer alone
+  fails the same way (`VPC details not found for Peer Serial no: <LE2>`). One request carrying both peers,
+  `{"attachments": [{"vrfName": "LAB", "switchId": "<LE1>", "attach": true}, {"vrfName": "LAB", "switchId": "<LE2>", "attach": true}]}`,
+  answered `success` for both items.
+- A network detach that lists interfaces removes only the interfaces. `POST /fabrics/SITE2/networkAttachments` with
+
+  ```json
+  {"attachments": [{"networkName": "LAB_NET1", "switchId": "<S2_LE1>", "vlanId": 2,
+                    "interfaces": [{"interfaceRange": "Ethernet1/2", "mode": "access"}], "attach": false}]}
+  ```
+
+  followed by the network deploy, left the switch `attach: true`, `status: deployed`, `interfaces: []`: ND removed the port and kept the
+  switch attached. A second detach with `"interfaces": []` then detached the switch (`attach: false`).
+
 ## Tooling notes for this repo
 
 - Both topology files declare `replication_modes` (`multicast` and `ingress`) for `SITE1` and `SITE2`, and `--replication-mode` picks one. Without

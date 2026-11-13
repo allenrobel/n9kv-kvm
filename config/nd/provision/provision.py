@@ -176,10 +176,15 @@ def link_payload(link: Link, src_serial: str, dst_serial: str) -> dict:
     }
 
 
-def attachment_payload(kind: str, att: dict, serial: str) -> dict:
+def attachment_item(kind: str, att: dict, serial: str) -> dict:
+    """One `attachments` entry (attach true) of a golden VRF/network attachment row."""
     if kind == "vrf":
-        return {"attachments": [{"vrfName": att["vrf"], "switchId": serial, "attach": True}]}
-    return {"attachments": [{"networkName": att["network"], "switchId": serial, "vlanId": att["vlan"], "interfaces": att.get("interfaces", []), "attach": True}]}
+        return {"vrfName": att["vrf"], "switchId": serial, "attach": True}
+    return {"networkName": att["network"], "switchId": serial, "vlanId": att["vlan"], "interfaces": att.get("interfaces", []), "attach": True}
+
+
+def attachment_payload(kind: str, att: dict, serial: str) -> dict:
+    return {"attachments": [attachment_item(kind, att, serial)]}
 
 
 def cdp_run_policy(serial: str) -> dict:
@@ -656,15 +661,21 @@ class Provisioner:
             net_query = self._query(f"/fabrics/{fabric}/networkAttachments/query", "attachments", {"switchIds": net_serials})
             net_attached[fabric] = {(a["networkName"], a["switchId"]) for a in net_query if a.get("attach")}
 
+        # one POST per object per fabric carrying every switch still to attach: ND 4.2.1 fails a vPC peer attached without its peer in
+        # the same request ("VPC details not found for Peer Serial no")
         touched_vrf: dict[str, set[str]] = {}
+        vrf_posts: dict[tuple[str, str], list[dict]] = {}
         for att in self.topo.overlay.vrf_attachments:
             serial = self.serial(att["switch"])
             if (att["vrf"], serial) in vrf_attached.get(att["fabric"], set()):
                 continue
-            self._post(f"/fabrics/{att['fabric']}/vrfAttachments", attachment_payload("vrf", att, serial))
+            vrf_posts.setdefault((att["fabric"], att["vrf"]), []).append(attachment_item("vrf", att, serial))
             touched_vrf.setdefault(att["fabric"], set()).add(serial)
+        for (fabric, _), items in vrf_posts.items():
+            self._post(f"/fabrics/{fabric}/vrfAttachments", {"attachments": items})
 
         touched_net: dict[str, set[str]] = {}
+        net_posts: dict[tuple[str, str], list[dict]] = {}
         for att in self.topo.overlay.network_attachments:
             serial = self.serial(att["switch"])
             if (att["network"], serial) in net_attached.get(att["fabric"], set()):
@@ -672,8 +683,10 @@ class Provisioner:
             for intf in att.get("interfaces", []):
                 if intf.get("mode") == "access":
                     self._ensure_access_port(att["fabric"], serial, intf["interfaceRange"], f"{att['network']} host port")
-            self._post(f"/fabrics/{att['fabric']}/networkAttachments", attachment_payload("network", att, serial))
+            net_posts.setdefault((att["fabric"], att["network"]), []).append(attachment_item("network", att, serial))
             touched_net.setdefault(att["fabric"], set()).add(serial)
+        for (fabric, _), items in net_posts.items():
+            self._post(f"/fabrics/{fabric}/networkAttachments", {"attachments": items})
 
         for fabric, touched_serials in touched_vrf.items():
             names = sorted({att["vrf"] for att in self.topo.overlay.vrf_attachments if att["fabric"] == fabric})

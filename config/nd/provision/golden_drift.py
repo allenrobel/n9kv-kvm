@@ -763,6 +763,15 @@ def _row_host(fab_live: LiveFabric, row: dict) -> str:
     return next((h for h, s in fab_live.switches.items() if s.get("serialNumber") == row.get("switchId")), row.get("switchId", ""))
 
 
+def _detach_op(kind: str, fabric: str, name: str, row: dict) -> Op:
+    """Detach the live attachment `row` of VRF/network `name`. A network detach lists no interfaces: ND 4.2.1 answers one that lists the
+    row's ports by removing only the ports and keeping the switch attached; with an empty list it frees the ports and detaches the switch."""
+    att: dict[str, Any] = {"vrf": name} if kind == "vrf" else {"network": name, "vlan": row.get("vlanId"), "interfaces": []}
+    body = attachment_payload(kind, att, row["switchId"])
+    body["attachments"][0]["attach"] = False
+    return Op("detach", fabric, "POST", f"/fabrics/{fabric}/{kind}Attachments", body)
+
+
 def _extra_overlay_drift(kind: str, fabric: str, live: dict[str, LiveFabric], obj: dict, scope: list[str]) -> Drift:
     """Extra VRF/network: delete = detach every attached switch (in `scope`: the fabric, or a group's member fabrics, where the propagated
     copies are attached), deploy them, then DELETE the object."""
@@ -772,11 +781,7 @@ def _extra_overlay_drift(kind: str, fabric: str, live: dict[str, LiveFabric], ob
     ops: list[Op] = []
     for target in scope:
         rows = [r for r in _attachment_rows(live[target], kind) if r.get(key) == name]
-        for row in rows:
-            att = {"vrf": name} if kind == "vrf" else {"network": name, "vlan": row.get("vlanId"), "interfaces": row.get("interfaces") or []}
-            body = attachment_payload(kind, att, row["switchId"])
-            body["attachments"][0]["attach"] = False
-            ops.append(Op("detach", target, "POST", f"/fabrics/{target}/{kind}Attachments", body))
+        ops.extend(_detach_op(kind, target, name, row) for row in rows)
         if rows:
             deploy = {names_key: [name], "switchIds": sorted({r["switchId"] for r in rows})}
             ops.append(Op("deploy_overlay", target, "POST", f"/fabrics/{target}/{kind}Actions/deploy", deploy))
@@ -952,10 +957,7 @@ def _attachment_drifts(topo: Topology, live: dict[str, LiveFabric], kind: str) -
             name = row.get(key, "")
             if (fabric, name, host) in wanted or (fabric, name) in owned:
                 continue
-            att = {"vrf": name} if kind == "vrf" else {"network": name, "vlan": row.get("vlanId"), "interfaces": row.get("interfaces") or []}
-            body = attachment_payload(kind, att, row["switchId"])
-            body["attachments"][0]["attach"] = False
-            delete = Op("detach", fabric, "POST", f"/fabrics/{fabric}/{kind}Attachments", body)
+            delete = _detach_op(kind, fabric, name, row)
             entry = {"fabric": fabric, gkey: name, "switch": host, **({} if kind == "vrf" else {"vlan": row.get("vlanId"), "interfaces": row.get("interfaces") or []})}
             adopt = Adoption(("overlay", f"{kind}_attachments"), entry)
             drifts.append(

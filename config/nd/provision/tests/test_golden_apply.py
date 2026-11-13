@@ -370,3 +370,65 @@ def test_waiting_applier_does_not_retry_a_delete_error_that_is_not_a_refusal(mon
     with pytest.raises(ApplyError):
         Applier(Provisioner(client, _topo()), _topo(), wait_overlay_deletes=True).apply([Op("delete_network", "MSD", "DELETE", "/fabrics/MSD/networks/N", None)])
     assert len(client.writes) == 1
+
+
+# --- one request per overlay object per fabric (ND 4.2.1: a vPC peer attached or detached alone fails "VPC details not found for Peer") ---
+
+
+def _att(action, fabric, name, serial, kind="vrf"):
+    key = "vrfName" if kind == "vrf" else "networkName"
+    item = {key: name, "switchId": serial, "attach": action == "attach"}
+    return Op(action, fabric, "POST", f"/fabrics/{fabric}/{kind}Attachments", {"attachments": [item]})
+
+
+def test_vpc_pair_attaches_of_one_vrf_arrive_as_one_post_with_both_items_in_order():
+    client = Stub()
+    _applier(client).apply([_att("attach", "SITE1", "LAB", "SN-LE1"), _att("attach", "SITE1", "LAB", "SN-LE2")])
+    assert client.writes == [
+        (
+            "POST",
+            "/fabrics/SITE1/vrfAttachments",
+            {"attachments": [{"vrfName": "LAB", "switchId": "SN-LE1", "attach": True}, {"vrfName": "LAB", "switchId": "SN-LE2", "attach": True}]},
+        )
+    ]
+
+
+def test_detaches_of_one_network_merge_at_the_position_of_the_first():
+    client = Stub()
+    deploy = Op("deploy_overlay", "SITE1", "POST", "/fabrics/SITE1/networkActions/deploy", {"networkNames": ["N"], "switchIds": ["SN-LE1", "SN-LE2"]})
+    _applier(client).apply([_att("detach", "SITE1", "N", "SN-LE1", "network"), deploy, _att("detach", "SITE1", "N", "SN-LE2", "network")])
+    assert [(c[1], [i["switchId"] for i in c[2].get("attachments", [])]) for c in client.writes] == [
+        ("/fabrics/SITE1/networkAttachments", ["SN-LE1", "SN-LE2"]),
+        ("/fabrics/SITE1/networkActions/deploy", []),
+    ]
+
+
+def test_attachments_of_different_objects_fabrics_or_actions_are_not_merged():
+    from golden_apply import coalesce_attachments
+
+    ops = [
+        _att("attach", "SITE1", "LAB", "SN-LE1"),
+        _att("attach", "SITE1", "OTHER", "SN-LE2"),  # another VRF
+        _att("attach", "SITE2", "LAB", "SN-S2LE1"),  # another fabric
+        _att("attach", "SITE1", "LAB", "SN-LE1", "network"),  # a network of the same name: another path
+        _att("detach", "SITE1", "LAB", "SN-BG1"),  # a detach is never merged into an attach
+        _att("attach", "SITE1", "LAB", "SN-LE2"),
+    ]
+    merged = coalesce_attachments(ops)
+    assert [(o.action, o.path, [i["switchId"] for i in o.body["attachments"]]) for o in merged] == [
+        ("attach", "/fabrics/SITE1/vrfAttachments", ["SN-LE1", "SN-LE2"]),
+        ("attach", "/fabrics/SITE1/vrfAttachments", ["SN-LE2"]),
+        ("attach", "/fabrics/SITE2/vrfAttachments", ["SN-S2LE1"]),
+        ("attach", "/fabrics/SITE1/networkAttachments", ["SN-LE1"]),
+        ("detach", "/fabrics/SITE1/vrfAttachments", ["SN-BG1"]),
+    ]
+    assert coalesce_attachments(merged) == merged  # coalescing twice changes nothing
+    assert ops[0].body["attachments"] == [{"vrfName": "LAB", "switchId": "SN-LE1", "attach": True}]  # the input ops are not modified
+
+
+def test_a_failed_item_in_a_merged_response_raises_naming_the_item():
+    bad = {"results": [{"status": "success", "switchId": "SN-LE1"}, {"status": "failed", "switchId": "SN-LE2", "message": "VPC details not found"}]}
+    client = Stub(post_results={"/fabrics/SITE1/vrfAttachments": bad})
+    with pytest.raises(ApplyError, match="attach POST /fabrics/SITE1/vrfAttachments: item SN-LE2 status 'failed': VPC details not found"):
+        _applier(client).apply([_att("attach", "SITE1", "LAB", "SN-LE1"), _att("attach", "SITE1", "LAB", "SN-LE2")])
+    assert len(client.writes) == 1

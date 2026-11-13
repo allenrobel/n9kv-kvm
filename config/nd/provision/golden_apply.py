@@ -63,6 +63,43 @@ def _delete_refusal(message: str) -> bool:
     return bool(_REFUSED.search(message))
 
 
+ATTACHMENT_ACTIONS = ("attach", "detach")
+
+
+def _attachment_key(op: Op) -> tuple[str, str, str, str] | None:
+    """(action, fabric, path, object name) of an attach/detach op whose items all name one VRF or network; None for anything else."""
+    items = op.body.get("attachments") if op.action in ATTACHMENT_ACTIONS and isinstance(op.body, dict) else None
+    if not items or not all(isinstance(i, dict) for i in items):
+        return None
+    names = {i.get("vrfName", i.get("networkName")) for i in items}
+    name = names.pop() if len(names) == 1 else None
+    return None if name is None else (op.action, op.fabric, op.path, name)
+
+
+def coalesce_attachments(ops: list[Op]) -> list[Op]:
+    """Merge the attach ops, and separately the detach ops, of one VRF or network in one fabric into one op whose `attachments` list is
+    theirs concatenated in order; the merged op takes the position of the first of its group. ND 4.2.1 fails a vPC peer attached or detached
+    without its peer in the same request ("VPC details not found for Peer Serial no"). Pure: the input ops are not modified."""
+    out: list[Op] = []
+    at: dict[tuple[str, str, str, str], int] = {}
+    for op in ops:
+        key = _attachment_key(op)
+        if key is None:
+            out.append(op)
+        elif key not in at:
+            at[key] = len(out)
+            out.append(op)
+        else:
+            first = out[at[key]]
+            out[at[key]] = Op(first.action, first.fabric, first.method, first.path, {**first.body, "attachments": [*first.body["attachments"], *op.body["attachments"]]})
+    return out
+
+
+def _item_name(item: dict) -> str:
+    """A failed response item's identity, from whichever of its identifying fields ND filled in."""
+    return " ".join(str(item[k]) for k in ("vrfName", "networkName", "switchName", "switchId", "interfaceName") if item.get(k))
+
+
 class ApplyError(RuntimeError):
     """An op failed (HTTP error or a failed item in a 207 response); nothing after it was sent."""
 
@@ -99,7 +136,8 @@ class Applier:
         if failed:
             item = failed[0]
             message = item.get("message") or item.get("error") or json.dumps(redact(item))[:LOG_BODY_LIMIT]
-            raise ApplyError(f"{op.action} {op.method} {op.path}: item status {item.get('status')!r}: {message}")
+            name = _item_name(item)
+            raise ApplyError(f"{op.action} {op.method} {op.path}: item {name + ' ' if name else ''}status {item.get('status')!r}: {message}")
 
     def _send(self, op: Op) -> Any:
         if op.method == "PUT":
@@ -119,7 +157,7 @@ class Applier:
         unknown = sorted({o.action for o in ops if o.action not in RANK})
         if unknown:
             raise ApplyError(f"unknown action(s) {unknown}; nothing was sent")
-        ordered = sorted(ops, key=lambda o: RANK[o.action])
+        ordered = coalesce_attachments(sorted(ops, key=lambda o: RANK[o.action]))
         switches_added = False
         groups_to_deploy = [o.fabric for o in ordered if o.action == "add_member"]
         for op in ordered:

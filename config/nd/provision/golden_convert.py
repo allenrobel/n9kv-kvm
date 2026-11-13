@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from golden import READ_ERRORS, Ask, Out, _nd_ip, _pending_fabrics, run_restore
-from golden_apply import RANK, ApplyError, Applier
+from golden_apply import RANK, ApplyError, Applier, coalesce_attachments
 from golden_drift import ATTACHMENTS, BUILT_IN_VRFS, NETWORKS, VRFS, Op, _extra_overlay_drift, _live_key, _policy, compute, drift_overlay, format_report
 from golden_live import LiveFabric, LiveReadError, read_live
 from provision import LOG_BODY_LIMIT, Provisioner, redact
@@ -53,7 +53,8 @@ def _groups(topo: Topology, live: dict[str, LiveFabric]) -> list[str]:
 
 def _overlay_ops(topo: Topology, live: dict[str, LiveFabric]) -> list[Op]:
     """Detach, deploy and delete for every VRF and network of the groups and the mode fabrics; a group object's propagated copy in a fabric
-    that is still a member goes with the group object. Sorted by the Applier's rank, so networks are deleted before the VRFs."""
+    that is still a member goes with the group object. Sorted by the Applier's rank, so networks are deleted before the VRFs, and with the
+    detaches of one object in one fabric merged into one request, as the Applier sends them (so the dry run prints the real calls)."""
     ops: list[Op] = []
     groups = _groups(topo, live)
     for kind, key, attr in (("network", "networkName", "networks"), ("vrf", "vrfName", "vrfs")):
@@ -68,7 +69,7 @@ def _overlay_ops(topo: Topology, live: dict[str, LiveFabric]) -> list[Op]:
             for obj in getattr(live[fabric], attr):
                 if obj[key] not in shared and obj[key] not in builtin:
                     ops.extend(_delete_sequence(kind, fabric, live, obj, [fabric]))
-    return sorted(ops, key=lambda o: RANK[o.action])
+    return coalesce_attachments(sorted(ops, key=lambda o: RANK[o.action]))
 
 
 def _delete_sequence(kind: str, fabric: str, live: dict[str, LiveFabric], obj: dict, scope: list[str]) -> list[Op]:
@@ -138,7 +139,7 @@ def describe(p: ConvertPlan) -> str:
             lines.append("convert: resuming a partly converted testbed")
         removed = [o for o in p.overlay_ops if o.action.startswith("delete_")]
         detaches = sum(1 for o in p.overlay_ops if o.action == "detach")
-        lines.append(f"1. remove overlay: {len(removed)} object(s), {detaches} detach(es) first")
+        lines.append(f"1. remove overlay: {len(removed)} object(s), {detaches} detach request(s) first")
         if p.redeploy:
             lines.append(f"     pending config left by an earlier run: Recalculate and Deploy {', '.join(p.redeploy)} first")
         lines.extend(f"     {o.action.removeprefix('delete_')} {o.path.rsplit('/', 1)[1]} in {o.fabric}" for o in removed)

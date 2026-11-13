@@ -824,6 +824,43 @@ def test_phase_overlay_live_skips_existing_vrf_attachment_but_attaches_missing_n
     assert [p[1] for p in posts if "Actions/deploy" in p[1]] == ["/fabrics/SITE1/networkActions/deploy"]
 
 
+def test_phase_overlay_sends_the_attachments_of_one_object_in_one_post():
+    """ND 4.2.1 fails a vPC peer attached without its peer in the same request: every switch still to attach goes in one POST per object
+    per fabric; an attached switch is still skipped."""
+    vrf = {"vrfName": "V1", "vrfId": 50001, "vlanId": 2001}
+    net = {"networkName": "N1", "networkId": 30001, "vlanId": 2, "vrfName": "V1"}
+    overlay = Overlay(
+        vrfs=[{"fabrics": ["SITE1"], "object": vrf}, {"fabrics": ["SITE1"], "object": dict(vrf, vrfName="V2")}],
+        networks=[{"fabrics": ["SITE1"], "object": net}],
+        vrf_attachments=[{"fabric": "SITE1", "vrf": "V1", "switch": h} for h in ("S1_LE1", "S1_LE2", "S1_BG1")] + [{"fabric": "SITE1", "vrf": "V2", "switch": "S1_LE1"}],
+        network_attachments=[{"fabric": "SITE1", "network": "N1", "switch": h, "vlan": 2, "interfaces": []} for h in ("S1_LE1", "S1_LE2")],
+    )
+    topo = replace(_topo(), overlay=overlay)
+    switches = [{"hostname": h, "serialNumber": f"SN-{h}", "switchRole": "leaf"} for h in ("S1_LE1", "S1_LE2", "S1_BG1")]
+    responses = {
+        ("/fabrics/SITE1/vrfs", ()): {"vrfs": [vrf, dict(vrf, vrfName="V2")]},
+        ("/fabrics/SITE1/networks", ()): {"networks": [net]},
+        ("/fabrics/SITE1/switches", ()): {"switches": switches},
+        **_overlay_query_stubs([{"vrfName": "V1", "switchId": "SN-S1_BG1", "attach": True}], []),
+    }
+    client = StubClient(responses)
+
+    Provisioner(client, topo).phase_overlay()
+
+    attaches = [(p[1], p[2]["attachments"]) for p in _posts(client) if p[1].endswith("Attachments")]
+    assert attaches == [
+        ("/fabrics/SITE1/vrfAttachments", [{"vrfName": "V1", "switchId": "SN-S1_LE1", "attach": True}, {"vrfName": "V1", "switchId": "SN-S1_LE2", "attach": True}]),
+        ("/fabrics/SITE1/vrfAttachments", [{"vrfName": "V2", "switchId": "SN-S1_LE1", "attach": True}]),
+        (
+            "/fabrics/SITE1/networkAttachments",
+            [
+                {"networkName": "N1", "switchId": "SN-S1_LE1", "vlanId": 2, "interfaces": [], "attach": True},
+                {"networkName": "N1", "switchId": "SN-S1_LE2", "vlanId": 2, "interfaces": [], "attach": True},
+            ],
+        ),
+    ]
+
+
 def test_phase_deploy_dry_run_deploys_every_fabric_and_does_not_check_pending(capsys):
     topo = _topo()
     client = StubClient({})

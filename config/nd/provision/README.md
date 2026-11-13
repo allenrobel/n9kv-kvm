@@ -212,6 +212,11 @@ Status: the code is covered by the unit tests. ND 4.3.1 was converted to ingress
   the far-side leaf also owns. Test from the host containers (`sudo virsh -c lxc:/// console S1_H1`, then `ping 192.0.1.172`).
   Also note the overlay attach of an interface change (the ToR host port flip to `accessHost`) leaves the port's own lines pending until the
   `deploy` phase recalculates the fabric; `networkActions/deploy` pushes only the VLAN/attachment.
+- A vPC peer cannot be attached to or detached from a VRF alone: a `vrfAttachments` POST that carries one peer answers that item `failed`
+  (`VPC details not found for Peer Serial no: <peer>`). The tools send every attach (and every detach) of one VRF or network in one fabric
+  as one request, so both peers are always in it.
+- A network detach (`attach: false`) that lists the row's `interfaces` removes only those ports and leaves the switch attached; the tools'
+  detaches send `"interfaces": []`, which frees the ports and detaches the switch.
 - The `vpc` phase pairs the leaf pairs listed under `vpc_pairs:` with ND's default template (`PUT /fabrics/{f}/switches/{sn}/vpcPair`,
   `vpcAction: pair`); ND allocates the domain id in pairing order and generates the `port-channel500` peer-link over the discovered leaf link.
   It then recalculates and deploys the fabric. Pairs ND already lists (`GET /fabrics/{f}/vpcPairs`, either order) are skipped.

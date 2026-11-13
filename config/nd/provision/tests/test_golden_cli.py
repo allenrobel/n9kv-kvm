@@ -44,7 +44,7 @@ def rec(monkeypatch):
     live = {"SITE1": LiveFabric("SITE1", "fabric", switches={"S1_SP1": {"serialNumber": "SER1"}})}
 
     class StubApplier:
-        def __init__(self, prov):
+        def __init__(self, prov, topo):
             pass
 
         def apply(self, ops):

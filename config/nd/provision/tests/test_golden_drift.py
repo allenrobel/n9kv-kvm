@@ -15,6 +15,7 @@ from golden_drift import (
     drift_generated_links,
     drift_interfaces,
     drift_links,
+    drift_members,
     drift_overlay,
     drift_pairs,
     drift_settings,
@@ -25,6 +26,7 @@ from golden_drift import (
 )
 from golden_live import read_live_from_snapshot
 from provision import vpc_pair_payload
+from replication import MULTICAST_ONLY_KEYS
 from topology import FabricLink, GeneratedLink, InterfaceIntent, Topology, load
 
 HERE = Path(__file__).resolve().parents[1]
@@ -896,3 +898,79 @@ def test_listed_l3po_as_golden_is_no_drift(nd421):
     description = po["configData"]["networkOS"]["policy"].get("description", "")
     intent = InterfaceIntent("S1_TOR1", "port-channel10", "l3Po", type="portChannel", description=description, inputs={"mtu": "9216"})
     assert not [d for d in _run_interfaces(_with_interfaces(topo, [("SITE1", intent)]), live) if "hannel10" in d.subject]
+
+
+# ---------------------------------------------------------------- group members and ingress enableIr
+
+
+def _ingress(topo: Topology) -> Topology:
+    return replace(topo, replication_mode="ingress", mode_fabrics=("SITE1", "SITE2"))
+
+
+def test_missing_group_member_is_a_drift_with_an_add_member_fix(nd421):
+    topo, live = nd421
+    live["MSD"].members = ["SITE2", "ISN"]
+    drifts = drift_members(topo, live)
+    assert [(d.cls, d.fabric, d.kind, d.subject) for d in drifts] == [("members", "MSD", "missing", "SITE1")]
+    assert drifts[0].fix == Op("add_member", "MSD", "POST", "/fabrics/MSD/actions/addMembers", {"members": [{"name": "SITE1"}]})
+    assert drifts[0].delete is None and drifts[0].adopt is None
+
+
+def test_extra_group_member_is_reported_only(nd421):
+    topo, live = nd421
+    live["MSD"].members = [*live["MSD"].members, "CAMPUS1"]
+    drifts = drift_members(topo, live)
+    assert [(d.kind, d.subject) for d in drifts] == [("extra", "CAMPUS1")]
+    assert drifts[0].fix is None and drifts[0].delete is None and drifts[0].adopt is None
+
+
+def test_golden_lab_has_no_member_drift_and_compute_places_members_after_switches(nd421):
+    topo, live = nd421
+    assert drift_members(topo, live) == []
+    live["MSD"].members = ["ISN"]
+    live["SITE1"].switches["S1_NEW"] = {"hostname": "S1_NEW", "serialNumber": "SN9", "switchRole": "leaf", "fabricManagementIp": "1.1.1.1"}
+    classes = list(dict.fromkeys(d.cls for d in compute(topo, live)))
+    assert classes[:2] == ["switches", "members"]
+
+
+def test_ingress_member_copy_without_enable_ir_is_different_with_a_put_and_deploy_fix(nd421):
+    topo, live = nd421
+    topo = _ingress(topo)
+    drifts = [d for d in drift_overlay(topo, live) if d.cls == "networks"]
+    assert [(d.fabric, d.kind, d.subject) for d in drifts] == [("SITE1", "different", "LAB_NET1"), ("SITE2", "different", "LAB_NET1")]
+    fix = drifts[0].fix
+    assert isinstance(fix, list) and [o.action for o in fix] == ["put_network_ir", "deploy_overlay"]
+    put, deploy = fix
+    assert (put.fabric, put.method, put.path) == ("SITE1", "PUT", "/fabrics/SITE1/networks/LAB_NET1")
+    assert put.body["l2Data"]["fabricData"]["enableIr"] is True and "networkStatus" not in put.body
+    assert put.body["l2Data"]["fabricData"]["multicastGroup"] == "239.1.1.0"  # the rest of the live copy is kept
+    assert live["SITE1"].networks[0]["l2Data"]["fabricData"]["enableIr"] is False and "networkStatus" in live["SITE1"].networks[0]  # live untouched
+    serials = sorted({r["switchId"] for r in live["SITE1"].network_attachments if r["networkName"] == "LAB_NET1"})
+    assert deploy == Op("deploy_overlay", "SITE1", "POST", "/fabrics/SITE1/networkActions/deploy", {"networkNames": ["LAB_NET1"], "switchIds": serials})
+    assert serials
+
+
+def test_ingress_member_copy_with_enable_ir_is_not_drift(nd421):
+    topo, live = nd421
+    for name in ("SITE1", "SITE2"):
+        live[name].networks[0]["l2Data"]["fabricData"]["enableIr"] = True
+    assert [d for d in drift_overlay(_ingress(topo), live) if d.cls == "networks"] == []
+
+
+def test_enable_ir_is_not_compared_in_multicast_mode(nd421):
+    topo, live = nd421
+    assert live["SITE1"].networks[0]["l2Data"]["fabricData"]["enableIr"] is False
+    for t in (topo, replace(topo, replication_mode="multicast", mode_fabrics=("SITE1", "SITE2"))):
+        assert [d for d in drift_overlay(t, live) if d.cls == "networks"] == []
+
+
+def test_put_settings_fix_for_ingress_carries_no_multicast_only_key(nd421):
+    topo, live = nd421
+    topo = load(HERE / "topology_nd421.yaml", replication_mode="ingress")
+    live["SITE1"].settings["management"]["replicationMode"] = "multicast"
+    live["SITE1"].settings["management"]["multicastGroupSubnet"] = "239.1.1.0/25"
+    drifts = [d for d in drift_settings(topo, live) if d.fabric == "SITE1"]
+    assert drifts and all(isinstance(d.fix, Op) for d in drifts)
+    body = drifts[0].fix.body
+    assert body["management"]["replicationMode"] == "ingress"
+    assert not set(MULTICAST_ONLY_KEYS) & set(body["management"])

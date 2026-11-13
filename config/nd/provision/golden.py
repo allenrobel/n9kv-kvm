@@ -73,7 +73,7 @@ def _fix_ops(drifts: list[Drift]) -> list[Op]:
     for d in drifts:
         if d.kind != "extra" and d.fix is not None and id(d.fix) not in seen:
             seen.add(id(d.fix))
-            ops.append(d.fix)
+            ops.extend(d.fix if isinstance(d.fix, list) else [d.fix])
     return ops
 
 
@@ -175,7 +175,7 @@ def run_restore(args: argparse.Namespace, topo: Topology, live: dict[str, LiveFa
         if answer not in ("y", "yes"):
             out("restore: cancelled")
             return 2
-    applier = Applier(prov)
+    applier = Applier(prov, topo)
     deployed: list[str] = []
     try:
         pending_fabrics = set() if args.no_deploy else _pending_fabrics(prov, topo, live)

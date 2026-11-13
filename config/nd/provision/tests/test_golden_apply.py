@@ -43,7 +43,7 @@ class Stub(StubClient):
 
 
 def _applier(client, dry_run=False):
-    return Applier(Provisioner(client, _topo(), dry_run=dry_run))
+    return Applier(Provisioner(client, _topo(), dry_run=dry_run), _topo())
 
 
 def test_apply_runs_ops_in_class_order_and_returns_touched():
@@ -266,3 +266,45 @@ def test_port_put_gives_up_after_the_retry_budget_and_reattaches():
     with pytest.raises(ApplyError, match="re-attached"):
         _applier(client).apply([Op("put_interface", "SITE1", "PUT", port, {"i": 1})])
     assert len([c for c in client.calls if c[0] == "PUT"]) == 13  # the first attempt plus TYPE_CHANGE_TRIES after the detach
+
+
+def _membership_ops():
+    return [
+        Op("attach", "SITE1", "POST", "/fabrics/SITE1/networkAttachments", {"attachments": []}),
+        Op("create_network", "MSD", "POST", "/fabrics/MSD/networks", {"networks": []}),
+        Op("put_link", "SITE1", "PUT", "/links/1", {"l": 1}),
+        Op("add_member", "MSD", "POST", "/fabrics/MSD/actions/addMembers", {"members": [{"name": "SITE1"}]}),
+    ]
+
+
+def test_apply_with_add_member_deploys_fabrics_then_group_before_any_overlay_op():
+    client = Stub()
+    topo = _topo()
+    assert topo.mode_fabrics == ("SITE1", "SITE2")
+    _applier(client).apply(_membership_ops())
+    assert [(c[0], c[1]) for c in client.calls if c[0] in ("PUT", "POST") and not c[1].endswith("/query")][:12] == [
+        ("POST", "/fabrics/MSD/actions/addMembers"),
+        ("PUT", "/links/1"),
+        ("POST", "/fabrics/SITE1/actions/configSave"),
+        ("POST", "/fabrics/SITE1/actions/deploy"),
+        ("POST", "/fabrics/SITE2/actions/configSave"),
+        ("POST", "/fabrics/SITE2/actions/deploy"),
+        ("POST", "/fabrics/MSD/actions/configSave"),
+        ("POST", "/fabrics/MSD/actions/deploy"),
+        ("POST", "/fabrics/MSD/networks"),
+        ("POST", "/fabrics/SITE1/networkAttachments"),
+    ]
+
+
+def test_apply_without_add_member_keeps_todays_order():
+    client = Stub()
+    ops = _membership_ops()[:3]
+    _applier(client).apply(ops)
+    assert [(c[0], c[1]) for c in client.calls] == [("PUT", "/links/1"), ("POST", "/fabrics/MSD/networks"), ("POST", "/fabrics/SITE1/networkAttachments")]
+
+
+def test_rank_orders_member_add_and_the_ir_put():
+    from golden_apply import RANK
+
+    assert RANK["set_role"] < RANK["add_member"] < RANK["clear_link"]
+    assert RANK["put_network_ir"] == RANK["attach"] > RANK["create_network"]

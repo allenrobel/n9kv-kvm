@@ -21,24 +21,27 @@ RANK = {
     "put_settings": 0,
     "add_switch": 1,
     "set_role": 2,
-    "clear_link": 3,
-    "put_link": 4,
-    "delete_interface": 5,
-    "reset_interface": 6,
-    "put_interface": 7,
-    "detach": 8,
-    "deploy_overlay": 8,
-    "delete_network": 9,
-    "delete_vrf": 10,
-    "create_vrf": 11,
-    "create_network": 12,
-    "attach": 13,
-    "unpair_tor": 14,
-    "unpair_vpc": 15,
-    "pair_vpc": 16,
-    "pair_tor": 17,
-    "deploy_owner": 18,
+    "add_member": 3,
+    "clear_link": 4,
+    "put_link": 5,
+    "delete_interface": 6,
+    "reset_interface": 7,
+    "put_interface": 8,
+    "detach": 9,
+    "deploy_overlay": 9,
+    "delete_network": 10,
+    "delete_vrf": 11,
+    "create_vrf": 12,
+    "create_network": 13,
+    "attach": 14,
+    "put_network_ir": 14,
+    "unpair_tor": 15,
+    "unpair_vpc": 16,
+    "pair_vpc": 17,
+    "pair_tor": 18,
+    "deploy_owner": 19,
 }
+OVERLAY_RANK = RANK["detach"]  # the first rank that touches overlay objects; a member add is deployed before it
 
 
 # networkActions/deploy only starts the detach (HTTP 202); until ND has finished it, the port PUT is still refused with the same
@@ -66,8 +69,9 @@ def _failed_items(resp: Any) -> list[dict]:
 
 
 class Applier:
-    def __init__(self, prov: Provisioner) -> None:
+    def __init__(self, prov: Provisioner, topo: Topology) -> None:
         self.prov = prov
+        self.topo = topo
 
     # -- transport -----------------------------------------------------------------------------------------
     def _delete(self, path: str) -> Any:
@@ -101,7 +105,11 @@ class Applier:
             raise ApplyError(f"unknown action(s) {unknown}; nothing was sent")
         ordered = sorted(ops, key=lambda o: RANK[o.action])
         switches_added = False
+        groups_to_deploy = [o.fabric for o in ordered if o.action == "add_member"]
         for op in ordered:
+            if groups_to_deploy and RANK[op.action] >= OVERLAY_RANK:
+                self._deploy_membership(groups_to_deploy)
+                groups_to_deploy = []
             touched.add(op.fabric)
             if op.action == "deploy_owner":
                 continue
@@ -115,6 +123,16 @@ class Applier:
                 continue
             self._run(op, lambda op=op: self._send(op))
         return touched
+
+    def _deploy_membership(self, groups: list[str]) -> None:
+        """ND refuses a network attachment on a border gateway until the group deploy has generated the multisite links: deploy the member
+        fabrics that declare replication modes, then each group a member was added to, before any overlay op."""
+        names = set(groups)
+        members = {m for g in self.topo.fabric_groups if g.name in names for m in g.members}
+        for fabric in (f for f in self.topo.mode_fabrics if f in members):
+            self.prov.config_deploy(fabric)
+        for group in dict.fromkeys(groups):
+            self.prov.config_deploy(group)
 
     def _run(self, op: Op, call: Any) -> Any:
         try:

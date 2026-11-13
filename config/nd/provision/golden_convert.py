@@ -154,9 +154,10 @@ def _remove_member(group: str, member: str) -> Op:
     return Op("remove_member", group, "POST", f"/fabrics/{group}/actions/removeMembers", {"members": [{"name": member}]})
 
 
-def _mode_put(topo: Topology, live: dict[str, LiveFabric], fabric: str) -> Op:
+def _mode_put(topo: Topology, current: dict, fabric: str) -> Op:
+    """The target settings PUT for `fabric`, merged over `current` (its live GET body)."""
     golden = next(f for f in topo.fabrics if f.name == fabric)
-    return Op("put_settings", fabric, "PUT", f"/fabrics/{fabric}", settings_body(live[fabric].settings, golden.settings))
+    return Op("put_settings", fabric, "PUT", f"/fabrics/{fabric}", settings_body(current, golden.settings))
 
 
 def _first_step(p: ConvertPlan, topo: Topology, live: dict[str, LiveFabric]) -> tuple[str, list[str]]:
@@ -172,7 +173,7 @@ def _first_step(p: ConvertPlan, topo: Topology, live: dict[str, LiveFabric]) -> 
     if p.convert:
         calls = []
         for fabric in p.convert:
-            put = _mode_put(topo, live, fabric)
+            put = _mode_put(topo, live[fabric].settings, fabric)  # the run re-reads the fabric first; a dry run shows today's values
             calls += [_call(put.method, put.path, put.body), *_deploy_calls(fabric)]
         return "change mode", calls
     drifts = compute(topo, live)
@@ -184,8 +185,9 @@ def _only_pending(fab: LiveFabric, target: str) -> bool:
     return fabric_state(fab) != target and _ignoring_pending(fab) == target
 
 
-def _convert(p: ConvertPlan, topo: Topology, live: dict[str, LiveFabric], prov: Provisioner, out: Out, steps: list[str]) -> None:
-    """Steps 1 to 4. Each step with work is appended to `steps` before it starts, so a failure can name it."""
+def _convert(p: ConvertPlan, topo: Topology, prov: Provisioner, out: Out, steps: list[str]) -> None:
+    """Steps 1 to 4. Each step with work is appended to `steps` before it starts, so a failure can name it. The mode PUT is built from a
+    fresh GET of the fabric: leaving the group can change settings ND inherits or generates, and the preflight read would write them back."""
     applier = Applier(prov, topo)
 
     def send(op: Op) -> None:
@@ -210,7 +212,11 @@ def _convert(p: ConvertPlan, topo: Topology, live: dict[str, LiveFabric], prov: 
             send(Op("delete_link", fabric, "DELETE", f"/links/{link_id}", None))
     start(f"change mode to {p.target}")
     for fabric in p.convert:
-        send(_mode_put(topo, live, fabric))
+        try:
+            current = prov.client.get(f"/fabrics/{fabric}") or {}
+        except READ_ERRORS as exc:
+            raise LiveReadError(f"GET /fabrics/{fabric}: {exc}") from exc
+        send(_mode_put(topo, current, fabric))
         prov.config_deploy(fabric)
 
 
@@ -248,7 +254,7 @@ def run(args: argparse.Namespace, topo_target: Topology, prov: Provisioner, ask:
     steps: list[str] = []
     try:
         if p.convert:
-            _convert(p, topo_target, live, prov, out, steps)
+            _convert(p, topo_target, prov, out, steps)
             steps.append("verify mode")
             after = read_live(prov.client, topo_target)
             again = [f for f in p.convert if _only_pending(after[f], target)]

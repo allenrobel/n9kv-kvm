@@ -201,16 +201,21 @@ def _no_settle_sleep(monkeypatch):
 
 
 class Client(Stub):
-    """Stub NDClient: every write recorded; pendingConfig answers from `pending_lines` (path -> lines), every other GET is HTTP 404."""
+    """Stub NDClient: every write recorded; pendingConfig answers from `pending_lines` (path -> lines), GET /fabrics/<mode fabric> from
+    `fabrics` (default: the multicast source setting), every other GET is HTTP 404."""
 
-    def __init__(self, post_results=None, pending_lines=None):
+    def __init__(self, post_results=None, pending_lines=None, fabrics=None):
         super().__init__(post_results=post_results)
         self.pending_lines = pending_lines or {}
+        self.fabrics = {f"/fabrics/{f}": {"management": {"replicationMode": "multicast"}} for f in MODE_FABRICS} if fabrics is None else fabrics
 
     def get(self, path, params=None):
         if path.endswith("/pendingConfig"):
             self.calls.append(("GET", path, params))
             return {"pendingConfigs": self.pending_lines.get(path, [])}
+        if path in self.fabrics:
+            self.calls.append(("GET", path, params))
+            return self.fabrics[path]
         return super().get(path, params)
 
     def ordered(self) -> list[tuple[str, str]]:
@@ -441,6 +446,59 @@ def test_run_apply_error_in_the_teardown_exits_4_naming_the_step(monkeypatch):
     assert h.run() == 4
     assert h.client.ordered() == [("POST", "/fabrics/SITE1/networkAttachments")] and h.restores == []
     assert "remove overlay" in h.lines[-1] and "boom" in h.lines[-1]
+
+
+def test_run_mode_put_is_built_from_a_read_taken_after_the_teardown(monkeypatch):
+    class LeaveChangesSettings(Client):
+        def post(self, path, json=None, timeout=None):
+            if path.endswith("/removeMembers"):  # ND rewrites an inherited field when a fabric leaves the group
+                self.fabrics[f"/fabrics/{json['members'][0]['name']}"] = {"management": {"replicationMode": "multicast", "siteId": "after-leave"}}
+            return super().post(path, json, timeout)
+
+    client = LeaveChangesSettings()
+    start = _testbed("multicast", overlay=False, links=False)
+    for f in MODE_FABRICS:
+        start[f].settings = {"management": {"replicationMode": "multicast", "siteId": "preflight"}}
+    h = Harness(monkeypatch, [start, _testbed("ingress", overlay=False, members=False, links=False), _testbed("ingress"), _testbed("ingress")], client=client)
+    assert h.run() == 0
+    for f in MODE_FABRICS:
+        put = client.body("PUT", f"/fabrics/{f}")
+        assert put["management"]["siteId"] == "after-leave" and put["management"]["replicationMode"] == "ingress"
+    reads = [c[1] for c in client.calls if c[0] in ("GET", "PUT") and c[1] in ("/fabrics/SITE1", "/fabrics/SITE2")]
+    assert reads == ["/fabrics/SITE1", "/fabrics/SITE1", "/fabrics/SITE2", "/fabrics/SITE2"]  # GET then PUT, per fabric
+
+
+def test_run_failed_settings_read_before_the_mode_put_exits_3_with_no_put(monkeypatch):
+    client = Client(fabrics={})  # GET /fabrics/SITE1 answers HTTP 404
+    h = Harness(monkeypatch, [_testbed("multicast", overlay=False, members=False, links=False)], client=client)
+    assert h.run() == 3
+    assert h.client.ordered() == [] and h.restores == []
+    assert "change mode to ingress" in h.lines[-1] and "GET /fabrics/SITE1" in h.lines[-1]
+
+
+def test_run_deploy_error_in_the_leave_step_exits_4_before_any_link_delete(monkeypatch):
+    class DeployFails(Client):
+        def post(self, path, json=None, timeout=None):
+            if path == "/fabrics/SITE1/actions/deploy":
+                self.calls.append(("POST", path, json))
+                raise RuntimeError("POST /fabrics/SITE1/actions/deploy -> HTTP 500")
+            return super().post(path, json, timeout)
+
+    h = Harness(monkeypatch, [_testbed("multicast", overlay=False)], client=DeployFails())
+    assert h.run() == 4
+    assert h.client.ordered() == [
+        ("POST", "/fabrics/MSD/actions/removeMembers"),
+        ("POST", "/fabrics/MSD/actions/removeMembers"),
+        *deploys("SITE1"),
+    ]
+    assert h.restores == [] and "leave fabric group failed" in h.lines[-1] and "HTTP 500" in h.lines[-1]
+
+
+def test_run_verify_read_failure_exits_3_without_the_rebuild(monkeypatch):
+    h = Harness(monkeypatch, [_testbed("multicast", overlay=False, members=False, links=False), LiveReadError("GET /fabrics/SITE1/policies: HTTP 500")])
+    assert h.run() == 3
+    assert h.restores == [] and "verify mode" in h.lines[-1] and "HTTP 500" in h.lines[-1]
+    assert h.client.ordered() == [("PUT", "/fabrics/SITE1"), *deploys("SITE1"), ("PUT", "/fabrics/SITE2"), *deploys("SITE2")]
 
 
 def test_run_initial_read_failure_exits_3(monkeypatch):

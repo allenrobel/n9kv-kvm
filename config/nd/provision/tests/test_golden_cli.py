@@ -15,7 +15,7 @@ from topology import load
 
 HERE = Path(__file__).resolve().parents[1]
 TOPO_PATH = HERE / "topology_nd421.yaml"
-SNAP = HERE / "golden" / "nd421"
+SNAP = HERE / "golden" / "nd421" / "multicast"
 
 
 def op(action: str, fabric: str = "SITE1", method: str = "PUT", path: str = "/x") -> Op:

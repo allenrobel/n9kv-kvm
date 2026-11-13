@@ -7,12 +7,14 @@ used to live only in the `provision-isn` skill and `docs/nd4_fabrics_bringup.md`
 ## Files
 
 - `topology_nd421.yaml` / `topology_nd431.yaml` - the two testbeds (SITE1/SITE2/ISN/MSD + the CAMPUS1 Cat9kv leaf per controller); differ only in hostnames and mgmt IPs
-- `provision.py` - phased, idempotent, `--dry-run` (phases: fabrics, msd, switches, vpc, tor, isn, overlay, deploy)
+- `provision.py` - phased, idempotent, `--dry-run` (phases: fabrics, msd, switches, vpc, tor, isn, overlay, deploy); `--replication-mode multicast|ingress`
 - `snapshot.py` - `dump` (read-only) and `diff` (normalized)
-- `golden.py` - `drift` / `restore` / `adopt` of the live ND against the topology files (see "Golden baseline" below)
+- `golden.py` - `drift` / `restore` / `adopt` / `convert` of the live ND against the topology files (see "Golden baseline" and "Replication modes" below)
 - `golden_drift.py` (pure compare), `golden_live.py` (live read), `golden_apply.py` (push),
-  `golden_adopt.py` (bootstrap/adoption writer) - the modules behind `golden.py`
-- `golden/nd421/`, `golden/nd431/` - reference snapshots (`snapshot.py dump`, credential hashes scrubbed); the tool does not read them
+  `golden_adopt.py` (bootstrap/adoption writer), `golden_convert.py` (mode conversion) - the modules behind `golden.py`
+- `replication.py` - replication-mode knowledge shared by `provision.py` and the golden tools (multicast-only keys, per-mode policy names, mode state)
+- `golden/nd421/<mode>/`, `golden/nd431/<mode>/` - reference snapshots (`snapshot.py dump`, credential hashes scrubbed), one directory per replication
+  mode; the tool does not read them. Only `multicast/` exists today (both testbeds were dumped in multicast mode); no `ingress/` snapshot has been taken
 - `nd_client.py`, `topology.py` - library code; `tests/` - pytest for the pure parts; `tests/fixtures/` - the two base topology files the golden tests use
 
 ## Usage (on the lab host, prod env sourced)
@@ -20,8 +22,9 @@ used to live only in the `provision-isn` skill and `docs/nd4_fabrics_bringup.md`
 ```bash
 source ~/repos/n9kv-kvm/env_prod/env.sh
 cd ~/repos/n9kv-kvm
-uv run config/nd/provision/provision.py --topology config/nd/provision/topology_nd431.yaml --nd-ip 10.10.20.20 --phase all --dry-run
-uv run config/nd/provision/provision.py --topology config/nd/provision/topology_nd431.yaml --nd-ip 10.10.20.20 --phase fabrics
+uv run config/nd/provision/provision.py --topology config/nd/provision/topology_nd431.yaml --nd-ip 10.10.20.20 --replication-mode ingress --phase all --dry-run
+uv run config/nd/provision/provision.py --topology config/nd/provision/topology_nd431.yaml --nd-ip 10.10.20.20 --replication-mode ingress --phase fabrics
+# --replication-mode is required because the shipped files declare replication_modes (there is no default)
 # ... msd, switches (waits for discovery; also pins the Catalyst mgmt-port intent to iosXeMgmt/cdp:false in campus fabrics), vpc, tor, isn, overlay, deploy
 uv run config/nd/provision/snapshot.py dump ~/tmp/snap_nd421 --nd-ip 10.10.20.10
 uv run config/nd/provision/snapshot.py dump ~/tmp/snap_nd431 --nd-ip 10.10.20.20
@@ -38,11 +41,18 @@ writes the live state into them. One invocation targets one controller (`--nd-ip
 ```bash
 source ~/repos/n9kv-kvm/env_prod/env.sh
 cd ~/repos/n9kv-kvm
-uv run config/nd/provision/golden.py drift   --topology config/nd/provision/topology_nd421.yaml --nd-ip 10.10.20.10     # read-only, exit 1 on drift
-uv run config/nd/provision/golden.py drift   --topology config/nd/provision/topology_nd431.yaml --snapshot ~/tmp/snap_nd431   # offline
-uv run config/nd/provision/golden.py restore --topology config/nd/provision/topology_nd431.yaml --nd-ip 10.10.20.20 [--yes] [--extras adopt|delete|skip] [--no-deploy]
-uv run config/nd/provision/golden.py adopt   --topology config/nd/provision/topology_nd431.yaml --nd-ip 10.10.20.20 [--snapshot DIR] [--classes links,interfaces,defaults]
+uv run config/nd/provision/golden.py drift --topology config/nd/provision/topology_nd421.yaml --nd-ip 10.10.20.10     # read-only, exit 1 on drift
+uv run config/nd/provision/golden.py drift --topology config/nd/provision/topology_nd431.yaml --snapshot ~/tmp/snap_nd431   # offline
+uv run config/nd/provision/golden.py restore --topology config/nd/provision/topology_nd431.yaml --nd-ip 10.10.20.20 \
+  [--replication-mode multicast|ingress] [--yes] [--extras adopt|delete|skip] [--no-deploy]
+uv run config/nd/provision/golden.py adopt --topology config/nd/provision/topology_nd431.yaml --nd-ip 10.10.20.20 \
+  [--replication-mode multicast|ingress] [--snapshot DIR] [--classes links,interfaces,defaults]
+uv run config/nd/provision/golden.py convert --topology config/nd/provision/topology_nd421.yaml --nd-ip 10.10.20.10 \
+  --replication-mode ingress [--yes] [--extras adopt|delete|skip] [--dry-run]
 ```
+
+`--replication-mode multicast|ingress` is optional on `drift`, `restore` and `adopt`: without it the mode is detected (see "Replication modes").
+`convert` requires it.
 
 - `drift` prints one line per difference (MISSING, DIFFERENT, EXTRA) and changes nothing.
 - `restore` prints the drift, writes any adoptions to the topology file first, asks for confirmation (`--yes` skips it), creates or overwrites what is
@@ -60,7 +70,7 @@ uv run config/nd/provision/golden.py adopt   --topology config/nd/provision/topo
 Rules:
 
 - Covered classes: tool-owned fabric and ISN links, ND-generated links listed under `generated_links`, physical interface policies, logical interfaces,
-  network/VRF attachments, VRFs and networks, vPC and ToR pairs, switch membership and role, fabric and group settings (golden settings are a subset;
+  network/VRF attachments, VRFs and networks, vPC and ToR pairs, switch membership and role, fabric-group membership, fabric and group settings (golden settings are a subset;
   extra keys in ND are not drift).
 - ND-generated links (`multisiteUnderlay`, `multisiteOverlay`, campus links, peer-link and ToR port-channels) are repaired by the owner's Recalculate &
   Deploy and are never deleted or `PUT`. Propagated MSD copies of VRFs and networks are never extras.
@@ -73,11 +83,89 @@ Rules:
 - Policy inputs in the yaml are the lowercase strings the comparison uses (`adminState: 'true'`, `mtu: '9216'`); the PUT bodies carry
   ND's own types (boolean, integer for `mtu`/`accessVlan`/`nativeVlan` when numeric). Both OpenAPI specs type them that way; ND 4.3.1
   validates request bodies against the schema and rejects the strings, ND 4.2.1 does not validate.
-- `golden/{nd421,nd431}/` are reference snapshots only; the topology yaml is the golden.
+- Fabric-group membership drift: a golden member missing from the live group is `MISSING` and `restore` re-adds it (`addMembers`, one member per call);
+  a live member the yaml does not list is `EXTRA` and only reported (never removed, never adopted). After a member add, `restore` first deploys the
+  mode fabrics that joined and then the group, because ND refuses a network attachment on a border gateway until the group deploy has generated the
+  multisite links.
+- Ingress `enableIr` drift (ingress mode only): a golden network whose copy in a mode fabric does not have `l2Data.fabricData.enableIr: true` is
+  `DIFFERENT`. ND then generates a bare `member vni`, the L2 VNI stays Down and nothing shows as pending. The group's own object always reads `false`
+  and a `PUT` on it is ignored, so the repair is two ops per member copy: `put_network_ir` (PUT the live copy with `enableIr: true`), then
+  `deploy_network_ir` (`networkActions/deploy` for that network on the switches it is attached to). The deploy is its own action so it always runs
+  after the PUT and after any attach.
+- The baseline for a free border-gateway port is `trunkHost` (`allowedVlans: none`, `mtu: jumbo`), like a leaf port. `Ethernet1/63` (`routedHost`,
+  MTU 9216) and `port-channel10` (`l3Po`, MTU 9216, "Routed subinterface parent for integration tests") are pinned on the SITE1 ToR and border gateway as
+  subinterface parents for the `cisco.nd` integration tests.
+- `golden/{nd421,nd431}/<mode>/` are reference snapshots only; the topology yaml is the golden.
 - Run it only when no tests are running: `restore` is disruptive by design (resets ports, deletes interfaces, deploys fabrics).
 
 The 2026-10-30 bootstrap found test residue (`trunkHost` on BGW and spine ports, an `l3Po` port-channel on the ToRs, a campus `Gi1/0/1`) and one ISN
 link converted to `multisiteUnderlay`; `restore --extras delete` handled all of it.
+
+## Replication modes
+
+SITE1 and SITE2 can run either multicast or ingress underlay replication. Each of those fabrics in `topology_nd421.yaml` / `topology_nd431.yaml`
+declares both, next to its common `settings`:
+
+```yaml
+    replication_modes:
+      multicast:
+        management: {replicationMode: multicast, anycastRendezvousPointIpRange: 10.13.0.0/24}
+      ingress:
+        management: {replicationMode: ingress}
+```
+
+Both modes must be declared, each must set `management.replicationMode` to its own name, and a key may not appear in both `settings` and
+`replication_modes`. The chosen mode's block is merged over `settings` at load time; the fabrics that declare it are the "mode fabrics". A file
+that declares modes does not load without a mode (there is no default), and `--replication-mode` on a file that declares none is an error.
+
+Choosing the mode:
+
+- `provision.py` takes `--replication-mode multicast|ingress`, required for the shipped files. An ingress fabric's PUT body drops the multicast-only
+  keys (`anycastRendezvousPointIpRange`, `multicastGroupSubnet`, `rendezvousPointLoopbackId`, `underlayMulticastGroupAddressLimit`,
+  `autoGenerateMulticastGroupAddress`, `tenantRoutedMulticastIpv6`), because ND answers HTTP 400 `invalid fields` when they are present.
+- `golden.py drift`, `restore` and `adopt` take the flag too, but detect the mode when it is omitted: they read `management.replicationMode` of every
+  mode fabric (from ND, or from `fabric_<name>.json` of a `--snapshot` dump), print `replication mode: <mode> (detected)`, and exit 2 if a fabric
+  reports no valid mode or the fabrics disagree.
+- `golden.py convert` requires `--replication-mode`; it is the only command that loads the topology without detecting or checking the live state.
+
+Refusals (exit 2, nothing written):
+
+- `drift`, `restore` and `adopt` on a live read refuse a testbed that is mid-conversion and point at `golden.py convert --replication-mode <mode>`.
+  A fabric is "mid" when its setting disagrees with its switches: a switch holds an underlay policy of the other mode (`base_multicast_11_1` or
+  `base_pim_asm_v6` for multicast, `ingress_rep_simulated` for ingress), or a switch still has pending config. A snapshot read has no policies, so
+  the saved setting alone decides.
+- `restore` also refuses when the live setting is not the requested mode, because it cannot change the mode on a populated fabric.
+- `provision.py --phase fabrics` refuses (exit 2, before any write) to change the mode of a fabric that already has switches, and exits 3 if it cannot
+  read the fabric's switches to tell. A fabric with no switches is changed in place.
+
+### convert
+
+ND refuses to change a fabric's mode while the fabric holds any overlay definition. That includes VRFs, networks, fabric-group membership and the
+`ebgpVrfLite` ISN links (see `docs/nd_replication_mode_change.md`). `golden.py convert` therefore tears those down, changes the mode and rebuilds
+with the normal restore against the target mode's golden:
+
+1. Remove overlay: detach, deploy and delete every VRF and network of the fabric group and of the mode fabrics (networks first), golden or not.
+2. Leave the fabric group: `removeMembers` for each mode fabric, then Recalculate and Deploy each fabric that left.
+3. Delete the `ebgpVrfLite` links of the mode fabrics.
+4. Change the mode: for each fabric not yet in the target mode, a fresh `GET` of the fabric (taken after the teardown, since leaving the group can change
+   inherited settings), then a `PUT` of the target settings merged over it, then Recalculate and Deploy. A re-read verifies the result.
+5. Rebuild: `golden.py restore` against the target golden (members, links, deploy, overlay), then a check for zero drift and nothing pending.
+
+Every step is decided from the live state, so a run that stopped part way is continued by running the same command again. A fabric needs converting
+while its setting is not the target or a switch still holds an other-mode underlay policy; pending config lines alone do not count and go straight to the
+rebuild. After the mode deploy, `convert` deploys once more if a converted fabric still has pending lines. If a fabric is still not in the target mode
+after that, it prints the rerun command and exits 4. A testbed whose fabrics already are in the target mode skips steps 1 to 4. A testbed that is intact in
+the source mode with pending config is refused (exit 2): deploy it first with `golden.py restore`.
+
+Options: `--nd-ip`, `--yes` (skip the prompt; needs `--extras adopt|delete|skip` for the rebuild's restore, else exit 2 before anything is sent) and
+`--dry-run`. Exit codes: 0 converted with zero drift and nothing pending, 2 refused or cancelled, 3 a live read failed, 4 a step failed or drift remains.
+
+`--dry-run` reads the live ND and prints the plan: the target mode, each fabric's state (`multicast`, `ingress` or `mid`), then for each step the
+objects it will act on (each VRF and network, each group member, each link with its ND link id, the fabrics whose mode changes). It then prints the exact
+calls of the first step that has work (for the mode change, the PUT bodies built from today's fabric values), and sends nothing.
+
+Status: the code is covered by the unit tests. ND 4.3.1 was converted to ingress by hand following the procedure in `docs/nd_replication_mode_change.md`;
+`convert` itself has not been run against a lab yet, and ND 4.2.1 is still in multicast.
 
 ## Gotchas carried over from ND 4.2.1
 

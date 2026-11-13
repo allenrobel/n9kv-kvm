@@ -63,13 +63,13 @@ def _with(topo: Topology, site1_links=(), site2_links=(), generated=(), isn=None
 def lab(request):
     version = request.param
     topo = load(BASE / f"topology_{version}_base.yaml")
-    return topo, read_live_from_snapshot(GOLDEN / version, topo)
+    return topo, read_live_from_snapshot(GOLDEN / version / "multicast", topo)
 
 
 @pytest.fixture
 def nd421():
     topo = load(BASE / "topology_nd421_base.yaml")
-    return topo, read_live_from_snapshot(GOLDEN / "nd421", topo)
+    return topo, read_live_from_snapshot(GOLDEN / "nd421" / "multicast", topo)
 
 
 def _fabric(topo: Topology, name: str):
@@ -734,7 +734,7 @@ def test_snapshot_group_extra_held_by_all_members_is_one_extra(nd421):
 
 def test_campus_reset_body_uses_ios_xe():
     topo = load(HERE / "topology_nd421.yaml", replication_mode="multicast")
-    live = read_live_from_snapshot(HERE / "golden" / "nd421", topo)
+    live = read_live_from_snapshot(HERE / "golden" / "nd421" / "multicast", topo)
     resets = [d for d in compute(topo, live) if d.cls == "interfaces" and d.kind == "extra" and d.subject.startswith("C1_LE1 ") and isinstance(d.delete, Op)]
     assert resets, "expected campus interface residue in the nd421 snapshot"
     for d in resets:
@@ -748,7 +748,7 @@ def test_campus_reset_body_uses_ios_xe():
 
 def test_explicit_interface_on_ios_xe_switch_uses_ios_xe():
     topo = load(HERE / "topology_nd421.yaml", replication_mode="multicast")
-    live = read_live_from_snapshot(HERE / "golden" / "nd421", topo)
+    live = read_live_from_snapshot(HERE / "golden" / "nd421" / "multicast", topo)
     fab = next(f for f in topo.fabrics if f.name == "CAMPUS1")
     intent = InterfaceIntent("C1_LE1", "GigabitEthernet1/0/9", "iosXeTrunkHost", description="x")
     fab = replace(fab, interfaces=[intent])

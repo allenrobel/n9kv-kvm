@@ -4,26 +4,33 @@ Date: 2026-11-13. Controller: ND 4.3.1 (10.10.20.20), fabrics `SITE1` and `SITE2
 
 ## Status
 
-The ND 4.3.1 testbed now runs ingress replication in `SITE1` and `SITE2` and is back on the golden baseline.
+The ND 4.3.1 testbed runs ingress replication in `SITE1` and `SITE2` and is back on the golden baseline. It was converted by hand, following the
+procedure below; `golden.py convert` (below) automates that procedure but has not yet been run against a lab.
 
 - `golden.py drift` against `topology_nd431.yaml` reports no drift, and no switch has pending config.
 - All ten switches report `inSync`. `MSD` holds `ISN`, `SITE1` and `SITE2` again.
 - VRF `LAB` and network `LAB_NET1` are attached and deployed as before.
 - On the switches, `show nve vni` lists VNI 30001 as `UnicastBGP`, state Up, and the NVE peers are up on both sites.
 - The cross-site host ping from `S3_H1` to `S4_H1` (192.0.1.172) works.
-- The ND 4.2.1 testbed (10.10.20.10) is untouched and still runs multicast.
+- The ND 4.2.1 testbed (10.10.20.10) is untouched and still runs multicast. It has not been converted with `golden.py convert` yet.
 
 ## What the interface tests should expect
 
-The restore reset test residue on ND 4.3.1 to the golden role defaults. Anything the test setup created earlier has to be created again.
+The restore reset test residue on ND 4.3.1 to the golden baseline. Anything the test setup created earlier has to be created again.
+The baseline (the same in `topology_nd421.yaml`) is:
 
-| Switch | Object | Before | Now |
-|--------|--------|--------|-----|
-| `S3_BG1` | `Ethernet1/10`-`1/14`, `1/31`-`1/34`, `1/41`-`1/50` | `trunkHost` (some with VLANs 400-500, "Fan-out test trunk ports") | `routedHost`, MTU 9216 |
-| `S3_TOR1` | `port-channel10` (`l3Po`, "Routed subinterface parent for integration tests") | present | deleted |
-| `S3_TOR1` | `Ethernet1/63` | `routedHost` | `trunkHost` |
-| `S3_TOR1` | `Ethernet1/3` (`S3_H1` host port) | `trunkHost` | `accessHost` |
-| `C3_LE1` | `GigabitEthernet1/0/1` | `iosXeRoutedHost` | `iosXeTrunkHost` |
+| Switch | Object | Baseline |
+|--------|--------|----------|
+| `S3_BG1`, `S4_BG1` | free ports, including `Ethernet1/10`-`1/14`, `1/31`-`1/34`, `1/41`-`1/50` | `trunkHost`, `allowedVlans: none`, MTU `jumbo` |
+| `S3_BG1` | `Ethernet1/63` | `routedHost`, MTU 9216 |
+| `S3_BG1` | `port-channel10` (`l3Po`, "Routed subinterface parent for integration tests") | present, MTU 9216 |
+| `S3_TOR1` | `Ethernet1/63` | `routedHost`, MTU 9216 |
+| `S3_TOR1` | `port-channel10` (`l3Po`, "Routed subinterface parent for integration tests") | present, MTU 9216 |
+| `S3_TOR1` | `Ethernet1/3` (`S3_H1` host port) | `accessHost` |
+| `C3_LE1` | `GigabitEthernet1/0/1` | `iosXeTrunkHost` |
+
+The ND 4.2.1 mirror pins the same objects on `S1_BG1` and `S1_TOR1`. The `Ethernet1/63` and `port-channel10` entries are the subinterface parents the
+integration tests use; nothing else on the border gateways is routed by default.
 
 Fabric settings that differ from the multicast baseline, in `SITE1` and `SITE2`:
 
@@ -77,7 +84,7 @@ The same template has the mirror check for Ingress to Multicast, keyed on the `i
 
 ## Procedure
 
-Per fabric, in this order. This is what was run on ND 4.3.1 and is the plan for ND 4.2.1.
+Per fabric, in this order. This is what was run on ND 4.3.1 and is the plan for ND 4.2.1. `golden.py convert` runs these steps (see below).
 
 1. Detach and delete every network and VRF, and remove the fabric from its fabric group.
 2. Save `replicationMode: ingress` on the fabric. Through the API, remove the multicast-only keys listed above from the `PUT /fabrics/{f}` body.
@@ -98,10 +105,23 @@ Order matters in steps 5 and 6:
 
 With this repo's tooling, steps 5 and 6 are `provision.py --phase msd`, `--phase deploy`, then `golden.py restore`.
 
+`golden.py convert` does the whole procedure, steps 1 to 6, against the topology file's `replication_modes` for the target mode, and a rerun
+continues a conversion that stopped part way:
+
+```bash
+uv run config/nd/provision/golden.py convert --topology config/nd/provision/topology_nd421.yaml --nd-ip 10.10.20.10 --replication-mode ingress --dry-run
+uv run config/nd/provision/golden.py convert --topology config/nd/provision/topology_nd421.yaml --nd-ip 10.10.20.10 --replication-mode ingress
+```
+
+`--dry-run` prints the plan and the first step's calls and sends nothing. See "Replication modes" in `config/nd/provision/README.md` for the steps, the
+refusals and the exit codes.
+
 ## Tooling notes for this repo
 
-- `topology_nd431.yaml` now pins `replicationMode: ingress` for `SITE1` and `SITE2` in place of `anycastRendezvousPointIpRange`.
-  The change is on the local branch `nd431-ingress-replication`, not committed.
-- `topology_nd421.yaml` is unchanged, so `test_shipped_topologies_differ_only_in_hostnames_and_mgmt_ips` fails until ND 4.2.1 is converted.
-- `golden.py` does not cover fabric-group membership and has no operation to update an existing network; it reports such a network as
-  `DIFFERENT` and applies nothing.
+- Both topology files declare `replication_modes` (`multicast` and `ingress`) for `SITE1` and `SITE2`, and `--replication-mode` picks one. Without
+  the flag, `golden.py drift`, `restore` and `adopt` use the mode they detect on the controller. `test_shipped_topologies_load_and_mirror`
+  passes in both modes: the two files differ only in hostnames and management IPs.
+- `provision.py --phase fabrics` refuses (exit 2) to change the mode of a fabric that already has switches. Use `golden.py convert` for that.
+- `golden.py` covers fabric-group membership (a missing member is re-added) and the `enableIr` flag of a golden network's member copies in
+  ingress mode. The repair of the flag is two ops: a `PUT` of the member copy, then `networkActions/deploy`. An existing network that differs in any
+  other field is still reported as `DIFFERENT` with no repair.

@@ -37,7 +37,7 @@ class StubClient:
 
 def _live():
     topo = load(HERE / "topology_nd421.yaml", replication_mode="multicast")
-    return read_live_from_snapshot(GOLDEN / "nd421", topo)
+    return read_live_from_snapshot(GOLDEN / "nd421" / "multicast", topo)
 
 
 def test_read_live_from_snapshot_loads_every_golden_fabric_and_group():

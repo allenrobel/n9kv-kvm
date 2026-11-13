@@ -8,6 +8,7 @@ import pytest
 
 import provision
 from provision import Provisioner, merge_settings
+from replication import MULTICAST_ONLY_KEYS
 from topology import Overlay, load
 
 HERE = Path(__file__).resolve().parents[1]
@@ -1175,3 +1176,62 @@ def test_phase_tor_live_raises_when_neither_nd_nor_the_topology_supplies_ids():
     with pytest.raises(RuntimeError, match=r"S1_TOR1 -> S1_LE1/S1_LE2: no port-channel ids: ND recommends none .*not connected.* and tor_pairs gives none"):
         Provisioner(client, topo, settle_seconds=0).phase_tor()
     assert _posts(client) == []
+
+
+def _mode_responses(topo, live_mode_name: str, switches: list) -> dict:
+    responses = {
+        ("/fabrics", ()): {"fabrics": [{"name": f.name} for f in topo.fabrics]},
+        ("/fabrics", (("category", "fabricGroup"),)): {"fabrics": []},
+    }
+    for fabric in topo.fabrics:
+        responses[(f"/fabrics/{fabric.name}", ())] = {"name": fabric.name, "management": {"type": fabric.type, "bgpAsn": fabric.asn, "replicationMode": live_mode_name}}
+        responses[(f"/fabrics/{fabric.name}/switches", ())] = {"switches": switches}
+    return responses
+
+
+def test_phase_fabrics_refuses_a_mode_change_on_a_populated_fabric(capsys):
+    topo = load(HERE / "topology_nd431.yaml", replication_mode="ingress")
+    client = StubClient(_mode_responses(topo, "multicast", [{"serialNumber": "SN1"}]))
+
+    with pytest.raises(SystemExit) as exc:
+        Provisioner(client, topo).phase_fabrics()
+
+    assert exc.value.code == 2
+    assert "golden.py convert" in capsys.readouterr().out
+    assert _puts(client) == []
+
+
+def test_phase_fabrics_sets_the_mode_on_an_empty_fabric():
+    topo = load(HERE / "topology_nd431.yaml", replication_mode="ingress")
+    client = StubClient(_mode_responses(topo, "multicast", []))
+
+    Provisioner(client, topo).phase_fabrics()
+
+    by_path = {p[1]: p[2] for p in _puts(client)}
+    body = by_path["/fabrics/SITE1"]["management"]
+    assert body["replicationMode"] == "ingress"
+    assert not set(body) & set(MULTICAST_ONLY_KEYS)
+
+
+def test_phase_fabrics_unchanged_mode_on_a_populated_fabric_does_not_refuse():
+    topo = load(HERE / "topology_nd431.yaml", replication_mode="ingress")
+    client = StubClient(_mode_responses(topo, "ingress", [{"serialNumber": "SN1"}]))
+
+    Provisioner(client, topo).phase_fabrics()
+
+
+def test_main_requires_the_flag_for_a_mode_bearing_topology(capsys):
+    with pytest.raises(SystemExit) as exc:
+        provision.main(["--topology", str(HERE / "topology_nd431.yaml"), "--phase", "fabrics", "--dry-run"])
+
+    assert exc.value.code == 2
+    captured = capsys.readouterr()
+    assert "--replication-mode" in captured.err + captured.out
+
+
+def test_main_rejects_a_mode_for_a_topology_without_replication_modes(capsys):
+    fixture = HERE / "tests" / "fixtures" / "topology_nd431_base.yaml"
+    with pytest.raises(SystemExit) as exc:
+        provision.main(["--topology", str(fixture), "--replication-mode", "ingress", "--dry-run"])
+
+    assert exc.value.code == 2

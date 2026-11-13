@@ -25,7 +25,8 @@ from pathlib import Path
 from typing import Any
 
 from nd_client import NDClient, NDCredentials
-from topology import Fabric, FabricGroup, Link, Topology, load, merge_settings
+from replication import live_mode, settings_body
+from topology import REPLICATION_MODES, Fabric, FabricGroup, Link, Topology, load, merge_settings
 
 PHASES = ["fabrics", "msd", "switches", "vpc", "tor", "isn", "overlay", "deploy"]
 
@@ -282,6 +283,15 @@ class Provisioner:
         found.update({g["name"]: g for g in (self.client.get("/fabrics", params={"category": "fabricGroup"}) or {}).get("fabrics", [])})
         return found
 
+    def _refuse_mode_change(self, fabric: Fabric, current: dict) -> None:
+        """Exit 2 (no write sent) when the topology's replication mode differs from the live one on a fabric that already has switches."""
+        wanted = live_mode(fabric.settings)
+        if wanted is None or live_mode(current) in (None, wanted) or fabric.name not in self.topo.mode_fabrics:
+            return
+        if self._read(f"/fabrics/{fabric.name}/switches", "switches"):
+            print(f"refused: {fabric.name} is {live_mode(current)} and has switches; changing it to {wanted} needs golden.py convert, not provision.py")
+            raise SystemExit(2)
+
     # -- phase: fabrics ------------------------------------------------------------------------------------
     def phase_fabrics(self) -> None:
         existing = self.existing_fabrics()
@@ -305,7 +315,8 @@ class Provisioner:
                     # do not create or write anything based on a guess.
                     self._log(f"could not read /fabrics/{fabric.name} after create/re-read; skipping settings this run")
                 continue
-            merged = merge_settings(current, fabric.settings)
+            self._refuse_mode_change(fabric, current)
+            merged = settings_body(current, fabric.settings)
             if merged != current:
                 self._put(f"/fabrics/{fabric.name}", merged)
             else:
@@ -690,14 +701,19 @@ class Provisioner:
             getattr(self, f"phase_{phase}")()
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--topology", type=Path, required=True)
     parser.add_argument("--nd-ip", help="override ND_IP4")
     parser.add_argument("--phase", default="all", choices=PHASES + ["all"])
     parser.add_argument("--dry-run", action="store_true", help="print every write instead of sending it")
-    args = parser.parse_args()
-    topo = load(args.topology)
+    parser.add_argument("--replication-mode", choices=REPLICATION_MODES, help="replication mode for a topology that declares replication_modes")
+    args = parser.parse_args(argv)
+    try:
+        topo = load(args.topology, args.replication_mode)
+    except ValueError as exc:
+        print(f"error: {exc}")
+        raise SystemExit(2) from exc
     client = NDClient(NDCredentials.from_env(args.nd_ip))
     client.login()
     Provisioner(client, topo, dry_run=args.dry_run).run(PHASES if args.phase == "all" else [args.phase])

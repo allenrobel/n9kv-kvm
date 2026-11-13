@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
 from typing import Any
 
 from golden import READ_ERRORS, Ask, Out, _nd_ip, _pending_fabrics, run_restore
@@ -86,26 +86,20 @@ def _vrf_lite_links(topo: Topology, live: dict[str, LiveFabric]) -> list[tuple[s
     return found
 
 
-def _ignoring_pending(fab: LiveFabric) -> str:
-    """fabric_state without the pending-config rule: what the setting and the held policies say."""
-    return fabric_state(replace(fab, pending=None))
-
-
 def plan(topo_target: Topology, live: dict[str, LiveFabric]) -> ConvertPlan:
     """What a conversion of `live` to `topo_target.replication_mode` still has to do. A fabric needs converting while its setting is not the
-    target or a switch still holds an other-mode policy; pending config alone does not count (the rebuild deploys it). Teardown (overlay,
-    members, links) is planned only while some fabric needs converting. `intact_source` also ignores pending config, which the run refuses
-    it for. `states` keeps the plain `fabric_state` for display."""
+    target or a switch still holds an other-mode policy (`fabric_state`); pending config does not count (the rebuild deploys it). Teardown
+    (overlay, members, links) is planned only while some fabric needs converting."""
     target = str(topo_target.replication_mode)
     source = next(m for m in REPLICATION_MODES if m != target)
     fabrics = list(topo_target.mode_fabrics)
     states = {f: fabric_state(live[f]) for f in fabrics}
-    convert = [f for f in fabrics if _ignoring_pending(live[f]) != target]  # pending lines alone are cleared by the rebuild's deploy
+    convert = [f for f in fabrics if states[f] != target]  # pending lines alone are cleared by the rebuild's deploy
     leave = [(g, f) for g in _groups(topo_target, live) for f in fabrics if f in live[g].members]
     golden_keys = {endpoint_key(link.src, link.src_if, link.dst, link.dst_if) for link in topo_target.isn.links}
     links = _vrf_lite_links(topo_target, live)
     live_keys = {_live_key(link) for _, link in links}
-    intact = all(_ignoring_pending(live[f]) == source for f in fabrics) and {f for _, f in leave} == set(fabrics) and golden_keys <= live_keys
+    intact = all(states[f] == source for f in fabrics) and {f for _, f in leave} == set(fabrics) and golden_keys <= live_keys
     result = ConvertPlan(target=target, states=states, convert=convert, intact_source=intact)
     if convert:
         result.overlay_ops = _overlay_ops(topo_target, live)
@@ -180,9 +174,9 @@ def _first_step(p: ConvertPlan, topo: Topology, live: dict[str, LiveFabric]) -> 
     return "rebuild (golden.py restore)", format_report(drifts).splitlines() if drifts else ["no drift: the restore has nothing to do"]
 
 
-def _only_pending(fab: LiveFabric, target: str) -> bool:
-    """In the target setting with no old-mode policy, held back only by pending config."""
-    return fabric_state(fab) != target and _ignoring_pending(fab) == target
+def _pending_in_target(fab: LiveFabric, target: str) -> bool:
+    """Converted (target setting, no old-mode policy) but some switch still has pending config lines."""
+    return fabric_state(fab) == target and any((fab.pending or {}).values())
 
 
 def _convert(p: ConvertPlan, topo: Topology, prov: Provisioner, out: Out, steps: list[str]) -> None:
@@ -257,13 +251,13 @@ def run(args: argparse.Namespace, topo_target: Topology, prov: Provisioner, ask:
             _convert(p, topo_target, prov, out, steps)
             steps.append("verify mode")
             after = read_live(prov.client, topo_target)
-            again = [f for f in p.convert if _only_pending(after[f], target)]
+            again = [f for f in p.convert if _pending_in_target(after[f], target)]
             for fabric in again:
                 out(f"convert: {fabric} still has pending config; Recalculate and Deploy once more")
                 prov.config_deploy(fabric)
             if again:
                 after = read_live(prov.client, topo_target)
-            stuck = [f"{f}={_ignoring_pending(after[f])}" for f in p.convert if _ignoring_pending(after[f]) != target]
+            stuck = [f"{f}={fabric_state(after[f])}" for f in p.convert if fabric_state(after[f]) != target]
             if stuck:
                 out(f"convert: not in {target} mode after the deploy: {', '.join(stuck)}; rerun golden.py convert --replication-mode {target}")
                 return 4

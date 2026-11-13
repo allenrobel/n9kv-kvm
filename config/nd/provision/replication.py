@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from topology import merge_settings
+from topology import REPLICATION_MODES, merge_settings
 
 if TYPE_CHECKING:
     from golden_live import LiveFabric
@@ -45,16 +45,17 @@ def live_mode(fabric_obj: dict) -> str | None:
 def fabric_state(live: LiveFabric) -> str:
     """ "multicast", "ingress" or "mid": the fabric's real replication mode, not just its saved setting.
 
-    "mid" means the setting disagrees with what the switches hold: a switch carries a policy of the other mode (saved, never deployed),
-    or a switch still has pending config (recalculated, deploy unfinished). A snapshot read has no policies, so the setting alone decides.
+    "mid" means the setting is missing or unknown, or disagrees with what the switches hold: a switch carries an underlay policy of the other
+    mode (saved, never deployed). Pending config is not part of the state: every test run leaves some, and `restore` is what deploys it.
+    A snapshot read has no policies, so the setting alone decides.
     """
     mode = live_mode(live.settings)
-    if live.mode_policies is None:
-        return mode or "mid"
-    other = {t for m, templates in MODE_POLICIES.items() if m != mode for t in templates}
-    if any(held & other for held in live.mode_policies.values()) or any((live.pending or {}).values()):
+    if mode not in REPLICATION_MODES:
         return "mid"
-    return mode or "mid"
+    if live.mode_policies is None:
+        return mode
+    other = {t for m, templates in MODE_POLICIES.items() if m != mode for t in templates}
+    return "mid" if any(held & other for held in live.mode_policies.values()) else mode
 
 
 def testbed_state(topo: Topology, live: dict[str, LiveFabric]) -> str:

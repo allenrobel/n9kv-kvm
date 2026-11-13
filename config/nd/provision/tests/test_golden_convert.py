@@ -166,7 +166,7 @@ def test_plan_treats_a_saved_but_undeployed_setting_as_not_converted():
 
 def test_plan_treats_pending_config_alone_after_the_change_as_converted():
     p = plan(topo("ingress"), _testbed("ingress", overlay=False, members=False, links=False, pending=4))
-    assert p.convert == [] and not p.intact_source and p.states == {"SITE1": "mid", "SITE2": "mid"}
+    assert p.convert == [] and not p.intact_source and p.states == {"SITE1": "ingress", "SITE2": "ingress"}
     assert p.overlay_ops == [] and p.leave == [] and p.link_ids == []
 
 
@@ -177,7 +177,7 @@ def test_plan_with_pending_config_alone_and_a_live_overlay_tears_nothing_down():
 
 def test_plan_counts_an_intact_source_with_pending_config_as_intact():
     p = plan(topo("ingress"), _testbed("multicast", pending=2))
-    assert p.states == {"SITE1": "mid", "SITE2": "mid"} and p.intact_source and p.convert == ["SITE1", "SITE2"]
+    assert p.states == {"SITE1": "multicast", "SITE2": "multicast"} and p.intact_source and p.convert == ["SITE1", "SITE2"]
 
 
 def test_plan_for_a_converted_but_unrebuilt_testbed_has_nothing_to_convert():

@@ -57,7 +57,10 @@ def _fabric(setting, policies, pending, name="SITE1"):
         ("ingress", {"S1_SP1": {"ingress_rep_simulated"}}, {"S1_SP1": 0}, "ingress"),
         ("ingress", {"S1_SP1": set()}, {"S1_SP1": 0}, "ingress"),  # ToR-like switch, no mode policy at all
         ("ingress", {"S1_SP1": {"base_multicast_11_1"}}, {"S1_SP1": 0}, "mid"),  # setting saved, never deployed
-        ("ingress", {"S1_SP1": set()}, {"S1_SP1": 9}, "mid"),  # recalculated, deploy not finished
+        ("ingress", {"S1_SP1": set()}, {"S1_SP1": 9}, "ingress"),  # pending config is not part of the state (every test run leaves some)
+        ("multicast", {"S1_SP1": {"base_multicast_11_1"}}, {"S1_SP1": 9}, "multicast"),
+        (None, {"S1_SP1": set()}, {"S1_SP1": 0}, "mid"),  # no setting
+        ("bogus", {"S1_SP1": set()}, {"S1_SP1": 0}, "mid"),  # unknown setting
         ("multicast", {"S1_SP1": {"ingress_rep_simulated"}}, {"S1_SP1": 0}, "mid"),
         ("multicast", {"S1_SP1": {"base_pim_asm_v6"}, "S1_LE1": {"ingress_rep_simulated"}}, {"S1_SP1": 0, "S1_LE1": 0}, "mid"),  # one switch lags
     ],
@@ -72,6 +75,7 @@ def test_fabric_state_treats_missing_pending_as_zero():
 
 def test_fabric_state_from_a_snapshot_uses_the_setting_alone():
     assert fabric_state(_fabric("ingress", None, None)) == "ingress"
+    assert fabric_state(_fabric("bogus", None, None)) == "mid"
 
 
 def test_testbed_state_is_the_common_fabric_state():

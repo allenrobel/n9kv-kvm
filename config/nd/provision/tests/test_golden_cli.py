@@ -425,11 +425,38 @@ def test_restore_without_flag_against_a_mid_conversion_testbed_exits_2_naming_co
     assert "convert" in lines[-1] and [c for c in rec.calls if c[0] in ("apply", "deploy", "write")] == [] and mode_client.writes == []
 
 
-def test_pending_config_alone_is_mid_conversion(monkeypatch, mode_client):
-    monkeypatch.setattr(golden, "read_live", lambda client, topo: live_for(topo, "multicast", pending=3))
+@pytest.mark.parametrize("mode", ["multicast", "ingress"])
+def test_pending_config_alone_is_not_mid_conversion(monkeypatch, mode_client, mode):
+    """Every test run leaves pending config; a same-mode testbed with pending lines and no other-mode policy is drifted and restored normally."""
+    mode_client.modes = {"SITE1": mode, "SITE2": mode}
+    monkeypatch.setattr(golden, "read_live", lambda client, topo: live_for(topo, mode, pending=3))
+    monkeypatch.setattr(golden, "compute", lambda t, lv: [drift("missing", "s", fix=op("put_link"))])
     lines: list[str] = []
-    assert run_main(["drift", "--topology", str(TOPO_PATH), "--nd-ip", "1.1.1.1"], lines) == 2
-    assert "mid-conversion" in lines[-1] and "--replication-mode multicast" in lines[-1]
+    assert run_main(["drift", "--topology", str(TOPO_PATH), "--nd-ip", "1.1.1.1"], lines) == 1
+    assert lines[0] == f"replication mode: {mode} (detected)" and "MISSING" in lines[1] and not any("mid-conversion" in line for line in lines)
+    restored: list = []
+    monkeypatch.setattr(golden, "run_restore", lambda args, topo, live, prov, ask, out: restored.append(topo.replication_mode) or 0)
+    lines.clear()
+    assert run_main(["restore", "--topology", str(TOPO_PATH), "--nd-ip", "1.1.1.1", "--yes", "--extras", "skip"], lines) == 0
+    assert restored == [mode] and not any("mid-conversion" in line for line in lines)
+
+
+def test_restore_with_no_drift_deploys_fabrics_with_pending_config(monkeypatch, rec):
+    monkeypatch.setattr(golden, "compute", lambda topo, live: [])
+    prov = SimpleNamespace(client=SimpleNamespace(creds=SimpleNamespace(ip="1.2.3.4")), pending=lambda fabric, serial: ["l1"])
+    lines: list[str] = []
+    ask = answers("y")
+    assert golden.run_restore(args(), load(TOPO_PATH, replication_mode="multicast"), rec.live, prov, ask, lines.append) == 0
+    assert rec.calls == [("deploy", ["SITE1"])] and "pending config" in ask.prompts[0]
+    assert lines[-1] == "restore: no drift; deployed SITE1, which had pending config"
+
+
+def test_restore_with_no_drift_and_pending_config_honours_no(monkeypatch, rec):
+    monkeypatch.setattr(golden, "compute", lambda topo, live: [])
+    prov = SimpleNamespace(client=SimpleNamespace(creds=SimpleNamespace(ip="1.2.3.4")), pending=lambda fabric, serial: ["l1"])
+    lines: list[str] = []
+    assert golden.run_restore(args(), load(TOPO_PATH, replication_mode="multicast"), rec.live, prov, answers("n"), lines.append) == 2
+    assert rec.calls == [] and lines[-1] == "restore: cancelled"
 
 
 def test_restore_flag_differing_from_the_live_setting_is_refused_naming_convert(monkeypatch, mode_client, rec):

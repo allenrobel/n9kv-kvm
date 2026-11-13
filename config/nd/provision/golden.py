@@ -157,11 +157,35 @@ def _pending_fabrics(prov: Provisioner, topo: Topology, live: dict[str, LiveFabr
     return found
 
 
+def _deploy_pending_only(args: argparse.Namespace, topo: Topology, live: dict[str, LiveFabric], prov: Provisioner, ask: Ask, out: Out) -> int:
+    """No drift: Recalculate and Deploy the golden fabrics whose switches still have pending config (what a test run leaves behind)."""
+    nd_ip = _nd_ip(args, prov)
+    try:
+        pending = [] if args.no_deploy else sorted(_pending_fabrics(prov, topo, live))
+    except READ_ERRORS as exc:
+        out(f"golden: cannot read {nd_ip}: {exc}")
+        return 3
+    if not pending:
+        out("restore: no drift")
+        return 0
+    if not args.yes:
+        answer = ask(f"No drift. Recalculate and Deploy {len(pending)} fabric(s) with pending config ({', '.join(pending)}) on {nd_ip}? [y/N] ")
+        if answer.strip().lower() not in ("y", "yes"):
+            out("restore: cancelled")
+            return 2
+    try:
+        Applier(prov, topo).deploy(set(pending), topo)
+    except (ApplyError, *READ_ERRORS) as exc:
+        out(f"restore: deploy failed: {exc}")
+        return 4
+    out(f"restore: no drift; deployed {', '.join(pending)}, which had pending config")
+    return 0
+
+
 def run_restore(args: argparse.Namespace, topo: Topology, live: dict[str, LiveFabric], prov: Provisioner, ask: Ask, out: Out) -> int:
     drifts = run_drift(topo, live, out)
     if not drifts:
-        out("restore: no drift")
-        return 0
+        return _deploy_pending_only(args, topo, live, prov, ask, out)
     extras = [d for d in drifts if d.kind == "extra"]
     if args.yes and extras and args.extras is None:
         out(f"restore: {len(extras)} extra object(s) need a decision; pass --extras adopt|delete|skip")

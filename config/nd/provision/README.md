@@ -41,8 +41,10 @@ writes the live state into them. One invocation targets one controller (`--nd-ip
 ```bash
 source ~/repos/n9kv-kvm/env_prod/env.sh
 cd ~/repos/n9kv-kvm
-uv run config/nd/provision/golden.py drift --topology config/nd/provision/topology_nd421.yaml --nd-ip 10.10.20.10     # read-only, exit 1 on drift
-uv run config/nd/provision/golden.py drift --topology config/nd/provision/topology_nd431.yaml --snapshot ~/tmp/snap_nd431   # offline
+uv run config/nd/provision/golden.py drift --topology config/nd/provision/topology_nd421.yaml --nd-ip 10.10.20.10 \
+  [--replication-mode multicast|ingress]     # read-only, exit 1 on drift
+uv run config/nd/provision/golden.py drift --topology config/nd/provision/topology_nd431.yaml --snapshot ~/tmp/snap_nd431 \
+  [--replication-mode multicast|ingress]     # offline
 uv run config/nd/provision/golden.py restore --topology config/nd/provision/topology_nd431.yaml --nd-ip 10.10.20.20 \
   [--replication-mode multicast|ingress] [--yes] [--extras adopt|delete|skip] [--no-deploy]
 uv run config/nd/provision/golden.py adopt --topology config/nd/provision/topology_nd431.yaml --nd-ip 10.10.20.20 \
@@ -65,7 +67,8 @@ uv run config/nd/provision/golden.py convert --topology config/nd/provision/topo
   read its remaining-drift line.
 - Extras are objects that exist live but not in golden. `--extras adopt` writes them into the yaml, `delete` removes them from ND, `skip` leaves them;
   without the flag `restore` asks per object. With `--yes` and extras present but no `--extras`, `restore` exits 2 and asks for `--extras adopt|delete|skip`.
-  `restore` also Recalculate & Deploys any fabric whose switches still carry pending config from an earlier aborted run.
+  `restore` also Recalculate & Deploys any fabric whose switches still carry pending config (left by a test run or an earlier aborted restore), even
+  when there is no drift; without `--yes` it asks first.
 
 Rules:
 
@@ -131,9 +134,10 @@ Choosing the mode:
 Refusals (exit 2, nothing written):
 
 - `drift`, `restore` and `adopt` on a live read refuse a testbed that is mid-conversion and point at `golden.py convert --replication-mode <mode>`.
-  A fabric is "mid" when its setting disagrees with its switches: a switch holds an underlay policy of the other mode (`base_multicast_11_1` or
-  `base_pim_asm_v6` for multicast, `ingress_rep_simulated` for ingress), or a switch still has pending config. A snapshot read has no policies, so
-  the saved setting alone decides.
+  A fabric is "mid" when its setting is missing or unknown, or disagrees with its switches: a switch holds an underlay policy of the other mode
+  (`base_multicast_11_1` or `base_pim_asm_v6` for multicast, `ingress_rep_simulated` for ingress). Pending config is not part of it: every test run
+  leaves some, and a same-mode testbed with pending lines is drifted and restored normally. A snapshot read has no policies, so the saved setting
+  alone decides.
 - `restore` also refuses when the live setting is not the requested mode, because it cannot change the mode on a populated fabric.
 - `provision.py --phase fabrics` refuses (exit 2, before any write) to change the mode of a fabric that already has switches, and exits 3 if it cannot
   read the fabric's switches to tell. A fabric with no switches is changed in place.
@@ -152,10 +156,10 @@ with the normal restore against the target mode's golden:
 5. Rebuild: `golden.py restore` against the target golden (members, links, deploy, overlay), then a check for zero drift and nothing pending.
 
 Every step is decided from the live state, so a run that stopped part way is continued by running the same command again. A fabric needs converting
-while its setting is not the target or a switch still holds an other-mode underlay policy; pending config lines alone do not count and go straight to the
-rebuild. After the mode deploy, `convert` deploys once more if a converted fabric still has pending lines. If a fabric is still not in the target mode
-after that, it prints the rerun command and exits 4. A testbed whose fabrics already are in the target mode skips steps 1 to 4. A testbed that is intact in
-the source mode with pending config is refused (exit 2): deploy it first with `golden.py restore`.
+while it is "mid" or in the other mode (see above); pending config lines alone do not count and go straight to the rebuild. After the mode deploy,
+`convert` deploys once more if a converted fabric still has pending lines. If a fabric is still not in the target mode after that, it prints the rerun
+command and exits 4. A testbed whose fabrics already are in the target mode skips steps 1 to 4. A testbed that is intact in the source mode with pending
+config is refused (exit 2), also under `--dry-run`: deploy it first with `golden.py restore`.
 
 Options: `--nd-ip`, `--yes` (skip the prompt; needs `--extras adopt|delete|skip` for the rebuild's restore, else exit 2 before anything is sent) and
 `--dry-run`. Exit codes: 0 converted with zero drift and nothing pending, 2 refused or cancelled, 3 a live read failed, 4 a step failed or drift remains.

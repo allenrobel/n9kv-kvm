@@ -1201,6 +1201,20 @@ def test_phase_fabrics_refuses_a_mode_change_on_a_populated_fabric(capsys):
     assert _puts(client) == []
 
 
+def test_phase_fabrics_exits_3_without_a_put_when_the_switches_read_fails(capsys):
+    topo = load(HERE / "topology_nd431.yaml", replication_mode="ingress")
+    responses = _mode_responses(topo, "multicast", [])
+    del responses[("/fabrics/SITE1/switches", ())]
+    client = StubClient(responses)
+
+    with pytest.raises(SystemExit) as exc:
+        Provisioner(client, topo).phase_fabrics()
+
+    assert exc.value.code == 3
+    assert "SITE1" in capsys.readouterr().out
+    assert _puts(client) == []
+
+
 def test_phase_fabrics_sets_the_mode_on_an_empty_fabric():
     topo = load(HERE / "topology_nd431.yaml", replication_mode="ingress")
     client = StubClient(_mode_responses(topo, "multicast", []))

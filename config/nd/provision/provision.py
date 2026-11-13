@@ -288,7 +288,12 @@ class Provisioner:
         wanted = live_mode(fabric.settings)
         if wanted is None or live_mode(current) in (None, wanted) or fabric.name not in self.topo.mode_fabrics:
             return
-        if self._read(f"/fabrics/{fabric.name}/switches", "switches"):
+        try:
+            body = self.client.get(f"/fabrics/{fabric.name}/switches") or {}
+        except RuntimeError as exc:
+            print(f"read failed: cannot tell whether {fabric.name} has switches ({str(exc)[:80]}); not changing its replication mode")
+            raise SystemExit(3) from exc
+        if body.get("switches", []) if isinstance(body, dict) else body:
             print(f"refused: {fabric.name} is {live_mode(current)} and has switches; changing it to {wanted} needs golden.py convert, not provision.py")
             raise SystemExit(2)
 

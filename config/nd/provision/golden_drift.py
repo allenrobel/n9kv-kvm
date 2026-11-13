@@ -341,7 +341,8 @@ def drift_generated_links(topo: Topology, fabric: Fabric, live: dict[str, LiveFa
 COMPARED_INPUTS = ("adminState", "mode", "accessVlan", "allowedVlans", "nativeVlan", "description", "mtu")
 GENERATED_LOGICAL_POLICIES = {"vpcPeerlinkPo", "vpcUplinkPo", "uplinkPo", "vpcUplink", "vpcBackupSvi"}
 LOGICAL_TYPES = {"portChannel", "vpc", "svi", "subInterface"}
-_MODES = (("routed", "routed"), ("trunk", "trunk"), ("access", "access"))  # substring of the lowercased policyType -> configData.mode
+# substring of the lowercased policyType -> configData.mode (l3Po is the routed port-channel policy)
+_MODES = (("routed", "routed"), ("l3po", "routed"), ("trunk", "trunk"), ("access", "access"))
 
 
 def _mode_for(policy: str) -> str:
@@ -451,6 +452,14 @@ def _if_body(serial: str, interface: str, interface_type: str, policy: dict, os_
 # bpduGuard on a trunk, and type mtu as an integer (1500-9216), so the IOS-XE seed carries only what every iosXe host template accepts.
 NXOS_SEED: dict = {"adminState": True, "mtu": "jumbo", "speed": "auto", "bpduGuard": "default", "portTypeEdgeTrunk": True}
 IOSXE_SEED: dict = {"adminState": True, "mtu": 1500}
+# ND's NX-OS routed templates (int_routed_host, int_l3_port_channel) have no bpduGuard / portTypeEdgeTrunk and type mtu as an integer
+ROUTED_SEED: dict = {"adminState": True, "mtu": 9216}
+
+
+def _seed(policy: str, os_type: str) -> dict:
+    if os_type == "ios-xe":
+        return IOSXE_SEED
+    return ROUTED_SEED if _mode_for(policy) == "routed" else NXOS_SEED
 
 
 def interface_body(serial: str, intent: InterfaceIntent, fabric_defaults: dict, os_type: str = "nx-os", role: str = "") -> dict:
@@ -463,7 +472,7 @@ def interface_body(serial: str, intent: InterfaceIntent, fabric_defaults: dict, 
     if default and _mode_for(str(default.get("policyType", ""))) == _mode_for(intent.policy):
         policy: dict = {"policyType": intent.policy, **default}  # policyType first, as in every other body this tool sends
     else:
-        policy = {"policyType": intent.policy, **(IOSXE_SEED if os_type == "ios-xe" else NXOS_SEED)}
+        policy = {"policyType": intent.policy, **_seed(intent.policy, os_type)}
     policy["policyType"] = intent.policy
     if intent.description:
         policy["description"] = intent.description
@@ -503,7 +512,10 @@ def _explicit_interface_drift(fabric: Fabric, live: LiveFabric, intent: Interfac
     kind: Kind = "different" if found and _if_policy(found) else "missing"
     role = next((s.role for s in fabric.switches if s.hostname == intent.switch), "")
     body = interface_body(serial, intent, fabric.defaults, _os_type(fabric, intent.switch, found), role)
-    fix = Op("put_interface", fabric.name, "PUT", interface_path(fabric.name, serial, intent.interface), body)
+    if found is None and intent.type != "ethernet":  # a logical interface that does not exist yet is created through the collection
+        fix = Op("put_interface", fabric.name, "POST", f"/fabrics/{fabric.name}/switches/{serial}/interfaces", {"interfaces": [body]})
+    else:
+        fix = Op("put_interface", fabric.name, "PUT", interface_path(fabric.name, serial, intent.interface), body)
     return Drift(INTERFACES, fabric.name, kind, subject, _if_text(golden), _if_text(live_values) if found else "none", fix, None, None)
 
 

@@ -863,3 +863,36 @@ def test_tor_recommendation_for_another_leaf_pair_is_not_a_pairing(nd421):
     _with_tor_associations(topo, live)
     live["SITE1"].tor_associations.append({**recommendation, "aggregationOrLeafSwitchId": serial["S1_LE3"], "aggregationOrLeafPeerSwitchId": serial["S1_LE4"]})
     assert [d for d in drift_pairs(topo, live) if d.cls == "pairs"] == []
+
+
+def test_routed_entry_under_a_trunk_role_default_uses_the_routed_seed():
+    """A routedHost port or an l3Po port-channel on a switch whose role default is trunkHost must not inherit the L2 seed: ND's routed
+    templates have no bpduGuard / portTypeEdgeTrunk and type mtu as an integer."""
+    defaults = {"tor": {"policyType": "trunkHost", "adminState": "true", "allowedVlans": "none", "mtu": "jumbo"}}
+    eth = interface_body("SER", InterfaceIntent("S1_TOR1", "Ethernet1/63", "routedHost", inputs={"mtu": "9216"}), defaults, "nx-os", "tor")
+    assert eth["configData"] == {"mode": "routed", "networkOS": {"networkOSType": "nx-os", "policy": {"policyType": "routedHost", "adminState": True, "mtu": 9216}}}
+    intent = InterfaceIntent("S1_TOR1", "port-channel10", "l3Po", type="portChannel", description="parent", inputs={"mtu": "9216"})
+    po = interface_body("SER", intent, defaults, "nx-os", "tor")
+    assert po["interfaceType"] == "portChannel" and po["configData"]["mode"] == "routed"
+    assert po["configData"]["networkOS"]["policy"] == {"policyType": "l3Po", "adminState": True, "mtu": 9216, "description": "parent"}
+
+
+def test_missing_logical_interface_is_created_with_a_post(nd421):
+    """ND has no object to PUT for a port-channel that does not exist yet; an ethernet port always exists and keeps the PUT."""
+    topo, live = nd421
+    live["SITE1"].interfaces["S1_TOR1"] = [i for i in live["SITE1"].interfaces["S1_TOR1"] if i["interfaceName"].lower() != "port-channel10"]
+    intent = InterfaceIntent("S1_TOR1", "port-channel10", "l3Po", type="portChannel", description="parent", inputs={"mtu": "9216"})
+    drift = next(d for d in _run_interfaces(_with_interfaces(topo, [("SITE1", intent)]), live) if d.subject == "S1_TOR1 port-channel10")
+    serial = live["SITE1"].switches["S1_TOR1"]["serialNumber"]
+    assert drift.kind == "missing" and drift.fix.action == "put_interface" and drift.fix.method == "POST"
+    assert drift.fix.path == f"/fabrics/SITE1/switches/{serial}/interfaces"
+    assert [i["interfaceName"] for i in drift.fix.body["interfaces"]] == ["port-channel10"]
+    assert drift.fix.body["interfaces"][0]["configData"]["networkOS"]["policy"]["policyType"] == "l3Po"
+
+
+def test_listed_l3po_as_golden_is_no_drift(nd421):
+    topo, live = nd421
+    po = _iface(live, "SITE1", "S1_TOR1", "port-channel10")
+    description = po["configData"]["networkOS"]["policy"].get("description", "")
+    intent = InterfaceIntent("S1_TOR1", "port-channel10", "l3Po", type="portChannel", description=description, inputs={"mtu": "9216"})
+    assert not [d for d in _run_interfaces(_with_interfaces(topo, [("SITE1", intent)]), live) if "hannel10" in d.subject]

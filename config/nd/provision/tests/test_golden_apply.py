@@ -247,3 +247,22 @@ def test_add_switch_missing_password_is_an_apply_error():
     with pytest.raises(ApplyError, match="add_switch: NXOS_PASSWORD is not set"):
         applier.apply(ops)
     assert client.writes == []
+
+
+def test_port_put_is_retried_while_the_detach_is_still_in_progress():
+    """networkActions/deploy answers 202 before the detach is done; ND keeps refusing the policy-type change until then."""
+    port = "/fabrics/SITE1/switches/S1/interfaces/Ethernet1%2F5"
+    rows = [{"networkName": "N1", "switchId": "S1", "vlanId": 10, "attach": True, "interfaces": [{"interfaceRange": "Ethernet1/5", "mode": "access"}]}]
+    refusal = "HTTP 400 Policy type change from trunkHost to accessHost is not allowed"
+    client = Stub(post_results={"/fabrics/SITE1/networkAttachments/query": {"attachments": rows}}, put_errors=[RuntimeError(refusal)] * 3)
+    _applier(client).apply([Op("put_interface", "SITE1", "PUT", port, {"i": 1})])
+    assert [c[0] for c in client.calls] == ["PUT", "POST", "POST", "POST", "PUT", "PUT", "PUT", "POST", "POST"]
+
+
+def test_port_put_gives_up_after_the_retry_budget_and_reattaches():
+    port = "/fabrics/SITE1/switches/S1/interfaces/Ethernet1%2F5"
+    rows = [{"networkName": "N1", "switchId": "S1", "vlanId": 10, "attach": True, "interfaces": [{"interfaceRange": "Ethernet1/5", "mode": "access"}]}]
+    client = Stub(post_results={"/fabrics/SITE1/networkAttachments/query": {"attachments": rows}}, put_errors=[RuntimeError("HTTP 400 Policy type change x")] * 50)
+    with pytest.raises(ApplyError, match="re-attached"):
+        _applier(client).apply([Op("put_interface", "SITE1", "PUT", port, {"i": 1})])
+    assert len([c for c in client.calls if c[0] == "PUT"]) == 13  # the first attempt plus TYPE_CHANGE_TRIES after the detach

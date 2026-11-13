@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import time
 from typing import Any
 from urllib.parse import unquote
 
@@ -38,6 +39,12 @@ RANK = {
     "pair_tor": 17,
     "deploy_owner": 18,
 }
+
+
+# networkActions/deploy only starts the detach (HTTP 202); until ND has finished it, the port PUT is still refused with the same
+# "Policy type change ... is not allowed" (lab, ND 4.2.1, 2026-11-13: refused right after the deploy call, accepted a few minutes later)
+TYPE_CHANGE_TRIES = 12
+TYPE_CHANGE_WAIT = 10
 
 
 class ApplyError(RuntimeError):
@@ -146,7 +153,7 @@ class Applier:
         self._run(op, lambda: self._check_post(op, attach_path, {"attachments": detach}))
         try:
             self._run(op, lambda: self._check_post(op, deploy_path, deploy))
-            self._run(op, lambda: self._send(op))
+            self._send_once_detached(op, port)
         except ApplyError as exc:
             try:
                 self._run(op, lambda: self._check_post(op, attach_path, {"attachments": reattach}))
@@ -161,6 +168,18 @@ class Applier:
             return
         self._run(op, lambda: self._check_post(op, attach_path, {"attachments": reattach}))
         self._run(op, lambda: self._check_post(op, deploy_path, deploy))
+
+    def _send_once_detached(self, op: Op, port: str) -> None:
+        """Send the port PUT, waiting out ND's asynchronous detach: retry while the answer is still the policy-type-change refusal."""
+        for attempt in range(1, TYPE_CHANGE_TRIES + 1):
+            try:
+                self._run(op, lambda: self._send(op))
+                return
+            except ApplyError as exc:
+                if "Policy type change" not in str(exc) or attempt == TYPE_CHANGE_TRIES or self.prov.dry_run:
+                    raise
+            self.prov._log(f"{port}: still refused, the detach is not finished; retry {attempt}/{TYPE_CHANGE_TRIES - 1} in {TYPE_CHANGE_WAIT}s")
+            time.sleep(TYPE_CHANGE_WAIT)
 
     def _check_post(self, op: Op, path: str, body: Any) -> None:
         self._check(Op(op.action, op.fabric, "POST", path, body), self.prov._post(path, body))

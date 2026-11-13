@@ -95,3 +95,9 @@ def test_testbed_state_is_mid_when_one_fabric_is_mid():
     topo = load(HERE / "topology_nd421.yaml", replication_mode="multicast")
     live = {"SITE1": _fabric("ingress", {"S1_SP1": {"base_multicast_11_1"}}, {"S1_SP1": 0}), "SITE2": _fabric("ingress", None, None, name="SITE2")}
     assert replication.testbed_state(topo, live) == "mid"
+
+
+def test_fabric_state_is_mid_when_the_body_has_no_setting_at_all():
+    """read_live refuses such a body; a hand-built LiveFabric still classifies as mid rather than as a mode."""
+    assert fabric_state(LiveFabric(name="SITE1", category="fabric", settings={}, mode_policies={"S1_SP1": set()}, pending={"S1_SP1": 0})) == "mid"
+    assert fabric_state(LiveFabric(name="SITE1", category="fabric", settings={"management": None}, mode_policies=None)) == "mid"

@@ -4,8 +4,9 @@
 from __future__ import annotations
 
 import json
+import re
 import time
-from typing import Any
+from typing import Any, Callable
 from urllib.parse import unquote
 
 import requests
@@ -46,9 +47,20 @@ OVERLAY_RANK = RANK["detach"]  # the first rank that touches overlay objects; a 
 
 
 # networkActions/deploy only starts the detach (HTTP 202); until ND has finished it, the port PUT is still refused with the same
-# "Policy type change ... is not allowed" (lab, ND 4.2.1, 2026-11-13: refused right after the deploy call, accepted a few minutes later)
+# "Policy type change ... is not allowed" (lab, ND 4.2.1, 2026-11-13: refused right after the deploy call, accepted a few minutes later).
+# The same budget covers a network/VRF DELETE that ND refuses while the detach of its attachments is still running.
 TYPE_CHANGE_TRIES = 12
 TYPE_CHANGE_WAIT = 10
+OVERLAY_DELETES = ("delete_network", "delete_vrf")
+_REFUSED = re.compile(r"-> HTTP 4(?!04)\d\d\b")  # NDClient's HTTP error text; a 4xx other than 404 is ND refusing the request
+
+
+def _policy_type_refusal(message: str) -> bool:
+    return "Policy type change" in message
+
+
+def _delete_refusal(message: str) -> bool:
+    return bool(_REFUSED.search(message))
 
 
 class ApplyError(RuntimeError):
@@ -70,9 +82,12 @@ def _failed_items(resp: Any) -> list[dict]:
 
 
 class Applier:
-    def __init__(self, prov: Provisioner, topo: Topology) -> None:
+    def __init__(self, prov: Provisioner, topo: Topology, wait_overlay_deletes: bool = False) -> None:
+        """`wait_overlay_deletes`: retry a network/VRF DELETE that ND refuses (HTTP 4xx) while the asynchronous detach deploy before it
+        finishes (golden.py convert's teardown)."""
         self.prov = prov
         self.topo = topo
+        self.wait_overlay_deletes = wait_overlay_deletes
 
     # -- transport -----------------------------------------------------------------------------------------
     def _delete(self, path: str) -> Any:
@@ -108,6 +123,7 @@ class Applier:
         switches_added = False
         groups_to_deploy = [o.fabric for o in ordered if o.action == "add_member"]
         for op in ordered:
+            # with no overlay op after the member add, this never fires: the final deploy (Applier.deploy) covers the membership
             if groups_to_deploy and RANK[op.action] >= OVERLAY_RANK:
                 self._deploy_membership(groups_to_deploy)
                 groups_to_deploy = []
@@ -121,6 +137,9 @@ class Applier:
                 continue
             if op.action in ("put_interface", "reset_interface"):  # both PUT a port policy; ND refuses a policy-type change under a network
                 self._put_interface(op)
+                continue
+            if self.wait_overlay_deletes and op.action in OVERLAY_DELETES:
+                self._send_once_detached(op, f"{op.action.removeprefix('delete_')} {op.path.rsplit('/', 1)[1]}", _delete_refusal)
                 continue
             self._run(op, lambda op=op: self._send(op))
         return touched
@@ -172,7 +191,7 @@ class Applier:
         self._run(op, lambda: self._check_post(op, attach_path, {"attachments": detach}))
         try:
             self._run(op, lambda: self._check_post(op, deploy_path, deploy))
-            self._send_once_detached(op, port)
+            self._send_once_detached(op, port, _policy_type_refusal)
         except ApplyError as exc:
             try:
                 self._run(op, lambda: self._check_post(op, attach_path, {"attachments": reattach}))
@@ -188,16 +207,17 @@ class Applier:
         self._run(op, lambda: self._check_post(op, attach_path, {"attachments": reattach}))
         self._run(op, lambda: self._check_post(op, deploy_path, deploy))
 
-    def _send_once_detached(self, op: Op, port: str) -> None:
-        """Send the port PUT, waiting out ND's asynchronous detach: retry while the answer is still the policy-type-change refusal."""
+    def _send_once_detached(self, op: Op, subject: str, refused: Callable[[str], bool]) -> None:
+        """Send `op`, waiting out ND's asynchronous detach: retry while the error is still the refusal `refused` recognises, at most
+        TYPE_CHANGE_TRIES attempts; the last error is raised."""
         for attempt in range(1, TYPE_CHANGE_TRIES + 1):
             try:
                 self._run(op, lambda: self._send(op))
                 return
             except ApplyError as exc:
-                if "Policy type change" not in str(exc) or attempt == TYPE_CHANGE_TRIES or self.prov.dry_run:
+                if not refused(str(exc)) or attempt == TYPE_CHANGE_TRIES or self.prov.dry_run:
                     raise
-            self.prov._log(f"{port}: still refused, the detach is not finished; retry {attempt}/{TYPE_CHANGE_TRIES - 1} in {TYPE_CHANGE_WAIT}s")
+            self.prov._log(f"{subject}: still refused, the detach is not finished; retry {attempt}/{TYPE_CHANGE_TRIES - 1} in {TYPE_CHANGE_WAIT}s")
             time.sleep(TYPE_CHANGE_WAIT)
 
     def _check_post(self, op: Op, path: str, body: Any) -> None:

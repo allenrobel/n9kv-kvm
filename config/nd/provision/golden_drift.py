@@ -874,10 +874,9 @@ def _ingress_drifts(topo: Topology, live: dict[str, LiveFabric]) -> list[Drift]:
                 body.pop("networkStatus", None)
                 body.setdefault("l2Data", {}).setdefault("fabricData", {})["enableIr"] = True
                 serials = sorted({r["switchId"] for r in live[fabric].network_attachments if r.get("networkName") == name})
-                fix = [
-                    Op("put_network_ir", fabric, "PUT", f"/fabrics/{fabric}/networks/{name}", body),
-                    Op("deploy_network_ir", fabric, "POST", f"/fabrics/{fabric}/networkActions/deploy", {"networkNames": [name], "switchIds": serials}),
-                ]
+                fix = [Op("put_network_ir", fabric, "PUT", f"/fabrics/{fabric}/networks/{name}", body)]
+                if serials:  # attached nowhere: nothing to deploy (an attachment fix deploys with the fabric)
+                    fix.append(Op("deploy_network_ir", fabric, "POST", f"/fabrics/{fabric}/networkActions/deploy", {"networkNames": [name], "switchIds": serials}))
                 drifts.append(Drift(NETWORKS, fabric, "different", name, "enableIr=true", f"enableIr={_norm(_enable_ir(copy_obj)) or 'none'}", fix, None, None))
     return drifts
 

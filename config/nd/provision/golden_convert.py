@@ -3,7 +3,8 @@
 ND refuses the mode change while a fabric holds any overlay definition (VRFs, networks, `ebgpVrfLite` links, fabric-group membership), so
 the conversion tears those down, changes the mode, and then rebuilds with the normal restore against the target mode's golden:
 
-    1. remove overlay   detach, deploy and delete every VRF and network of the group and of the mode fabrics (networks first), golden or not
+    1. remove overlay   detach, deploy and delete every VRF and network of the group and of the mode fabrics (networks first), golden or not;
+                        a DELETE ND refuses while the asynchronous detach finishes is retried (golden_apply TYPE_CHANGE_TRIES / _WAIT)
     2. leave group      removeMembers for each mode fabric, then Recalculate and Deploy the fabrics that left
     3. delete links     DELETE every live `ebgpVrfLite` link of the mode fabrics
     4. change mode      PUT the target settings, then Recalculate and Deploy, per fabric not yet in the target mode; verified by a re-read
@@ -24,10 +25,10 @@ from typing import Any
 
 from golden import READ_ERRORS, Ask, Out, _nd_ip, _pending_fabrics, run_restore
 from golden_apply import RANK, ApplyError, Applier
-from golden_drift import BUILT_IN_VRFS, Op, _extra_overlay_drift, _live_key, _policy, compute, format_report
+from golden_drift import ATTACHMENTS, BUILT_IN_VRFS, NETWORKS, VRFS, Op, _extra_overlay_drift, _live_key, _policy, compute, drift_overlay, format_report
 from golden_live import LiveFabric, LiveReadError, read_live
 from provision import LOG_BODY_LIMIT, Provisioner, redact
-from replication import fabric_state, settings_body
+from replication import fabric_state, live_mode, settings_body
 from topology import REPLICATION_MODES, Topology, endpoint_key
 
 VRF_LITE = "ebgpVrfLite"
@@ -42,6 +43,7 @@ class ConvertPlan:
     link_ids: list[tuple[str, str, str]] = field(default_factory=list)  # (fabric, linkId, description)
     convert: list[str] = field(default_factory=list)  # mode fabrics not yet in the target mode
     intact_source: bool = False
+    redeploy: list[str] = field(default_factory=list)  # resume only: mode fabrics with pending config, Recalculated and Deployed before the deletes
 
 
 def _groups(topo: Topology, live: dict[str, LiveFabric]) -> list[str]:
@@ -86,10 +88,19 @@ def _vrf_lite_links(topo: Topology, live: dict[str, LiveFabric]) -> list[tuple[s
     return found
 
 
+def _overlay_intact(topo: Topology, live: dict[str, LiveFabric]) -> bool:
+    """Every golden VRF and network is present and every golden attachment is live (attach true)."""
+    return not any(d.kind == "missing" and d.cls in (VRFS, NETWORKS, ATTACHMENTS) for d in drift_overlay(topo, live))
+
+
 def plan(topo_target: Topology, live: dict[str, LiveFabric]) -> ConvertPlan:
     """What a conversion of `live` to `topo_target.replication_mode` still has to do. A fabric needs converting while its setting is not the
     target or a switch still holds an other-mode policy (`fabric_state`); pending config does not count (the rebuild deploys it). Teardown
-    (overlay, members, links) is planned only while some fabric needs converting."""
+    (overlay, members, links) is planned only while some fabric needs converting.
+
+    The source is intact when every mode fabric is in the source mode, is a group member and the golden VRF-Lite links, VRFs, networks
+    and attachments are all live. A resume (not intact) that still has overlay deletes to do first Recalculates and Deploys the mode fabrics
+    with pending config: a detach whose asynchronous deploy never completed is pushed again, or ND keeps refusing the DELETE."""
     target = str(topo_target.replication_mode)
     source = next(m for m in REPLICATION_MODES if m != target)
     fabrics = list(topo_target.mode_fabrics)
@@ -99,12 +110,14 @@ def plan(topo_target: Topology, live: dict[str, LiveFabric]) -> ConvertPlan:
     golden_keys = {endpoint_key(link.src, link.src_if, link.dst, link.dst_if) for link in topo_target.isn.links}
     links = _vrf_lite_links(topo_target, live)
     live_keys = {_live_key(link) for _, link in links}
-    intact = all(states[f] == source for f in fabrics) and {f for _, f in leave} == set(fabrics) and golden_keys <= live_keys
+    intact = all(states[f] == source for f in fabrics) and {f for _, f in leave} == set(fabrics) and golden_keys <= live_keys and _overlay_intact(topo_target, live)
     result = ConvertPlan(target=target, states=states, convert=convert, intact_source=intact)
     if convert:
         result.overlay_ops = _overlay_ops(topo_target, live)
         result.leave = leave
         result.link_ids = [(f, link["linkId"], _link_text(link, golden_keys)) for f, link in links]
+        if not intact and any(o.action.startswith("delete_") for o in result.overlay_ops):
+            result.redeploy = [f for f in fabrics if any((live[f].pending or {}).values())]
     return result
 
 
@@ -126,6 +139,8 @@ def describe(p: ConvertPlan) -> str:
         removed = [o for o in p.overlay_ops if o.action.startswith("delete_")]
         detaches = sum(1 for o in p.overlay_ops if o.action == "detach")
         lines.append(f"1. remove overlay: {len(removed)} object(s), {detaches} detach(es) first")
+        if p.redeploy:
+            lines.append(f"     pending config left by an earlier run: Recalculate and Deploy {', '.join(p.redeploy)} first")
         lines.extend(f"     {o.action.removeprefix('delete_')} {o.path.rsplit('/', 1)[1]} in {o.fabric}" for o in removed)
         lines.append(f"2. leave fabric group: {len(p.leave)} member(s)")
         lines.extend(f"     {member} from {group}, then Recalculate and Deploy {member}" for group, member in p.leave)
@@ -158,7 +173,7 @@ def _first_step(p: ConvertPlan, topo: Topology, live: dict[str, LiveFabric]) -> 
     """The first step with work and its exact calls (dry run); for the rebuild, the drift its restore starts from. The teardown fields are
     empty when nothing needs converting."""
     if p.overlay_ops:
-        return "remove overlay", [_call(o.method, o.path, o.body) for o in p.overlay_ops]
+        return "remove overlay", [c for f in p.redeploy for c in _deploy_calls(f)] + [_call(o.method, o.path, o.body) for o in p.overlay_ops]
     if p.leave:
         removes = [_call(o.method, o.path, o.body) for o in (_remove_member(g, m) for g, m in p.leave)]
         return "leave fabric group", removes + [c for _, m in p.leave for c in _deploy_calls(m)]
@@ -182,7 +197,7 @@ def _pending_in_target(fab: LiveFabric, target: str) -> bool:
 def _convert(p: ConvertPlan, topo: Topology, prov: Provisioner, out: Out, steps: list[str]) -> None:
     """Steps 1 to 4. Each step with work is appended to `steps` before it starts, so a failure can name it. The mode PUT is built from a
     fresh GET of the fabric: leaving the group can change settings ND inherits or generates, and the preflight read would write them back."""
-    applier = Applier(prov, topo)
+    applier = Applier(prov, topo, wait_overlay_deletes=True)
 
     def send(op: Op) -> None:
         applier._run(op, lambda: applier._send(op))
@@ -193,6 +208,9 @@ def _convert(p: ConvertPlan, topo: Topology, prov: Provisioner, out: Out, steps:
 
     if p.overlay_ops:
         start("remove overlay")
+        for fabric in p.redeploy:
+            out(f"convert: {fabric} has pending config from an earlier run (a detach whose deploy may not have finished); Recalculate and Deploy it before the deletes")
+            prov.config_deploy(fabric)
         applier.apply(p.overlay_ops)
     if p.leave:
         start("leave fabric group")
@@ -207,9 +225,12 @@ def _convert(p: ConvertPlan, topo: Topology, prov: Provisioner, out: Out, steps:
     start(f"change mode to {p.target}")
     for fabric in p.convert:
         try:
-            current = prov.client.get(f"/fabrics/{fabric}") or {}
+            current = prov.client.get(f"/fabrics/{fabric}")
         except READ_ERRORS as exc:
             raise LiveReadError(f"GET /fabrics/{fabric}: {exc}") from exc
+        mode = live_mode(current) if isinstance(current, dict) else None
+        if mode not in REPLICATION_MODES:  # an empty or partial body: a PUT built from it would carry the golden settings alone
+            raise LiveReadError(f"GET /fabrics/{fabric}: the body has no valid management.replicationMode ({mode!r})")
         send(_mode_put(topo, current, fabric))
         prov.config_deploy(fabric)
 

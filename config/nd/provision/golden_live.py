@@ -16,12 +16,12 @@ from urllib.parse import quote
 import requests
 
 from nd_client import NDClient
-from replication import MODE_POLICIES
-from topology import Topology
+from replication import MODE_POLICIES, live_mode
+from topology import REPLICATION_MODES, Topology
 
 
 class LiveReadError(RuntimeError):
-    """A live read failed or a golden fabric/group is absent."""
+    """A live read failed, a golden fabric/group is absent, or a mode fabric's body carries no valid replication mode."""
 
 
 @dataclass
@@ -100,6 +100,10 @@ def read_live(client: NDClient, topo: Topology) -> dict[str, LiveFabric]:
     for fabric in topo.fabrics:
         name = fabric.name
         live = LiveFabric(name=name, category="fabric", settings=get(f"/fabrics/{name}") or {})
+        if name in topo.mode_fabrics:  # an empty or partial body is a failed read, not a "mid" fabric
+            mode = live_mode(live.settings) if isinstance(live.settings, dict) else None
+            if mode not in REPLICATION_MODES:
+                raise LiveReadError(f"GET /fabrics/{name}: the body has no valid management.replicationMode ({mode!r})")
         switch_list = _items(get(f"/fabrics/{name}/switches"), "switches")
         live.switches = {s["hostname"]: s for s in switch_list}
         live.links = paged("/links", "links", {"fabricName": name})

@@ -1231,7 +1231,11 @@ def test_phase_fabrics_unchanged_mode_on_a_populated_fabric_does_not_refuse():
     topo = load(HERE / "topology_nd431.yaml", replication_mode="ingress")
     client = StubClient(_mode_responses(topo, "ingress", [{"serialNumber": "SN1"}]))
 
-    Provisioner(client, topo).phase_fabrics()
+    Provisioner(client, topo).phase_fabrics()  # a refusal would raise SystemExit before any PUT
+
+    by_path = {p[1]: p[2] for p in _puts(client)}
+    for fabric in topo.mode_fabrics:
+        assert by_path[f"/fabrics/{fabric}"]["management"]["replicationMode"] == "ingress"
 
 
 def test_main_requires_the_flag_for_a_mode_bearing_topology(capsys):

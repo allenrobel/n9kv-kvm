@@ -8,7 +8,7 @@ import pytest
 import golden
 import golden_convert
 import provision
-from golden_convert import plan
+from golden_convert import describe, plan
 from golden_live import LiveFabric, LiveReadError
 from provision import Provisioner
 from replication import MODE_POLICIES
@@ -44,14 +44,24 @@ ISN_S2 = _link("LINK-S2", "S2_BG1", "Ethernet1/3", "WAN1", "GigabitEthernet3")  
 DISCOVERED = _link("LINK-D", "S1_SP1", "Ethernet1/1", "S1_LE1", "Ethernet1/1", policy=None)
 
 
-def _rows(fabric: str, host: str, network: bool) -> dict:
-    row = {"switchId": serial(host), "switchName": host, "attach": True}
-    return {**row, "networkName": "LAB_NET1", "vlanId": 2, "interfaces": []} if network else {**row, "vrfName": "LAB"}
+def _rows(fabric: str, network: bool) -> list[dict]:
+    """The live attachment rows of `fabric` for every golden attachment (VRF LAB / network LAB_NET1)."""
+    t = topo("multicast")
+    rows = []
+    for att in t.overlay.network_attachments if network else t.overlay.vrf_attachments:
+        if att["fabric"] != fabric:
+            continue
+        row = {"switchId": serial(att["switch"]), "switchName": att["switch"], "attach": True}
+        rows.append({**row, "networkName": att["network"], "vlanId": att["vlan"], "interfaces": att["interfaces"]} if network else {**row, "vrfName": att["vrf"]})
+    return rows
 
 
-def _testbed(mode: str, *, overlay: bool = True, members: bool = True, links: bool = True, policies=None, pending: int = 0) -> dict[str, LiveFabric]:
+def _testbed(
+    mode: str, *, overlay: bool = True, attached: bool = True, members: bool = True, links: bool = True, policies=None, pending: int = 0
+) -> dict[str, LiveFabric]:
     """A live testbed read by hand: SITE1/SITE2 saved in `mode`, holding `policies` (default: `mode`'s own), `pending` lines per switch;
-    the golden MSD overlay (VRF LAB, network LAB_NET1 attached on S1_LE1 and S2_LE1), membership and ISN links as asked."""
+    the golden MSD overlay (VRF LAB, network LAB_NET1, attached on every golden switch unless `attached` is false), membership and ISN
+    links as asked."""
     t = topo("multicast")
     live: dict[str, LiveFabric] = {}
     for f in t.fabrics:
@@ -65,11 +75,12 @@ def _testbed(mode: str, *, overlay: bool = True, members: bool = True, links: bo
     if overlay:
         live["MSD"].vrfs = [{"vrfName": "LAB"}]
         live["MSD"].networks = [{"networkName": "LAB_NET1"}]
-        for fabric, host in (("SITE1", "S1_LE1"), ("SITE2", "S2_LE1")):
+        for fabric in MODE_FABRICS:
             live[fabric].vrfs = [{"vrfName": "LAB"}, {"vrfName": "default"}]
             live[fabric].networks = [{"networkName": "LAB_NET1"}]
-            live[fabric].vrf_attachments = [_rows(fabric, host, network=False)]
-            live[fabric].network_attachments = [_rows(fabric, host, network=True)]
+            if attached:
+                live[fabric].vrf_attachments = _rows(fabric, network=False)
+                live[fabric].network_attachments = _rows(fabric, network=True)
     if links:
         live["SITE1"].links = [ISN_S1, DISCOVERED]
         live["SITE2"].links = [ISN_S2]
@@ -81,14 +92,14 @@ def _summary(ops) -> list[tuple[str, str, str]]:
     return [(o.action, o.method, o.path) for o in ops]
 
 
-GOLDEN_TEARDOWN = [
-    ("detach", "POST", "/fabrics/SITE1/networkAttachments"),
+GOLDEN_TEARDOWN = [  # one detach per golden attachment (SITE1: 4 network, 3 VRF; SITE2: 2 and 2), one deploy per fabric
+    *[("detach", "POST", "/fabrics/SITE1/networkAttachments")] * 4,
     ("deploy_overlay", "POST", "/fabrics/SITE1/networkActions/deploy"),
-    ("detach", "POST", "/fabrics/SITE2/networkAttachments"),
+    *[("detach", "POST", "/fabrics/SITE2/networkAttachments")] * 2,
     ("deploy_overlay", "POST", "/fabrics/SITE2/networkActions/deploy"),
-    ("detach", "POST", "/fabrics/SITE1/vrfAttachments"),
+    *[("detach", "POST", "/fabrics/SITE1/vrfAttachments")] * 3,
     ("deploy_overlay", "POST", "/fabrics/SITE1/vrfActions/deploy"),
-    ("detach", "POST", "/fabrics/SITE2/vrfAttachments"),
+    *[("detach", "POST", "/fabrics/SITE2/vrfAttachments")] * 2,
     ("deploy_overlay", "POST", "/fabrics/SITE2/vrfActions/deploy"),
     ("delete_network", "DELETE", "/fabrics/MSD/networks/LAB_NET1"),
     ("delete_vrf", "DELETE", "/fabrics/MSD/vrfs/LAB"),
@@ -136,6 +147,9 @@ def test_plan_includes_non_golden_overlay_and_links():
     assert [o.body["attachments"][0]["switchId"] for o in p.overlay_ops if o.action == "detach" and o.fabric == "SITE1" and "network" in o.path] == [
         "SN-S1_LE1",
         "SN-S1_LE2",
+        "SN-S1_BG1",
+        "SN-S1_TOR1",
+        "SN-S1_LE2",  # TEST_NET's
     ]
     assert p.link_ids == [*GOLDEN_LINKS[:1], ("SITE1", "LINK-X", "S1_BG1 Ethernet1/4 <-> WAN1 GigabitEthernet4 (not in golden)"), GOLDEN_LINKS[1]]
     assert p.intact_source  # residue does not make a testbed less intact
@@ -143,8 +157,33 @@ def test_plan_includes_non_golden_overlay_and_links():
 
 def test_plan_resumes_with_no_overlay():
     p = plan(topo("ingress"), _testbed("multicast", overlay=False))
-    assert p.overlay_ops == []
-    assert p.intact_source and p.convert == ["SITE1", "SITE2"] and p.leave == [("MSD", "SITE1"), ("MSD", "SITE2")] and p.link_ids == GOLDEN_LINKS
+    assert p.overlay_ops == [] and p.redeploy == []
+    assert not p.intact_source  # the overlay is part of an intact testbed: a run that removed it is resumed, not refused
+    assert p.convert == ["SITE1", "SITE2"] and p.leave == [("MSD", "SITE1"), ("MSD", "SITE2")] and p.link_ids == GOLDEN_LINKS
+
+
+def test_plan_with_the_overlay_detached_but_not_deleted_is_not_intact():
+    p = plan(topo("ingress"), _testbed("multicast", attached=False))
+    assert not p.intact_source and p.convert == ["SITE1", "SITE2"]
+    assert _summary(p.overlay_ops) == [("delete_network", "DELETE", "/fabrics/MSD/networks/LAB_NET1"), ("delete_vrf", "DELETE", "/fabrics/MSD/vrfs/LAB")]
+
+
+def test_plan_with_one_golden_attachment_missing_is_not_intact():
+    live = _testbed("multicast")
+    live["SITE1"].network_attachments = [r for r in live["SITE1"].network_attachments if r["switchName"] != "S1_TOR1"]
+    assert not plan(topo("ingress"), live).intact_source
+
+
+def test_plan_redeploys_pending_mode_fabrics_before_the_deletes_of_a_resume():
+    p = plan(topo("ingress"), _testbed("multicast", attached=False, pending=2))
+    assert not p.intact_source and p.redeploy == ["SITE1", "SITE2"]
+    assert "Recalculate and Deploy SITE1, SITE2 first" in describe(p)
+
+
+def test_plan_does_not_redeploy_without_deletes_or_on_an_intact_testbed():
+    assert plan(topo("ingress"), _testbed("multicast", overlay=False, pending=2)).redeploy == []  # nothing to delete
+    assert plan(topo("ingress"), _testbed("multicast", pending=2)).redeploy == []  # intact: refused before any write
+    assert plan(topo("ingress"), _testbed("multicast", attached=False)).redeploy == []  # nothing pending
 
 
 def test_plan_resumes_out_of_group_with_links_deleted():
@@ -272,16 +311,7 @@ def test_run_converts_an_intact_multicast_testbed_in_order(monkeypatch):
     h = Harness(monkeypatch, [_testbed("multicast"), _testbed("ingress", overlay=False, members=False, links=False), rebuild_live, _testbed("ingress")])
     assert h.run() == 0
     assert h.client.ordered() == [
-        ("POST", "/fabrics/SITE1/networkAttachments"),
-        ("POST", "/fabrics/SITE1/networkActions/deploy"),
-        ("POST", "/fabrics/SITE2/networkAttachments"),
-        ("POST", "/fabrics/SITE2/networkActions/deploy"),
-        ("POST", "/fabrics/SITE1/vrfAttachments"),
-        ("POST", "/fabrics/SITE1/vrfActions/deploy"),
-        ("POST", "/fabrics/SITE2/vrfAttachments"),
-        ("POST", "/fabrics/SITE2/vrfActions/deploy"),
-        ("DELETE", "/fabrics/MSD/networks/LAB_NET1"),
-        ("DELETE", "/fabrics/MSD/vrfs/LAB"),
+        *[(method, path) for _, method, path in GOLDEN_TEARDOWN],
         ("POST", "/fabrics/MSD/actions/removeMembers"),
         ("POST", "/fabrics/MSD/actions/removeMembers"),
         *deploys("SITE1"),
@@ -318,6 +348,100 @@ def test_run_refuses_an_intact_source_with_pending_config(monkeypatch):
     assert h.run() == 2
     assert h.client.ordered() == [] and h.restores == []
     assert "pending" in h.lines[-1] and "SITE1" in h.lines[-1]
+
+
+def test_run_resumes_with_the_overlay_gone_still_in_the_group_with_pending_config(monkeypatch):
+    start = _testbed("multicast", overlay=False, pending=2)  # a run that stopped after removing the overlay
+    h = Harness(monkeypatch, [start, _testbed("ingress", overlay=False, members=False, links=False), _testbed("ingress"), _testbed("ingress")])
+    assert h.run() == 0
+    assert not any("refused" in line for line in h.lines)
+    assert h.client.ordered() == [
+        ("POST", "/fabrics/MSD/actions/removeMembers"),
+        ("POST", "/fabrics/MSD/actions/removeMembers"),
+        *deploys("SITE1"),
+        *deploys("SITE2"),
+        ("DELETE", "/links/LINK-S1"),
+        ("DELETE", "/links/LINK-S2"),
+        ("PUT", "/fabrics/SITE1"),
+        *deploys("SITE1"),
+        ("PUT", "/fabrics/SITE2"),
+        *deploys("SITE2"),
+        ("RESTORE", "ingress"),
+    ]
+
+
+def test_run_resumes_a_detached_overlay_with_pending_config_by_redeploying_before_the_deletes(monkeypatch):
+    start = _testbed("multicast", attached=False, pending=2)  # detached, the deletes never ran (or ND refused them)
+    h = Harness(monkeypatch, [start, _testbed("ingress", overlay=False, members=False, links=False), _testbed("ingress"), _testbed("ingress")])
+    assert h.run() == 0
+    assert h.client.ordered()[:6] == [
+        *deploys("SITE1"),
+        *deploys("SITE2"),
+        ("DELETE", "/fabrics/MSD/networks/LAB_NET1"),
+        ("DELETE", "/fabrics/MSD/vrfs/LAB"),
+    ]
+    assert h.client.ordered()[6:8] == [("POST", "/fabrics/MSD/actions/removeMembers")] * 2 and h.client.ordered()[-1] == ("RESTORE", "ingress")
+    assert any("Recalculate and Deploy SITE1, SITE2 first" in line for line in h.lines)  # the plan says so
+    assert [line for line in h.lines if line.endswith("before the deletes")] == [
+        f"convert: {f} has pending config from an earlier run (a detach whose deploy may not have finished); Recalculate and Deploy it before the deletes"
+        for f in ("SITE1", "SITE2")
+    ]
+
+
+class RefusesDeletes(Client):
+    """DELETE of a path in `refusals` answers HTTP `status` that many times (ND still finishing the asynchronous detach)."""
+
+    def __init__(self, refusals, status=400, **kw):
+        super().__init__(**kw)
+        self.refusals = dict(refusals)
+        self.status = status
+
+    def delete(self, path):
+        self.calls.append(("DELETE", path, None))
+        if self.refusals.get(path):
+            self.refusals[path] -= 1
+            raise RuntimeError(f"DELETE {path} -> HTTP {self.status}: network LAB_NET1 is attached to a switch")
+        return None
+
+
+def _sleeps(monkeypatch) -> list:
+    """The retry waits (the `time` module is shared, so the deploy's settle sleeps are filtered out by their length)."""
+    import golden_apply
+
+    slept: list = []
+    monkeypatch.setattr(golden_apply.time, "sleep", lambda seconds: slept.append(seconds) if seconds == golden_apply.TYPE_CHANGE_WAIT else None)
+    return slept
+
+
+def test_run_retries_an_overlay_delete_refused_while_the_detach_finishes(monkeypatch):
+    slept = _sleeps(monkeypatch)
+    client = RefusesDeletes({"/fabrics/MSD/networks/LAB_NET1": 2})
+    start = _testbed("multicast", attached=False)
+    h = Harness(monkeypatch, [start, _testbed("ingress", overlay=False, members=False, links=False), _testbed("ingress"), _testbed("ingress")], client=client)
+    assert h.run() == 0
+    assert h.client.ordered()[:4] == [("DELETE", "/fabrics/MSD/networks/LAB_NET1")] * 3 + [("DELETE", "/fabrics/MSD/vrfs/LAB")]
+    assert len(slept) == 2
+
+
+def test_run_overlay_delete_refused_past_the_budget_exits_4_naming_the_step(monkeypatch):
+    import golden_apply
+
+    slept = _sleeps(monkeypatch)
+    client = RefusesDeletes({"/fabrics/MSD/networks/LAB_NET1": 50})
+    h = Harness(monkeypatch, [_testbed("multicast", attached=False)], client=client)
+    assert h.run() == 4
+    assert h.client.ordered() == [("DELETE", "/fabrics/MSD/networks/LAB_NET1")] * golden_apply.TYPE_CHANGE_TRIES  # nothing after it
+    assert len(slept) == golden_apply.TYPE_CHANGE_TRIES - 1 and h.restores == []
+    assert "remove overlay failed" in h.lines[-1] and "HTTP 400" in h.lines[-1]
+
+
+def test_run_overlay_delete_server_error_is_not_retried(monkeypatch):
+    slept = _sleeps(monkeypatch)
+    client = RefusesDeletes({"/fabrics/MSD/networks/LAB_NET1": 50}, status=500)
+    h = Harness(monkeypatch, [_testbed("multicast", attached=False)], client=client)
+    assert h.run() == 4
+    assert h.client.ordered() == [("DELETE", "/fabrics/MSD/networks/LAB_NET1")] and slept == []
+    assert "remove overlay failed" in h.lines[-1]
 
 
 def test_run_resumes_a_broken_testbed_with_pending_config(monkeypatch):
@@ -382,6 +506,19 @@ def test_run_dry_run_prints_the_first_step_and_sends_nothing(monkeypatch):
     assert "SITE1=multicast" in text and "network LAB_NET1" in text and "LINK-S1" in text
     assert "POST /fabrics/SITE1/networkAttachments" in text and "DELETE /fabrics/MSD/vrfs/LAB" in text
     assert "POST /fabrics/MSD/actions/removeMembers" not in text  # only the first step with work is spelled out as calls
+
+
+def test_run_dry_run_of_a_resume_lists_the_redeploy_before_the_deletes(monkeypatch):
+    h = Harness(monkeypatch, [_testbed("multicast", attached=False, pending=2)])
+    assert h.run(dry_run=True) == 0 and h.client.ordered() == []
+    calls = h.lines[-1].splitlines()
+    assert [c.split()[1] for c in calls[:5]] == [
+        "/fabrics/SITE1/actions/configSave",
+        "/fabrics/SITE1/actions/deploy",
+        "/fabrics/SITE2/actions/configSave",
+        "/fabrics/SITE2/actions/deploy",
+        "/fabrics/MSD/networks/LAB_NET1",
+    ]
 
 
 def test_run_dry_run_of_a_later_step_prints_its_calls(monkeypatch):
@@ -474,6 +611,33 @@ def test_run_failed_settings_read_before_the_mode_put_exits_3_with_no_put(monkey
     assert h.run() == 3
     assert h.client.ordered() == [] and h.restores == []
     assert "change mode to ingress" in h.lines[-1] and "GET /fabrics/SITE1" in h.lines[-1]
+
+
+@pytest.mark.parametrize("body", [{}, None, {"management": {}}, {"management": {"replicationMode": "bogus"}}])
+def test_run_settings_read_without_a_valid_mode_exits_3_with_no_put(monkeypatch, body):
+    client = Client(fabrics={"/fabrics/SITE1": body, "/fabrics/SITE2": {"management": {"replicationMode": "multicast"}}})
+    h = Harness(monkeypatch, [_testbed("multicast", overlay=False, members=False, links=False)], client=client)
+    assert h.run() == 3
+    assert h.client.ordered() == [] and h.restores == []
+    assert "change mode to ingress" in h.lines[-1] and "SITE1" in h.lines[-1] and "replicationMode" in h.lines[-1]
+
+
+def test_run_rebuild_with_zero_drift_deploys_the_pending_lines_and_ends_0(monkeypatch):
+    class DeployClears(Client):
+        def post(self, path, json=None, timeout=None):
+            if path == "/fabrics/SITE1/actions/deploy":
+                self.pending_lines.clear()
+            return super().post(path, json, timeout)
+
+    pending_path = "/fabrics/SITE1/switches/SN-S1_LE1/pendingConfig"
+    client = DeployClears(pending_lines={pending_path: ["interface Ethernet1/3"]})
+    done = _testbed("ingress", pending=1)
+    h = Harness(monkeypatch, [done, done, done], client=client)
+    monkeypatch.setattr(golden_convert, "run_restore", golden.run_restore)  # the real restore: no drift, so it deploys what is pending
+    monkeypatch.setattr(golden, "compute", lambda topo_, live: [])
+    assert h.run() == 0
+    assert h.client.ordered() == deploys("SITE1")
+    assert "restore: no drift; deployed SITE1, which had pending config" in h.lines and "convert: done" in h.lines[-1]
 
 
 def test_run_deploy_error_in_the_leave_step_exits_4_before_any_link_delete(monkeypatch):

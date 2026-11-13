@@ -35,6 +35,9 @@ class StubClient:
         return []
 
 
+MODE_BODIES = {f"/fabrics/{f}": {"management": {"replicationMode": "multicast"}} for f in ("SITE1", "SITE2")}  # the mode fabrics' settings
+
+
 def _live():
     topo = load(HERE / "topology_nd421.yaml", replication_mode="multicast")
     return read_live_from_snapshot(GOLDEN / "nd421" / "multicast", topo)
@@ -78,6 +81,7 @@ def _tor_stub(**kwargs):
     responses = {
         "/fabrics": [{"name": n} for n in [*(f.name for f in topo.fabrics), *(g.name for g in topo.fabric_groups)]],
         "/fabrics/SITE1/switches": {"switches": switches},
+        **MODE_BODIES,
     }
     responses.update(kwargs.pop("responses", {}))
     return topo, StubClient(responses, **kwargs)
@@ -136,6 +140,7 @@ def _mode_stub(policy_rows):
         "/fabrics": [{"name": n} for n in [*(f.name for f in topo.fabrics), *(g.name for g in topo.fabric_groups)]],
         "/fabrics/SITE1/switches": {"switches": switches},
         "/fabrics/MSD/members": {"fabrics": [{"name": "SITE1"}, {"name": "SITE2"}]},
+        **MODE_BODIES,
         f"/fabrics/SITE1/switches/{first['serialNumber']}/pendingConfig": {"pendingConfigs": ["a", "b"]},
     }
 
@@ -220,3 +225,30 @@ def test_snapshot_read_fills_members_and_leaves_mode_fields_none():
     assert live["MSD"].members == ["ISN", "SITE1", "SITE2"]
     assert live["SITE1"].members == []
     assert all(f.mode_policies is None and f.pending is None for f in live.values())
+
+
+@pytest.mark.parametrize("body", [{}, {"management": {}}, {"management": {"replicationMode": "bogus"}}])
+def test_read_live_mode_fabric_without_a_valid_mode_is_a_live_read_error(body):
+    topo, client, _, _ = _mode_stub(lambda a, b: [])
+    client.responses["/fabrics/SITE2"] = body
+    with pytest.raises(LiveReadError, match=r"SITE2.*replicationMode"):
+        read_live(client, topo)
+
+
+def test_read_live_mode_check_skips_non_mode_fabrics_and_modeless_topologies():
+    topo, client, _, _ = _mode_stub(lambda a, b: [])
+    assert "/fabrics/ISN" not in client.responses and "ISN" not in topo.mode_fabrics
+    read_live(client, topo)  # ISN's empty body is not checked
+    for path in MODE_BODIES:
+        client.responses.pop(path)
+    read_live(client, load(HERE / "tests" / "fixtures" / "topology_nd421_base.yaml"))  # no mode fabrics: nothing is checked
+
+
+def test_snapshot_read_does_not_check_the_mode(tmp_path):
+    import shutil
+
+    snap = tmp_path / "snap"
+    shutil.copytree(GOLDEN / "nd421" / "multicast", snap)
+    (snap / "fabric_SITE1.json").write_text('{"name": "SITE1", "management": {}}', encoding="utf-8")
+    live = read_live_from_snapshot(snap, load(HERE / "topology_nd421.yaml", replication_mode="multicast"))
+    assert live["SITE1"].settings == {"name": "SITE1", "management": {}}

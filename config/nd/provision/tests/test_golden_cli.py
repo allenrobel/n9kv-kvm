@@ -451,6 +451,34 @@ def test_restore_with_no_drift_deploys_fabrics_with_pending_config(monkeypatch, 
     assert lines[-1] == "restore: no drift; deployed SITE1, which had pending config"
 
 
+def test_restore_with_no_drift_and_an_unreadable_pending_config_exits_3_before_any_deploy(monkeypatch, rec):
+    monkeypatch.setattr(golden, "compute", lambda topo, live: [])
+
+    def pending(fabric, serial):
+        raise RuntimeError(f"GET /fabrics/{fabric}/switches/{serial}/pendingConfig -> HTTP 500")
+
+    prov = SimpleNamespace(client=SimpleNamespace(creds=SimpleNamespace(ip="1.2.3.4")), pending=pending)
+    lines: list[str] = []
+    assert golden.run_restore(args(yes=True), load(TOPO_PATH, replication_mode="multicast"), rec.live, prov, answers(), lines.append) == 3
+    assert rec.calls == [] and "cannot read 1.2.3.4" in lines[-1] and "HTTP 500" in lines[-1]
+
+
+def test_restore_with_no_drift_and_a_failed_pending_deploy_exits_4(monkeypatch, rec):
+    monkeypatch.setattr(golden, "compute", lambda topo, live: [])
+    rec.deploy_error = RuntimeError("POST /fabrics/SITE1/actions/deploy -> HTTP 500")
+    prov = SimpleNamespace(client=SimpleNamespace(creds=SimpleNamespace(ip="1.2.3.4")), pending=lambda fabric, serial: ["l1"])
+    lines: list[str] = []
+    assert golden.run_restore(args(yes=True), load(TOPO_PATH, replication_mode="multicast"), rec.live, prov, answers(), lines.append) == 4
+    assert rec.calls == [("deploy", ["SITE1"])] and lines[-1].startswith("restore: deploy failed") and "HTTP 500" in lines[-1]
+
+
+def test_missing_detected_mode_is_refused_naming_the_fabric(monkeypatch, mode_client):
+    monkeypatch.setattr(ModeClient, "get", lambda self, path, params=None: {} if path == "/fabrics/SITE1" else fabric_obj("multicast"))
+    lines: list[str] = []
+    assert run_main(["drift", "--topology", str(TOPO_PATH), "--nd-ip", "1.1.1.1"], lines) == 2
+    assert "SITE1" in lines[0] and "None" in lines[0] and "--replication-mode" in lines[0]
+
+
 def test_restore_with_no_drift_and_pending_config_honours_no(monkeypatch, rec):
     monkeypatch.setattr(golden, "compute", lambda topo, live: [])
     prov = SimpleNamespace(client=SimpleNamespace(creds=SimpleNamespace(ip="1.2.3.4")), pending=lambda fabric, serial: ["l1"])

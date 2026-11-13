@@ -950,6 +950,14 @@ def test_ingress_member_copy_without_enable_ir_is_different_with_a_put_and_deplo
     assert serials
 
 
+def test_ingress_member_copy_with_no_attached_switch_gets_only_the_put(nd421):
+    topo, live = nd421
+    live["SITE2"].network_attachments = [r for r in live["SITE2"].network_attachments if r["networkName"] != "LAB_NET1"]
+    fixes = {d.fabric: d.fix for d in drift_overlay(_ingress(topo), live) if d.cls == "networks"}
+    assert isinstance(fixes["SITE2"], list) and [o.action for o in fixes["SITE2"]] == ["put_network_ir"]  # no deploy with switchIds []
+    assert isinstance(fixes["SITE1"], list) and [o.action for o in fixes["SITE1"]] == ["put_network_ir", "deploy_network_ir"]
+
+
 def test_ingress_member_copy_with_enable_ir_is_not_drift(nd421):
     topo, live = nd421
     for name in ("SITE1", "SITE2"):

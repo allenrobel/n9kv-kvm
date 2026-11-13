@@ -326,3 +326,47 @@ def test_enable_ir_fix_from_the_drift_applies_the_put_before_the_deploy():
     client = Stub()
     _applier(client).apply(list(reversed(fix)))
     assert [(c[0], c[1]) for c in client.calls] == [("PUT", "/fabrics/SITE1/networks/LAB_NET1"), ("POST", "/fabrics/SITE1/networkActions/deploy")]
+
+
+class RefusingDelete(Stub):
+    def __init__(self, refusals, message="DELETE /fabrics/MSD/networks/N -> HTTP 400: network is attached"):
+        super().__init__()
+        self.refusals = refusals
+        self.message = message
+
+    def delete(self, path):
+        self.calls.append(("DELETE", path, None))
+        if self.refusals:
+            self.refusals -= 1
+            raise RuntimeError(self.message)
+        return None
+
+
+def test_restore_applier_does_not_retry_a_refused_overlay_delete():
+    client = RefusingDelete(1)
+    ops = [Op("delete_network", "MSD", "DELETE", "/fabrics/MSD/networks/N", None), Op("delete_vrf", "MSD", "DELETE", "/fabrics/MSD/vrfs/V", None)]
+    with pytest.raises(ApplyError, match="HTTP 400"):
+        _applier(client).apply(ops)
+    assert client.writes == [("DELETE", "/fabrics/MSD/networks/N", None)]
+
+
+def test_waiting_applier_retries_a_refused_overlay_delete_with_the_detach_budget(monkeypatch):
+    import golden_apply
+
+    slept: list = []
+    monkeypatch.setattr(golden_apply.time, "sleep", slept.append)
+    client = RefusingDelete(2)
+    applier = Applier(Provisioner(client, _topo()), _topo(), wait_overlay_deletes=True)
+    applier.apply([Op("delete_vrf", "MSD", "DELETE", "/fabrics/MSD/vrfs/V", None)])
+    assert [c[1] for c in client.writes] == ["/fabrics/MSD/vrfs/V"] * 3 and slept == [golden_apply.TYPE_CHANGE_WAIT] * 2
+
+
+@pytest.mark.parametrize("message", ["DELETE /x -> HTTP 404: not found", "DELETE /x -> HTTP 500: boom", "connection aborted"])
+def test_waiting_applier_does_not_retry_a_delete_error_that_is_not_a_refusal(monkeypatch, message):
+    import golden_apply
+
+    monkeypatch.setattr(golden_apply.time, "sleep", lambda s: pytest.fail("no wait expected"))
+    client = RefusingDelete(5, message)
+    with pytest.raises(ApplyError):
+        Applier(Provisioner(client, _topo()), _topo(), wait_overlay_deletes=True).apply([Op("delete_network", "MSD", "DELETE", "/fabrics/MSD/networks/N", None)])
+    assert len(client.writes) == 1

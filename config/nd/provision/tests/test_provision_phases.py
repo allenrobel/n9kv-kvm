@@ -76,7 +76,7 @@ class _StubClientFlakyRead(StubClient):
 
 
 def _topo():
-    return load(HERE / "topology_nd421.yaml")
+    return load(HERE / "topology_nd421.yaml", replication_mode="multicast")
 
 
 def _posts(client: StubClient) -> list[tuple]:

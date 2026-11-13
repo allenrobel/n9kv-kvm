@@ -17,7 +17,6 @@ Credentials: ND_IP4/ND_USERNAME/ND_PASSWORD/ND_DOMAIN (controller), NXOS_PASSWOR
 from __future__ import annotations
 
 import argparse
-import copy
 import json
 import os
 import re
@@ -26,7 +25,7 @@ from pathlib import Path
 from typing import Any
 
 from nd_client import NDClient, NDCredentials
-from topology import Fabric, FabricGroup, Link, Topology, load
+from topology import Fabric, FabricGroup, Link, Topology, load, merge_settings
 
 PHASES = ["fabrics", "msd", "switches", "vpc", "tor", "isn", "overlay", "deploy"]
 
@@ -50,16 +49,6 @@ def fabric_group_create_payload(group: FabricGroup) -> dict:
     management = {"type": "vxlan"}
     management.update(group.settings.get("management", {}))
     return {"name": group.name, "category": "fabricGroup", "management": management}
-
-
-def merge_settings(current: dict, settings: dict) -> dict:
-    merged = copy.deepcopy(current)
-    for key, value in settings.items():
-        if isinstance(value, dict) and isinstance(merged.get(key), dict):
-            merged[key] = merge_settings(merged[key], value)
-        else:
-            merged[key] = value
-    return merged
 
 
 DISCOVERY_PLACEHOLDER = "<from-discovery>"

@@ -2,6 +2,7 @@
 """Declarative testbed description consumed by provision.py (see topology_nd421.yaml for the schema by example)."""
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -17,6 +18,7 @@ class Switch:
     platform: str = "nx-os"
 
 
+REPLICATION_MODES = ("multicast", "ingress")
 TOOL_LINK_POLICIES = {"numbered", "unnumbered", "ebgpVrfLite"}
 GENERATED_LINK_POLICIES = {"multisiteUnderlay", "multisiteOverlay", "iosXeNumbered"}
 
@@ -167,6 +169,8 @@ class Topology:
     overlay: Overlay
     vpc_pairs: list[VpcPair] = field(default_factory=list)
     tor_pairs: list[TorPair] = field(default_factory=list)
+    replication_mode: str | None = None
+    mode_fabrics: tuple[str, ...] = ()
 
     def switches(self) -> dict[str, Switch]:
         return {s.hostname: s for f in self.fabrics for s in f.switches}
@@ -248,14 +252,67 @@ def _validate(topo: Topology) -> None:
             raise ValueError(f"overlay attachment references unknown switch {switch_name}")
 
 
-def load(path: Path) -> Topology:
+def merge_settings(current: dict, settings: dict) -> dict:
+    """Deep-merge `settings` over `current` (nested dicts merge, anything else is replaced); `current` is not modified."""
+    merged = copy.deepcopy(current)
+    for key, value in settings.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = merge_settings(merged[key], value)
+        else:
+            merged[key] = value
+    return merged
+
+
+def _leaf_paths(tree: dict, prefix: tuple[str, ...] = ()) -> set[tuple[str, ...]]:
+    paths: set[tuple[str, ...]] = set()
+    for key, value in tree.items():
+        if isinstance(value, dict) and value:
+            paths |= _leaf_paths(value, prefix + (key,))
+        else:
+            paths.add(prefix + (key,))
+    return paths
+
+
+def _check_modes(fabric: str, settings: dict, modes: dict) -> None:
+    for name in modes:
+        if name not in REPLICATION_MODES:
+            raise ValueError(f"fabric {fabric}: unknown replication mode '{name}' (expected one of {', '.join(REPLICATION_MODES)})")
+    if set(modes) != set(REPLICATION_MODES):
+        raise ValueError(f"fabric {fabric}: replication_modes must declare both {' and '.join(REPLICATION_MODES)}")
+    for name, delta in modes.items():
+        delta = delta or {}
+        if (delta.get("management") or {}).get("replicationMode") != name:
+            raise ValueError(f"fabric {fabric}: replication mode {name} must set management.replicationMode to {name}")
+        for path in sorted(_leaf_paths(delta) & _leaf_paths(settings)):
+            raise ValueError(f"fabric {fabric}: {'.'.join(path)} is in both settings and replication_modes ({name})")
+
+
+def declared_mode_fabrics(path: Path) -> list[str]:
+    """Names of the fabrics that declare replication_modes, in file order; reads the yaml only (no validation)."""
     raw: dict[str, Any] = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    return [f["name"] for f in raw.get("fabrics", []) if f.get("replication_modes")]
+
+
+def load(path: Path, replication_mode: str | None = None) -> Topology:
+    """Load a topology file. A file whose fabrics declare `replication_modes` needs `replication_mode` (there is no default);
+    the chosen mode's delta is merged over each such fabric's settings. A file that declares none rejects a mode."""
+    raw: dict[str, Any] = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    mode_fabrics = tuple(f["name"] for f in raw.get("fabrics", []) if f.get("replication_modes"))
+    if replication_mode is not None and replication_mode not in REPLICATION_MODES:
+        raise ValueError(f"unknown replication mode '{replication_mode}' (expected one of {', '.join(REPLICATION_MODES)})")
+    if replication_mode is not None and not mode_fabrics:
+        raise ValueError(f"{path.name} declares no replication_modes; drop --replication-mode")
+    if replication_mode is None and mode_fabrics:
+        raise ValueError(f"{path.name} declares replication_modes for {', '.join(mode_fabrics)}; pass --replication-mode {{{','.join(REPLICATION_MODES)}}}")
+    for f in raw.get("fabrics", []):
+        if f.get("replication_modes"):
+            _check_modes(f["name"], f.get("settings", {}) or {}, f["replication_modes"])
     fabrics = [
         Fabric(
             name=f["name"],
             type=f["type"],
             asn=str(f["asn"]),
-            settings=f.get("settings", {}),
+            settings=merge_settings(f.get("settings", {}) or {}, (f.get("replication_modes") or {}).get(replication_mode) or {}),
             switches=[Switch(**s) for s in f.get("switches", [])],
             links=[FabricLink(**{"src_ip": "", "dst_ip": "", **item}) for item in f.get("links", []) or []],
             generated_links=[GeneratedLink(**item) for item in f.get("generated_links", []) or []],
@@ -270,6 +327,15 @@ def load(path: Path) -> Topology:
     overlay = Overlay(**(raw.get("overlay", {}) or {}))
     pairs = [VpcPair(**item) for item in raw.get("vpc_pairs", []) or []]
     tor_pairs = [TorPair(**item) for item in raw.get("tor_pairs", []) or []]
-    topo = Topology(fabrics=fabrics, fabric_groups=groups, isn=isn, overlay=overlay, vpc_pairs=pairs, tor_pairs=tor_pairs)
+    topo = Topology(
+        fabrics=fabrics,
+        fabric_groups=groups,
+        isn=isn,
+        overlay=overlay,
+        vpc_pairs=pairs,
+        tor_pairs=tor_pairs,
+        replication_mode=replication_mode,
+        mode_fabrics=mode_fabrics,
+    )
     _validate(topo)
     return topo

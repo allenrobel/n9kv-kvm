@@ -36,7 +36,7 @@ class StubClient:
 
 
 def _live():
-    topo = load(HERE / "topology_nd421.yaml")
+    topo = load(HERE / "topology_nd421.yaml", replication_mode="multicast")
     return read_live_from_snapshot(GOLDEN / "nd421", topo)
 
 
@@ -62,17 +62,17 @@ def test_interface_paths_encode_the_slash():
 def test_read_live_fails_loud_when_fabric_controller_is_down():
     client = StubClient(error="HTTP 500 Error communicating with fabric controller")
     with pytest.raises(LiveReadError, match="fabric controller"):
-        read_live(client, load(HERE / "topology_nd421.yaml"))
+        read_live(client, load(HERE / "topology_nd421.yaml", replication_mode="multicast"))
 
 
 def test_read_live_fails_loud_when_a_golden_fabric_is_missing():
     client = StubClient({"/fabrics": []})
     with pytest.raises(LiveReadError, match="SITE1"):
-        read_live(client, load(HERE / "topology_nd421.yaml"))
+        read_live(client, load(HERE / "topology_nd421.yaml", replication_mode="multicast"))
 
 
 def _tor_stub(**kwargs):
-    topo = load(HERE / "topology_nd421.yaml")
+    topo = load(HERE / "topology_nd421.yaml", replication_mode="multicast")
     site1 = next(f for f in topo.fabrics if f.name == "SITE1")
     switches = [{"hostname": s.hostname, "serialNumber": f"SN_{s.hostname}"} for s in site1.switches]
     responses = {

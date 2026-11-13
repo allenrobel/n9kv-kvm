@@ -17,6 +17,12 @@ TOPO_PATH = HERE / "topology_nd421.yaml"
 SNAP = HERE / "golden" / "nd421"
 
 
+@pytest.fixture(autouse=True)
+def multicast_mode(monkeypatch):
+    """golden.main still loads the shipped file without a mode (the CLI flag arrives in a later task); pin one here."""
+    monkeypatch.setattr(golden, "load", lambda path: load(path, replication_mode="multicast"))
+
+
 def op(action: str, fabric: str = "SITE1", method: str = "PUT", path: str = "/x") -> Op:
     return Op(action, fabric, method, path, {})
 
@@ -96,12 +102,12 @@ def restore(monkeypatch, drifts, a, ask, rec):
     answers_ = iter([drifts, []])  # run_restore computes twice: the report before applying, the remaining drift after
     monkeypatch.setattr(golden, "compute", lambda topo, live: next(answers_))
     lines: list[str] = []
-    code = golden.run_restore(a, load(TOPO_PATH), rec.live, prov_stub(rec), ask, lines.append)
+    code = golden.run_restore(a, load(TOPO_PATH, replication_mode="multicast"), rec.live, prov_stub(rec), ask, lines.append)
     return code, lines
 
 
 def test_drift_exits_1_with_report_and_0_when_clean(monkeypatch):
-    topo = load(TOPO_PATH)
+    topo = load(TOPO_PATH, replication_mode="multicast")
     live = read_live_from_snapshot(SNAP, topo)
     lines: list[str] = []
     monkeypatch.setattr(golden, "compute", lambda t, lv: [drift("missing", "s", fix=op("put_link"))])
@@ -237,7 +243,7 @@ def test_adopt_prints_conflicts_filters_classes_and_exits_1(monkeypatch):
 def test_restore_deploys_fabrics_with_pending_config_from_an_earlier_run(monkeypatch, rec):
     prov = prov_stub()
     prov.pending = lambda fabric, serial: ["l1"] if fabric == "SITE1" else []
-    topo = load(TOPO_PATH)
+    topo = load(TOPO_PATH, replication_mode="multicast")
     rec.live.update({f.name: LiveFabric(f.name, "fabric", switches={s.hostname: {"serialNumber": "S-" + s.hostname} for s in f.switches}) for f in topo.fabrics})
     monkeypatch.setattr(golden, "compute", lambda t, lv: [drift("extra", "e", adopt=ADOPT)] if not rec.calls else [])
     lines: list[str] = []
@@ -268,7 +274,7 @@ def test_restore_pre_apply_pending_read_error_exits_3_before_any_write(monkeypat
     prov.pending = pending
     monkeypatch.setattr(golden, "compute", lambda t, lv: [drift("missing", "m", fix=op("put_link"))])
     lines: list[str] = []
-    code = golden.run_restore(args(yes=True), load(TOPO_PATH), rec.live, prov, answers(), lines.append)
+    code = golden.run_restore(args(yes=True), load(TOPO_PATH, replication_mode="multicast"), rec.live, prov, answers(), lines.append)
     assert code == 3 and rec.calls == [] and lines[-1] == "golden: cannot read 1.2.3.4: unreachable"
 
 

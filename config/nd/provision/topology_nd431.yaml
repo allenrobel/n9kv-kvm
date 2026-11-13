@@ -9,13 +9,17 @@ fabrics:
       management:
         bgpLoopbackIpRange: 10.11.0.0/22
         nveLoopbackIpRange: 10.12.0.0/22
-        replicationMode: ingress    # no PIM/anycast RP underlay; ND rejects anycastRendezvousPointIpRange in this mode
         intraFabricSubnetRange: 10.14.0.0/22
         vrfLiteSubnetRange: 10.15.0.0/16
         vrfLiteAutoConfig: back2BackAndToExternal
         autoSymmetricVrfLite: true
         autoVrfLiteDefaultVrf: true
         autoSymmetricDefaultVrf: true
+    replication_modes:
+      multicast:
+        management: {replicationMode: multicast, anycastRendezvousPointIpRange: 10.13.0.0/24}
+      ingress:
+        management: {replicationMode: ingress}
     switches:
       - {hostname: S3_BG1, ip: 192.168.14.131, role: borderGateway}
       - {hostname: S3_SP1, ip: 192.168.14.141, role: spine}
@@ -55,13 +59,17 @@ fabrics:
       management:
         bgpLoopbackIpRange: 10.21.0.0/22
         nveLoopbackIpRange: 10.22.0.0/22
-        replicationMode: ingress    # no PIM/anycast RP underlay; ND rejects anycastRendezvousPointIpRange in this mode
         intraFabricSubnetRange: 10.24.0.0/22
         vrfLiteSubnetRange: 10.25.0.0/16
         vrfLiteAutoConfig: back2BackAndToExternal
         autoSymmetricVrfLite: true
         autoVrfLiteDefaultVrf: true
         autoSymmetricDefaultVrf: true
+    replication_modes:
+      multicast:
+        management: {replicationMode: multicast, anycastRendezvousPointIpRange: 10.23.0.0/24}
+      ingress:
+        management: {replicationMode: ingress}
     switches:
       - {hostname: S4_BG1, ip: 192.168.14.132, role: borderGateway}
       - {hostname: S4_SP1, ip: 192.168.14.142, role: spine}

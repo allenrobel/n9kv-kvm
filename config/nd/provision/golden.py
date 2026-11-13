@@ -4,6 +4,7 @@
     golden.py drift   --topology T.yaml [--nd-ip IP | --snapshot DIR]
     golden.py restore --topology T.yaml [--nd-ip IP] [--yes] [--extras adopt|delete|skip] [--no-deploy]
     golden.py adopt   --topology T.yaml [--nd-ip IP | --snapshot DIR] [--classes links,interfaces,...]
+    golden.py convert --topology T.yaml --replication-mode multicast|ingress [--nd-ip IP] [--yes] [--extras adopt|delete|skip] [--dry-run]
 
 `drift` prints one line per difference (MISSING / DIFFERENT / EXTRA) and exits 1 when there is any. `restore` creates or overwrites what is
 missing or different, asks per EXTRA object whether to adopt it into the yaml or delete it from ND, writes the adoptions, applies, and
@@ -11,6 +12,7 @@ deploys the touched fabrics. `adopt` writes the live state into the yaml (bootst
 
 A topology that declares `replication_modes` needs one chosen before it loads: `--replication-mode` or, when omitted, the mode detected from the
 live ND (or the snapshot). A testbed caught between modes is refused (exit 2); `golden.py convert` finishes the conversion.
+`convert` moves the mode fabrics to the given mode (teardown, mode change, then a restore against that mode's golden); see golden_convert.py.
 
 Exit codes: 0 ok / no drift, 1 drift (drift) or conflicts (adopt), 2 refused or cancelled, 3 live read failed (an HTTP error or an unreachable controller
 while reading), 4 apply failed (a failed op, a dropped connection or an HTTP error while `restore` writes or deploys).
@@ -287,11 +289,38 @@ def _parser() -> argparse.ArgumentParser:
     restore.add_argument("--extras", choices=["adopt", "delete", "skip"], help="what to do with live-only objects without asking")
     restore.add_argument("--no-deploy", action="store_true", help="push the changes but do not run configDeploy")
     sub.choices["adopt"].add_argument("--classes", help="comma list of sections to adopt, e.g. links,interfaces,defaults")
+    convert = sub.add_parser("convert")
+    convert.add_argument("--topology", type=Path, required=True)
+    convert.add_argument("--nd-ip", help="override ND_IP4")
+    convert.add_argument("--replication-mode", choices=REPLICATION_MODES, required=True, help="the mode to convert the testbed to")
+    convert.add_argument("--yes", action="store_true", help="do not ask for confirmation (needs --extras)")
+    convert.add_argument("--extras", choices=["adopt", "delete", "skip"], help="what the rebuild's restore does with live-only objects")
+    convert.add_argument("--dry-run", action="store_true", help="print the plan and the first step's calls; send nothing")
     return parser
+
+
+def _main_convert(args: argparse.Namespace, ask: Ask, out: Out) -> int:
+    """convert loads the topology in its target mode: no detection and no mid-conversion refusal, a stopped conversion is what it resumes."""
+    import golden_convert  # golden_convert imports this module
+
+    try:
+        topo = load(args.topology, args.replication_mode)
+    except ValueError as exc:
+        out(f"golden: {exc}")
+        return 2
+    try:
+        client = NDClient(NDCredentials.from_env(args.nd_ip))
+        client.login()
+    except (requests.RequestException, OSError, RuntimeError) as exc:
+        out(f"golden: cannot read {args.nd_ip or 'ND'}: {exc}")
+        return 3
+    return golden_convert.run(args, topo, Provisioner(client, topo), ask, out)
 
 
 def main(argv: list[str] | None = None, ask: Ask = _ask_default, out: Out = print) -> int:
     args = _parser().parse_args(argv)
+    if args.cmd == "convert":
+        return _main_convert(args, ask, out)
     where = args.nd_ip or "ND"
     client = None
     try:

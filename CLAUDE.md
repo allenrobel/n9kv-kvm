@@ -95,7 +95,8 @@ The repo is organized by **lab subsystem**, not by language. Each subdir is larg
   its saved startup-config; the launcher falls back to the copy only when no disk exists.
 - **The provision topology yaml is the golden baseline.** `config/nd/provision/golden.py restore` pushes a live ND back to `topology_nd4*.yaml`; it
   never deletes ND-generated links or switches, resets an unlisted physical port to the role default (`defaults:`) instead of deleting it, and
-  really deletes only logical interfaces ND did not generate. `golden/{nd421,nd431}/<mode>/` are reference snapshots it does not read. Run it only
+  really deletes only logical interfaces ND did not generate, and even with no drift it Recalculates and Deploys every golden fabric (CAMPUS1 and ISN
+  too) that has pending config. `golden/{nd421,nd431}/<mode>/` are reference snapshots it does not read. Run it only
   when no tests are running. The topology files declare both replication modes (`replication_modes:`); changing a populated testbed between
   them is `golden.py convert`, which tears down the overlay and rebuilds it, not a settings edit (see the Replication modes section of
   `config/nd/provision/README.md`).

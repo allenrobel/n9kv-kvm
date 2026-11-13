@@ -67,8 +67,9 @@ uv run config/nd/provision/golden.py convert --topology config/nd/provision/topo
   read its remaining-drift line.
 - Extras are objects that exist live but not in golden. `--extras adopt` writes them into the yaml, `delete` removes them from ND, `skip` leaves them;
   without the flag `restore` asks per object. With `--yes` and extras present but no `--extras`, `restore` exits 2 and asks for `--extras adopt|delete|skip`.
-  `restore` also Recalculate & Deploys any fabric whose switches still carry pending config (left by a test run or an earlier aborted restore), even
-  when there is no drift; without `--yes` it asks first.
+  `restore` also Recalculate & Deploys any golden fabric (CAMPUS1 and ISN included) whose switches still carry pending config (left by a test run or
+  an earlier aborted restore), even when there is no drift: pending config is a departure from golden. So a `restore --yes` on a drift-free ND reads
+  every golden switch's pendingConfig and may run a long deploy; without `--yes` it asks first. A failed pendingConfig read exits 3, a failed deploy 4.
 
 Rules:
 
@@ -94,7 +95,7 @@ Rules:
   `DIFFERENT`. ND then generates a bare `member vni`, the L2 VNI stays Down and nothing shows as pending. The group's own object always reads `false`
   and a `PUT` on it is ignored, so the repair is two ops per member copy: `put_network_ir` (PUT the live copy with `enableIr: true`), then
   `deploy_network_ir` (`networkActions/deploy` for that network on the switches it is attached to). The deploy is its own action so it always runs
-  after the PUT and after any attach.
+  after the PUT and after any attach. A copy attached nowhere gets the PUT alone.
 - The baseline for a free border-gateway port is `trunkHost` (`allowedVlans: none`, `mtu: jumbo`), like a leaf port. `Ethernet1/63` (`routedHost`,
   MTU 9216) and `port-channel10` (`l3Po`, MTU 9216, "Routed subinterface parent for integration tests") are pinned on the SITE1 ToR and border gateway as
   subinterface parents for the `cisco.nd` integration tests.
@@ -129,15 +130,18 @@ Choosing the mode:
 - `golden.py drift`, `restore` and `adopt` take the flag too, but detect the mode when it is omitted: they read `management.replicationMode` of every
   mode fabric (from ND, or from `fabric_<name>.json` of a `--snapshot` dump), print `replication mode: <mode> (detected)`, and exit 2 if a fabric
   reports no valid mode or the fabrics disagree.
+- On a live read (`drift`, `restore`, `adopt` and every `convert` read), a mode fabric whose `GET /fabrics/<name>` body has no valid
+  `management.replicationMode` (empty, missing, or not `multicast`/`ingress`) is a failed read (exit 3), not a "mid" fabric; `convert` checks the
+  `GET` it builds the mode `PUT` from the same way. Snapshot reads and fabrics without `replication_modes` are not checked.
 - `golden.py convert` requires `--replication-mode`; it is the only command that loads the topology without detecting or checking the live state.
 
 Refusals (exit 2, nothing written):
 
 - `drift`, `restore` and `adopt` on a live read refuse a testbed that is mid-conversion and point at `golden.py convert --replication-mode <mode>`.
-  A fabric is "mid" when its setting is missing or unknown, or disagrees with its switches: a switch holds an underlay policy of the other mode
-  (`base_multicast_11_1` or `base_pim_asm_v6` for multicast, `ingress_rep_simulated` for ingress). Pending config is not part of it: every test run
-  leaves some, and a same-mode testbed with pending lines is drifted and restored normally. A snapshot read has no policies, so the saved setting
-  alone decides.
+  A fabric is "mid" when its setting disagrees with its switches (a missing or unknown setting is a failed read, see above): a switch holds an
+  underlay policy of the other mode (`base_multicast_11_1` or `base_pim_asm_v6` for multicast, `ingress_rep_simulated` for ingress). Pending config
+  is not part of it: every test run leaves some, and a same-mode testbed with pending lines is drifted and restored normally. A snapshot read has no
+  policies, so the saved setting alone decides.
 - `restore` also refuses when the live setting is not the requested mode, because it cannot change the mode on a populated fabric.
 - `provision.py --phase fabrics` refuses (exit 2, before any write) to change the mode of a fabric that already has switches, and exits 3 if it cannot
   read the fabric's switches to tell. A fabric with no switches is changed in place.
@@ -149,6 +153,10 @@ ND refuses to change a fabric's mode while the fabric holds any overlay definiti
 with the normal restore against the target mode's golden:
 
 1. Remove overlay: detach, deploy and delete every VRF and network of the fabric group and of the mode fabrics (networks first), golden or not.
+   `networkActions/deploy` only starts the detach, and ND refuses the `DELETE` (an HTTP 4xx other than 404) until it has finished, so a refused
+   network or VRF `DELETE` is retried every 10 s, 12 attempts in all (the port-PUT retry budget); after that the step fails with exit 4. On a
+   resumed run (the testbed is not intact) that still has deletes to do, each mode fabric with pending config is Recalculated and Deployed first,
+   so a detach whose deploy never completed is pushed again.
 2. Leave the fabric group: `removeMembers` for each mode fabric, then Recalculate and Deploy each fabric that left.
 3. Delete the `ebgpVrfLite` links of the mode fabrics.
 4. Change the mode: for each fabric not yet in the target mode, a fresh `GET` of the fabric (taken after the teardown, since leaving the group can change
@@ -158,11 +166,15 @@ with the normal restore against the target mode's golden:
 Every step is decided from the live state, so a run that stopped part way is continued by running the same command again. A fabric needs converting
 while it is "mid" or in the other mode (see above); pending config lines alone do not count and go straight to the rebuild. After the mode deploy,
 `convert` deploys once more if a converted fabric still has pending lines. If a fabric is still not in the target mode after that, it prints the rerun
-command and exits 4. A testbed whose fabrics already are in the target mode skips steps 1 to 4. A testbed that is intact in the source mode with pending
-config is refused (exit 2), also under `--dry-run`: deploy it first with `golden.py restore`.
+command and exits 4. A testbed whose fabrics already are in the target mode skips steps 1 to 4. A testbed that is intact in the source mode (every
+mode fabric in the source mode and in the group, and the golden VRF-Lite links, VRFs, networks and attachments all live) with pending config is
+refused (exit 2), also under `--dry-run`: deploy it first with `golden.py restore`. A testbed with any of those golden objects or attachments
+missing is a resumed run, and pending config there is expected.
 
 Options: `--nd-ip`, `--yes` (skip the prompt; needs `--extras adopt|delete|skip` for the rebuild's restore, else exit 2 before anything is sent) and
 `--dry-run`. Exit codes: 0 converted with zero drift and nothing pending, 2 refused or cancelled, 3 a live read failed, 4 a step failed or drift remains.
+`convert --extras skip` with residue present (an extra link or interface the teardown does not remove) ends with exit 4: the final check counts the
+skipped extras as drift.
 
 `--dry-run` reads the live ND and prints the plan: the target mode, each fabric's state (`multicast`, `ingress` or `mid`), then for each step the
 objects it will act on (each VRF and network, each group member, each link with its ND link id, the fabrics whose mode changes). It then prints the exact

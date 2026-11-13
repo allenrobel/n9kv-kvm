@@ -164,9 +164,15 @@ def test_plan_treats_a_saved_but_undeployed_setting_as_not_converted():
     assert p.convert == ["SITE1", "SITE2"] and p.states == {"SITE1": "mid", "SITE2": "mid"} and not p.intact_source
 
 
-def test_plan_treats_pending_config_after_the_change_as_not_converted():
+def test_plan_treats_pending_config_alone_after_the_change_as_converted():
     p = plan(topo("ingress"), _testbed("ingress", overlay=False, members=False, links=False, pending=4))
-    assert p.convert == ["SITE1", "SITE2"] and not p.intact_source
+    assert p.convert == [] and not p.intact_source and p.states == {"SITE1": "mid", "SITE2": "mid"}
+    assert p.overlay_ops == [] and p.leave == [] and p.link_ids == []
+
+
+def test_plan_with_pending_config_alone_and_a_live_overlay_tears_nothing_down():
+    p = plan(topo("ingress"), _testbed("ingress", pending=4))  # a rebuild that stopped after recreating members, links and overlay
+    assert p.convert == [] and p.overlay_ops == [] and p.leave == [] and p.link_ids == []
 
 
 def test_plan_counts_an_intact_source_with_pending_config_as_intact():
@@ -336,6 +342,31 @@ def test_run_on_a_converted_but_unrebuilt_testbed_only_rebuilds(monkeypatch):
     h = Harness(monkeypatch, [bare, bare, _testbed("ingress")])
     assert h.run() == 0
     assert h.client.ordered() == [("RESTORE", "ingress")] and h.reads == []
+
+
+def test_run_with_pending_config_alone_goes_straight_to_the_rebuild(monkeypatch):
+    start = _testbed("ingress", overlay=False, members=False, links=False, pending=4)
+    h = Harness(monkeypatch, [start, start, _testbed("ingress")])
+    assert h.run() == 0
+    assert h.client.ordered() == [("RESTORE", "ingress")] and h.reads == []
+    assert h.restores[0][2] is start
+
+
+def test_run_proceeds_to_the_rebuild_when_pending_lines_survive_the_second_deploy(monkeypatch):
+    start = _testbed("multicast", overlay=False, members=False, links=False)
+    left = _testbed("ingress", overlay=False, members=False, links=False, pending=3)
+    h = Harness(monkeypatch, [start, left, left, left, _testbed("ingress")])
+    assert h.run() == 0
+    assert h.client.ordered() == [
+        ("PUT", "/fabrics/SITE1"),
+        *deploys("SITE1"),
+        ("PUT", "/fabrics/SITE2"),
+        *deploys("SITE2"),
+        *deploys("SITE1"),
+        *deploys("SITE2"),
+        ("RESTORE", "ingress"),
+    ]
+    assert h.reads == []
 
 
 def test_run_dry_run_prints_the_first_step_and_sends_nothing(monkeypatch):

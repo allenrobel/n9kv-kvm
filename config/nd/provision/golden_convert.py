@@ -10,8 +10,9 @@ the conversion tears those down, changes the mode, and then rebuilds with the no
     5. rebuild          golden.py restore against the target golden (members, links, deploy, then overlay), then a zero-drift check
 
 Every step is decided from the live state: a run that stopped part way is continued by running the same command again. Steps 1 to 4 run
-only while some mode fabric is not in the target mode by `replication.fabric_state` (setting, held policies, pending config); a fabric
-whose setting was saved but never deployed therefore converts again and the rebuild does not start until it is in the target mode.
+only while some mode fabric's setting is not the target or a switch still holds a policy of the other mode; a fabric whose setting was
+saved but never deployed therefore converts again and the rebuild does not start until it is converted. Pending config lines alone do not
+count: the rebuild's deploy clears them, and the final check requires zero drift and nothing pending.
 """
 
 from __future__ import annotations
@@ -91,13 +92,15 @@ def _ignoring_pending(fab: LiveFabric) -> str:
 
 
 def plan(topo_target: Topology, live: dict[str, LiveFabric]) -> ConvertPlan:
-    """What a conversion of `live` to `topo_target.replication_mode` still has to do. Teardown (overlay, members, links) is planned only
-    while some mode fabric is not in the target mode. `intact_source` ignores pending config, which is what the run refuses it for."""
+    """What a conversion of `live` to `topo_target.replication_mode` still has to do. A fabric needs converting while its setting is not the
+    target or a switch still holds an other-mode policy; pending config alone does not count (the rebuild deploys it). Teardown (overlay,
+    members, links) is planned only while some fabric needs converting. `intact_source` also ignores pending config, which the run refuses
+    it for. `states` keeps the plain `fabric_state` for display."""
     target = str(topo_target.replication_mode)
     source = next(m for m in REPLICATION_MODES if m != target)
     fabrics = list(topo_target.mode_fabrics)
     states = {f: fabric_state(live[f]) for f in fabrics}
-    convert = [f for f in fabrics if states[f] != target]
+    convert = [f for f in fabrics if _ignoring_pending(live[f]) != target]  # pending lines alone are cleared by the rebuild's deploy
     leave = [(g, f) for g in _groups(topo_target, live) for f in fabrics if f in live[g].members]
     golden_keys = {endpoint_key(link.src, link.src_if, link.dst, link.dst_if) for link in topo_target.isn.links}
     links = _vrf_lite_links(topo_target, live)
@@ -254,7 +257,7 @@ def run(args: argparse.Namespace, topo_target: Topology, prov: Provisioner, ask:
                 prov.config_deploy(fabric)
             if again:
                 after = read_live(prov.client, topo_target)
-            stuck = [f"{f}={fabric_state(after[f])}" for f in p.convert if fabric_state(after[f]) != target]
+            stuck = [f"{f}={_ignoring_pending(after[f])}" for f in p.convert if _ignoring_pending(after[f]) != target]
             if stuck:
                 out(f"convert: not in {target} mode after the deploy: {', '.join(stuck)}; rerun golden.py convert --replication-mode {target}")
                 return 4

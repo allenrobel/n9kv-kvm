@@ -125,3 +125,98 @@ def test_tor_association_transport_error_is_a_live_read_error():
     client.get = get
     with pytest.raises(LiveReadError, match="accessAssociations"):
         read_live(client, topo)
+
+
+def _mode_stub(policy_rows):
+    topo = load(HERE / "topology_nd421.yaml", replication_mode="multicast")
+    site1 = next(f for f in topo.fabrics if f.name == "SITE1")
+    switches = [{"hostname": s.hostname, "serialNumber": f"SN_{s.hostname}"} for s in site1.switches]
+    first, second = switches[0], switches[1]
+    responses = {
+        "/fabrics": [{"name": n} for n in [*(f.name for f in topo.fabrics), *(g.name for g in topo.fabric_groups)]],
+        "/fabrics/SITE1/switches": {"switches": switches},
+        "/fabrics/MSD/members": {"fabrics": [{"name": "SITE1"}, {"name": "SITE2"}]},
+        f"/fabrics/SITE1/switches/{first['serialNumber']}/pendingConfig": {"pendingConfigs": ["a", "b"]},
+    }
+
+    class Client(StubClient):
+        def paged(self, path, key, params=None, page=100):
+            self.calls.append((path, params))
+            return policy_rows(first, second) if path == "/fabrics/SITE1/policies" else []
+
+    return topo, Client(responses), first, second
+
+
+def test_read_live_reads_group_members_mode_policies_and_pending():
+    def rows(first, second):
+        return [
+            {"switchId": first["serialNumber"], "templateName": "base_multicast_11_1"},
+            {"switchId": first["serialNumber"], "templateName": "some_other_template"},
+            {"switchId": second["serialNumber"], "templateName": "ingress_rep_simulated"},
+            {"switchId": "SN_UNKNOWN", "templateName": "base_pim_asm_v6"},
+        ]
+
+    topo, client, first, second = _mode_stub(rows)
+    live = read_live(client, topo)
+    assert live["MSD"].members == ["SITE1", "SITE2"]
+    assert live["SITE1"].members == []
+    assert live["SITE1"].mode_policies[first["hostname"]] == {"base_multicast_11_1"}
+    assert live["SITE1"].mode_policies[second["hostname"]] == {"ingress_rep_simulated"}
+    assert "SN_UNKNOWN" not in live["SITE1"].mode_policies
+    assert live["SITE1"].pending[first["hostname"]] == 2 and live["SITE1"].pending[second["hostname"]] == 0
+    assert live["ISN"].mode_policies is None and live["ISN"].pending is None
+    assert not any(c[0] == "/fabrics/ISN/policies" for c in client.calls)
+
+
+def test_read_live_groups_policies_by_switch_when_the_filter_is_ignored():
+    """ND 4.3.1 returns every switch's rows whatever the filter says."""
+
+    def rows(first, second):
+        return [{"switchId": second["serialNumber"], "templateName": "base_pim_asm_v6"}]
+
+    topo, client, first, second = _mode_stub(rows)
+    policies = read_live(client, topo)["SITE1"].mode_policies
+    assert policies[first["hostname"]] == set() and policies[second["hostname"]] == {"base_pim_asm_v6"}
+
+
+def test_read_live_modeless_topology_makes_no_per_mode_reads():
+    topo, client, _, _ = _mode_stub(lambda a, b: [])
+    modeless = load(HERE / "tests" / "fixtures" / "topology_nd421_base.yaml")
+    assert modeless.mode_fabrics == ()
+    live = read_live(client, modeless)
+    assert all(f.mode_policies is None and f.pending is None for f in live.values())
+
+
+def test_read_live_policies_failure_is_a_live_read_error():
+    topo, client, _, _ = _mode_stub(lambda a, b: [])
+
+    def paged(path, key, params=None, page=100):
+        raise RuntimeError("GET policies -> HTTP 500")
+
+    client.paged = paged
+    with pytest.raises(LiveReadError, match="policies"):
+        read_live(client, topo)
+
+
+def test_read_live_pending_transport_error_is_a_live_read_error():
+    import requests
+
+    topo, client, first, _ = _mode_stub(lambda a, b: [])
+    original = client.get
+    path = f"/fabrics/SITE1/switches/{first['serialNumber']}/pendingConfig"
+
+    def get(p, params=None):
+        if p == path:
+            raise requests.ConnectionError("boom")
+        return original(p, params)
+
+    client.get = get
+    with pytest.raises(LiveReadError, match="pendingConfig"):
+        read_live(client, topo)
+
+
+def test_snapshot_read_fills_members_and_leaves_mode_fields_none():
+    live = _live()
+    assert live["MSD"].members == ["ISN", "SITE1", "SITE2"]
+    assert live["SITE1"].members == []
+    assert all(f.mode_policies is None and f.pending is None for f in live.values())

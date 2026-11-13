@@ -16,6 +16,7 @@ from urllib.parse import quote
 import requests
 
 from nd_client import NDClient
+from replication import MODE_POLICIES
 from topology import Topology
 
 
@@ -37,6 +38,9 @@ class LiveFabric:
     network_attachments: list[dict] = field(default_factory=list)  # attach == True only
     vpc_pairs: list[dict] = field(default_factory=list)
     tor_associations: list[dict] = field(default_factory=list)
+    members: list[str] = field(default_factory=list)  # fabric groups only: member fabric names
+    mode_policies: dict[str, set[str]] | None = None  # hostname -> mode policy template names held; mode fabrics on a live read only
+    pending: dict[str, int] | None = None  # hostname -> pending config line count; mode fabrics on a live read only
 
 
 def _items(body: Any, key: str) -> list[dict]:
@@ -88,6 +92,7 @@ def read_live(client: NDClient, topo: Topology) -> dict[str, LiveFabric]:
     result: dict[str, LiveFabric] = {}
     for group in _group_names(topo):
         live = LiveFabric(name=group, category="fabricGroup", settings=get(f"/fabrics/{group}") or {})
+        live.members = [m["name"] for m in _items(get(f"/fabrics/{group}/members"), "fabrics")]
         live.links = paged("/links", "links", {"fabricName": group})
         live.vrfs = _items(get(f"/fabrics/{group}/vrfs"), "vrfs")
         live.networks = _items(get(f"/fabrics/{group}/networks"), "networks")
@@ -112,6 +117,15 @@ def read_live(client: NDClient, topo: Topology) -> dict[str, LiveFabric]:
                 # A fabric with no pairings answers 400/404; anything else (HTTP 5xx, transport) is a real failure.
                 if not (isinstance(exc, RuntimeError) and re.search(r"-> HTTP (400|404)\b", str(exc))):
                     raise LiveReadError(f"GET /fabrics/{name}/accessAssociations: {exc}") from exc
+        if name in topo.mode_fabrics:
+            held = {template for templates in MODE_POLICIES.values() for template in templates}
+            host_of = {s["serialNumber"]: s["hostname"] for s in switch_list}
+            live.mode_policies = {host: set() for host in host_of.values()}
+            # ND 4.3.1 ignores a switch filter on this list, so group every row by its switchId and drop the rest.
+            for row in paged(f"/fabrics/{name}/policies", "policies"):
+                if row.get("switchId") in host_of and row.get("templateName") in held:
+                    live.mode_policies[host_of[row["switchId"]]].add(row["templateName"])
+            live.pending = {host: len(_items(get(f"/fabrics/{name}/switches/{serial}/pendingConfig"), "pendingConfigs")) for serial, host in host_of.items()}
         serials = [s["serialNumber"] for s in switch_list]
         if serials:
             live.vrf_attachments = query("vrf", name, serials)
@@ -138,6 +152,7 @@ def read_live_from_snapshot(snapshot_dir: Path, topo: Topology) -> dict[str, Liv
             category="fabricGroup",
             settings=settings,
             links=_items(load(f"links_{group}"), "links"),
+            members=[m["name"] for m in _items(load(f"members_{group}"), "fabrics")],
             vrfs=_items(load(f"vrfs_{group}"), "vrfs"),
             networks=_items(load(f"networks_{group}"), "networks"),
         )

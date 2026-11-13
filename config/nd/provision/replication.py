@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from topology import merge_settings
+
+if TYPE_CHECKING:
+    from golden_live import LiveFabric
+    from topology import Topology
 
 # fabric `management` keys that only exist (or only mean something) under multicast replication
 MULTICAST_ONLY_KEYS: tuple[str, ...] = (
@@ -34,3 +40,24 @@ def settings_body(current: dict, settings: dict) -> dict:
 def live_mode(fabric_obj: dict) -> str | None:
     """`management.replicationMode` of a fabric GET body."""
     return (fabric_obj.get("management") or {}).get("replicationMode")
+
+
+def fabric_state(live: LiveFabric) -> str:
+    """ "multicast", "ingress" or "mid": the fabric's real replication mode, not just its saved setting.
+
+    "mid" means the setting disagrees with what the switches hold: a switch carries a policy of the other mode (saved, never deployed),
+    or a switch still has pending config (recalculated, deploy unfinished). A snapshot read has no policies, so the setting alone decides.
+    """
+    mode = live_mode(live.settings)
+    if live.mode_policies is None:
+        return mode or "mid"
+    other = {t for m, templates in MODE_POLICIES.items() if m != mode for t in templates}
+    if any(held & other for held in live.mode_policies.values()) or any((live.pending or {}).values()):
+        return "mid"
+    return mode or "mid"
+
+
+def testbed_state(topo: Topology, live: dict[str, LiveFabric]) -> str:
+    """The common `fabric_state` of every fabric that declares replication modes, else "mid"."""
+    states = {fabric_state(live[name]) for name in topo.mode_fabrics}
+    return states.pop() if len(states) == 1 else "mid"

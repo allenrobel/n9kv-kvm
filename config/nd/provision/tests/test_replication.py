@@ -1,6 +1,16 @@
 """Tests for replication.py: the ingress settings body and the live-mode reader."""
 
-from replication import MODE_POLICIES, MULTICAST_ONLY_KEYS, live_mode, settings_body
+from pathlib import Path
+
+import pytest
+
+import replication
+
+from golden_live import LiveFabric
+from replication import MODE_POLICIES, MULTICAST_ONLY_KEYS, fabric_state, live_mode, settings_body
+from topology import load
+
+HERE = Path(__file__).resolve().parents[1]
 
 
 def test_ingress_body_drops_every_multicast_only_key():
@@ -34,3 +44,50 @@ def test_live_mode_reads_management_replication_mode():
 
 def test_mode_policies():
     assert MODE_POLICIES == {"multicast": ("base_multicast_11_1", "base_pim_asm_v6"), "ingress": ("ingress_rep_simulated",)}
+
+
+def _fabric(setting, policies, pending, name="SITE1"):
+    return LiveFabric(name=name, category="fabric", settings={"management": {"replicationMode": setting}}, mode_policies=policies, pending=pending)
+
+
+@pytest.mark.parametrize(
+    "setting, policies, pending, expected",
+    [
+        ("multicast", {"S1_SP1": {"base_multicast_11_1"}}, {"S1_SP1": 0}, "multicast"),
+        ("ingress", {"S1_SP1": {"ingress_rep_simulated"}}, {"S1_SP1": 0}, "ingress"),
+        ("ingress", {"S1_SP1": set()}, {"S1_SP1": 0}, "ingress"),  # ToR-like switch, no mode policy at all
+        ("ingress", {"S1_SP1": {"base_multicast_11_1"}}, {"S1_SP1": 0}, "mid"),  # setting saved, never deployed
+        ("ingress", {"S1_SP1": set()}, {"S1_SP1": 9}, "mid"),  # recalculated, deploy not finished
+        ("multicast", {"S1_SP1": {"ingress_rep_simulated"}}, {"S1_SP1": 0}, "mid"),
+        ("multicast", {"S1_SP1": {"base_pim_asm_v6"}, "S1_LE1": {"ingress_rep_simulated"}}, {"S1_SP1": 0, "S1_LE1": 0}, "mid"),  # one switch lags
+    ],
+)
+def test_fabric_state(setting, policies, pending, expected):
+    assert fabric_state(_fabric(setting, policies, pending)) == expected
+
+
+def test_fabric_state_treats_missing_pending_as_zero():
+    assert fabric_state(_fabric("ingress", {"S1_SP1": {"ingress_rep_simulated"}}, None)) == "ingress"
+
+
+def test_fabric_state_from_a_snapshot_uses_the_setting_alone():
+    assert fabric_state(_fabric("ingress", None, None)) == "ingress"
+
+
+def test_testbed_state_is_the_common_fabric_state():
+    topo = load(HERE / "topology_nd421.yaml", replication_mode="multicast")
+    live = {n: _fabric("ingress", None, None, name=n) for n in topo.mode_fabrics}
+    assert replication.testbed_state(topo, live) == "ingress"
+
+
+def test_testbed_state_is_mid_when_fabrics_disagree():
+    topo = load(HERE / "topology_nd421.yaml", replication_mode="multicast")
+    assert topo.mode_fabrics == ("SITE1", "SITE2")
+    live = {"SITE1": _fabric("ingress", None, None, name="SITE1"), "SITE2": _fabric("multicast", None, None, name="SITE2")}
+    assert replication.testbed_state(topo, live) == "mid"
+
+
+def test_testbed_state_is_mid_when_one_fabric_is_mid():
+    topo = load(HERE / "topology_nd421.yaml", replication_mode="multicast")
+    live = {"SITE1": _fabric("ingress", {"S1_SP1": {"base_multicast_11_1"}}, {"S1_SP1": 0}), "SITE2": _fabric("ingress", None, None, name="SITE2")}
+    assert replication.testbed_state(topo, live) == "mid"

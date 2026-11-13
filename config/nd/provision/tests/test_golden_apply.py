@@ -282,7 +282,7 @@ def test_apply_with_add_member_deploys_fabrics_then_group_before_any_overlay_op(
     topo = _topo()
     assert topo.mode_fabrics == ("SITE1", "SITE2")
     _applier(client).apply(_membership_ops())
-    assert [(c[0], c[1]) for c in client.calls if c[0] in ("PUT", "POST") and not c[1].endswith("/query")][:12] == [
+    assert [(c[0], c[1]) for c in client.calls if c[0] in ("PUT", "POST") and not c[1].endswith("/query")] == [
         ("POST", "/fabrics/MSD/actions/addMembers"),
         ("PUT", "/links/1"),
         ("POST", "/fabrics/SITE1/actions/configSave"),
@@ -308,3 +308,21 @@ def test_rank_orders_member_add_and_the_ir_put():
 
     assert RANK["set_role"] < RANK["add_member"] < RANK["clear_link"]
     assert RANK["put_network_ir"] == RANK["attach"] > RANK["create_network"]
+    assert RANK["put_network_ir"] < RANK["deploy_network_ir"] < RANK["unpair_tor"]
+
+
+def test_enable_ir_fix_from_the_drift_applies_the_put_before_the_deploy():
+    from dataclasses import replace
+
+    from golden_drift import drift_overlay
+    from golden_live import read_live_from_snapshot
+    from tests.test_golden_drift import BASE, GOLDEN
+    from topology import load
+
+    topo = replace(load(BASE / "topology_nd421_base.yaml"), replication_mode="ingress", mode_fabrics=("SITE1",))
+    live = read_live_from_snapshot(GOLDEN / "nd421", topo)
+    fix = next(d.fix for d in drift_overlay(topo, live) if d.cls == "networks")
+    assert isinstance(fix, list)
+    client = Stub()
+    _applier(client).apply(list(reversed(fix)))
+    assert [(c[0], c[1]) for c in client.calls] == [("PUT", "/fabrics/SITE1/networks/LAB_NET1"), ("POST", "/fabrics/SITE1/networkActions/deploy")]

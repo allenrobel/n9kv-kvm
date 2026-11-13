@@ -39,7 +39,7 @@ INTERFACES = "interfaces"
 class Op:
     """One controller call. action is one of put_link, clear_link, put_interface, reset_interface, delete_interface, attach, detach, create_vrf,
     create_network, delete_vrf, delete_network, deploy_overlay, pair_vpc, unpair_vpc, pair_tor, unpair_tor, add_switch, set_role, put_settings, deploy_owner,
-    add_member, put_network_ir."""
+    add_member, put_network_ir, deploy_network_ir."""
 
     action: str
     fabric: str
@@ -876,7 +876,7 @@ def _ingress_drifts(topo: Topology, live: dict[str, LiveFabric]) -> list[Drift]:
                 serials = sorted({r["switchId"] for r in live[fabric].network_attachments if r.get("networkName") == name})
                 fix = [
                     Op("put_network_ir", fabric, "PUT", f"/fabrics/{fabric}/networks/{name}", body),
-                    Op("deploy_overlay", fabric, "POST", f"/fabrics/{fabric}/networkActions/deploy", {"networkNames": [name], "switchIds": serials}),
+                    Op("deploy_network_ir", fabric, "POST", f"/fabrics/{fabric}/networkActions/deploy", {"networkNames": [name], "switchIds": serials}),
                 ]
                 drifts.append(Drift(NETWORKS, fabric, "different", name, "enableIr=true", f"enableIr={_norm(_enable_ir(copy_obj)) or 'none'}", fix, None, None))
     return drifts

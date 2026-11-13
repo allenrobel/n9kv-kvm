@@ -35,11 +35,12 @@ RANK = {
     "create_network": 13,
     "attach": 14,
     "put_network_ir": 14,
-    "unpair_tor": 15,
-    "unpair_vpc": 16,
-    "pair_vpc": 17,
-    "pair_tor": 18,
-    "deploy_owner": 19,
+    "deploy_network_ir": 15,  # after the PUT (and the attaches): deploying earlier would push the stale copy
+    "unpair_tor": 16,
+    "unpair_vpc": 17,
+    "pair_vpc": 18,
+    "pair_tor": 19,
+    "deploy_owner": 20,
 }
 OVERLAY_RANK = RANK["detach"]  # the first rank that touches overlay objects; a member add is deployed before it
 

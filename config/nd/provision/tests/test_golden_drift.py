@@ -939,14 +939,14 @@ def test_ingress_member_copy_without_enable_ir_is_different_with_a_put_and_deplo
     drifts = [d for d in drift_overlay(topo, live) if d.cls == "networks"]
     assert [(d.fabric, d.kind, d.subject) for d in drifts] == [("SITE1", "different", "LAB_NET1"), ("SITE2", "different", "LAB_NET1")]
     fix = drifts[0].fix
-    assert isinstance(fix, list) and [o.action for o in fix] == ["put_network_ir", "deploy_overlay"]
+    assert isinstance(fix, list) and [o.action for o in fix] == ["put_network_ir", "deploy_network_ir"]
     put, deploy = fix
     assert (put.fabric, put.method, put.path) == ("SITE1", "PUT", "/fabrics/SITE1/networks/LAB_NET1")
     assert put.body["l2Data"]["fabricData"]["enableIr"] is True and "networkStatus" not in put.body
     assert put.body["l2Data"]["fabricData"]["multicastGroup"] == "239.1.1.0"  # the rest of the live copy is kept
     assert live["SITE1"].networks[0]["l2Data"]["fabricData"]["enableIr"] is False and "networkStatus" in live["SITE1"].networks[0]  # live untouched
     serials = sorted({r["switchId"] for r in live["SITE1"].network_attachments if r["networkName"] == "LAB_NET1"})
-    assert deploy == Op("deploy_overlay", "SITE1", "POST", "/fabrics/SITE1/networkActions/deploy", {"networkNames": ["LAB_NET1"], "switchIds": serials})
+    assert deploy == Op("deploy_network_ir", "SITE1", "POST", "/fabrics/SITE1/networkActions/deploy", {"networkNames": ["LAB_NET1"], "switchIds": serials})
     assert serials
 
 

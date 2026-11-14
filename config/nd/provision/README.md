@@ -14,7 +14,7 @@ used to live only in the `provision-isn` skill and `docs/nd4_fabrics_bringup.md`
   `golden_adopt.py` (bootstrap/adoption writer), `golden_convert.py` (mode conversion) - the modules behind `golden.py`
 - `replication.py` - replication-mode knowledge shared by `provision.py` and the golden tools (multicast-only keys, per-mode policy names, mode state)
 - `golden/nd421/<mode>/`, `golden/nd431/<mode>/` - reference snapshots (`snapshot.py dump`, credential hashes scrubbed), one directory per replication
-  mode; the tool does not read them. Only `multicast/` exists today (both testbeds were dumped in multicast mode); no `ingress/` snapshot has been taken
+  mode; the tool does not read them. Both `multicast/` and `ingress/` exist for each testbed.
 - `nd_client.py`, `topology.py` - library code; `tests/` - pytest for the pure parts; `tests/fixtures/` - the two base topology files the golden tests use
 
 ## Usage (on the lab host, prod env sourced)
@@ -180,8 +180,9 @@ skipped extras as drift.
 objects it will act on (each VRF and network, each group member, each link with its ND link id, the fabrics whose mode changes). It then prints the exact
 calls of the first step that has work (for the mode change, the PUT bodies built from today's fabric values), and sends nothing.
 
-Status: the code is covered by the unit tests. ND 4.3.1 was converted to ingress by hand following the procedure in `docs/nd_replication_mode_change.md`;
-`convert` itself has not been run against a lab yet, and ND 4.2.1 is still in multicast.
+Status: ND 4.2.1 was converted from multicast to ingress with `convert` on 2026-11-13 (zero drift afterwards, host ping verified). ND 4.3.1 was
+converted to ingress by hand following the procedure in `docs/nd_replication_mode_change.md`. `convert` from ingress to multicast and the resume of
+an interrupted run have not been run against a controller yet; they are covered by the unit tests only.
 
 ## Gotchas carried over from ND 4.2.1
 

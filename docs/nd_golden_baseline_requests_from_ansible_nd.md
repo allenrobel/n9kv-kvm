@@ -167,3 +167,13 @@ has test port-channels to remove.
 
 Agreed on request 4: nothing changes in the baseline, and the port will drift after any run that includes `nd_interface_ethernet_access`
 until the collection fix lands. A restore puts it back.
+
+## ND 4.2.1 is on ingress replication (n9kv-kvm session, 2026-11-13 23:35 UTC)
+
+ND 4.2.1 (`S1_*`, `S2_*`) was converted from multicast to ingress and is on the same baseline as ND 4.3.1: `golden.py drift` reports nothing,
+no fabric has pending config, VNI 30001 is `UnicastBGP` and Up, and the `S1_H1` to `S2_H1` ping works. It is free for the interface tests.
+
+Two things differ from before the conversion and may matter to tests that hard-code them:
+
+- The two ISN VRF-Lite links were deleted and recreated, so their ND link ids changed.
+- `LAB` and `LAB_NET1` were deleted and recreated with the same names, ids and VLANs.

@@ -4,15 +4,23 @@ Date: 2026-11-13. Controller: ND 4.3.1 (10.10.20.20), fabrics `SITE1` and `SITE2
 
 ## Status
 
-The ND 4.3.1 testbed runs ingress replication in `SITE1` and `SITE2` and is back on the golden baseline. It was converted by hand, following the
-procedure below; `golden.py convert` (below) automates that procedure but has not yet been run against a lab.
+Both testbeds run ingress replication in `SITE1` and `SITE2` and are on the golden baseline. ND 4.3.1 was converted by hand, following the
+procedure below. ND 4.2.1 was converted on 2026-11-13 by `golden.py convert`, which automates that procedure.
+
+ND 4.3.1:
 
 - `golden.py drift` against `topology_nd431.yaml` reports no drift, and no switch has pending config.
 - All ten switches report `inSync`. `MSD` holds `ISN`, `SITE1` and `SITE2` again.
 - VRF `LAB` and network `LAB_NET1` are attached and deployed as before.
 - On the switches, `show nve vni` lists VNI 30001 as `UnicastBGP`, state Up, and the NVE peers are up on both sites.
 - The cross-site host ping from `S3_H1` to `S4_H1` (192.0.1.172) works.
-- The ND 4.2.1 testbed (10.10.20.10) is untouched and still runs multicast. It has not been converted with `golden.py convert` yet.
+
+ND 4.2.1 (10.10.20.10), after `golden.py convert --replication-mode ingress`:
+
+- The run took about 15 minutes and ended with zero drift and no pending config. `MSD` holds `ISN`, `SITE1` and `SITE2`.
+- `show nve vni` lists VNI 30001 as `UnicastBGP`, state Up, on `S1_LE1`, `S2_LE1` and `S1_BG1`; the NVE peers are up and there are no PIM neighbours.
+- The host ping from `S1_H1` to `S2_H1` (192.0.1.172) works.
+- Not yet run on a controller: `convert` from ingress back to multicast, and resuming an interrupted `convert`. Both are covered by unit tests only.
 
 ## What the interface tests should expect
 
@@ -84,7 +92,7 @@ The same template has the mirror check for Ingress to Multicast, keyed on the `i
 
 ## Procedure
 
-Per fabric, in this order. This is what was run on ND 4.3.1 and is the plan for ND 4.2.1. `golden.py convert` runs these steps (see below).
+Per fabric, in this order. This is what was run by hand on ND 4.3.1; `golden.py convert` runs these steps (see below) and was used on ND 4.2.1.
 
 1. Detach and delete every network and VRF, and remove the fabric from its fabric group.
 2. Save `replicationMode: ingress` on the fabric. Through the API, remove the multicast-only keys listed above from the `PUT /fabrics/{f}` body.
@@ -145,3 +153,11 @@ The first `golden.py convert` run against ND 4.2.1 (2026-11-13) stopped in "remo
 - `golden.py` covers fabric-group membership (a missing member is re-added) and the `enableIr` flag of a golden network's member copies in
   ingress mode. The repair of the flag is two ops: a `PUT` of the member copy, then `networkActions/deploy`. An existing network that differs in any
   other field is still reported as `DIFFERENT` with no repair.
+
+Also seen on the successful run:
+
+- ND refused the first `DELETE /fabrics/MSD/networks/LAB_NET1` while the detach was still being deployed; the retry 10 seconds later succeeded.
+- `POST /fabrics/MSD/actions/removeMembers` takes the same body as `addMembers`, `{"members": [{"name": "SITE1"}]}`. Recalculate and Deploy of
+  each fabric after it left the group was enough; `MSD` itself needed no deploy at that point.
+- On an ingress fabric the `ingress_rep_simulated` policy is present on the switches (checked on ND 4.3.1), which is what the tool uses to
+  recognise an unfinished ingress-to-multicast change.

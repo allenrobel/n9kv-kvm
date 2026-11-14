@@ -8,6 +8,7 @@ import pytest
 
 import provision
 from provision import Provisioner, merge_settings
+from replication import MULTICAST_ONLY_KEYS
 from topology import Overlay, load
 
 HERE = Path(__file__).resolve().parents[1]
@@ -76,7 +77,7 @@ class _StubClientFlakyRead(StubClient):
 
 
 def _topo():
-    return load(HERE / "topology_nd421.yaml")
+    return load(HERE / "topology_nd421.yaml", replication_mode="multicast")
 
 
 def _posts(client: StubClient) -> list[tuple]:
@@ -823,6 +824,43 @@ def test_phase_overlay_live_skips_existing_vrf_attachment_but_attaches_missing_n
     assert [p[1] for p in posts if "Actions/deploy" in p[1]] == ["/fabrics/SITE1/networkActions/deploy"]
 
 
+def test_phase_overlay_sends_the_attachments_of_one_object_in_one_post():
+    """ND 4.2.1 fails a vPC peer attached without its peer in the same request: every switch still to attach goes in one POST per object
+    per fabric; an attached switch is still skipped."""
+    vrf = {"vrfName": "V1", "vrfId": 50001, "vlanId": 2001}
+    net = {"networkName": "N1", "networkId": 30001, "vlanId": 2, "vrfName": "V1"}
+    overlay = Overlay(
+        vrfs=[{"fabrics": ["SITE1"], "object": vrf}, {"fabrics": ["SITE1"], "object": dict(vrf, vrfName="V2")}],
+        networks=[{"fabrics": ["SITE1"], "object": net}],
+        vrf_attachments=[{"fabric": "SITE1", "vrf": "V1", "switch": h} for h in ("S1_LE1", "S1_LE2", "S1_BG1")] + [{"fabric": "SITE1", "vrf": "V2", "switch": "S1_LE1"}],
+        network_attachments=[{"fabric": "SITE1", "network": "N1", "switch": h, "vlan": 2, "interfaces": []} for h in ("S1_LE1", "S1_LE2")],
+    )
+    topo = replace(_topo(), overlay=overlay)
+    switches = [{"hostname": h, "serialNumber": f"SN-{h}", "switchRole": "leaf"} for h in ("S1_LE1", "S1_LE2", "S1_BG1")]
+    responses = {
+        ("/fabrics/SITE1/vrfs", ()): {"vrfs": [vrf, dict(vrf, vrfName="V2")]},
+        ("/fabrics/SITE1/networks", ()): {"networks": [net]},
+        ("/fabrics/SITE1/switches", ()): {"switches": switches},
+        **_overlay_query_stubs([{"vrfName": "V1", "switchId": "SN-S1_BG1", "attach": True}], []),
+    }
+    client = StubClient(responses)
+
+    Provisioner(client, topo).phase_overlay()
+
+    attaches = [(p[1], p[2]["attachments"]) for p in _posts(client) if p[1].endswith("Attachments")]
+    assert attaches == [
+        ("/fabrics/SITE1/vrfAttachments", [{"vrfName": "V1", "switchId": "SN-S1_LE1", "attach": True}, {"vrfName": "V1", "switchId": "SN-S1_LE2", "attach": True}]),
+        ("/fabrics/SITE1/vrfAttachments", [{"vrfName": "V2", "switchId": "SN-S1_LE1", "attach": True}]),
+        (
+            "/fabrics/SITE1/networkAttachments",
+            [
+                {"networkName": "N1", "switchId": "SN-S1_LE1", "vlanId": 2, "interfaces": [], "attach": True},
+                {"networkName": "N1", "switchId": "SN-S1_LE2", "vlanId": 2, "interfaces": [], "attach": True},
+            ],
+        ),
+    ]
+
+
 def test_phase_deploy_dry_run_deploys_every_fabric_and_does_not_check_pending(capsys):
     topo = _topo()
     client = StubClient({})
@@ -1175,3 +1213,80 @@ def test_phase_tor_live_raises_when_neither_nd_nor_the_topology_supplies_ids():
     with pytest.raises(RuntimeError, match=r"S1_TOR1 -> S1_LE1/S1_LE2: no port-channel ids: ND recommends none .*not connected.* and tor_pairs gives none"):
         Provisioner(client, topo, settle_seconds=0).phase_tor()
     assert _posts(client) == []
+
+
+def _mode_responses(topo, live_mode_name: str, switches: list) -> dict:
+    responses = {
+        ("/fabrics", ()): {"fabrics": [{"name": f.name} for f in topo.fabrics]},
+        ("/fabrics", (("category", "fabricGroup"),)): {"fabrics": []},
+    }
+    for fabric in topo.fabrics:
+        responses[(f"/fabrics/{fabric.name}", ())] = {"name": fabric.name, "management": {"type": fabric.type, "bgpAsn": fabric.asn, "replicationMode": live_mode_name}}
+        responses[(f"/fabrics/{fabric.name}/switches", ())] = {"switches": switches}
+    return responses
+
+
+def test_phase_fabrics_refuses_a_mode_change_on_a_populated_fabric(capsys):
+    topo = load(HERE / "topology_nd431.yaml", replication_mode="ingress")
+    client = StubClient(_mode_responses(topo, "multicast", [{"serialNumber": "SN1"}]))
+
+    with pytest.raises(SystemExit) as exc:
+        Provisioner(client, topo).phase_fabrics()
+
+    assert exc.value.code == 2
+    assert "golden.py convert" in capsys.readouterr().out
+    assert _puts(client) == []
+
+
+def test_phase_fabrics_exits_3_without_a_put_when_the_switches_read_fails(capsys):
+    topo = load(HERE / "topology_nd431.yaml", replication_mode="ingress")
+    responses = _mode_responses(topo, "multicast", [])
+    del responses[("/fabrics/SITE1/switches", ())]
+    client = StubClient(responses)
+
+    with pytest.raises(SystemExit) as exc:
+        Provisioner(client, topo).phase_fabrics()
+
+    assert exc.value.code == 3
+    assert "SITE1" in capsys.readouterr().out
+    assert _puts(client) == []
+
+
+def test_phase_fabrics_sets_the_mode_on_an_empty_fabric():
+    topo = load(HERE / "topology_nd431.yaml", replication_mode="ingress")
+    client = StubClient(_mode_responses(topo, "multicast", []))
+
+    Provisioner(client, topo).phase_fabrics()
+
+    by_path = {p[1]: p[2] for p in _puts(client)}
+    body = by_path["/fabrics/SITE1"]["management"]
+    assert body["replicationMode"] == "ingress"
+    assert not set(body) & set(MULTICAST_ONLY_KEYS)
+
+
+def test_phase_fabrics_unchanged_mode_on_a_populated_fabric_does_not_refuse():
+    topo = load(HERE / "topology_nd431.yaml", replication_mode="ingress")
+    client = StubClient(_mode_responses(topo, "ingress", [{"serialNumber": "SN1"}]))
+
+    Provisioner(client, topo).phase_fabrics()  # a refusal would raise SystemExit before any PUT
+
+    by_path = {p[1]: p[2] for p in _puts(client)}
+    for fabric in topo.mode_fabrics:
+        assert by_path[f"/fabrics/{fabric}"]["management"]["replicationMode"] == "ingress"
+
+
+def test_main_requires_the_flag_for_a_mode_bearing_topology(capsys):
+    with pytest.raises(SystemExit) as exc:
+        provision.main(["--topology", str(HERE / "topology_nd431.yaml"), "--phase", "fabrics", "--dry-run"])
+
+    assert exc.value.code == 2
+    captured = capsys.readouterr()
+    assert "--replication-mode" in captured.err + captured.out
+
+
+def test_main_rejects_a_mode_for_a_topology_without_replication_modes(capsys):
+    fixture = HERE / "tests" / "fixtures" / "topology_nd431_base.yaml"
+    with pytest.raises(SystemExit) as exc:
+        provision.main(["--topology", str(fixture), "--replication-mode", "ingress", "--dry-run"])
+
+    assert exc.value.code == 2

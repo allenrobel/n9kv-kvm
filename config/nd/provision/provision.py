@@ -17,7 +17,6 @@ Credentials: ND_IP4/ND_USERNAME/ND_PASSWORD/ND_DOMAIN (controller), NXOS_PASSWOR
 from __future__ import annotations
 
 import argparse
-import copy
 import json
 import os
 import re
@@ -26,7 +25,8 @@ from pathlib import Path
 from typing import Any
 
 from nd_client import NDClient, NDCredentials
-from topology import Fabric, FabricGroup, Link, Topology, load
+from replication import live_mode, settings_body
+from topology import REPLICATION_MODES, Fabric, FabricGroup, Link, Topology, load, merge_settings
 
 PHASES = ["fabrics", "msd", "switches", "vpc", "tor", "isn", "overlay", "deploy"]
 
@@ -50,16 +50,6 @@ def fabric_group_create_payload(group: FabricGroup) -> dict:
     management = {"type": "vxlan"}
     management.update(group.settings.get("management", {}))
     return {"name": group.name, "category": "fabricGroup", "management": management}
-
-
-def merge_settings(current: dict, settings: dict) -> dict:
-    merged = copy.deepcopy(current)
-    for key, value in settings.items():
-        if isinstance(value, dict) and isinstance(merged.get(key), dict):
-            merged[key] = merge_settings(merged[key], value)
-        else:
-            merged[key] = value
-    return merged
 
 
 DISCOVERY_PLACEHOLDER = "<from-discovery>"
@@ -186,10 +176,15 @@ def link_payload(link: Link, src_serial: str, dst_serial: str) -> dict:
     }
 
 
-def attachment_payload(kind: str, att: dict, serial: str) -> dict:
+def attachment_item(kind: str, att: dict, serial: str) -> dict:
+    """One `attachments` entry (attach true) of a golden VRF/network attachment row."""
     if kind == "vrf":
-        return {"attachments": [{"vrfName": att["vrf"], "switchId": serial, "attach": True}]}
-    return {"attachments": [{"networkName": att["network"], "switchId": serial, "vlanId": att["vlan"], "interfaces": att.get("interfaces", []), "attach": True}]}
+        return {"vrfName": att["vrf"], "switchId": serial, "attach": True}
+    return {"networkName": att["network"], "switchId": serial, "vlanId": att["vlan"], "interfaces": att.get("interfaces", []), "attach": True}
+
+
+def attachment_payload(kind: str, att: dict, serial: str) -> dict:
+    return {"attachments": [attachment_item(kind, att, serial)]}
 
 
 def cdp_run_policy(serial: str) -> dict:
@@ -293,6 +288,20 @@ class Provisioner:
         found.update({g["name"]: g for g in (self.client.get("/fabrics", params={"category": "fabricGroup"}) or {}).get("fabrics", [])})
         return found
 
+    def _refuse_mode_change(self, fabric: Fabric, current: dict) -> None:
+        """Exit 2 (no write sent) when the topology's replication mode differs from the live one on a fabric that already has switches."""
+        wanted = live_mode(fabric.settings)
+        if wanted is None or live_mode(current) in (None, wanted) or fabric.name not in self.topo.mode_fabrics:
+            return
+        try:
+            body = self.client.get(f"/fabrics/{fabric.name}/switches") or {}
+        except RuntimeError as exc:
+            print(f"read failed: cannot tell whether {fabric.name} has switches ({str(exc)[:80]}); not changing its replication mode")
+            raise SystemExit(3) from exc
+        if body.get("switches", []) if isinstance(body, dict) else body:
+            print(f"refused: {fabric.name} is {live_mode(current)} and has switches; changing it to {wanted} needs golden.py convert, not provision.py")
+            raise SystemExit(2)
+
     # -- phase: fabrics ------------------------------------------------------------------------------------
     def phase_fabrics(self) -> None:
         existing = self.existing_fabrics()
@@ -316,7 +325,8 @@ class Provisioner:
                     # do not create or write anything based on a guess.
                     self._log(f"could not read /fabrics/{fabric.name} after create/re-read; skipping settings this run")
                 continue
-            merged = merge_settings(current, fabric.settings)
+            self._refuse_mode_change(fabric, current)
+            merged = settings_body(current, fabric.settings)
             if merged != current:
                 self._put(f"/fabrics/{fabric.name}", merged)
             else:
@@ -651,15 +661,21 @@ class Provisioner:
             net_query = self._query(f"/fabrics/{fabric}/networkAttachments/query", "attachments", {"switchIds": net_serials})
             net_attached[fabric] = {(a["networkName"], a["switchId"]) for a in net_query if a.get("attach")}
 
+        # one POST per object per fabric carrying every switch still to attach: ND 4.2.1 fails a vPC peer attached without its peer in
+        # the same request ("VPC details not found for Peer Serial no")
         touched_vrf: dict[str, set[str]] = {}
+        vrf_posts: dict[tuple[str, str], list[dict]] = {}
         for att in self.topo.overlay.vrf_attachments:
             serial = self.serial(att["switch"])
             if (att["vrf"], serial) in vrf_attached.get(att["fabric"], set()):
                 continue
-            self._post(f"/fabrics/{att['fabric']}/vrfAttachments", attachment_payload("vrf", att, serial))
+            vrf_posts.setdefault((att["fabric"], att["vrf"]), []).append(attachment_item("vrf", att, serial))
             touched_vrf.setdefault(att["fabric"], set()).add(serial)
+        for (fabric, _), items in vrf_posts.items():
+            self._post(f"/fabrics/{fabric}/vrfAttachments", {"attachments": items})
 
         touched_net: dict[str, set[str]] = {}
+        net_posts: dict[tuple[str, str], list[dict]] = {}
         for att in self.topo.overlay.network_attachments:
             serial = self.serial(att["switch"])
             if (att["network"], serial) in net_attached.get(att["fabric"], set()):
@@ -667,8 +683,10 @@ class Provisioner:
             for intf in att.get("interfaces", []):
                 if intf.get("mode") == "access":
                     self._ensure_access_port(att["fabric"], serial, intf["interfaceRange"], f"{att['network']} host port")
-            self._post(f"/fabrics/{att['fabric']}/networkAttachments", attachment_payload("network", att, serial))
+            net_posts.setdefault((att["fabric"], att["network"]), []).append(attachment_item("network", att, serial))
             touched_net.setdefault(att["fabric"], set()).add(serial)
+        for (fabric, _), items in net_posts.items():
+            self._post(f"/fabrics/{fabric}/networkAttachments", {"attachments": items})
 
         for fabric, touched_serials in touched_vrf.items():
             names = sorted({att["vrf"] for att in self.topo.overlay.vrf_attachments if att["fabric"] == fabric})
@@ -701,14 +719,19 @@ class Provisioner:
             getattr(self, f"phase_{phase}")()
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--topology", type=Path, required=True)
     parser.add_argument("--nd-ip", help="override ND_IP4")
     parser.add_argument("--phase", default="all", choices=PHASES + ["all"])
     parser.add_argument("--dry-run", action="store_true", help="print every write instead of sending it")
-    args = parser.parse_args()
-    topo = load(args.topology)
+    parser.add_argument("--replication-mode", choices=REPLICATION_MODES, help="replication mode for a topology that declares replication_modes")
+    args = parser.parse_args(argv)
+    try:
+        topo = load(args.topology, args.replication_mode)
+    except ValueError as exc:
+        print(f"error: {exc}")
+        raise SystemExit(2) from exc
     client = NDClient(NDCredentials.from_env(args.nd_ip))
     client.login()
     Provisioner(client, topo, dry_run=args.dry_run).run(PHASES if args.phase == "all" else [args.phase])

@@ -7,6 +7,7 @@ import pytest
 import requests
 
 import golden
+from replication import MODE_POLICIES
 from golden_apply import ApplyError
 from golden_drift import Adoption, Drift, Op
 from golden_live import LiveFabric, LiveReadError, read_live_from_snapshot
@@ -14,7 +15,7 @@ from topology import load
 
 HERE = Path(__file__).resolve().parents[1]
 TOPO_PATH = HERE / "topology_nd421.yaml"
-SNAP = HERE / "golden" / "nd421"
+SNAP = HERE / "golden" / "nd421" / "multicast"
 
 
 def op(action: str, fabric: str = "SITE1", method: str = "PUT", path: str = "/x") -> Op:
@@ -43,7 +44,7 @@ def rec(monkeypatch):
     live = {"SITE1": LiveFabric("SITE1", "fabric", switches={"S1_SP1": {"serialNumber": "SER1"}})}
 
     class StubApplier:
-        def __init__(self, prov):
+        def __init__(self, prov, topo):
             pass
 
         def apply(self, ops):
@@ -96,12 +97,12 @@ def restore(monkeypatch, drifts, a, ask, rec):
     answers_ = iter([drifts, []])  # run_restore computes twice: the report before applying, the remaining drift after
     monkeypatch.setattr(golden, "compute", lambda topo, live: next(answers_))
     lines: list[str] = []
-    code = golden.run_restore(a, load(TOPO_PATH), rec.live, prov_stub(rec), ask, lines.append)
+    code = golden.run_restore(a, load(TOPO_PATH, replication_mode="multicast"), rec.live, prov_stub(rec), ask, lines.append)
     return code, lines
 
 
 def test_drift_exits_1_with_report_and_0_when_clean(monkeypatch):
-    topo = load(TOPO_PATH)
+    topo = load(TOPO_PATH, replication_mode="multicast")
     live = read_live_from_snapshot(SNAP, topo)
     lines: list[str] = []
     monkeypatch.setattr(golden, "compute", lambda t, lv: [drift("missing", "s", fix=op("put_link"))])
@@ -215,7 +216,7 @@ def test_live_read_error_exits_3(monkeypatch):
 
     monkeypatch.setattr(golden, "read_live_from_snapshot", boom)
     lines: list[str] = []
-    assert golden.main(["drift", "--topology", str(TOPO_PATH), "--snapshot", "x", "--nd-ip", "9.9.9.9"], out=lines.append) == 3
+    assert golden.main(["drift", "--topology", str(TOPO_PATH), "--replication-mode", "multicast", "--snapshot", "x", "--nd-ip", "9.9.9.9"], out=lines.append) == 3
     assert lines == ["golden: cannot read x: no fabric"]
 
 
@@ -229,7 +230,7 @@ def test_adopt_prints_conflicts_filters_classes_and_exits_1(monkeypatch):
     lines: list[str] = []
     code = golden.main(["adopt", "--topology", str(TOPO_PATH), "--snapshot", str(SNAP), "--classes", "links"], out=lines.append)
     assert code == 1 and written == [ADOPT]
-    assert lines[0] == "CONFLICT: clash" and lines[-1] == f"adopt: 1 entries written to {TOPO_PATH}"
+    assert lines[0] == "replication mode: multicast (detected)" and lines[1] == "CONFLICT: clash" and lines[-1] == f"adopt: 1 entries written to {TOPO_PATH}"
     monkeypatch.setattr(golden, "bootstrap_conflicts", lambda t, lv: [])
     assert golden.main(["adopt", "--topology", str(TOPO_PATH), "--snapshot", str(SNAP)], out=lambda m: None) == 0
 
@@ -237,7 +238,7 @@ def test_adopt_prints_conflicts_filters_classes_and_exits_1(monkeypatch):
 def test_restore_deploys_fabrics_with_pending_config_from_an_earlier_run(monkeypatch, rec):
     prov = prov_stub()
     prov.pending = lambda fabric, serial: ["l1"] if fabric == "SITE1" else []
-    topo = load(TOPO_PATH)
+    topo = load(TOPO_PATH, replication_mode="multicast")
     rec.live.update({f.name: LiveFabric(f.name, "fabric", switches={s.hostname: {"serialNumber": "S-" + s.hostname} for s in f.switches}) for f in topo.fabrics})
     monkeypatch.setattr(golden, "compute", lambda t, lv: [drift("extra", "e", adopt=ADOPT)] if not rec.calls else [])
     lines: list[str] = []
@@ -268,7 +269,7 @@ def test_restore_pre_apply_pending_read_error_exits_3_before_any_write(monkeypat
     prov.pending = pending
     monkeypatch.setattr(golden, "compute", lambda t, lv: [drift("missing", "m", fix=op("put_link"))])
     lines: list[str] = []
-    code = golden.run_restore(args(yes=True), load(TOPO_PATH), rec.live, prov, answers(), lines.append)
+    code = golden.run_restore(args(yes=True), load(TOPO_PATH, replication_mode="multicast"), rec.live, prov, answers(), lines.append)
     assert code == 3 and rec.calls == [] and lines[-1] == "golden: cannot read 1.2.3.4: unreachable"
 
 
@@ -300,3 +301,216 @@ def test_restore_summary_counts_role_default_resets_separately(monkeypatch, rec)
     ]
     code, lines = restore(monkeypatch, ds, args(yes=True, extras="delete"), answers(), rec)
     assert code == 0 and "restore: 1 applied, 0 adopted, 1 reset, 1 deleted; deployed SITE1." in lines[-1]
+
+
+# --- replication mode selection ---
+
+FIXTURE_TOPO = HERE / "tests" / "fixtures" / "topology_nd421_base.yaml"  # declares no replication_modes
+
+
+def fabric_obj(mode: str) -> dict:
+    return {"management": {"replicationMode": mode}}
+
+
+class ModeClient:
+    """Stub NDClient: GET /fabrics/<f> answers from `modes`; every write is recorded."""
+
+    modes: dict[str, str] = {}
+    gets: list[str] = []
+    writes: list[str] = []
+
+    def __init__(self, creds):
+        self.creds = creds
+
+    def login(self):
+        pass
+
+    def get(self, path, params=None):
+        ModeClient.gets.append(path)
+        return fabric_obj(ModeClient.modes[path.rsplit("/", 1)[1]])
+
+    def post(self, *a, **kw):
+        ModeClient.writes.append("post")
+
+    def put(self, *a, **kw):
+        ModeClient.writes.append("put")
+
+
+@pytest.fixture
+def mode_client(monkeypatch):
+    ModeClient.modes = {"SITE1": "multicast", "SITE2": "multicast"}
+    ModeClient.gets = []
+    ModeClient.writes = []
+    monkeypatch.setattr(golden, "NDCredentials", SimpleNamespace(from_env=lambda ip: SimpleNamespace(ip=ip)))
+    monkeypatch.setattr(golden, "NDClient", ModeClient)
+    monkeypatch.setattr(golden, "compute", lambda t, lv: [])
+    return ModeClient
+
+
+def live_for(topo, state: str = "multicast", pending: int = 0) -> dict[str, LiveFabric]:
+    other = {"multicast": "ingress", "ingress": "multicast"}[state if state != "mid" else "multicast"]
+    result = {}
+    for f in topo.fabrics:
+        fab = LiveFabric(f.name, "fabric", settings=fabric_obj(state if state != "mid" else "multicast"), switches={s.hostname: {} for s in f.switches})
+        if f.name in topo.mode_fabrics:
+            held = set(MODE_POLICIES[other]) if state == "mid" else set()
+            fab.mode_policies = {h: set(held) for h in fab.switches}
+            fab.pending = {h: pending for h in fab.switches}
+        result[f.name] = fab
+    return result
+
+
+def run_main(argv, lines):
+    return golden.main(argv, out=lines.append, ask=answers())
+
+
+def test_modeless_file_loads_with_no_detection_read(monkeypatch, mode_client):
+    monkeypatch.setattr(golden, "read_live", lambda client, topo: {})
+    lines: list[str] = []
+    assert run_main(["drift", "--topology", str(FIXTURE_TOPO), "--nd-ip", "1.1.1.1"], lines) == 0
+    assert mode_client.gets == [] and lines == []
+
+
+def test_flag_on_a_modeless_file_is_refused(mode_client):
+    lines: list[str] = []
+    assert run_main(["drift", "--topology", str(FIXTURE_TOPO), "--replication-mode", "ingress", "--nd-ip", "1.1.1.1"], lines) == 2
+    assert "declares no replication_modes" in lines[0] and mode_client.gets == []
+
+
+def test_omitted_flag_detects_the_live_mode_and_prints_it_once(monkeypatch, mode_client):
+    mode_client.modes = {"SITE1": "ingress", "SITE2": "ingress"}
+    topo_seen: list = []
+    monkeypatch.setattr(golden, "read_live", lambda client, topo: topo_seen.append(topo) or live_for(topo, "ingress"))
+    lines: list[str] = []
+    assert run_main(["drift", "--topology", str(TOPO_PATH), "--nd-ip", "1.1.1.1"], lines) == 0
+    assert lines == ["replication mode: ingress (detected)"] and topo_seen[0].replication_mode == "ingress"
+    assert mode_client.gets == ["/fabrics/SITE1", "/fabrics/SITE2"]
+
+
+def test_detection_disagreement_is_refused_naming_convert(monkeypatch, mode_client):
+    mode_client.modes = {"SITE1": "ingress", "SITE2": "multicast"}
+    lines: list[str] = []
+    assert run_main(["restore", "--topology", str(TOPO_PATH), "--nd-ip", "1.1.1.1", "--yes"], lines) == 2
+    assert "convert" in lines[0] and "SITE1=ingress" in lines[0] and mode_client.writes == []
+
+
+def test_detected_value_outside_the_known_modes_is_refused_naming_the_fabric(mode_client):
+    mode_client.modes = {"SITE1": "multicast", "SITE2": "bogus"}
+    lines: list[str] = []
+    assert run_main(["drift", "--topology", str(TOPO_PATH), "--nd-ip", "1.1.1.1"], lines) == 2
+    assert "SITE2" in lines[0] and "bogus" in lines[0]
+
+
+def test_failed_detection_read_exits_3(monkeypatch, mode_client):
+    monkeypatch.setattr(ModeClient, "get", lambda self, path, params=None: (_ for _ in ()).throw(RuntimeError("HTTP 500")))
+    lines: list[str] = []
+    assert run_main(["drift", "--topology", str(TOPO_PATH), "--nd-ip", "1.1.1.1"], lines) == 3
+    assert lines == ["golden: cannot read 1.1.1.1: GET /fabrics/SITE1: HTTP 500"]
+
+
+@pytest.mark.parametrize("cmd", ["drift", "restore", "adopt"])
+def test_mid_conversion_testbed_is_refused_without_a_write(monkeypatch, mode_client, cmd):
+    monkeypatch.setattr(golden, "read_live", lambda client, topo: live_for(topo, "mid"))
+    lines: list[str] = []
+    argv = [cmd, "--topology", str(TOPO_PATH), "--nd-ip", "1.1.1.1", "--replication-mode", "ingress"]
+    assert run_main(argv, lines) == 2
+    assert lines == ["golden: testbed is mid-conversion; run golden.py convert --replication-mode ingress"]
+    assert mode_client.writes == []
+
+
+def test_restore_without_flag_against_a_mid_conversion_testbed_exits_2_naming_convert(monkeypatch, mode_client, rec):
+    monkeypatch.setattr(golden, "read_live", lambda client, topo: live_for(topo, "mid"))
+    lines: list[str] = []
+    assert run_main(["restore", "--topology", str(TOPO_PATH), "--nd-ip", "1.1.1.1", "--yes"], lines) == 2
+    assert "convert" in lines[-1] and [c for c in rec.calls if c[0] in ("apply", "deploy", "write")] == [] and mode_client.writes == []
+
+
+@pytest.mark.parametrize("mode", ["multicast", "ingress"])
+def test_pending_config_alone_is_not_mid_conversion(monkeypatch, mode_client, mode):
+    """Every test run leaves pending config; a same-mode testbed with pending lines and no other-mode policy is drifted and restored normally."""
+    mode_client.modes = {"SITE1": mode, "SITE2": mode}
+    monkeypatch.setattr(golden, "read_live", lambda client, topo: live_for(topo, mode, pending=3))
+    monkeypatch.setattr(golden, "compute", lambda t, lv: [drift("missing", "s", fix=op("put_link"))])
+    lines: list[str] = []
+    assert run_main(["drift", "--topology", str(TOPO_PATH), "--nd-ip", "1.1.1.1"], lines) == 1
+    assert lines[0] == f"replication mode: {mode} (detected)" and "MISSING" in lines[1] and not any("mid-conversion" in line for line in lines)
+    restored: list = []
+    monkeypatch.setattr(golden, "run_restore", lambda args, topo, live, prov, ask, out: restored.append(topo.replication_mode) or 0)
+    lines.clear()
+    assert run_main(["restore", "--topology", str(TOPO_PATH), "--nd-ip", "1.1.1.1", "--yes", "--extras", "skip"], lines) == 0
+    assert restored == [mode] and not any("mid-conversion" in line for line in lines)
+
+
+def test_restore_with_no_drift_deploys_fabrics_with_pending_config(monkeypatch, rec):
+    monkeypatch.setattr(golden, "compute", lambda topo, live: [])
+    prov = SimpleNamespace(client=SimpleNamespace(creds=SimpleNamespace(ip="1.2.3.4")), pending=lambda fabric, serial: ["l1"])
+    lines: list[str] = []
+    ask = answers("y")
+    assert golden.run_restore(args(), load(TOPO_PATH, replication_mode="multicast"), rec.live, prov, ask, lines.append) == 0
+    assert rec.calls == [("deploy", ["SITE1"])] and "pending config" in ask.prompts[0]
+    assert lines[-1] == "restore: no drift; deployed SITE1, which had pending config"
+
+
+def test_restore_with_no_drift_and_an_unreadable_pending_config_exits_3_before_any_deploy(monkeypatch, rec):
+    monkeypatch.setattr(golden, "compute", lambda topo, live: [])
+
+    def pending(fabric, serial):
+        raise RuntimeError(f"GET /fabrics/{fabric}/switches/{serial}/pendingConfig -> HTTP 500")
+
+    prov = SimpleNamespace(client=SimpleNamespace(creds=SimpleNamespace(ip="1.2.3.4")), pending=pending)
+    lines: list[str] = []
+    assert golden.run_restore(args(yes=True), load(TOPO_PATH, replication_mode="multicast"), rec.live, prov, answers(), lines.append) == 3
+    assert rec.calls == [] and "cannot read 1.2.3.4" in lines[-1] and "HTTP 500" in lines[-1]
+
+
+def test_restore_with_no_drift_and_a_failed_pending_deploy_exits_4(monkeypatch, rec):
+    monkeypatch.setattr(golden, "compute", lambda topo, live: [])
+    rec.deploy_error = RuntimeError("POST /fabrics/SITE1/actions/deploy -> HTTP 500")
+    prov = SimpleNamespace(client=SimpleNamespace(creds=SimpleNamespace(ip="1.2.3.4")), pending=lambda fabric, serial: ["l1"])
+    lines: list[str] = []
+    assert golden.run_restore(args(yes=True), load(TOPO_PATH, replication_mode="multicast"), rec.live, prov, answers(), lines.append) == 4
+    assert rec.calls == [("deploy", ["SITE1"])] and lines[-1].startswith("restore: deploy failed") and "HTTP 500" in lines[-1]
+
+
+def test_missing_detected_mode_is_refused_naming_the_fabric(monkeypatch, mode_client):
+    monkeypatch.setattr(ModeClient, "get", lambda self, path, params=None: {} if path == "/fabrics/SITE1" else fabric_obj("multicast"))
+    lines: list[str] = []
+    assert run_main(["drift", "--topology", str(TOPO_PATH), "--nd-ip", "1.1.1.1"], lines) == 2
+    assert "SITE1" in lines[0] and "None" in lines[0] and "--replication-mode" in lines[0]
+
+
+def test_restore_with_no_drift_and_pending_config_honours_no(monkeypatch, rec):
+    monkeypatch.setattr(golden, "compute", lambda topo, live: [])
+    prov = SimpleNamespace(client=SimpleNamespace(creds=SimpleNamespace(ip="1.2.3.4")), pending=lambda fabric, serial: ["l1"])
+    lines: list[str] = []
+    assert golden.run_restore(args(), load(TOPO_PATH, replication_mode="multicast"), rec.live, prov, answers("n"), lines.append) == 2
+    assert rec.calls == [] and lines[-1] == "restore: cancelled"
+
+
+def test_restore_flag_differing_from_the_live_setting_is_refused_naming_convert(monkeypatch, mode_client, rec):
+    monkeypatch.setattr(golden, "read_live", lambda client, topo: live_for(topo, "multicast"))
+    lines: list[str] = []
+    assert run_main(["restore", "--topology", str(TOPO_PATH), "--nd-ip", "1.1.1.1", "--yes", "--replication-mode", "ingress"], lines) == 2
+    assert "convert --replication-mode ingress" in lines[-1] and rec.calls == [] and mode_client.writes == []
+
+
+def test_drift_flag_differing_from_the_live_setting_is_allowed(monkeypatch, mode_client):
+    monkeypatch.setattr(golden, "read_live", lambda client, topo: live_for(topo, "multicast"))
+    lines: list[str] = []
+    assert run_main(["drift", "--topology", str(TOPO_PATH), "--nd-ip", "1.1.1.1", "--replication-mode", "ingress"], lines) == 0
+    assert lines == [] and mode_client.gets == []
+
+
+def test_snapshot_detection_reads_the_dump_and_never_classifies_as_mid(monkeypatch):
+    seen: list = []
+    monkeypatch.setattr(golden, "compute", lambda t, lv: seen.append(t) or [])
+    monkeypatch.setattr(golden, "testbed_state", lambda *a: pytest.fail("snapshot read must not be classified"))
+    lines: list[str] = []
+    assert golden.main(["drift", "--topology", str(TOPO_PATH), "--snapshot", str(SNAP)], out=lines.append) == 0
+    assert lines == ["replication mode: multicast (detected)"] and seen[0].replication_mode == "multicast"
+
+
+def test_snapshot_missing_the_fabric_dump_exits_3(tmp_path):
+    lines: list[str] = []
+    assert golden.main(["drift", "--topology", str(TOPO_PATH), "--snapshot", str(tmp_path)], out=lines.append) == 3
+    assert "fabric_SITE1.json" in lines[0]

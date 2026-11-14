@@ -4,17 +4,23 @@
     golden.py drift   --topology T.yaml [--nd-ip IP | --snapshot DIR]
     golden.py restore --topology T.yaml [--nd-ip IP] [--yes] [--extras adopt|delete|skip] [--no-deploy]
     golden.py adopt   --topology T.yaml [--nd-ip IP | --snapshot DIR] [--classes links,interfaces,...]
+    golden.py convert --topology T.yaml --replication-mode multicast|ingress [--nd-ip IP] [--yes] [--extras adopt|delete|skip] [--dry-run]
 
 `drift` prints one line per difference (MISSING / DIFFERENT / EXTRA) and exits 1 when there is any. `restore` creates or overwrites what is
 missing or different, asks per EXTRA object whether to adopt it into the yaml or delete it from ND, writes the adoptions, applies, and
 deploys the touched fabrics. `adopt` writes the live state into the yaml (bootstrap of a golden file); live-only objects become entries.
 
-Exit codes: 0 ok / no drift, 1 drift (drift) or conflicts (adopt), 2 refused, 3 live read failed (an HTTP error or an unreachable controller
+A topology that declares `replication_modes` needs one chosen before it loads: `--replication-mode` or, when omitted, the mode detected from the
+live ND (or the snapshot). A testbed caught between modes is refused (exit 2); `golden.py convert` finishes the conversion.
+`convert` moves the mode fabrics to the given mode (teardown, mode change, then a restore against that mode's golden); see golden_convert.py.
+
+Exit codes: 0 ok / no drift, 1 drift (drift) or conflicts (adopt), 2 refused or cancelled, 3 live read failed (an HTTP error or an unreachable controller
 while reading), 4 apply failed (a failed op, a dropped connection or an HTTP error while `restore` writes or deploys).
 """
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 from typing import Callable
@@ -27,7 +33,8 @@ from golden_drift import Adoption, Drift, Op, compute, format_report
 from golden_live import LiveFabric, LiveReadError, read_live, read_live_from_snapshot
 from nd_client import NDClient, NDCredentials
 from provision import Provisioner
-from topology import Topology, load
+from replication import live_mode, testbed_state
+from topology import REPLICATION_MODES, Topology, declared_mode_fabrics, load
 
 Ask = Callable[[str], str]
 Out = Callable[[str], None]
@@ -36,6 +43,10 @@ PROMPT = "[a]dopt / [d]elete / [s]kip / [A]ll adopt / [D]ll delete: "
 MAX_TRIES = 3
 # what a controller read or write can raise: RuntimeError for an HTTP error (NDClient), RequestException (an OSError) for a dropped connection
 READ_ERRORS = (RuntimeError, requests.RequestException, OSError)
+
+
+class Refused(Exception):
+    """A request golden.py will not act on (exit 2)."""
 
 
 def _ask_default(prompt: str) -> str:
@@ -64,7 +75,7 @@ def _fix_ops(drifts: list[Drift]) -> list[Op]:
     for d in drifts:
         if d.kind != "extra" and d.fix is not None and id(d.fix) not in seen:
             seen.add(id(d.fix))
-            ops.append(d.fix)
+            ops.extend(d.fix if isinstance(d.fix, list) else [d.fix])
     return ops
 
 
@@ -146,11 +157,35 @@ def _pending_fabrics(prov: Provisioner, topo: Topology, live: dict[str, LiveFabr
     return found
 
 
+def _deploy_pending_only(args: argparse.Namespace, topo: Topology, live: dict[str, LiveFabric], prov: Provisioner, ask: Ask, out: Out) -> int:
+    """No drift: Recalculate and Deploy the golden fabrics whose switches still have pending config (what a test run leaves behind)."""
+    nd_ip = _nd_ip(args, prov)
+    try:
+        pending = [] if args.no_deploy else sorted(_pending_fabrics(prov, topo, live))
+    except READ_ERRORS as exc:
+        out(f"golden: cannot read {nd_ip}: {exc}")
+        return 3
+    if not pending:
+        out("restore: no drift")
+        return 0
+    if not args.yes:
+        answer = ask(f"No drift. Recalculate and Deploy {len(pending)} fabric(s) with pending config ({', '.join(pending)}) on {nd_ip}? [y/N] ")
+        if answer.strip().lower() not in ("y", "yes"):
+            out("restore: cancelled")
+            return 2
+    try:
+        Applier(prov, topo).deploy(set(pending), topo)
+    except (ApplyError, *READ_ERRORS) as exc:
+        out(f"restore: deploy failed: {exc}")
+        return 4
+    out(f"restore: no drift; deployed {', '.join(pending)}, which had pending config")
+    return 0
+
+
 def run_restore(args: argparse.Namespace, topo: Topology, live: dict[str, LiveFabric], prov: Provisioner, ask: Ask, out: Out) -> int:
     drifts = run_drift(topo, live, out)
     if not drifts:
-        out("restore: no drift")
-        return 0
+        return _deploy_pending_only(args, topo, live, prov, ask, out)
     extras = [d for d in drifts if d.kind == "extra"]
     if args.yes and extras and args.extras is None:
         out(f"restore: {len(extras)} extra object(s) need a decision; pass --extras adopt|delete|skip")
@@ -166,7 +201,7 @@ def run_restore(args: argparse.Namespace, topo: Topology, live: dict[str, LiveFa
         if answer not in ("y", "yes"):
             out("restore: cancelled")
             return 2
-    applier = Applier(prov)
+    applier = Applier(prov, topo)
     deployed: list[str] = []
     try:
         pending_fabrics = set() if args.no_deploy else _pending_fabrics(prov, topo, live)
@@ -216,6 +251,53 @@ def run_adopt(args: argparse.Namespace, topo: Topology, live: dict[str, LiveFabr
     return 1 if conflicts else 0
 
 
+def _detect(source: NDClient | Path, fabric: str) -> str | None:
+    """The saved replication mode of one fabric, read from the controller or from the snapshot dump."""
+    if isinstance(source, Path):
+        path = source / f"fabric_{fabric}.json"
+        if not path.exists():
+            raise LiveReadError(f"snapshot {source} has no fabric_{fabric}.json content")
+        return live_mode(json.loads(path.read_text(encoding="utf-8")) or {})
+    try:
+        return live_mode(source.get(f"/fabrics/{fabric}"))
+    except READ_ERRORS as exc:
+        raise LiveReadError(f"GET /fabrics/{fabric}: {exc}") from exc
+
+
+def resolve_mode(args: argparse.Namespace, source: NDClient | Path, out: Out) -> str | None:
+    """The replication mode to load the topology with: None for a file that declares none, else the flag or the mode detected from `source`.
+    Raises Refused for a flag on a modeless file, a fabric whose mode is unreadable, or fabrics that disagree; LiveReadError when a read fails."""
+    fabrics = declared_mode_fabrics(args.topology)
+    flag = getattr(args, "replication_mode", None)
+    if not fabrics:
+        if flag is not None:
+            raise Refused(f"{Path(args.topology).name} declares no replication_modes; drop --replication-mode")
+        return None
+    if flag is not None:
+        return str(flag)
+    found = {name: _detect(source, name) for name in fabrics}
+    for name, mode in found.items():
+        if mode not in REPLICATION_MODES:
+            raise Refused(f"fabric {name} has replication mode {mode!r}, expected one of {', '.join(REPLICATION_MODES)}; pass --replication-mode")
+    if len(set(found.values())) != 1:
+        detail = ", ".join(f"{name}={mode}" for name, mode in found.items())
+        raise Refused(f"fabrics disagree on the replication mode ({detail}); run golden.py convert --replication-mode <mode>")
+    mode = found[fabrics[0]]
+    assert mode is not None
+    out(f"replication mode: {mode} (detected)")
+    return mode
+
+
+def _check_conversion(args: argparse.Namespace, topo: Topology, live: dict[str, LiveFabric], mode: str | None) -> None:
+    """Refuse a testbed that is mid-conversion (live reads only), and a restore toward a mode other than the live setting."""
+    if not topo.mode_fabrics or any(live[name].mode_policies is None for name in topo.mode_fabrics):
+        return
+    if testbed_state(topo, live) == "mid":
+        raise Refused(f"testbed is mid-conversion; run golden.py convert --replication-mode {mode}")
+    if args.cmd == "restore" and mode is not None and any(live_mode(live[name].settings) != mode for name in topo.mode_fabrics):
+        raise Refused(f"the live testbed is not in {mode} mode; run golden.py convert --replication-mode {mode} first")
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -223,6 +305,7 @@ def _parser() -> argparse.ArgumentParser:
         p = sub.add_parser(name)
         p.add_argument("--topology", type=Path, required=True)
         p.add_argument("--nd-ip", help="override ND_IP4")
+        p.add_argument("--replication-mode", choices=REPLICATION_MODES, help="mode to load a topology that declares replication_modes (default: detected)")
         if name != "restore":
             p.add_argument("--snapshot", type=Path, help="read the live state from a snapshot dump instead of ND")
     restore = sub.choices["restore"]
@@ -230,23 +313,55 @@ def _parser() -> argparse.ArgumentParser:
     restore.add_argument("--extras", choices=["adopt", "delete", "skip"], help="what to do with live-only objects without asking")
     restore.add_argument("--no-deploy", action="store_true", help="push the changes but do not run configDeploy")
     sub.choices["adopt"].add_argument("--classes", help="comma list of sections to adopt, e.g. links,interfaces,defaults")
+    convert = sub.add_parser("convert")
+    convert.add_argument("--topology", type=Path, required=True)
+    convert.add_argument("--nd-ip", help="override ND_IP4")
+    convert.add_argument("--replication-mode", choices=REPLICATION_MODES, required=True, help="the mode to convert the testbed to")
+    convert.add_argument("--yes", action="store_true", help="do not ask for confirmation (needs --extras)")
+    convert.add_argument("--extras", choices=["adopt", "delete", "skip"], help="what the rebuild's restore does with live-only objects")
+    convert.add_argument("--dry-run", action="store_true", help="print the plan and the first step's calls; send nothing")
     return parser
+
+
+def _main_convert(args: argparse.Namespace, ask: Ask, out: Out) -> int:
+    """convert loads the topology in its target mode: no detection and no mid-conversion refusal, a stopped conversion is what it resumes."""
+    import golden_convert  # golden_convert imports this module
+
+    try:
+        topo = load(args.topology, args.replication_mode)
+    except ValueError as exc:
+        out(f"golden: {exc}")
+        return 2
+    try:
+        client = NDClient(NDCredentials.from_env(args.nd_ip))
+        client.login()
+    except (requests.RequestException, OSError, RuntimeError) as exc:
+        out(f"golden: cannot read {args.nd_ip or 'ND'}: {exc}")
+        return 3
+    return golden_convert.run(args, topo, Provisioner(client, topo), ask, out)
 
 
 def main(argv: list[str] | None = None, ask: Ask = _ask_default, out: Out = print) -> int:
     args = _parser().parse_args(argv)
-    topo = load(args.topology)
+    if args.cmd == "convert":
+        return _main_convert(args, ask, out)
     where = args.nd_ip or "ND"
     client = None
     try:
         if getattr(args, "snapshot", None):
             where = str(args.snapshot)
-            live = read_live_from_snapshot(args.snapshot, topo)
+            source: NDClient | Path = args.snapshot
         else:
             client = NDClient(NDCredentials.from_env(args.nd_ip))
+            source = client
             client.login()
             where = args.nd_ip or client.creds.ip
-            live = read_live(client, topo)
+        topo = load(args.topology, resolve_mode(args, source, out))
+        live = read_live_from_snapshot(args.snapshot, topo) if client is None else read_live(client, topo)
+        _check_conversion(args, topo, live, topo.replication_mode)
+    except Refused as exc:
+        out(f"golden: {exc}")
+        return 2
     except (LiveReadError, requests.RequestException, OSError) as exc:  # login can fail on the connection before read_live wraps anything
         out(f"golden: cannot read {where}: {exc}")
         return 3

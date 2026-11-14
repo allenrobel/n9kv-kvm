@@ -43,7 +43,7 @@ class Stub(StubClient):
 
 
 def _applier(client, dry_run=False):
-    return Applier(Provisioner(client, _topo(), dry_run=dry_run))
+    return Applier(Provisioner(client, _topo(), dry_run=dry_run), _topo())
 
 
 def test_apply_runs_ops_in_class_order_and_returns_touched():
@@ -247,3 +247,188 @@ def test_add_switch_missing_password_is_an_apply_error():
     with pytest.raises(ApplyError, match="add_switch: NXOS_PASSWORD is not set"):
         applier.apply(ops)
     assert client.writes == []
+
+
+def test_port_put_is_retried_while_the_detach_is_still_in_progress():
+    """networkActions/deploy answers 202 before the detach is done; ND keeps refusing the policy-type change until then."""
+    port = "/fabrics/SITE1/switches/S1/interfaces/Ethernet1%2F5"
+    rows = [{"networkName": "N1", "switchId": "S1", "vlanId": 10, "attach": True, "interfaces": [{"interfaceRange": "Ethernet1/5", "mode": "access"}]}]
+    refusal = "HTTP 400 Policy type change from trunkHost to accessHost is not allowed"
+    client = Stub(post_results={"/fabrics/SITE1/networkAttachments/query": {"attachments": rows}}, put_errors=[RuntimeError(refusal)] * 3)
+    _applier(client).apply([Op("put_interface", "SITE1", "PUT", port, {"i": 1})])
+    assert [c[0] for c in client.calls] == ["PUT", "POST", "POST", "POST", "PUT", "PUT", "PUT", "POST", "POST"]
+
+
+def test_port_put_gives_up_after_the_retry_budget_and_reattaches():
+    port = "/fabrics/SITE1/switches/S1/interfaces/Ethernet1%2F5"
+    rows = [{"networkName": "N1", "switchId": "S1", "vlanId": 10, "attach": True, "interfaces": [{"interfaceRange": "Ethernet1/5", "mode": "access"}]}]
+    client = Stub(post_results={"/fabrics/SITE1/networkAttachments/query": {"attachments": rows}}, put_errors=[RuntimeError("HTTP 400 Policy type change x")] * 50)
+    with pytest.raises(ApplyError, match="re-attached"):
+        _applier(client).apply([Op("put_interface", "SITE1", "PUT", port, {"i": 1})])
+    assert len([c for c in client.calls if c[0] == "PUT"]) == 13  # the first attempt plus TYPE_CHANGE_TRIES after the detach
+
+
+def _membership_ops():
+    return [
+        Op("attach", "SITE1", "POST", "/fabrics/SITE1/networkAttachments", {"attachments": []}),
+        Op("create_network", "MSD", "POST", "/fabrics/MSD/networks", {"networks": []}),
+        Op("put_link", "SITE1", "PUT", "/links/1", {"l": 1}),
+        Op("add_member", "MSD", "POST", "/fabrics/MSD/actions/addMembers", {"members": [{"name": "SITE1"}]}),
+    ]
+
+
+def test_apply_with_add_member_deploys_fabrics_then_group_before_any_overlay_op():
+    client = Stub()
+    topo = _topo()
+    assert topo.mode_fabrics == ("SITE1", "SITE2")
+    _applier(client).apply(_membership_ops())
+    assert [(c[0], c[1]) for c in client.calls if c[0] in ("PUT", "POST") and not c[1].endswith("/query")] == [
+        ("POST", "/fabrics/MSD/actions/addMembers"),
+        ("PUT", "/links/1"),
+        ("POST", "/fabrics/SITE1/actions/configSave"),
+        ("POST", "/fabrics/SITE1/actions/deploy"),
+        ("POST", "/fabrics/SITE2/actions/configSave"),
+        ("POST", "/fabrics/SITE2/actions/deploy"),
+        ("POST", "/fabrics/MSD/actions/configSave"),
+        ("POST", "/fabrics/MSD/actions/deploy"),
+        ("POST", "/fabrics/MSD/networks"),
+        ("POST", "/fabrics/SITE1/networkAttachments"),
+    ]
+
+
+def test_apply_without_add_member_keeps_todays_order():
+    client = Stub()
+    ops = _membership_ops()[:3]
+    _applier(client).apply(ops)
+    assert [(c[0], c[1]) for c in client.calls] == [("PUT", "/links/1"), ("POST", "/fabrics/MSD/networks"), ("POST", "/fabrics/SITE1/networkAttachments")]
+
+
+def test_rank_orders_member_add_and_the_ir_put():
+    from golden_apply import RANK
+
+    assert RANK["set_role"] < RANK["add_member"] < RANK["clear_link"]
+    assert RANK["put_network_ir"] == RANK["attach"] > RANK["create_network"]
+    assert RANK["put_network_ir"] < RANK["deploy_network_ir"] < RANK["unpair_tor"]
+
+
+def test_enable_ir_fix_from_the_drift_applies_the_put_before_the_deploy():
+    from dataclasses import replace
+
+    from golden_drift import drift_overlay
+    from golden_live import read_live_from_snapshot
+    from tests.test_golden_drift import BASE, GOLDEN
+    from topology import load
+
+    topo = replace(load(BASE / "topology_nd421_base.yaml"), replication_mode="ingress", mode_fabrics=("SITE1",))
+    live = read_live_from_snapshot(GOLDEN / "nd421" / "multicast", topo)
+    fix = next(d.fix for d in drift_overlay(topo, live) if d.cls == "networks")
+    assert isinstance(fix, list)
+    client = Stub()
+    _applier(client).apply(list(reversed(fix)))
+    assert [(c[0], c[1]) for c in client.calls] == [("PUT", "/fabrics/SITE1/networks/LAB_NET1"), ("POST", "/fabrics/SITE1/networkActions/deploy")]
+
+
+class RefusingDelete(Stub):
+    def __init__(self, refusals, message="DELETE /fabrics/MSD/networks/N -> HTTP 400: network is attached"):
+        super().__init__()
+        self.refusals = refusals
+        self.message = message
+
+    def delete(self, path):
+        self.calls.append(("DELETE", path, None))
+        if self.refusals:
+            self.refusals -= 1
+            raise RuntimeError(self.message)
+        return None
+
+
+def test_restore_applier_does_not_retry_a_refused_overlay_delete():
+    client = RefusingDelete(1)
+    ops = [Op("delete_network", "MSD", "DELETE", "/fabrics/MSD/networks/N", None), Op("delete_vrf", "MSD", "DELETE", "/fabrics/MSD/vrfs/V", None)]
+    with pytest.raises(ApplyError, match="HTTP 400"):
+        _applier(client).apply(ops)
+    assert client.writes == [("DELETE", "/fabrics/MSD/networks/N", None)]
+
+
+def test_waiting_applier_retries_a_refused_overlay_delete_with_the_detach_budget(monkeypatch):
+    import golden_apply
+
+    slept: list = []
+    monkeypatch.setattr(golden_apply.time, "sleep", slept.append)
+    client = RefusingDelete(2)
+    applier = Applier(Provisioner(client, _topo()), _topo(), wait_overlay_deletes=True)
+    applier.apply([Op("delete_vrf", "MSD", "DELETE", "/fabrics/MSD/vrfs/V", None)])
+    assert [c[1] for c in client.writes] == ["/fabrics/MSD/vrfs/V"] * 3 and slept == [golden_apply.TYPE_CHANGE_WAIT] * 2
+
+
+@pytest.mark.parametrize("message", ["DELETE /x -> HTTP 404: not found", "DELETE /x -> HTTP 500: boom", "connection aborted"])
+def test_waiting_applier_does_not_retry_a_delete_error_that_is_not_a_refusal(monkeypatch, message):
+    import golden_apply
+
+    monkeypatch.setattr(golden_apply.time, "sleep", lambda s: pytest.fail("no wait expected"))
+    client = RefusingDelete(5, message)
+    with pytest.raises(ApplyError):
+        Applier(Provisioner(client, _topo()), _topo(), wait_overlay_deletes=True).apply([Op("delete_network", "MSD", "DELETE", "/fabrics/MSD/networks/N", None)])
+    assert len(client.writes) == 1
+
+
+# --- one request per overlay object per fabric (ND 4.2.1: a vPC peer attached or detached alone fails "VPC details not found for Peer") ---
+
+
+def _att(action, fabric, name, serial, kind="vrf"):
+    key = "vrfName" if kind == "vrf" else "networkName"
+    item = {key: name, "switchId": serial, "attach": action == "attach"}
+    return Op(action, fabric, "POST", f"/fabrics/{fabric}/{kind}Attachments", {"attachments": [item]})
+
+
+def test_vpc_pair_attaches_of_one_vrf_arrive_as_one_post_with_both_items_in_order():
+    client = Stub()
+    _applier(client).apply([_att("attach", "SITE1", "LAB", "SN-LE1"), _att("attach", "SITE1", "LAB", "SN-LE2")])
+    assert client.writes == [
+        (
+            "POST",
+            "/fabrics/SITE1/vrfAttachments",
+            {"attachments": [{"vrfName": "LAB", "switchId": "SN-LE1", "attach": True}, {"vrfName": "LAB", "switchId": "SN-LE2", "attach": True}]},
+        )
+    ]
+
+
+def test_detaches_of_one_network_merge_at_the_position_of_the_first():
+    client = Stub()
+    deploy = Op("deploy_overlay", "SITE1", "POST", "/fabrics/SITE1/networkActions/deploy", {"networkNames": ["N"], "switchIds": ["SN-LE1", "SN-LE2"]})
+    _applier(client).apply([_att("detach", "SITE1", "N", "SN-LE1", "network"), deploy, _att("detach", "SITE1", "N", "SN-LE2", "network")])
+    assert [(c[1], [i["switchId"] for i in c[2].get("attachments", [])]) for c in client.writes] == [
+        ("/fabrics/SITE1/networkAttachments", ["SN-LE1", "SN-LE2"]),
+        ("/fabrics/SITE1/networkActions/deploy", []),
+    ]
+
+
+def test_attachments_of_different_objects_fabrics_or_actions_are_not_merged():
+    from golden_apply import coalesce_attachments
+
+    ops = [
+        _att("attach", "SITE1", "LAB", "SN-LE1"),
+        _att("attach", "SITE1", "OTHER", "SN-LE2"),  # another VRF
+        _att("attach", "SITE2", "LAB", "SN-S2LE1"),  # another fabric
+        _att("attach", "SITE1", "LAB", "SN-LE1", "network"),  # a network of the same name: another path
+        _att("detach", "SITE1", "LAB", "SN-BG1"),  # a detach is never merged into an attach
+        _att("attach", "SITE1", "LAB", "SN-LE2"),
+    ]
+    merged = coalesce_attachments(ops)
+    assert [(o.action, o.path, [i["switchId"] for i in o.body["attachments"]]) for o in merged] == [
+        ("attach", "/fabrics/SITE1/vrfAttachments", ["SN-LE1", "SN-LE2"]),
+        ("attach", "/fabrics/SITE1/vrfAttachments", ["SN-LE2"]),
+        ("attach", "/fabrics/SITE2/vrfAttachments", ["SN-S2LE1"]),
+        ("attach", "/fabrics/SITE1/networkAttachments", ["SN-LE1"]),
+        ("detach", "/fabrics/SITE1/vrfAttachments", ["SN-BG1"]),
+    ]
+    assert coalesce_attachments(merged) == merged  # coalescing twice changes nothing
+    assert ops[0].body["attachments"] == [{"vrfName": "LAB", "switchId": "SN-LE1", "attach": True}]  # the input ops are not modified
+
+
+def test_a_failed_item_in_a_merged_response_raises_naming_the_item():
+    bad = {"results": [{"status": "success", "switchId": "SN-LE1"}, {"status": "failed", "switchId": "SN-LE2", "message": "VPC details not found"}]}
+    client = Stub(post_results={"/fabrics/SITE1/vrfAttachments": bad})
+    with pytest.raises(ApplyError, match="attach POST /fabrics/SITE1/vrfAttachments: item SN-LE2 status 'failed': VPC details not found"):
+        _applier(client).apply([_att("attach", "SITE1", "LAB", "SN-LE1"), _att("attach", "SITE1", "LAB", "SN-LE2")])
+    assert len(client.writes) == 1

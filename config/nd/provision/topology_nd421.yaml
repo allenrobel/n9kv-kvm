@@ -9,13 +9,17 @@ fabrics:
       management:
         bgpLoopbackIpRange: 10.11.0.0/22
         nveLoopbackIpRange: 10.12.0.0/22
-        anycastRendezvousPointIpRange: 10.13.0.0/24
         intraFabricSubnetRange: 10.14.0.0/22
         vrfLiteSubnetRange: 10.15.0.0/16
         vrfLiteAutoConfig: back2BackAndToExternal
         autoSymmetricVrfLite: true
         autoVrfLiteDefaultVrf: true
         autoSymmetricDefaultVrf: true
+    replication_modes:
+      multicast:
+        management: {replicationMode: multicast, anycastRendezvousPointIpRange: 10.13.0.0/24}
+      ingress:
+        management: {replicationMode: ingress}
     switches:
       - {hostname: S1_BG1, ip: 192.168.12.131, role: borderGateway}
       - {hostname: S1_SP1, ip: 192.168.12.141, role: spine}
@@ -25,7 +29,9 @@ fabrics:
       - {hostname: S1_LE4, ip: 192.168.12.155, role: leaf}
       - {hostname: S1_TOR1, ip: 192.168.12.161, role: tor}
     defaults:
-      borderGateway: {policyType: routedHost, adminState: 'true', mtu: '9216'}
+      # Free BGW ports are L2 trunks like leaf ports: the cisco.nd interface tests run on the BGW and reset a port by normalizing it to
+      # trunkHost, and ND returns a deleted port-channel's members to this default (a routed default breaks the tests' delete check).
+      borderGateway: {policyType: trunkHost, adminState: 'true', allowedVlans: none, mtu: jumbo}
       spine: {policyType: routedHost, adminState: 'true', mtu: '9216'}
       leaf: {policyType: trunkHost, adminState: 'true', allowedVlans: none, mtu: jumbo}
       tor: {policyType: trunkHost, adminState: 'true', allowedVlans: none, mtu: jumbo}
@@ -40,6 +46,12 @@ fabrics:
       - {src: S1_BG1, src_if: Loopback0, dst: S2_BG1, dst_if: Loopback0, policy: multisiteOverlay, owner: MSD}
     interfaces:
       - {switch: S1_TOR1, interface: Ethernet1/3, policy: accessHost, description: S1_H1 host port}
+      # Routed subinterface parents for the cisco.nd subinterface and workflow targets. ND refuses a subinterface unless the parent's
+      # discovered mode is routed, so these must be deployed, not only present as intent. The targets do not create them.
+      - {switch: S1_TOR1, interface: Ethernet1/63, policy: routedHost, inputs: {mtu: '9216'}}
+      - {switch: S1_TOR1, interface: port-channel10, type: portChannel, policy: l3Po, description: Routed subinterface parent for integration tests, inputs: {mtu: '9216'}}
+      - {switch: S1_BG1, interface: Ethernet1/63, policy: routedHost, inputs: {mtu: '9216'}}
+      - {switch: S1_BG1, interface: port-channel10, type: portChannel, policy: l3Po, description: Routed subinterface parent for integration tests, inputs: {mtu: '9216'}}
   - name: SITE2
     type: vxlanIbgp
     asn: "65002"
@@ -47,19 +59,23 @@ fabrics:
       management:
         bgpLoopbackIpRange: 10.21.0.0/22
         nveLoopbackIpRange: 10.22.0.0/22
-        anycastRendezvousPointIpRange: 10.23.0.0/24
         intraFabricSubnetRange: 10.24.0.0/22
         vrfLiteSubnetRange: 10.25.0.0/16
         vrfLiteAutoConfig: back2BackAndToExternal
         autoSymmetricVrfLite: true
         autoVrfLiteDefaultVrf: true
         autoSymmetricDefaultVrf: true
+    replication_modes:
+      multicast:
+        management: {replicationMode: multicast, anycastRendezvousPointIpRange: 10.23.0.0/24}
+      ingress:
+        management: {replicationMode: ingress}
     switches:
       - {hostname: S2_BG1, ip: 192.168.12.132, role: borderGateway}
       - {hostname: S2_SP1, ip: 192.168.12.142, role: spine}
       - {hostname: S2_LE1, ip: 192.168.12.153, role: leaf}
     defaults:
-      borderGateway: {policyType: routedHost, adminState: 'true', mtu: '9216'}
+      borderGateway: {policyType: trunkHost, adminState: 'true', allowedVlans: none, mtu: jumbo}   # as SITE1
       spine: {policyType: routedHost, adminState: 'true', mtu: '9216'}
       leaf: {policyType: trunkHost, adminState: 'true', allowedVlans: none, mtu: jumbo}
     links:

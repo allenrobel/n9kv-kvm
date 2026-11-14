@@ -8,12 +8,14 @@ adopt it into the golden file (`adopt`).
 
 from __future__ import annotations
 
+import copy
 import re
 from dataclasses import dataclass, replace
 from typing import Any, Literal
 
 from golden_live import LiveFabric, free_ports, interface_path
-from provision import attachment_payload, link_payload, merge_settings, tor_associate_payload, vpc_pair_payload
+from provision import attachment_payload, link_payload, tor_associate_payload, vpc_pair_payload
+from replication import settings_body
 from topology import TOOL_LINK_POLICIES, Fabric, FabricLink, FabricGroup, InterfaceIntent, Link, Topology, TorPair, endpoint_key
 
 Kind = Literal["missing", "different", "extra"]
@@ -36,7 +38,8 @@ INTERFACES = "interfaces"
 @dataclass(frozen=True)
 class Op:
     """One controller call. action is one of put_link, clear_link, put_interface, reset_interface, delete_interface, attach, detach, create_vrf,
-    create_network, delete_vrf, delete_network, deploy_overlay, pair_vpc, unpair_vpc, pair_tor, unpair_tor, add_switch, set_role, put_settings, deploy_owner."""
+    create_network, delete_vrf, delete_network, deploy_overlay, pair_vpc, unpair_vpc, pair_tor, unpair_tor, add_switch, set_role, put_settings, deploy_owner,
+    add_member, put_network_ir, deploy_network_ir."""
 
     action: str
     fabric: str
@@ -61,7 +64,7 @@ class Drift:
     subject: str
     golden: str
     live: str
-    fix: Op | None
+    fix: Op | list[Op] | None  # a list is an ordered sequence of ops
     delete: Op | list[Op] | None  # a list is an ordered sequence (detach, deploy, DELETE)
     adopt: Adoption | None
 
@@ -341,7 +344,8 @@ def drift_generated_links(topo: Topology, fabric: Fabric, live: dict[str, LiveFa
 COMPARED_INPUTS = ("adminState", "mode", "accessVlan", "allowedVlans", "nativeVlan", "description", "mtu")
 GENERATED_LOGICAL_POLICIES = {"vpcPeerlinkPo", "vpcUplinkPo", "uplinkPo", "vpcUplink", "vpcBackupSvi"}
 LOGICAL_TYPES = {"portChannel", "vpc", "svi", "subInterface"}
-_MODES = (("routed", "routed"), ("trunk", "trunk"), ("access", "access"))  # substring of the lowercased policyType -> configData.mode
+# substring of the lowercased policyType -> configData.mode (l3Po is the routed port-channel policy)
+_MODES = (("routed", "routed"), ("l3po", "routed"), ("trunk", "trunk"), ("access", "access"))
 
 
 def _mode_for(policy: str) -> str:
@@ -451,6 +455,14 @@ def _if_body(serial: str, interface: str, interface_type: str, policy: dict, os_
 # bpduGuard on a trunk, and type mtu as an integer (1500-9216), so the IOS-XE seed carries only what every iosXe host template accepts.
 NXOS_SEED: dict = {"adminState": True, "mtu": "jumbo", "speed": "auto", "bpduGuard": "default", "portTypeEdgeTrunk": True}
 IOSXE_SEED: dict = {"adminState": True, "mtu": 1500}
+# ND's NX-OS routed templates (int_routed_host, int_l3_port_channel) have no bpduGuard / portTypeEdgeTrunk and type mtu as an integer
+ROUTED_SEED: dict = {"adminState": True, "mtu": 9216}
+
+
+def _seed(policy: str, os_type: str) -> dict:
+    if os_type == "ios-xe":
+        return IOSXE_SEED
+    return ROUTED_SEED if _mode_for(policy) == "routed" else NXOS_SEED
 
 
 def interface_body(serial: str, intent: InterfaceIntent, fabric_defaults: dict, os_type: str = "nx-os", role: str = "") -> dict:
@@ -463,7 +475,7 @@ def interface_body(serial: str, intent: InterfaceIntent, fabric_defaults: dict, 
     if default and _mode_for(str(default.get("policyType", ""))) == _mode_for(intent.policy):
         policy: dict = {"policyType": intent.policy, **default}  # policyType first, as in every other body this tool sends
     else:
-        policy = {"policyType": intent.policy, **(IOSXE_SEED if os_type == "ios-xe" else NXOS_SEED)}
+        policy = {"policyType": intent.policy, **_seed(intent.policy, os_type)}
     policy["policyType"] = intent.policy
     if intent.description:
         policy["description"] = intent.description
@@ -503,7 +515,10 @@ def _explicit_interface_drift(fabric: Fabric, live: LiveFabric, intent: Interfac
     kind: Kind = "different" if found and _if_policy(found) else "missing"
     role = next((s.role for s in fabric.switches if s.hostname == intent.switch), "")
     body = interface_body(serial, intent, fabric.defaults, _os_type(fabric, intent.switch, found), role)
-    fix = Op("put_interface", fabric.name, "PUT", interface_path(fabric.name, serial, intent.interface), body)
+    if found is None and intent.type != "ethernet":  # a logical interface that does not exist yet is created through the collection
+        fix = Op("put_interface", fabric.name, "POST", f"/fabrics/{fabric.name}/switches/{serial}/interfaces", {"interfaces": [body]})
+    else:
+        fix = Op("put_interface", fabric.name, "PUT", interface_path(fabric.name, serial, intent.interface), body)
     return Drift(INTERFACES, fabric.name, kind, subject, _if_text(golden), _if_text(live_values) if found else "none", fix, None, None)
 
 
@@ -642,7 +657,7 @@ def drift_settings(topo: Topology, live: dict[str, LiveFabric]) -> list[Drift]:
             if _norm(wanted) == _norm(found):
                 continue
             if fix is None:
-                fix = Op("put_settings", item.name, "PUT", f"/fabrics/{item.name}", merge_settings(current, item.settings))
+                fix = Op("put_settings", item.name, "PUT", f"/fabrics/{item.name}", settings_body(current, item.settings))
             drifts.append(Drift(SETTINGS, item.name, "different", ".".join(path), _norm(wanted) or "none", _norm(found) or "none", fix, None, None))
     return drifts
 
@@ -681,6 +696,27 @@ def drift_switches(topo: Topology, live: dict[str, LiveFabric]) -> list[Drift]:
                 continue
             entry = {"hostname": hostname, "ip": found.get("fabricManagementIp", ""), "role": found.get("switchRole", "")}
             drifts.append(Drift(SWITCHES, fabric.name, "extra", hostname, "none", entry["role"], None, None, Adoption(("fabrics", fabric.name, SWITCHES), entry)))
+    return drifts
+
+
+# ---------------------------------------------------------------- group members
+
+MEMBERS = "members"
+
+
+def drift_members(topo: Topology, live: dict[str, LiveFabric]) -> list[Drift]:
+    """Fabric-group membership. A golden member absent from the live group is `missing` (fix addMembers); a live member golden does not list
+    is `extra`, reported only (never removed, never adopted)."""
+    drifts: list[Drift] = []
+    for group in topo.fabric_groups:
+        if group.name not in live:
+            continue
+        found = live[group.name].members
+        for member in group.members:
+            if member not in found:
+                fix = Op("add_member", group.name, "POST", f"/fabrics/{group.name}/actions/addMembers", {"members": [{"name": member}]})
+                drifts.append(Drift(MEMBERS, group.name, "missing", member, "member", "none", fix, None, None))
+        drifts.extend(Drift(MEMBERS, group.name, "extra", member, "none", "member", None, None, None) for member in found if member not in group.members)
     return drifts
 
 
@@ -727,6 +763,15 @@ def _row_host(fab_live: LiveFabric, row: dict) -> str:
     return next((h for h, s in fab_live.switches.items() if s.get("serialNumber") == row.get("switchId")), row.get("switchId", ""))
 
 
+def _detach_op(kind: str, fabric: str, name: str, row: dict) -> Op:
+    """Detach the live attachment `row` of VRF/network `name`. A network detach lists no interfaces: ND 4.2.1 answers one that lists the
+    row's ports by removing only the ports and keeping the switch attached; with an empty list it frees the ports and detaches the switch."""
+    att: dict[str, Any] = {"vrf": name} if kind == "vrf" else {"network": name, "vlan": row.get("vlanId"), "interfaces": []}
+    body = attachment_payload(kind, att, row["switchId"])
+    body["attachments"][0]["attach"] = False
+    return Op("detach", fabric, "POST", f"/fabrics/{fabric}/{kind}Attachments", body)
+
+
 def _extra_overlay_drift(kind: str, fabric: str, live: dict[str, LiveFabric], obj: dict, scope: list[str]) -> Drift:
     """Extra VRF/network: delete = detach every attached switch (in `scope`: the fabric, or a group's member fabrics, where the propagated
     copies are attached), deploy them, then DELETE the object."""
@@ -736,11 +781,7 @@ def _extra_overlay_drift(kind: str, fabric: str, live: dict[str, LiveFabric], ob
     ops: list[Op] = []
     for target in scope:
         rows = [r for r in _attachment_rows(live[target], kind) if r.get(key) == name]
-        for row in rows:
-            att = {"vrf": name} if kind == "vrf" else {"network": name, "vlan": row.get("vlanId"), "interfaces": row.get("interfaces") or []}
-            body = attachment_payload(kind, att, row["switchId"])
-            body["attachments"][0]["attach"] = False
-            ops.append(Op("detach", target, "POST", f"/fabrics/{target}/{kind}Attachments", body))
+        ops.extend(_detach_op(kind, target, name, row) for row in rows)
         if rows:
             deploy = {names_key: [name], "switchIds": sorted({r["switchId"] for r in rows})}
             ops.append(Op("deploy_overlay", target, "POST", f"/fabrics/{target}/{kind}Actions/deploy", deploy))
@@ -816,6 +857,35 @@ def _overlay_extras(topo: Topology, live: dict[str, LiveFabric], kind: str) -> l
     return extras
 
 
+def _enable_ir(copy_obj: dict) -> Any:
+    return ((copy_obj.get("l2Data") or {}).get("fabricData") or {}).get("enableIr")
+
+
+def _ingress_drifts(topo: Topology, live: dict[str, LiveFabric]) -> list[Drift]:
+    """Ingress mode only: a golden network's copy in a mode fabric whose `l2Data.fabricData.enableIr` is not true is `different`. ND then
+    generates a bare `member vni`, the L2 VNI stays Down and nothing shows as pending. The PUT on the group's own object is accepted and ignored,
+    so the fix is per member fabric: PUT the live copy with enableIr true, then deploy the network on the switches it is attached to."""
+    if topo.replication_mode != "ingress":
+        return []
+    expected = _expected_names(topo, "network")
+    drifts: list[Drift] = []
+    for item in topo.overlay.networks:
+        name = item["object"]["networkName"]
+        for fabric in topo.mode_fabrics:
+            if fabric not in live or name not in expected.get(fabric, set()):
+                continue
+            for copy_obj in (o for o in live[fabric].networks if o.get("networkName") == name and _enable_ir(o) is not True):
+                body = copy.deepcopy(copy_obj)
+                body.pop("networkStatus", None)
+                body.setdefault("l2Data", {}).setdefault("fabricData", {})["enableIr"] = True
+                serials = sorted({r["switchId"] for r in live[fabric].network_attachments if r.get("networkName") == name})
+                fix = [Op("put_network_ir", fabric, "PUT", f"/fabrics/{fabric}/networks/{name}", body)]
+                if serials:  # attached nowhere: nothing to deploy (an attachment fix deploys with the fabric)
+                    fix.append(Op("deploy_network_ir", fabric, "POST", f"/fabrics/{fabric}/networkActions/deploy", {"networkNames": [name], "switchIds": serials}))
+                drifts.append(Drift(NETWORKS, fabric, "different", name, "enableIr=true", f"enableIr={_norm(_enable_ir(copy_obj)) or 'none'}", fix, None, None))
+    return drifts
+
+
 def _overlay_object_drifts(topo: Topology, live: dict[str, LiveFabric], kind: str) -> list[Drift]:
     items = topo.overlay.vrfs if kind == "vrf" else topo.overlay.networks
     key, attr, plural = ("vrfName", "vrfs", VRFS) if kind == "vrf" else ("networkName", "networks", NETWORKS)
@@ -838,6 +908,8 @@ def _overlay_object_drifts(topo: Topology, live: dict[str, LiveFabric], kind: st
             if bad is not None:
                 drifts.append(Drift(plural, fabric, "different", name, text, _overlay_text(bad, keys), None, None, None))
     drifts.extend(_extra_overlay_drift(kind, fabric, live, obj, scope) for fabric, obj, scope in _overlay_extras(topo, live, kind))
+    if kind == "network":
+        drifts.extend(_ingress_drifts(topo, live))
     return drifts
 
 
@@ -885,10 +957,7 @@ def _attachment_drifts(topo: Topology, live: dict[str, LiveFabric], kind: str) -
             name = row.get(key, "")
             if (fabric, name, host) in wanted or (fabric, name) in owned:
                 continue
-            att = {"vrf": name} if kind == "vrf" else {"network": name, "vlan": row.get("vlanId"), "interfaces": row.get("interfaces") or []}
-            body = attachment_payload(kind, att, row["switchId"])
-            body["attachments"][0]["attach"] = False
-            delete = Op("detach", fabric, "POST", f"/fabrics/{fabric}/{kind}Attachments", body)
+            delete = _detach_op(kind, fabric, name, row)
             entry = {"fabric": fabric, gkey: name, "switch": host, **({} if kind == "vrf" else {"vlan": row.get("vlanId"), "interfaces": row.get("interfaces") or []})}
             adopt = Adoption(("overlay", f"{kind}_attachments"), entry)
             drifts.append(
@@ -1017,10 +1086,10 @@ def drift_pairs(topo: Topology, live: dict[str, LiveFabric]) -> list[Drift]:
 
 
 def compute(topo: Topology, live: dict[str, LiveFabric]) -> list[Drift]:
-    """All drift classes in a stable order: settings, switches, links, generated links, interfaces, vrfs, networks, attachments, pairs."""
+    """All drift classes in a stable order: settings, switches, members, links, generated links, interfaces, vrfs, networks, attachments, pairs."""
     all_links = [link for fab in live.values() for link in fab.links]
     seen: set = set()
-    drifts = [*drift_settings(topo, live), *drift_switches(topo, live)]
+    drifts = [*drift_settings(topo, live), *drift_switches(topo, live), *drift_members(topo, live)]
     for fabric in topo.fabrics:
         drifts.extend(drift_links(topo, fabric, live, seen))
     for fabric in topo.fabrics:

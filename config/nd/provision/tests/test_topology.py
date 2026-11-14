@@ -4,14 +4,18 @@ from pathlib import Path
 
 import pytest
 
-from topology import FabricLink, endpoint_key, load
+from topology import FabricLink, declared_mode_fabrics, endpoint_key, load
 
 HERE = Path(__file__).resolve().parents[1]
 
 
-def test_shipped_topologies_load_and_mirror():
-    t421 = load(HERE / "topology_nd421.yaml")
-    t431 = load(HERE / "topology_nd431.yaml")
+MODE_NAMES = ("multicast", "ingress")
+
+
+@pytest.mark.parametrize("mode", MODE_NAMES)
+def test_shipped_topologies_load_and_mirror(mode):
+    t421 = load(HERE / "topology_nd421.yaml", replication_mode=mode)
+    t431 = load(HERE / "topology_nd431.yaml", replication_mode=mode)
     assert [f.name for f in t421.fabrics] == [f.name for f in t431.fabrics] == ["SITE1", "SITE2", "ISN", "CAMPUS1"]
     assert t421.fabric_groups[0].members == t431.fabric_groups[0].members == ["SITE1", "SITE2", "ISN"]
     assert t421.switch_fabric("S1_BG1") == "SITE1" and t431.switch_fabric("S3_BG1") == "SITE1"
@@ -63,8 +67,8 @@ def test_switch_hostname_declared_in_two_fabrics_is_rejected(tmp_path):
 
 
 def test_shipped_topologies_declare_the_two_site1_vpc_pairs():
-    t421 = load(HERE / "topology_nd421.yaml")
-    t431 = load(HERE / "topology_nd431.yaml")
+    t421 = load(HERE / "topology_nd421.yaml", replication_mode="multicast")
+    t431 = load(HERE / "topology_nd431.yaml", replication_mode="multicast")
     assert [(p.fabric, p.switch, p.peer) for p in t421.vpc_pairs] == [("SITE1", "S1_LE1", "S1_LE2"), ("SITE1", "S1_LE3", "S1_LE4")]
     assert [(p.fabric, p.switch, p.peer) for p in t431.vpc_pairs] == [("SITE1", "S3_LE1", "S3_LE2"), ("SITE1", "S3_LE3", "S3_LE4")]
 
@@ -81,8 +85,8 @@ def test_vpc_pair_must_reference_switches_of_its_own_fabric(tmp_path):
 
 
 def test_shipped_topologies_declare_the_site1_tor_pair():
-    t421 = load(HERE / "topology_nd421.yaml")
-    t431 = load(HERE / "topology_nd431.yaml")
+    t421 = load(HERE / "topology_nd421.yaml", replication_mode="multicast")
+    t431 = load(HERE / "topology_nd431.yaml", replication_mode="multicast")
     assert [(p.fabric, p.tor, p.leaf, p.peer) for p in t421.tor_pairs] == [("SITE1", "S1_TOR1", "S1_LE1", "S1_LE2")]
     assert [(p.fabric, p.tor, p.leaf, p.peer) for p in t431.tor_pairs] == [("SITE1", "S3_TOR1", "S3_LE1", "S3_LE2")]
     # ND 4.2.1 recommends no ids (resources: {} in every query form, lab-verified 2026-09-14), so the files carry them.
@@ -165,7 +169,7 @@ def test_tor_pair_accepts_the_vpc_pair_in_either_order(tmp_path):
 def test_shipped_topologies_attach_lab_net1_to_the_tor_host_port_in_access_mode():
     """S1_H1 / S3_H1 hang off the ToR's Ethernet1/3; the ToR is its own attachment row (no ToR-port field on the leaf row in ND 4.x)."""
     for fn, tor in (("topology_nd421.yaml", "S1_TOR1"), ("topology_nd431.yaml", "S3_TOR1")):
-        topo = load(HERE / fn)
+        topo = load(HERE / fn, replication_mode="multicast")
         rows = [a for a in topo.overlay.network_attachments if a["switch"] == tor]
         assert rows == [{"fabric": "SITE1", "network": "LAB_NET1", "switch": tor, "vlan": 2, "interfaces": [{"mode": "access", "interfaceRange": "Ethernet1/3"}]}]
         assert any(p.tor == tor for p in topo.tor_pairs), f"{tor} must be paired before its host port is attached"
@@ -175,7 +179,7 @@ def test_shipped_topologies_attach_the_overlay_to_both_border_gateways():
     """An MSD stretches a VRF/network across sites only when it is attached to the border gateways too (that attachment
     puts the VNIs with multisite ingress replication on the BGWs); without it the BGWs carry no VNI at all (lab, 2026-09-14)."""
     for fn, bgs in (("topology_nd421.yaml", {"SITE1": "S1_BG1", "SITE2": "S2_BG1"}), ("topology_nd431.yaml", {"SITE1": "S3_BG1", "SITE2": "S4_BG1"})):
-        topo = load(HERE / fn)
+        topo = load(HERE / fn, replication_mode="multicast")
         for fabric, bg in bgs.items():
             assert {"fabric": fabric, "vrf": "LAB", "switch": bg} in topo.overlay.vrf_attachments, f"{fn}: VRF LAB not attached to {bg}"
             assert {
@@ -220,17 +224,18 @@ def test_load_reads_links_generated_links_interfaces_and_defaults(tmp_path):
 
 
 def test_shipped_files_load_with_bootstrapped_golden_sections():
-    topo = load(HERE / "topology_nd421.yaml")
+    topo = load(HERE / "topology_nd421.yaml", replication_mode="multicast")
     assert len(topo.fabrics[0].links) == 5 and len(topo.fabrics[1].links) == 2
     assert topo.fabrics[0].defaults and topo.fabrics[0].generated_links
 
 
-def test_shipped_topologies_differ_only_in_hostnames_and_mgmt_ips():
+@pytest.mark.parametrize("mode", MODE_NAMES)
+def test_shipped_topologies_differ_only_in_hostnames_and_mgmt_ips(mode):
     """Besides names and mgmt IPs, only the SITE2 spine-BGW /30 differs: ND 4.3.1 allocated it the other way round and refuses to swap it."""
     import dataclasses
     import json
 
-    t421, t431 = load(HERE / "topology_nd421.yaml"), load(HERE / "topology_nd431.yaml")
+    t421, t431 = load(HERE / "topology_nd421.yaml", replication_mode=mode), load(HERE / "topology_nd431.yaml", replication_mode=mode)
     bgw_421 = next(link for link in t421.fabrics[1].links if link.dst == "S2_BG1")
     bgw_431 = next(link for link in t431.fabrics[1].links if link.dst == "S4_BG1")
     assert (bgw_421.src_ip, bgw_421.dst_ip) == ("10.24.0.1", "10.24.0.2")
@@ -267,3 +272,71 @@ def test_validate_requires_link_ips_for_numbered(tmp_path):
 
 def test_endpoint_key_is_direction_free():
     assert endpoint_key("S1_LE1", "Ethernet1/1", "S1_SP1", "Ethernet1/2") == endpoint_key("S1_SP1", "Ethernet1/2", "S1_LE1", "Ethernet1/1")
+
+
+MODES = (
+    "    replication_modes:\n"
+    "      multicast: {management: {replicationMode: multicast, anycastRendezvousPointIpRange: 10.13.0.0/24}}\n"
+    "      ingress: {management: {replicationMode: ingress}}\n"
+)
+
+
+def _file(tmp_path, block: str) -> Path:
+    return _write(
+        tmp_path,
+        "fabrics:\n  - name: SITE1\n    type: vxlanIbgp\n    asn: '65001'\n    settings: {management: {bgpLoopbackIpRange: 10.11.0.0/22}}\n"
+        + block
+        + "    switches: []\nfabric_groups: []\nisn: {}\noverlay: {}\n",
+    )
+
+
+def test_mode_delta_is_merged_into_settings(tmp_path):
+    topo = load(_file(tmp_path, MODES), replication_mode="multicast")
+    assert topo.fabrics[0].settings["management"] == {
+        "bgpLoopbackIpRange": "10.11.0.0/22",
+        "replicationMode": "multicast",
+        "anycastRendezvousPointIpRange": "10.13.0.0/24",
+    }
+    assert topo.replication_mode == "multicast" and topo.mode_fabrics == ("SITE1",)
+    ingress = load(_file(tmp_path, MODES), replication_mode="ingress")
+    assert "anycastRendezvousPointIpRange" not in ingress.fabrics[0].settings["management"]
+    assert ingress.fabrics[0].settings["management"]["replicationMode"] == "ingress"
+
+
+def test_mode_bearing_file_needs_a_mode(tmp_path):
+    with pytest.raises(ValueError, match="--replication-mode"):
+        load(_file(tmp_path, MODES))
+
+
+def test_modeless_file_loads_unchanged_and_rejects_a_mode(tmp_path):
+    topo = load(_file(tmp_path, ""))
+    assert topo.replication_mode is None and topo.mode_fabrics == ()
+    with pytest.raises(ValueError, match="declares no replication_modes"):
+        load(_file(tmp_path, ""), replication_mode="ingress")
+
+
+def test_unknown_requested_mode_is_rejected(tmp_path):
+    with pytest.raises(ValueError, match="unknown replication mode 'bogus'"):
+        load(_file(tmp_path, MODES), replication_mode="bogus")
+
+
+@pytest.mark.parametrize(
+    "modes, message",
+    [
+        ("    replication_modes:\n      multicast: {management: {replicationMode: multicast}}\n", "SITE1.*both multicast and ingress"),
+        (MODES.replace("ingress:", "ingres:"), "SITE1.*unknown replication mode 'ingres'"),
+        (MODES.replace("replicationMode: ingress", "replicationMode: multicast"), "SITE1.*ingress.*replicationMode"),
+        (
+            MODES.replace("anycastRendezvousPointIpRange: 10.13.0.0/24", "bgpLoopbackIpRange: 10.99.0.0/22"),
+            "SITE1.*bgpLoopbackIpRange.*both settings and replication_modes",
+        ),
+    ],
+)
+def test_mode_section_validation(tmp_path, modes, message):
+    with pytest.raises(ValueError, match=message):
+        load(_file(tmp_path, modes), replication_mode="multicast")
+
+
+def test_declared_mode_fabrics_reads_names_only(tmp_path):
+    assert declared_mode_fabrics(_file(tmp_path, MODES)) == ["SITE1"]
+    assert declared_mode_fabrics(_file(tmp_path, "")) == []

@@ -15,6 +15,7 @@ from golden_drift import (
     drift_generated_links,
     drift_interfaces,
     drift_links,
+    drift_members,
     drift_overlay,
     drift_pairs,
     drift_settings,
@@ -25,6 +26,7 @@ from golden_drift import (
 )
 from golden_live import read_live_from_snapshot
 from provision import vpc_pair_payload
+from replication import MULTICAST_ONLY_KEYS
 from topology import FabricLink, GeneratedLink, InterfaceIntent, Topology, load
 
 HERE = Path(__file__).resolve().parents[1]
@@ -61,13 +63,13 @@ def _with(topo: Topology, site1_links=(), site2_links=(), generated=(), isn=None
 def lab(request):
     version = request.param
     topo = load(BASE / f"topology_{version}_base.yaml")
-    return topo, read_live_from_snapshot(GOLDEN / version, topo)
+    return topo, read_live_from_snapshot(GOLDEN / version / "multicast", topo)
 
 
 @pytest.fixture
 def nd421():
     topo = load(BASE / "topology_nd421_base.yaml")
-    return topo, read_live_from_snapshot(GOLDEN / "nd421", topo)
+    return topo, read_live_from_snapshot(GOLDEN / "nd421" / "multicast", topo)
 
 
 def _fabric(topo: Topology, name: str):
@@ -546,6 +548,33 @@ def test_extra_attachment_offers_adopt_or_detach(nd421):
     assert delete.body["attachments"][0]["attach"] is False and delete.body["attachments"][0]["networkName"] == "LAB_NET1"
 
 
+def test_extra_attachment_detach_lists_no_ports(nd421):
+    """ND 4.2.1: a network detach that lists the row's ports only removes the ports and keeps the switch attached."""
+    topo, live = nd421
+    port = [{"interfaceRange": "Ethernet1/9", "mode": "access"}]
+    row = next(a for a in live["SITE1"].network_attachments if a["switchName"] == "S1_LE1")
+    live["SITE1"].network_attachments.append({**row, "switchName": "S1_LE3", "switchId": live["SITE1"].switches["S1_LE3"]["serialNumber"], "interfaces": port})
+    (drift,) = drift_overlay(topo, live)
+    assert drift.adopt is not None and drift.adopt.entry["interfaces"] == port  # adopting keeps the live ports
+    assert isinstance(drift.delete, Op) and drift.delete.body["attachments"] == [
+        {"networkName": "LAB_NET1", "switchId": live["SITE1"].switches["S1_LE3"]["serialNumber"], "vlanId": row["vlanId"], "interfaces": [], "attach": False}
+    ]
+
+
+def test_extra_network_delete_detaches_with_no_ports(nd421):
+    topo, live = nd421
+    live["SITE2"].networks.append({"networkName": "STRAY", "networkId": 30009, "vlanId": 9, "vrfName": "LAB"})
+    switch = live["SITE2"].switches["S2_LE1"]
+    port = [{"interfaceRange": "Ethernet1/2", "mode": "access"}]
+    live["SITE2"].network_attachments.append(
+        {"networkName": "STRAY", "switchName": "S2_LE1", "switchId": switch["serialNumber"], "attach": True, "vlanId": 9, "interfaces": port}
+    )
+    (drift,) = [d for d in drift_overlay(topo, live) if d.cls == "networks"]
+    assert isinstance(drift.delete, list) and drift.delete[0].body == {
+        "attachments": [{"networkName": "STRAY", "switchId": switch["serialNumber"], "vlanId": 9, "interfaces": [], "attach": False}]
+    }
+
+
 def test_extra_network_offers_adopt_or_delete_after_detach(nd421):
     topo, live = nd421
     live["SITE2"].networks.append({"networkName": "STRAY", "networkId": 30009, "vlanId": 9, "vrfName": "LAB", "l3Data": {"gatewayIpv4Address": "10.9.9.1/24"}})
@@ -731,8 +760,8 @@ def test_snapshot_group_extra_held_by_all_members_is_one_extra(nd421):
 
 
 def test_campus_reset_body_uses_ios_xe():
-    topo = load(HERE / "topology_nd421.yaml")
-    live = read_live_from_snapshot(HERE / "golden" / "nd421", topo)
+    topo = load(HERE / "topology_nd421.yaml", replication_mode="multicast")
+    live = read_live_from_snapshot(HERE / "golden" / "nd421" / "multicast", topo)
     resets = [d for d in compute(topo, live) if d.cls == "interfaces" and d.kind == "extra" and d.subject.startswith("C1_LE1 ") and isinstance(d.delete, Op)]
     assert resets, "expected campus interface residue in the nd421 snapshot"
     for d in resets:
@@ -745,8 +774,8 @@ def test_campus_reset_body_uses_ios_xe():
 
 
 def test_explicit_interface_on_ios_xe_switch_uses_ios_xe():
-    topo = load(HERE / "topology_nd421.yaml")
-    live = read_live_from_snapshot(HERE / "golden" / "nd421", topo)
+    topo = load(HERE / "topology_nd421.yaml", replication_mode="multicast")
+    live = read_live_from_snapshot(HERE / "golden" / "nd421" / "multicast", topo)
     fab = next(f for f in topo.fabrics if f.name == "CAMPUS1")
     intent = InterfaceIntent("C1_LE1", "GigabitEthernet1/0/9", "iosXeTrunkHost", description="x")
     fab = replace(fab, interfaces=[intent])
@@ -863,3 +892,120 @@ def test_tor_recommendation_for_another_leaf_pair_is_not_a_pairing(nd421):
     _with_tor_associations(topo, live)
     live["SITE1"].tor_associations.append({**recommendation, "aggregationOrLeafSwitchId": serial["S1_LE3"], "aggregationOrLeafPeerSwitchId": serial["S1_LE4"]})
     assert [d for d in drift_pairs(topo, live) if d.cls == "pairs"] == []
+
+
+def test_routed_entry_under_a_trunk_role_default_uses_the_routed_seed():
+    """A routedHost port or an l3Po port-channel on a switch whose role default is trunkHost must not inherit the L2 seed: ND's routed
+    templates have no bpduGuard / portTypeEdgeTrunk and type mtu as an integer."""
+    defaults = {"tor": {"policyType": "trunkHost", "adminState": "true", "allowedVlans": "none", "mtu": "jumbo"}}
+    eth = interface_body("SER", InterfaceIntent("S1_TOR1", "Ethernet1/63", "routedHost", inputs={"mtu": "9216"}), defaults, "nx-os", "tor")
+    assert eth["configData"] == {"mode": "routed", "networkOS": {"networkOSType": "nx-os", "policy": {"policyType": "routedHost", "adminState": True, "mtu": 9216}}}
+    intent = InterfaceIntent("S1_TOR1", "port-channel10", "l3Po", type="portChannel", description="parent", inputs={"mtu": "9216"})
+    po = interface_body("SER", intent, defaults, "nx-os", "tor")
+    assert po["interfaceType"] == "portChannel" and po["configData"]["mode"] == "routed"
+    assert po["configData"]["networkOS"]["policy"] == {"policyType": "l3Po", "adminState": True, "mtu": 9216, "description": "parent"}
+
+
+def test_missing_logical_interface_is_created_with_a_post(nd421):
+    """ND has no object to PUT for a port-channel that does not exist yet; an ethernet port always exists and keeps the PUT."""
+    topo, live = nd421
+    live["SITE1"].interfaces["S1_TOR1"] = [i for i in live["SITE1"].interfaces["S1_TOR1"] if i["interfaceName"].lower() != "port-channel10"]
+    intent = InterfaceIntent("S1_TOR1", "port-channel10", "l3Po", type="portChannel", description="parent", inputs={"mtu": "9216"})
+    drift = next(d for d in _run_interfaces(_with_interfaces(topo, [("SITE1", intent)]), live) if d.subject == "S1_TOR1 port-channel10")
+    serial = live["SITE1"].switches["S1_TOR1"]["serialNumber"]
+    assert drift.kind == "missing" and drift.fix.action == "put_interface" and drift.fix.method == "POST"
+    assert drift.fix.path == f"/fabrics/SITE1/switches/{serial}/interfaces"
+    assert [i["interfaceName"] for i in drift.fix.body["interfaces"]] == ["port-channel10"]
+    assert drift.fix.body["interfaces"][0]["configData"]["networkOS"]["policy"]["policyType"] == "l3Po"
+
+
+def test_listed_l3po_as_golden_is_no_drift(nd421):
+    topo, live = nd421
+    po = _iface(live, "SITE1", "S1_TOR1", "port-channel10")
+    description = po["configData"]["networkOS"]["policy"].get("description", "")
+    intent = InterfaceIntent("S1_TOR1", "port-channel10", "l3Po", type="portChannel", description=description, inputs={"mtu": "9216"})
+    assert not [d for d in _run_interfaces(_with_interfaces(topo, [("SITE1", intent)]), live) if "hannel10" in d.subject]
+
+
+# ---------------------------------------------------------------- group members and ingress enableIr
+
+
+def _ingress(topo: Topology) -> Topology:
+    return replace(topo, replication_mode="ingress", mode_fabrics=("SITE1", "SITE2"))
+
+
+def test_missing_group_member_is_a_drift_with_an_add_member_fix(nd421):
+    topo, live = nd421
+    live["MSD"].members = ["SITE2", "ISN"]
+    drifts = drift_members(topo, live)
+    assert [(d.cls, d.fabric, d.kind, d.subject) for d in drifts] == [("members", "MSD", "missing", "SITE1")]
+    assert drifts[0].fix == Op("add_member", "MSD", "POST", "/fabrics/MSD/actions/addMembers", {"members": [{"name": "SITE1"}]})
+    assert drifts[0].delete is None and drifts[0].adopt is None
+
+
+def test_extra_group_member_is_reported_only(nd421):
+    topo, live = nd421
+    live["MSD"].members = [*live["MSD"].members, "CAMPUS1"]
+    drifts = drift_members(topo, live)
+    assert [(d.kind, d.subject) for d in drifts] == [("extra", "CAMPUS1")]
+    assert drifts[0].fix is None and drifts[0].delete is None and drifts[0].adopt is None
+
+
+def test_golden_lab_has_no_member_drift_and_compute_places_members_after_switches(nd421):
+    topo, live = nd421
+    assert drift_members(topo, live) == []
+    live["MSD"].members = ["ISN"]
+    live["SITE1"].switches["S1_NEW"] = {"hostname": "S1_NEW", "serialNumber": "SN9", "switchRole": "leaf", "fabricManagementIp": "1.1.1.1"}
+    classes = list(dict.fromkeys(d.cls for d in compute(topo, live)))
+    assert classes[:2] == ["switches", "members"]
+
+
+def test_ingress_member_copy_without_enable_ir_is_different_with_a_put_and_deploy_fix(nd421):
+    topo, live = nd421
+    topo = _ingress(topo)
+    drifts = [d for d in drift_overlay(topo, live) if d.cls == "networks"]
+    assert [(d.fabric, d.kind, d.subject) for d in drifts] == [("SITE1", "different", "LAB_NET1"), ("SITE2", "different", "LAB_NET1")]
+    fix = drifts[0].fix
+    assert isinstance(fix, list) and [o.action for o in fix] == ["put_network_ir", "deploy_network_ir"]
+    put, deploy = fix
+    assert (put.fabric, put.method, put.path) == ("SITE1", "PUT", "/fabrics/SITE1/networks/LAB_NET1")
+    assert put.body["l2Data"]["fabricData"]["enableIr"] is True and "networkStatus" not in put.body
+    assert put.body["l2Data"]["fabricData"]["multicastGroup"] == "239.1.1.0"  # the rest of the live copy is kept
+    assert live["SITE1"].networks[0]["l2Data"]["fabricData"]["enableIr"] is False and "networkStatus" in live["SITE1"].networks[0]  # live untouched
+    serials = sorted({r["switchId"] for r in live["SITE1"].network_attachments if r["networkName"] == "LAB_NET1"})
+    assert deploy == Op("deploy_network_ir", "SITE1", "POST", "/fabrics/SITE1/networkActions/deploy", {"networkNames": ["LAB_NET1"], "switchIds": serials})
+    assert serials
+
+
+def test_ingress_member_copy_with_no_attached_switch_gets_only_the_put(nd421):
+    topo, live = nd421
+    live["SITE2"].network_attachments = [r for r in live["SITE2"].network_attachments if r["networkName"] != "LAB_NET1"]
+    fixes = {d.fabric: d.fix for d in drift_overlay(_ingress(topo), live) if d.cls == "networks"}
+    assert isinstance(fixes["SITE2"], list) and [o.action for o in fixes["SITE2"]] == ["put_network_ir"]  # no deploy with switchIds []
+    assert isinstance(fixes["SITE1"], list) and [o.action for o in fixes["SITE1"]] == ["put_network_ir", "deploy_network_ir"]
+
+
+def test_ingress_member_copy_with_enable_ir_is_not_drift(nd421):
+    topo, live = nd421
+    for name in ("SITE1", "SITE2"):
+        live[name].networks[0]["l2Data"]["fabricData"]["enableIr"] = True
+    assert [d for d in drift_overlay(_ingress(topo), live) if d.cls == "networks"] == []
+
+
+def test_enable_ir_is_not_compared_in_multicast_mode(nd421):
+    topo, live = nd421
+    assert live["SITE1"].networks[0]["l2Data"]["fabricData"]["enableIr"] is False
+    for t in (topo, replace(topo, replication_mode="multicast", mode_fabrics=("SITE1", "SITE2"))):
+        assert [d for d in drift_overlay(t, live) if d.cls == "networks"] == []
+
+
+def test_put_settings_fix_for_ingress_carries_no_multicast_only_key(nd421):
+    topo, live = nd421
+    topo = load(HERE / "topology_nd421.yaml", replication_mode="ingress")
+    live["SITE1"].settings["management"]["replicationMode"] = "multicast"
+    live["SITE1"].settings["management"]["multicastGroupSubnet"] = "239.1.1.0/25"
+    drifts = [d for d in drift_settings(topo, live) if d.fabric == "SITE1"]
+    assert drifts and all(isinstance(d.fix, Op) for d in drifts)
+    body = drifts[0].fix.body
+    assert body["management"]["replicationMode"] == "ingress"
+    assert not set(MULTICAST_ONLY_KEYS) & set(body["management"])

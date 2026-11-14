@@ -1,0 +1,45 @@
+{
+  "attachments": [
+    {
+      "attach": true,
+      "displayName": "LAB_NET1",
+      "extraConfig": "",
+      "instanceValues": {},
+      "interfaces": [
+        {
+          "interfaceRange": "Ethernet1/2",
+          "mode": "access"
+        }
+      ],
+      "networkId": 30001,
+      "networkName": "LAB_NET1",
+      "status": "deployed",
+      "switchFabricName": "SITE2",
+      "switchId": "9MFE5PGFUJC",
+      "switchName": "S2_LE1",
+      "switchRole": "leaf",
+      "vlanId": 2
+    },
+    {
+      "attach": true,
+      "displayName": "LAB_NET1",
+      "extraConfig": "",
+      "instanceValues": {},
+      "interfaces": [],
+      "networkId": 30001,
+      "networkName": "LAB_NET1",
+      "status": "deployed",
+      "switchFabricName": "SITE2",
+      "switchId": "9FHI8FTNWEW",
+      "switchName": "S2_BG1",
+      "switchRole": "borderGateway",
+      "vlanId": 2
+    }
+  ],
+  "meta": {
+    "counts": {
+      "remaining": 0,
+      "total": 2
+    }
+  }
+}

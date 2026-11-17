@@ -441,6 +441,49 @@ def test_pending_config_alone_is_not_mid_conversion(monkeypatch, mode_client, mo
     assert restored == [mode] and not any("mid-conversion" in line for line in lines)
 
 
+def _serial_live(topo, mode: str = "multicast") -> dict[str, LiveFabric]:
+    live = live_for(topo, mode)
+    for fab in live.values():
+        fab.switches = {h: {"serialNumber": f"SN_{h}"} for h in fab.switches}
+    return live
+
+
+def test_live_drift_reports_pending_config_and_exits_1_without_drift(monkeypatch, mode_client):
+    """Pending config is a departure from golden (a deleted port-channel a test never deployed shows up nowhere else)."""
+    monkeypatch.setattr(golden, "read_live", lambda client, topo: _serial_live(topo))
+    pending = lambda self, fabric, serial: ["l1", "l2"] if (fabric, serial) == ("SITE1", "SN_S1_BG1") else []  # noqa: E731
+    monkeypatch.setattr(golden.Provisioner, "pending", pending)
+    lines: list[str] = []
+    assert run_main(["drift", "--topology", str(TOPO_PATH), "--nd-ip", "1.1.1.1"], lines) == 1
+    assert lines == ["replication mode: multicast (detected)", "SITE1: 2 pending config line(s); a restore will Recalculate & Deploy it"]
+
+
+def test_live_drift_with_nothing_pending_prints_nothing_and_exits_0(monkeypatch, mode_client):
+    monkeypatch.setattr(golden, "read_live", lambda client, topo: _serial_live(topo))
+    monkeypatch.setattr(golden.Provisioner, "pending", lambda self, fabric, serial: [])
+    lines: list[str] = []
+    assert run_main(["drift", "--topology", str(TOPO_PATH), "--nd-ip", "1.1.1.1"], lines) == 0
+    assert lines == ["replication mode: multicast (detected)"]
+
+
+def test_live_drift_with_an_unreadable_pending_config_exits_3(monkeypatch, mode_client):
+    monkeypatch.setattr(golden, "read_live", lambda client, topo: _serial_live(topo))
+
+    def pending(self, fabric, serial):
+        raise RuntimeError("pendingConfig -> HTTP 500")
+
+    monkeypatch.setattr(golden.Provisioner, "pending", pending)
+    lines: list[str] = []
+    assert run_main(["drift", "--topology", str(TOPO_PATH), "--nd-ip", "1.1.1.1"], lines) == 3
+    assert lines[-1] == "golden: cannot read 1.1.1.1: pendingConfig -> HTTP 500"
+
+
+def test_snapshot_drift_reads_no_pending_config(monkeypatch):
+    monkeypatch.setattr(golden, "compute", lambda t, lv: [])
+    monkeypatch.setattr(golden.Provisioner, "pending", lambda self, fabric, serial: ["l1"])
+    assert golden.main(["drift", "--topology", str(TOPO_PATH), "--snapshot", str(SNAP)], out=lambda m: None) == 0
+
+
 def test_restore_with_no_drift_deploys_fabrics_with_pending_config(monkeypatch, rec):
     monkeypatch.setattr(golden, "compute", lambda topo, live: [])
     prov = SimpleNamespace(client=SimpleNamespace(creds=SimpleNamespace(ip="1.2.3.4")), pending=lambda fabric, serial: ["l1"])

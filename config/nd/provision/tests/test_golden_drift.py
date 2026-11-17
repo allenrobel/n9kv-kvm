@@ -801,6 +801,39 @@ def test_interface_marked_for_deletion_is_not_drift(nd421):
     assert drift.kind == "different" and drift.live == "pending deletion" and drift.fix is None and drift.delete is None
 
 
+def _pending_delete_row(name: str) -> dict:
+    policy = {"policyType": "userDefined", "templateConfig": {"ReadOnlyOnEdit": True}, "templateName": "interface_delete"}
+    return {"interfaceName": name, "interfaceType": "portChannel", "switchId": "X", "configData": {"networkOS": {"policy": policy}}}
+
+
+def _bundle(live, host: str, name: str, channel: int) -> dict:
+    """Make a free port a routedHost in intent that the switch still has bundled in port-channel `channel`."""
+    port = _iface(live, "SITE1", host, name)
+    port["operData"] = {**(port.get("operData") or {}), "portChannelId": channel}
+    port["configData"]["networkOS"]["policy"] = {"policyType": "routedHost", "adminState": True, "mtu": 9216}
+    return port
+
+
+def test_member_of_a_port_channel_pending_deletion_is_a_free_port(nd421):
+    """A test deletes a port-channel without deploying: ND keeps the row as `Port-channel501` (interface_delete), the switch still has the
+    members bundled, and ND's intent for them is already routedHost. They are drift now, not only after the delete is deployed."""
+    topo, live = nd421
+    golden = _with_interfaces(topo)
+    _bundle(live, "S1_LE3", "Ethernet1/10", 501)
+    assert not [d for d in _run_interfaces(golden, live) if d.subject == "S1_LE3 Ethernet1/10"]  # member of a live port-channel: not free
+    live["SITE1"].interfaces["S1_LE3"].append(_pending_delete_row("Port-channel501"))
+    drift = next(d for d in _run_interfaces(golden, live) if d.subject == "S1_LE3 Ethernet1/10")
+    assert drift.kind == "extra" and drift.live.startswith("routedHost") and drift.delete.action == "reset_interface"
+    assert not [d for d in _run_interfaces(golden, live) if "hannel501" in d.subject]
+
+
+def test_member_of_another_live_port_channel_stays_excluded(nd421):
+    topo, live = nd421
+    _bundle(live, "S1_LE3", "Ethernet1/10", 502)
+    live["SITE1"].interfaces["S1_LE3"].append(_pending_delete_row("Port-channel501"))
+    assert not [d for d in _run_interfaces(_with_interfaces(topo), live) if d.subject == "S1_LE3 Ethernet1/10"]
+
+
 def test_logical_interface_names_compare_case_insensitively(nd421):
     topo, live = nd421
     golden = _with_interfaces(topo)

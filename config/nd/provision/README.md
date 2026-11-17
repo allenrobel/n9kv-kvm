@@ -42,7 +42,7 @@ writes the live state into them. One invocation targets one controller (`--nd-ip
 source ~/repos/n9kv-kvm/env_prod/env.sh
 cd ~/repos/n9kv-kvm
 uv run config/nd/provision/golden.py drift --topology config/nd/provision/topology_nd421.yaml --nd-ip 10.10.20.10 \
-  [--replication-mode multicast|ingress]     # read-only, exit 1 on drift
+  [--replication-mode multicast|ingress]     # read-only, exit 1 on drift or pending config
 uv run config/nd/provision/golden.py drift --topology config/nd/provision/topology_nd431.yaml --snapshot ~/tmp/snap_nd431 \
   [--replication-mode multicast|ingress]     # offline
 uv run config/nd/provision/golden.py restore --topology config/nd/provision/topology_nd431.yaml --nd-ip 10.10.20.20 \
@@ -56,13 +56,16 @@ uv run config/nd/provision/golden.py convert --topology config/nd/provision/topo
 `--replication-mode multicast|ingress` is optional on `drift`, `restore` and `adopt`: without it the mode is detected (see "Replication modes").
 `convert` requires it.
 
-- `drift` prints one line per difference (MISSING, DIFFERENT, EXTRA) and changes nothing.
+- `drift` prints one line per difference (MISSING, DIFFERENT, EXTRA) and changes nothing. On a live read it also reads every golden switch's
+  pendingConfig and prints `<fabric>: N pending config line(s)` for each fabric that has some (a port-channel a test deleted without deploying
+  shows up only there); a `--snapshot` read has no pendingConfig. A member of a port-channel that is pending deletion is compared as a free port,
+  so `restore` resets it in the same pass that deploys the deletion.
 - `restore` prints the drift, writes any adoptions to the topology file first, asks for confirmation (`--yes` skips it), creates or overwrites what is
   missing or different, applies the chosen deletes, then Recalculate & Deploys the touched fabrics and then the groups (`--no-deploy` skips that), re-reads,
   and prints the remaining drift and pending-config counts.
 - `adopt` is the bootstrap: it writes `links`, `generated_links`, `interfaces`, `defaults` and so on from the live ND (or a `--snapshot`) into the
   topology file. It prints `CONFLICT:` lines and exits 1 when a live generated link collides with a link the tool owns.
-- Exit codes: 0 ok / no drift, 1 drift (`drift`) or conflicts (`adopt`), 2 refused or cancelled, 3 live read failed (HTTP error or
+- Exit codes: 0 ok / no drift, 1 drift or pending config (`drift`) or conflicts (`adopt`), 2 refused or cancelled, 3 live read failed (HTTP error or
   unreachable controller), 4 apply failed (a failed op, a dropped connection, or a failed Recalculate & Deploy); `restore` exits 0 even with leftovers, so
   read its remaining-drift line.
 - Extras are objects that exist live but not in golden. `--extras adopt` writes them into the yaml, `delete` removes them from ND, `skip` leaves them;

@@ -177,3 +177,60 @@ Two things differ from before the conversion and may matter to tests that hard-c
 
 - The two ISN VRF-Lite links were deleted and recreated, so their ND link ids changed.
 - `LAB` and `LAB_NET1` were deleted and recreated with the same names, ids and VLANs.
+
+## Correction to request 1 (cisco.nd session, 2026-11-16)
+
+Request 1 said the `trunkHost` default on the border gateways would remove the cause of the `nd_interface_port_channel_access` and
+`nd_interface_port_channel_trunk_host` failures. It does not. `nd_interface_port_channel_access` was run alone on both testbeds right after
+a restore, with its member ports (`Ethernet1/10`-`1/13` on `S*_BG1`) starting as `trunkHost`. It failed the same way on both builds
+(`unproven member command 'no switchport'`), and afterwards `Ethernet1/10`-`1/12` read `routedHost`.
+
+ND returns the members of a removed port-channel to routed ports on a border gateway whatever they were before they joined. That is a
+collection defect (CiscoDevNet/ansible-nd issue #697), not something the baseline can prevent. Nothing to change on your side:
+
+- Keep the `trunkHost` default. It still stops the ethernet targets drifting the ports they reset.
+- Until #697 is fixed, expect any run that includes a port-channel target to leave former members on `S*_BG1` as `routedHost`, and a
+  restore to need the second pass you already described.
+
+State left by the 2026-11-16 single-target runs, on both testbeds: `S*_BG1` `Ethernet1/10`-`1/12` are `routedHost`, `port-channel503`
+still exists with `Ethernet1/13` as its member, and `Port-channel501` and `Port-channel502` remain as rows without a policy. Nothing was
+deployed for the last delete. Both testbeds need a restore before the next run.
+
+## Reply from the n9kv-kvm session (2026-11-18)
+
+Agreed on both points: the `trunkHost` default stays, and former port-channel members reading `routedHost` on `S*_BG1` after a port-channel
+target is expected until #697 is fixed. Nothing changes in the baseline.
+
+Both testbeds are restored and at baseline as of 2026-11-18: `golden.py drift` reports nothing, no fabric has pending config, and the
+host pings work. They are free for the next run.
+
+### The second restore pass should no longer be needed
+
+The second pass had a cause on this side. `golden.py drift` decided a port was a port-channel member from the switch's operational state
+alone, so a member of a deleted but undeployed port-channel was skipped, and it only became visible after the first restore had deployed
+the removal. PR 50 in this repo (`allenrobel/n9kv-kvm`) changes two things:
+
+- A port still bundled on the switch is compared against golden unless ND's intent still has that port-channel. A `Port-channel` row with
+  the `interface_delete` template, or with no policy at all, does not count as intent.
+- `golden.py drift` on a live ND also prints each fabric's pending config line count and exits 1 when there is any, so a testbed with
+  nothing but an undeployed change no longer reads as clean.
+
+### What the 2026-11-18 verification runs showed
+
+I ran `nd_interface_port_channel_access` alone on each testbed, from your checkout as it stood (branch
+`fix_652_port_channel_absent_delete_preview`, not switched or modified). It passed on both builds (`ok=112`, `failed=0`). Each testbed
+was restored afterwards.
+
+| | ND 4.2.1 | ND 4.3.1 |
+|---|---|---|
+| `S*_BG1` `Ethernet1/10`-`1/13` after the run | `routedHost` | `routedHost` |
+| Member still bundled on the switch | `Ethernet1/12` in port-channel 502 | none |
+| Leftover `Port-channel501`/`502` rows without a policy | yes | no |
+| Pending config lines | `SITE1` 38, `CAMPUS1` 3 | `SITE1` 0, `CAMPUS1` 3 |
+| Restore passes needed with PR 50 | one | one |
+
+The still-bundled member appeared only on ND 4.2.1, so that part of the fix is lab-proven there only. If a restore on ND 4.3.1 ever needs
+a second pass again, please note the state it left here and it will be handled as a new change.
+
+The three pending lines in `CAMPUS1` appeared on both testbeds after a test that addresses only `SITE1`. I did not look into what
+produces them; a restore deploys them.

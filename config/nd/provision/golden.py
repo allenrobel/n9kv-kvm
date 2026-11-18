@@ -6,16 +6,17 @@
     golden.py adopt   --topology T.yaml [--nd-ip IP | --snapshot DIR] [--classes links,interfaces,...]
     golden.py convert --topology T.yaml --replication-mode multicast|ingress [--nd-ip IP] [--yes] [--extras adopt|delete|skip] [--dry-run]
 
-`drift` prints one line per difference (MISSING / DIFFERENT / EXTRA) and exits 1 when there is any. `restore` creates or overwrites what is
-missing or different, asks per EXTRA object whether to adopt it into the yaml or delete it from ND, writes the adoptions, applies, and
-deploys the touched fabrics. `adopt` writes the live state into the yaml (bootstrap of a golden file); live-only objects become entries.
+`drift` prints one line per difference (MISSING / DIFFERENT / EXTRA) and, on a live read, one per fabric with pending config; it exits 1 when
+there is any of either. `restore` creates or overwrites what is missing or different, asks per EXTRA object whether to adopt it into the yaml or
+delete it from ND, writes the adoptions, applies, and deploys the touched fabrics. `adopt` writes the live state into the yaml (bootstrap of a
+golden file); live-only objects become entries.
 
 A topology that declares `replication_modes` needs one chosen before it loads: `--replication-mode` or, when omitted, the mode detected from the
 live ND (or the snapshot). A testbed caught between modes is refused (exit 2); `golden.py convert` finishes the conversion.
 `convert` moves the mode fabrics to the given mode (teardown, mode change, then a restore against that mode's golden); see golden_convert.py.
 
-Exit codes: 0 ok / no drift, 1 drift (drift) or conflicts (adopt), 2 refused or cancelled, 3 live read failed (an HTTP error or an unreachable controller
-while reading), 4 apply failed (a failed op, a dropped connection or an HTTP error while `restore` writes or deploys).
+Exit codes: 0 ok / no drift, 1 drift or pending config (drift) or conflicts (adopt), 2 refused or cancelled, 3 live read failed (an HTTP error or an
+unreachable controller while reading), 4 apply failed (a failed op, a dropped connection or an HTTP error while `restore` writes or deploys).
 """
 from __future__ import annotations
 
@@ -62,6 +63,20 @@ def run_drift(topo: Topology, live: dict[str, LiveFabric], out: Out) -> list[Dri
     if drifts:
         out(format_report(drifts))
     return drifts
+
+
+def run_drift_pending(prov: Provisioner, topo: Topology, live: dict[str, LiveFabric], out: Out) -> bool:
+    """Print one line per golden fabric whose golden switches have undeployed config; True when any has. Pending config is a departure
+    from golden that the object comparison cannot see (a port-channel a test deleted without deploying). A failed read raises."""
+    found = False
+    for fabric in topo.fabrics:
+        fab_live = live.get(fabric.name)
+        serials = [((fab_live.switches.get(sw.hostname) if fab_live else None) or {}).get("serialNumber") for sw in fabric.switches]
+        total = sum(len(prov.pending(fabric.name, serial)) for serial in serials if serial)
+        if total:
+            out(f"{fabric.name}: {total} pending config line(s); a restore will Recalculate & Deploy it")
+            found = True
+    return found
 
 
 def _flatten(delete: Op | list[Op]) -> list[Op]:
@@ -366,7 +381,15 @@ def main(argv: list[str] | None = None, ask: Ask = _ask_default, out: Out = prin
         out(f"golden: cannot read {where}: {exc}")
         return 3
     if args.cmd == "drift":
-        return 1 if run_drift(topo, live, out) else 0
+        drifts = run_drift(topo, live, out)
+        pending = False
+        if client is not None:  # a snapshot holds no pendingConfig
+            try:
+                pending = run_drift_pending(Provisioner(client, topo), topo, live, out)
+            except READ_ERRORS as exc:
+                out(f"golden: cannot read {where}: {exc}")
+                return 3
+        return 1 if drifts or pending else 0
     if args.cmd == "adopt":
         return run_adopt(args, topo, live, out)
     assert client is not None

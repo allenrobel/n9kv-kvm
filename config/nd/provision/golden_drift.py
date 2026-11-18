@@ -13,7 +13,7 @@ import re
 from dataclasses import dataclass, replace
 from typing import Any, Literal
 
-from golden_live import LiveFabric, free_ports, interface_path
+from golden_live import LiveFabric, free_ports, interface_path, pending_delete
 from provision import attachment_payload, link_payload, tor_associate_payload, vpc_pair_payload
 from replication import settings_body
 from topology import TOOL_LINK_POLICIES, Fabric, FabricLink, FabricGroup, InterfaceIntent, Link, Topology, TorPair, endpoint_key
@@ -359,11 +359,6 @@ def _if_policy(intf: dict) -> dict:
     return value if isinstance(value, dict) else {}
 
 
-def _pending_delete(intf: dict) -> bool:
-    """ND keeps a deleted interface (renamed, e.g. `Port-channel10`) until the next deploy, with the `interface_delete` template."""
-    return _if_policy(intf).get("templateName") == "interface_delete"
-
-
 def _same_name(a: str, b: str) -> bool:
     return a.lower() == b.lower()
 
@@ -507,7 +502,7 @@ def _explicit_interface_drift(fabric: Fabric, live: LiveFabric, intent: Interfac
     subject = f"{intent.switch} {intent.interface}"
     golden = _golden_values(intent.policy, intent.description, intent.inputs)
     found = next((i for i in live.interfaces.get(intent.switch, []) if _same_name(i.get("interfaceName", ""), intent.interface)), None)
-    if found and _pending_delete(found):
+    if found and pending_delete(found):
         return Drift(INTERFACES, fabric.name, "different", subject, _if_text(golden), "pending deletion", None, None, None)
     live_values = _if_values(found) if found else {}
     if found and _if_policy(found) and not _if_differs(golden, live_values):
@@ -582,7 +577,7 @@ def drift_interfaces(topo: Topology, fabric: Fabric, live: dict[str, LiveFabric]
     """Interface drift of `fabric`: explicit `interfaces:` entries (missing/different, fix = put_interface), free physical ports that are not
     as the role default says (extra, delete = reset_interface) and logical interfaces golden does not list (extra, delete = delete_interface).
 
-    Free ports come from `free_ports`, so a link endpoint or port-channel member is never an extra. A role without an entry in
+    Free ports come from `free_ports`, so a link endpoint or a member of a live port-channel is never an extra. A role without an entry in
     `fabric.defaults` has its free ports left unchecked. Core routers and externalConnectivity fabrics are skipped. Only the golden-defined
     keys and the description are compared (`COMPARED_INPUTS`, values as strings)."""
     if fabric.type == "externalConnectivity" or fabric.name not in live:
@@ -606,12 +601,12 @@ def drift_interfaces(topo: Topology, fabric: Fabric, live: dict[str, LiveFabric]
         if default:
             golden = _golden_values(default.get("policyType", ""), default.get("description", ""), default)
             for intf in free_ports(fab_live, switch.hostname, all_links):
-                if (switch.hostname, intf["interfaceName"].lower()) in listed or _pending_delete(intf):
+                if (switch.hostname, intf["interfaceName"].lower()) in listed or pending_delete(intf):
                     continue
                 if _if_differs(golden, _if_values(intf)):
                     drifts.append(_extra_interface_drift(fabric, fab_live, switch.hostname, intf, default))
         for intf in fab_live.interfaces.get(switch.hostname, []):
-            if intf.get("interfaceType") not in LOGICAL_TYPES or (switch.hostname, intf["interfaceName"].lower()) in listed or _pending_delete(intf):
+            if intf.get("interfaceType") not in LOGICAL_TYPES or (switch.hostname, intf["interfaceName"].lower()) in listed or pending_delete(intf):
                 continue
             if not _is_generated_logical(intf, vlans, endpoints, switch.hostname):
                 drifts.append(_extra_interface_drift(fabric, fab_live, switch.hostname, intf, None))

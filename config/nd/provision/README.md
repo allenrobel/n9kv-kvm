@@ -58,8 +58,9 @@ uv run config/nd/provision/golden.py convert --topology config/nd/provision/topo
 
 - `drift` prints one line per difference (MISSING, DIFFERENT, EXTRA) and changes nothing. On a live read it also reads every golden switch's
   pendingConfig and prints `<fabric>: N pending config line(s)` for each fabric that has some (a port-channel a test deleted without deploying
-  shows up only there); a `--snapshot` read has no pendingConfig. A member of a port-channel that is pending deletion is compared as a free port,
-  so `restore` resets it in the same pass that deploys the deletion.
+  can show up only there); a `--snapshot` read has no pendingConfig. A port the switch still has bundled in a port-channel that ND's intent no
+  longer holds (an `interface_delete` row, a row without a policy, or no row) is compared as a free port, so `restore` resets it in the same pass
+  that deploys the deletion.
 - `restore` prints the drift, writes any adoptions to the topology file first, asks for confirmation (`--yes` skips it), creates or overwrites what is
   missing or different, applies the chosen deletes, then Recalculate & Deploys the touched fabrics and then the groups (`--no-deploy` skips that), re-reads,
   and prints the remaining drift and pending-config counts.

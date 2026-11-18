@@ -6,8 +6,8 @@
     golden.py adopt   --topology T.yaml [--nd-ip IP | --snapshot DIR] [--classes links,interfaces,...]
     golden.py convert --topology T.yaml --replication-mode multicast|ingress [--nd-ip IP] [--yes] [--extras adopt|delete|skip] [--dry-run]
 
-`drift` prints one line per difference (MISSING / DIFFERENT / EXTRA) and exits 1 when there is any. `restore` creates or overwrites what is
-missing or different, asks per EXTRA object whether to adopt it into the yaml or delete it from ND, writes the adoptions, applies, and
+`drift` prints one line per difference (MISSING / DIFFERENT / EXTRA) and, on a live read, one per fabric with pending config; it exits 1 when
+there is any of either. `restore` creates or overwrites what is missing or different, asks per EXTRA object whether to adopt it into the yaml or delete it from ND, writes the adoptions, applies, and
 deploys the touched fabrics. `adopt` writes the live state into the yaml (bootstrap of a golden file); live-only objects become entries.
 
 A topology that declares `replication_modes` needs one chosen before it loads: `--replication-mode` or, when omitted, the mode detected from the

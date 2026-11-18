@@ -801,11 +801,6 @@ def test_interface_marked_for_deletion_is_not_drift(nd421):
     assert drift.kind == "different" and drift.live == "pending deletion" and drift.fix is None and drift.delete is None
 
 
-def _pending_delete_row(name: str) -> dict:
-    policy = {"policyType": "userDefined", "templateConfig": {"ReadOnlyOnEdit": True}, "templateName": "interface_delete"}
-    return {"interfaceName": name, "interfaceType": "portChannel", "switchId": "X", "configData": {"networkOS": {"policy": policy}}}
-
-
 def _bundle(live, host: str, name: str, channel: int) -> dict:
     """Make a free port a routedHost in intent that the switch still has bundled in port-channel `channel`."""
     port = _iface(live, "SITE1", host, name)
@@ -814,24 +809,53 @@ def _bundle(live, host: str, name: str, channel: int) -> dict:
     return port
 
 
-def test_member_of_a_port_channel_pending_deletion_is_a_free_port(nd421):
-    """A test deletes a port-channel without deploying: ND keeps the row as `Port-channel501` (interface_delete), the switch still has the
-    members bundled, and ND's intent for them is already routedHost. They are drift now, not only after the delete is deployed."""
+def _channel_row(name: str, policy: dict | None) -> dict:
+    os_config: dict = {"networkOSType": "nx-os"}
+    if policy is not None:
+        os_config["policy"] = policy
+    return {"interfaceName": name, "interfaceType": "portChannel", "switchId": "X", "configData": {"mode": "unknown", "networkOS": os_config}}
+
+
+LIVE_CHANNEL = {"policyType": "accessPoHost", "adminState": True}
+DELETED_CHANNEL = {"policyType": "userDefined", "templateConfig": {"ReadOnlyOnEdit": True}, "templateName": "interface_delete"}
+
+
+def _member_drift(topo, live) -> list[Drift]:
+    return [d for d in _run_interfaces(_with_interfaces(topo), live) if d.subject == "S1_LE3 Ethernet1/10"]
+
+
+def test_member_of_a_live_port_channel_is_not_a_free_port(nd421):
     topo, live = nd421
-    golden = _with_interfaces(topo)
     _bundle(live, "S1_LE3", "Ethernet1/10", 501)
-    assert not [d for d in _run_interfaces(golden, live) if d.subject == "S1_LE3 Ethernet1/10"]  # member of a live port-channel: not free
-    live["SITE1"].interfaces["S1_LE3"].append(_pending_delete_row("Port-channel501"))
-    drift = next(d for d in _run_interfaces(golden, live) if d.subject == "S1_LE3 Ethernet1/10")
+    live["SITE1"].interfaces["S1_LE3"].append(_channel_row("port-channel501", LIVE_CHANNEL))
+    assert not _member_drift(topo, live)
+
+
+@pytest.mark.parametrize("row", [_channel_row("Port-channel501", DELETED_CHANNEL), _channel_row("Port-channel501", None), None])
+def test_member_of_a_port_channel_gone_from_intent_is_a_free_port(nd421, row):
+    """A test deletes a port-channel and the switch still has the members bundled (`operData.portChannelId`) while ND's intent for them is
+    already routedHost. ND keeps the channel as an `interface_delete` row, as a row without a policy (seen on ND 4.2.1 after
+    nd_interface_port_channel_access), or not at all. The member is drift now, not only after the next deploy."""
+    topo, live = nd421
+    _bundle(live, "S1_LE3", "Ethernet1/10", 501)
+    if row:
+        live["SITE1"].interfaces["S1_LE3"].append(row)
+    (drift,) = _member_drift(topo, live)
     assert drift.kind == "extra" and drift.live.startswith("routedHost") and drift.delete.action == "reset_interface"
-    assert not [d for d in _run_interfaces(golden, live) if "hannel501" in d.subject]
+
+
+def test_port_without_operational_data_is_not_a_free_port(nd421):
+    """Unknown membership is not "free": a port ND has no operData for is left unchecked, as before."""
+    topo, live = nd421
+    _bundle(live, "S1_LE3", "Ethernet1/10", 501).pop("operData")
+    assert not _member_drift(topo, live)
 
 
 def test_member_of_another_live_port_channel_stays_excluded(nd421):
     topo, live = nd421
     _bundle(live, "S1_LE3", "Ethernet1/10", 502)
-    live["SITE1"].interfaces["S1_LE3"].append(_pending_delete_row("Port-channel501"))
-    assert not [d for d in _run_interfaces(_with_interfaces(topo), live) if d.subject == "S1_LE3 Ethernet1/10"]
+    live["SITE1"].interfaces["S1_LE3"] += [_channel_row("Port-channel501", DELETED_CHANNEL), _channel_row("port-channel502", LIVE_CHANNEL)]
+    assert not _member_drift(topo, live)
 
 
 def test_logical_interface_names_compare_case_insensitively(nd421):

@@ -183,40 +183,46 @@ def read_live_from_snapshot(snapshot_dir: Path, topo: Topology) -> dict[str, Liv
     return result
 
 
+def _policy(intf: dict) -> dict:
+    value = ((intf.get("configData") or {}).get("networkOS") or {}).get("policy")
+    return value if isinstance(value, dict) else {}
+
+
 def pending_delete(intf: dict) -> bool:
     """ND keeps a deleted interface (renamed, e.g. `Port-channel10`) until the next deploy, with the `interface_delete` template."""
-    policy = ((intf.get("configData") or {}).get("networkOS") or {}).get("policy")
-    return isinstance(policy, dict) and policy.get("templateName") == "interface_delete"
+    return _policy(intf).get("templateName") == "interface_delete"
 
 
-def _dying_channels(interfaces: list[dict]) -> set[int]:
-    """Ids of the port-channels whose deletion is not deployed yet. The switch still has their members bundled (`operData.portChannelId`),
-    but ND's intent has already released them."""
+def _intended_channels(interfaces: list[dict]) -> set[int]:
+    """Ids of the port-channels ND's intent still holds: a row with a policy that is not marked for deletion. A deleted port-channel
+    stays on the switch until the next deploy, and ND shows it as an `interface_delete` row, as a row without a policy, or not at all."""
     ids: set[int] = set()
     for intf in interfaces:
         match = re.fullmatch(r"port-channel(\d+)", intf.get("interfaceName", ""), re.IGNORECASE)
-        if match and pending_delete(intf):
+        if match and _policy(intf) and not pending_delete(intf):
             ids.add(int(match.group(1)))
     return ids
 
 
 def free_ports(live: LiveFabric, hostname: str, all_links: list[dict]) -> list[dict]:
-    """Physical ethernet interfaces of `hostname` that no link uses and that are not port-channel members. A member of a port-channel
-    that is pending deletion counts as free: its intent is what the next deploy puts on the switch. Interface names are compared
+    """Physical ethernet interfaces of `hostname` that no link uses and that are not port-channel members. Membership is what the switch
+    reports (`operData.portChannelId`), but only in a port-channel ND's intent still holds: a member the switch still has bundled in a
+    deleted port-channel counts as free, because its intent is what the next deploy puts on the switch. Interface names are compared
     case-insensitively, as drift_interfaces does."""
     used: set[tuple[str, str]] = set()
     for link in all_links:
         used.add((link.get("srcSwitchName", ""), link.get("srcInterfaceName", "").lower()))
         used.add((link.get("dstSwitchName", ""), link.get("dstInterfaceName", "").lower()))
     interfaces = live.interfaces.get(hostname, [])
-    unbundled = {-1, *_dying_channels(interfaces)}
+    intended = _intended_channels(interfaces)
     return [
         i
         for i in interfaces
         if i.get("interfaceType") == "ethernet"
         and not i.get("interfaceName", "").startswith("mgmt")
         and (hostname, i["interfaceName"].lower()) not in used
-        and (i.get("operData") or {}).get("portChannelId") in unbundled
+        and (i.get("operData") or {}).get("portChannelId") is not None
+        and i["operData"]["portChannelId"] not in intended
     ]
 
 

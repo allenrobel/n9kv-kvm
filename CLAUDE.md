@@ -37,8 +37,10 @@ hardcoded defaults. Changing IPs/credentials should be done via the env scripts,
 
 - Python 3.13 (see `.python-version`); deps managed with `uv` (`uv.lock` present, `pyproject.toml` is the source of truth).
 - Line length is **169** everywhere — `black`, `flake8`, and `pylint` are all configured to it in `pyproject.toml` / `.flake8`. Don't reformat to PEP 8's 79/88 default.
-- No test suite exists. Don't claim "tests pass" — there are none to run. Validate Python changes with `mypy`, `flake8`, and by exercising the script against
-  the lab (or `--dry-run` where supported).
+- Unit tests (`pytest`) live in a `tests/` directory beside the code: `config/nd/provision/tests` (the bulk), `config/cat9kv/tests`, `config/8000v/tests`
+  and `config/nexus9000v/tests`. Run them all with `uv run pytest config -q`, or one directory at a time. `config/containers/`, `monitor/` and the shell
+  scripts have none. The tests run without a lab, so a green run says nothing about behaviour against a live ND or switch: also validate Python changes
+  with `mypy`, `flake8`, and by exercising the script against the lab (or `--dry-run` where supported), and report the two separately.
 - Use `pymarkdown scan <file>` to ensure Markdown files are formatted correctly and `pymarkdown fix <file>` to fix.
 
 ```bash
@@ -46,6 +48,7 @@ hardcoded defaults. Changing IPs/credentials should be done via the env scripts,
 mypy config/nexus9000v/startup_config.py
 flake8 config/containers/
 black --check config/
+uv run pytest config -q
 ```
 
 ## High-Level Layout

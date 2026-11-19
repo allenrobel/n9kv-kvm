@@ -1,0 +1,118 @@
+[
+  {
+    "configData": {
+      "policyType": "multisiteUnderlay",
+      "templateInputs": {
+        "dciTrackingEnableFlag": false,
+        "dstEbgpAsn": "65001",
+        "dstInterfaceConfig": "",
+        "dstInterfaceDescription": "connected-to-WAN1-GigabitEthernet2",
+        "dstIpAddress": "10.10.1.6",
+        "dstIpv6Address": "",
+        "ebgpAuthKeyEncryptionType": "3des",
+        "ebgpBfd": false,
+        "ebgpLogNeighborChange": false,
+        "ebgpMaximumPaths": 1,
+        "ebgpPassword": "",
+        "ebgpSendComboth": true,
+        "enableEbgpPassword": true,
+        "inheritEbgpPasswordMsdSettings": true,
+        "inheritTtagFabricSetting": true,
+        "routingTag": "54321",
+        "speed": "auto",
+        "srcEbgpAsn": "65535",
+        "srcInterfaceConfig": "",
+        "srcInterfaceDescription": "connected-to-S1_BG1-Ethernet1/3",
+        "srcIpAddressMask": "10.10.1.5/30",
+        "srcIpv6AddressMask": ""
+      }
+    },
+    "displayName": "Multi-Site underlay",
+    "dstFabricName": "SITE1",
+    "dstInterfaceName": "Ethernet1/3",
+    "dstSwitchId": "92IAYR41NF3",
+    "dstSwitchInfo": {
+      "interfaceAdminStatus": "up",
+      "interfaceOperReason": "none",
+      "interfaceOperStatus": "up",
+      "switchModelName": "N9K-C9300v",
+      "switchRole": "border gateway",
+      "vdc": false,
+      "vdcId": 0
+    },
+    "dstSwitchName": "S1_BG1",
+    "ipMtu": 9198,
+    "linkDiscovered": false,
+    "linkId": "LINK-UUID-78520",
+    "linkPlanned": false,
+    "linkPresent": true,
+    "linkType": "ethisl",
+    "memberLink": false,
+    "portChannel": false,
+    "srcFabricName": "ISN",
+    "srcInterfaceName": "GigabitEthernet2",
+    "srcSwitchId": "9S3F1H79UZU",
+    "srcSwitchInfo": {
+      "interfaceAdminStatus": "up",
+      "interfaceOperReason": "",
+      "interfaceOperStatus": "up",
+      "switchModelName": "C8000V",
+      "switchRole": "core router",
+      "vdc": false,
+      "vdcId": 0
+    },
+    "srcSwitchName": "WAN1"
+  },
+  {
+    "configData": {
+      "policyType": "ebgpVrfLite",
+      "templateInputs": {
+        "autoGenConfigPeer": true,
+        "dstEbgpAsn": "65002",
+        "dstInterfaceDescription": "connected-to-WAN1-GigabitEthernet3",
+        "dstIpAddress": "10.25.0.2",
+        "inheritTtagFabricSetting": true,
+        "linkMtu": 9000,
+        "srcEbgpAsn": "65535",
+        "srcInterfaceDescription": "connected-to-S2_BG1-Ethernet1/3",
+        "srcIpAddressMask": "10.25.0.1/30",
+        "templateConfigGenPeer": "ios_xe_Ext_VRF_Lite_Jython"
+      }
+    },
+    "displayName": "VRF lite (Subinterface)",
+    "dstFabricName": "SITE2",
+    "dstInterfaceName": "Ethernet1/3",
+    "dstSwitchId": "9FHI8FTNWEW",
+    "dstSwitchInfo": {
+      "interfaceAdminStatus": "up",
+      "interfaceOperReason": "none",
+      "interfaceOperStatus": "up",
+      "switchModelName": "N9K-C9300v",
+      "switchRole": "border gateway",
+      "vdc": false,
+      "vdcId": 0
+    },
+    "dstSwitchName": "S2_BG1",
+    "ipMtu": 9198,
+    "linkDiscovered": false,
+    "linkId": "LINK-UUID-122220",
+    "linkPlanned": false,
+    "linkPresent": true,
+    "linkType": "ethisl",
+    "memberLink": false,
+    "portChannel": false,
+    "srcFabricName": "ISN",
+    "srcInterfaceName": "GigabitEthernet3",
+    "srcSwitchId": "9S3F1H79UZU",
+    "srcSwitchInfo": {
+      "interfaceAdminStatus": "up",
+      "interfaceOperReason": "",
+      "interfaceOperStatus": "up",
+      "switchModelName": "C8000V",
+      "switchRole": "core router",
+      "vdc": false,
+      "vdcId": 0
+    },
+    "srcSwitchName": "WAN1"
+  }
+]

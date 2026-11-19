@@ -2086,7 +2086,7 @@
             "bpduGuard": "default",
             "cdp": true,
             "debounceTimer": 100,
-            "description": "LAB_NET1 host port",
+            "description": "S2_H1 host port",
             "duplexMode": "auto",
             "errorDetectionAcl": true,
             "fec": "auto",

@@ -1897,9 +1897,9 @@
             "adminState": true,
             "bfd": false,
             "bfdEchoDisable": false,
-            "description": "connected-to-S1_LE1-Ethernet1/1",
+            "description": "connected-to-S1_LE4-Ethernet1/1",
             "fec": "auto",
-            "ip": "10.14.0.5",
+            "ip": "10.14.0.17",
             "isType": "level2",
             "mtu": 9216,
             "ospfAreaId": "0.0.0.0",
@@ -1912,65 +1912,18 @@
           }
         }
       },
-      "interfaceName": "Ethernet1/2",
+      "interfaceName": "Ethernet1/5",
       "interfaceType": "ethernet",
       "operData": {
         "adminStatus": "up",
-        "ipAddress": "10.14.0.5/30",
+        "ipAddress": "10.14.0.17/30",
         "mode": "routed",
         "mtu": 9216,
         "neighbors": [
           {
             "fabricName": "SITE1",
             "interfaceName": "Ethernet1/1",
-            "switchName": "S1_LE1"
-          }
-        ],
-        "operationalDescription": "ok",
-        "operationalStatus": "up",
-        "portChannelId": -1,
-        "speed": "1Gb",
-        "switchName": "S1_SP1",
-        "vlanRange": "-1"
-      },
-      "switchId": "9N3T3ATJWN8"
-    },
-    {
-      "configData": {
-        "mode": "routed",
-        "networkOS": {
-          "networkOSType": "nx-os",
-          "policy": {
-            "adminState": true,
-            "bfd": false,
-            "bfdEchoDisable": false,
-            "description": "connected-to-S1_LE3-Ethernet1/1",
-            "fec": "auto",
-            "ip": "10.14.0.13",
-            "isType": "level2",
-            "mtu": 9216,
-            "ospfAreaId": "0.0.0.0",
-            "policyType": "numbered",
-            "prefix": 30,
-            "ptp": false,
-            "replicationMode": "multicast",
-            "speed": "auto",
-            "v6prefix": 126
-          }
-        }
-      },
-      "interfaceName": "Ethernet1/4",
-      "interfaceType": "ethernet",
-      "operData": {
-        "adminStatus": "up",
-        "ipAddress": "10.14.0.13/30",
-        "mode": "routed",
-        "mtu": 9216,
-        "neighbors": [
-          {
-            "fabricName": "SITE1",
-            "interfaceName": "Ethernet1/1",
-            "switchName": "S1_LE3"
+            "switchName": "S1_LE4"
           }
         ],
         "operationalDescription": "ok",
@@ -2038,9 +1991,9 @@
             "adminState": true,
             "bfd": false,
             "bfdEchoDisable": false,
-            "description": "connected-to-S1_LE4-Ethernet1/1",
+            "description": "connected-to-S1_LE3-Ethernet1/1",
             "fec": "auto",
-            "ip": "10.14.0.17",
+            "ip": "10.14.0.13",
             "isType": "level2",
             "mtu": 9216,
             "ospfAreaId": "0.0.0.0",
@@ -2053,18 +2006,18 @@
           }
         }
       },
-      "interfaceName": "Ethernet1/5",
+      "interfaceName": "Ethernet1/4",
       "interfaceType": "ethernet",
       "operData": {
         "adminStatus": "up",
-        "ipAddress": "10.14.0.17/30",
+        "ipAddress": "10.14.0.13/30",
         "mode": "routed",
         "mtu": 9216,
         "neighbors": [
           {
             "fabricName": "SITE1",
             "interfaceName": "Ethernet1/1",
-            "switchName": "S1_LE4"
+            "switchName": "S1_LE3"
           }
         ],
         "operationalDescription": "ok",
@@ -2112,6 +2065,53 @@
             "fabricName": "SITE1",
             "interfaceName": "Ethernet1/2",
             "switchName": "S1_BG1"
+          }
+        ],
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "S1_SP1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9N3T3ATJWN8"
+    },
+    {
+      "configData": {
+        "mode": "routed",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "bfd": false,
+            "bfdEchoDisable": false,
+            "description": "connected-to-S1_LE1-Ethernet1/1",
+            "fec": "auto",
+            "ip": "10.14.0.5",
+            "isType": "level2",
+            "mtu": 9216,
+            "ospfAreaId": "0.0.0.0",
+            "policyType": "numbered",
+            "prefix": 30,
+            "ptp": false,
+            "replicationMode": "multicast",
+            "speed": "auto",
+            "v6prefix": 126
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/2",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "ipAddress": "10.14.0.5/30",
+        "mode": "routed",
+        "mtu": 9216,
+        "neighbors": [
+          {
+            "fabricName": "SITE1",
+            "interfaceName": "Ethernet1/1",
+            "switchName": "S1_LE1"
           }
         ],
         "operationalDescription": "ok",

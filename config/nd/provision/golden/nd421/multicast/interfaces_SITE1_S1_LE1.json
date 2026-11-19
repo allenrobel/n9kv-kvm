@@ -921,7 +921,6 @@
         "networkOS": {
           "networkOSType": "nx-os",
           "policy": {
-            "accessVlan": 1,
             "adminState": true,
             "allowedVlans": "none",
             "bpduFilter": "default",
@@ -934,7 +933,6 @@
             "linkType": "auto",
             "monitor": false,
             "mtu": "jumbo",
-            "nativeVlan": 1,
             "negotiateAuto": true,
             "netflow": false,
             "orphanPort": false,
@@ -946,12 +944,6 @@
             "speed": "auto",
             "stormControl": false,
             "stormControlAction": "default",
-            "stormControlBroadcastLevel": 0,
-            "stormControlBroadcastLevelPps": 0,
-            "stormControlMulticastLevel": 0,
-            "stormControlMulticastLevelPps": 0,
-            "stormControlUnicastLevel": 0,
-            "stormControlUnicastLevelPps": 0,
             "vlanMapping": false
           }
         }
@@ -1010,7 +1002,6 @@
         "networkOS": {
           "networkOSType": "nx-os",
           "policy": {
-            "accessVlan": 1,
             "adminState": true,
             "allowedVlans": "none",
             "bpduFilter": "default",
@@ -1023,7 +1014,6 @@
             "linkType": "auto",
             "monitor": false,
             "mtu": "jumbo",
-            "nativeVlan": 1,
             "negotiateAuto": true,
             "netflow": false,
             "orphanPort": false,
@@ -1035,12 +1025,6 @@
             "speed": "auto",
             "stormControl": false,
             "stormControlAction": "default",
-            "stormControlBroadcastLevel": 0,
-            "stormControlBroadcastLevelPps": 0,
-            "stormControlMulticastLevel": 0,
-            "stormControlMulticastLevelPps": 0,
-            "stormControlUnicastLevel": 0,
-            "stormControlUnicastLevelPps": 0,
             "vlanMapping": false
           }
         }
@@ -1066,7 +1050,6 @@
         "networkOS": {
           "networkOSType": "nx-os",
           "policy": {
-            "accessVlan": 1,
             "adminState": true,
             "allowedVlans": "none",
             "bpduFilter": "default",
@@ -1079,7 +1062,6 @@
             "linkType": "auto",
             "monitor": false,
             "mtu": "jumbo",
-            "nativeVlan": 1,
             "negotiateAuto": true,
             "netflow": false,
             "orphanPort": false,
@@ -1091,12 +1073,6 @@
             "speed": "auto",
             "stormControl": false,
             "stormControlAction": "default",
-            "stormControlBroadcastLevel": 0,
-            "stormControlBroadcastLevelPps": 0,
-            "stormControlMulticastLevel": 0,
-            "stormControlMulticastLevelPps": 0,
-            "stormControlUnicastLevel": 0,
-            "stormControlUnicastLevelPps": 0,
             "vlanMapping": false
           }
         }
@@ -2157,150 +2133,6 @@
           }
         }
       },
-      "interfaceName": "Ethernet1/5",
-      "interfaceType": "ethernet",
-      "operData": {
-        "adminStatus": "up",
-        "mode": "trunk",
-        "mtu": 9216,
-        "operationalDescription": "Link not connected",
-        "operationalStatus": "down",
-        "portChannelId": -1,
-        "speed": "10Gb",
-        "switchName": "S1_LE1",
-        "vlanRange": "-1"
-      },
-      "switchId": "9UDEG98YLEY"
-    },
-    {
-      "configData": {
-        "mode": "trunk",
-        "networkOS": {
-          "networkOSType": "nx-os",
-          "policy": {
-            "adminState": true,
-            "allowedVlans": "none",
-            "bpduFilter": "default",
-            "bpduGuard": "default",
-            "cdp": true,
-            "debounceTimer": 100,
-            "duplexMode": "auto",
-            "errorDetectionAcl": true,
-            "fec": "auto",
-            "linkType": "auto",
-            "monitor": false,
-            "mtu": "jumbo",
-            "negotiateAuto": true,
-            "netflow": false,
-            "orphanPort": false,
-            "pfc": false,
-            "policyType": "trunkHost",
-            "portTypeEdgeTrunk": true,
-            "ptp": false,
-            "qos": false,
-            "speed": "auto",
-            "stormControl": false,
-            "stormControlAction": "default",
-            "vlanMapping": false
-          }
-        }
-      },
-      "interfaceName": "Ethernet1/6",
-      "interfaceType": "ethernet",
-      "operData": {
-        "adminStatus": "up",
-        "mode": "trunk",
-        "mtu": 9216,
-        "operationalDescription": "Link not connected",
-        "operationalStatus": "down",
-        "portChannelId": -1,
-        "speed": "10Gb",
-        "switchName": "S1_LE1",
-        "vlanRange": "-1"
-      },
-      "switchId": "9UDEG98YLEY"
-    },
-    {
-      "configData": {
-        "mode": "trunk",
-        "networkOS": {
-          "networkOSType": "nx-os",
-          "policy": {
-            "adminState": true,
-            "allowedVlans": "none",
-            "bpduFilter": "default",
-            "bpduGuard": "default",
-            "cdp": true,
-            "debounceTimer": 100,
-            "duplexMode": "auto",
-            "errorDetectionAcl": true,
-            "fec": "auto",
-            "linkType": "auto",
-            "monitor": false,
-            "mtu": "jumbo",
-            "negotiateAuto": true,
-            "netflow": false,
-            "orphanPort": false,
-            "pfc": false,
-            "policyType": "trunkHost",
-            "portTypeEdgeTrunk": true,
-            "ptp": false,
-            "qos": false,
-            "speed": "auto",
-            "stormControl": false,
-            "stormControlAction": "default",
-            "vlanMapping": false
-          }
-        }
-      },
-      "interfaceName": "Ethernet1/7",
-      "interfaceType": "ethernet",
-      "operData": {
-        "adminStatus": "up",
-        "mode": "trunk",
-        "mtu": 9216,
-        "operationalDescription": "Link not connected",
-        "operationalStatus": "down",
-        "portChannelId": -1,
-        "speed": "10Gb",
-        "switchName": "S1_LE1",
-        "vlanRange": "-1"
-      },
-      "switchId": "9UDEG98YLEY"
-    },
-    {
-      "configData": {
-        "mode": "trunk",
-        "networkOS": {
-          "networkOSType": "nx-os",
-          "policy": {
-            "adminState": true,
-            "allowedVlans": "none",
-            "bpduFilter": "default",
-            "bpduGuard": "default",
-            "cdp": true,
-            "debounceTimer": 100,
-            "duplexMode": "auto",
-            "errorDetectionAcl": true,
-            "fec": "auto",
-            "linkType": "auto",
-            "monitor": false,
-            "mtu": "jumbo",
-            "negotiateAuto": true,
-            "netflow": false,
-            "orphanPort": false,
-            "pfc": false,
-            "policyType": "trunkHost",
-            "portTypeEdgeTrunk": true,
-            "ptp": false,
-            "qos": false,
-            "speed": "auto",
-            "stormControl": false,
-            "stormControlAction": "default",
-            "vlanMapping": false
-          }
-        }
-      },
       "interfaceName": "Ethernet1/8",
       "interfaceType": "ethernet",
       "operData": {
@@ -2398,6 +2230,150 @@
         }
       },
       "interfaceName": "Ethernet1/10",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9UDEG98YLEY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduFilter": "default",
+            "bpduGuard": "default",
+            "cdp": true,
+            "debounceTimer": 100,
+            "duplexMode": "auto",
+            "errorDetectionAcl": true,
+            "fec": "auto",
+            "linkType": "auto",
+            "monitor": false,
+            "mtu": "jumbo",
+            "negotiateAuto": true,
+            "netflow": false,
+            "orphanPort": false,
+            "pfc": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "qos": false,
+            "speed": "auto",
+            "stormControl": false,
+            "stormControlAction": "default",
+            "vlanMapping": false
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/5",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9UDEG98YLEY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduFilter": "default",
+            "bpduGuard": "default",
+            "cdp": true,
+            "debounceTimer": 100,
+            "duplexMode": "auto",
+            "errorDetectionAcl": true,
+            "fec": "auto",
+            "linkType": "auto",
+            "monitor": false,
+            "mtu": "jumbo",
+            "negotiateAuto": true,
+            "netflow": false,
+            "orphanPort": false,
+            "pfc": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "qos": false,
+            "speed": "auto",
+            "stormControl": false,
+            "stormControlAction": "default",
+            "vlanMapping": false
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/6",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S1_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9UDEG98YLEY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduFilter": "default",
+            "bpduGuard": "default",
+            "cdp": true,
+            "debounceTimer": 100,
+            "duplexMode": "auto",
+            "errorDetectionAcl": true,
+            "fec": "auto",
+            "linkType": "auto",
+            "monitor": false,
+            "mtu": "jumbo",
+            "negotiateAuto": true,
+            "netflow": false,
+            "orphanPort": false,
+            "pfc": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": false,
+            "qos": false,
+            "speed": "auto",
+            "stormControl": false,
+            "stormControlAction": "default",
+            "vlanMapping": false
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/7",
       "interfaceType": "ethernet",
       "operData": {
         "adminStatus": "up",

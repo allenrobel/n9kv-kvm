@@ -9,7 +9,7 @@ from golden_live import LiveReadError, free_ports, interface_path, read_live, re
 from topology import load
 
 HERE = Path(__file__).resolve().parents[1]
-GOLDEN = HERE / "golden"
+SNAPSHOTS = HERE / "tests" / "fixtures" / "snapshots"  # dumps frozen with the *_base.yaml topologies; golden/ holds the current reference dumps
 
 
 class StubClient:
@@ -40,7 +40,7 @@ MODE_BODIES = {f"/fabrics/{f}": {"management": {"replicationMode": "multicast"}}
 
 def _live():
     topo = load(HERE / "topology_nd421.yaml", replication_mode="multicast")
-    return read_live_from_snapshot(GOLDEN / "nd421" / "multicast", topo)
+    return read_live_from_snapshot(SNAPSHOTS / "nd421", topo)
 
 
 def test_read_live_from_snapshot_loads_every_golden_fabric_and_group():
@@ -248,7 +248,7 @@ def test_snapshot_read_does_not_check_the_mode(tmp_path):
     import shutil
 
     snap = tmp_path / "snap"
-    shutil.copytree(GOLDEN / "nd421" / "multicast", snap)
+    shutil.copytree(SNAPSHOTS / "nd421", snap)
     (snap / "fabric_SITE1.json").write_text('{"name": "SITE1", "management": {}}', encoding="utf-8")
     live = read_live_from_snapshot(snap, load(HERE / "topology_nd421.yaml", replication_mode="multicast"))
     assert live["SITE1"].settings == {"name": "SITE1", "management": {}}

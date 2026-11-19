@@ -1,0 +1,2274 @@
+{
+  "interfaces": [
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/29",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/27",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/28",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/25",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/26",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/23",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/24",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/21",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/22",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/9",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/63",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/8",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/64",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/20",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/7",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/61",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/6",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/62",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/5",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/60",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/38",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/39",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/36",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/37",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/34",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/35",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/32",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/33",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/30",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/31",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/49",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/47",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/48",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/45",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/46",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/43",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/44",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/41",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/42",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/40",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/18",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/19",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/16",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/17",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/58",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/14",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/59",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/15",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/12",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/56",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/57",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/13",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/10",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/54",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/11",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/55",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/52",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/53",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/50",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/51",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/4",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduGuard": "default",
+            "mtu": "jumbo",
+            "netflow": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/3",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "managed",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "cdp": false,
+            "extraConfig": "  ip address 192.168.14.153/24",
+            "policyType": "mgmt"
+          }
+        }
+      },
+      "interfaceName": "mgmt0",
+      "interfaceType": "management",
+      "operData": {
+        "adminStatus": "up",
+        "ipAddress": "192.168.14.153/24",
+        "mtu": 1500,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1",
+        "vrfName": "management"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "access",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "bpduFilter": "default",
+            "bpduGuard": "default",
+            "cdp": true,
+            "description": "S4_H1 eth1",
+            "duplexMode": "auto",
+            "errorDetectionAcl": true,
+            "fec": "auto",
+            "linkType": "auto",
+            "monitor": false,
+            "mtu": "jumbo",
+            "negotiateAuto": true,
+            "netflow": false,
+            "orphanPort": false,
+            "pfc": false,
+            "policyType": "accessHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": "false",
+            "qos": false,
+            "speed": "auto",
+            "stormControl": false,
+            "stormControlAction": "default"
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/2",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "access",
+        "mtu": 9216,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "managed",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "description": "Routing loopback interface",
+            "ip": "10.21.0.1",
+            "linkStateRoutingTag": "UNDERLAY",
+            "ospfAreaId": "0.0.0.0",
+            "policyType": "underlayLoopback",
+            "replicationMode": "multicast"
+          }
+        }
+      },
+      "interfaceName": "loopback0",
+      "interfaceType": "loopback",
+      "operData": {
+        "adminStatus": "up",
+        "ipAddress": "10.21.0.1/32",
+        "mtu": 1500,
+        "neighbors": [
+          {
+            "fabricName": "SITE2",
+            "interfaceName": "Loopback0",
+            "switchName": "S4_SP1"
+          }
+        ],
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "8Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "managed",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "description": "VTEP loopback interface",
+            "ip": "10.22.0.1",
+            "linkStateRoutingTag": "UNDERLAY",
+            "ospfAreaId": "0.0.0.0",
+            "policyType": "underlayLoopback",
+            "replicationMode": "multicast"
+          }
+        }
+      },
+      "interfaceName": "loopback1",
+      "interfaceType": "loopback",
+      "operData": {
+        "adminStatus": "up",
+        "ipAddress": "10.22.0.1/32",
+        "mtu": 1500,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "8Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "routed",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "description": "connected-to-S4_SP1-Ethernet1/2",
+            "fec": "auto",
+            "ip": "10.24.0.6",
+            "mtu": 9216,
+            "policyType": "numbered",
+            "prefix": 30,
+            "speed": "auto",
+            "v6prefix": 126
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/1",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "ipAddress": "10.24.0.6/30",
+        "mode": "routed",
+        "mtu": 9216,
+        "neighbors": [
+          {
+            "fabricName": "SITE2",
+            "interfaceName": "Ethernet1/2",
+            "switchName": "S4_SP1"
+          }
+        ],
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "managed",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "policyType": "nve",
+            "sourceInterfaceName": "loopback1"
+          }
+        }
+      },
+      "interfaceName": "nve1",
+      "interfaceType": "nve",
+      "operData": {
+        "adminStatus": "up",
+        "mtu": 9216,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "auto",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "unknown",
+        "networkOS": {
+          "networkOSType": "nx-os"
+        }
+      },
+      "interfaceName": "Vlan1",
+      "interfaceType": "svi",
+      "operData": {
+        "adminStatus": "up",
+        "ipAddress": "192.168.14.153/24",
+        "mtu": 1500,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1",
+        "vrfName": "management"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "unknown",
+        "networkOS": {
+          "networkOSType": "nx-os"
+        }
+      },
+      "interfaceName": "Vlan2",
+      "interfaceType": "svi",
+      "operData": {
+        "adminStatus": "up",
+        "ipAddress": "192.168.14.153/24",
+        "mtu": 1500,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1",
+        "vrfName": "management"
+      },
+      "switchId": "9TNWE163CJY"
+    },
+    {
+      "configData": {
+        "mode": "unknown",
+        "networkOS": {
+          "networkOSType": "nx-os"
+        }
+      },
+      "interfaceName": "Vlan2001",
+      "interfaceType": "svi",
+      "operData": {
+        "adminStatus": "up",
+        "ipAddress": "192.168.14.153/24",
+        "mtu": 1500,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "S4_LE1",
+        "vlanRange": "-1",
+        "vrfName": "management"
+      },
+      "switchId": "9TNWE163CJY"
+    }
+  ],
+  "meta": {
+    "counts": {
+      "remaining": 0,
+      "total": 71
+    }
+  }
+}

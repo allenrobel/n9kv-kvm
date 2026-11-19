@@ -356,8 +356,23 @@ def _main_convert(args: argparse.Namespace, ask: Ask, out: Out) -> int:
     return golden_convert.run(args, topo, Provisioner(client, topo), ask, out)
 
 
+INTERRUPTED = 130  # the shell's own exit status for a process ended by SIGINT
+
+
 def main(argv: list[str] | None = None, ask: Ask = _ask_default, out: Out = print) -> int:
+    """Run one subcommand. Ctrl-C ends it with one line and exit 130 instead of a traceback: nothing is rolled back."""
     args = _parser().parse_args(argv)
+    try:
+        return _run(args, ask, out)
+    except KeyboardInterrupt:
+        if args.cmd in ("restore", "convert") and not getattr(args, "dry_run", False):
+            out(f"golden: interrupted. ND keeps what was already sent, and a request in flight may still complete; rerun golden.py {args.cmd} to continue.")
+        else:
+            out("golden: interrupted; no changes were sent to ND")
+        return INTERRUPTED
+
+
+def _run(args: argparse.Namespace, ask: Ask, out: Out) -> int:
     if args.cmd == "convert":
         return _main_convert(args, ask, out)
     where = args.nd_ip or "ND"

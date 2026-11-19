@@ -20,7 +20,8 @@ ND 4.2.1 (10.10.20.10), after `golden.py convert --replication-mode ingress`:
 - The run took about 15 minutes and ended with zero drift and no pending config. `MSD` holds `ISN`, `SITE1` and `SITE2`.
 - `show nve vni` lists VNI 30001 as `UnicastBGP`, state Up, on `S1_LE1`, `S2_LE1` and `S1_BG1`; the NVE peers are up and there are no PIM neighbours.
 - The host ping from `S1_H1` to `S2_H1` (192.0.1.172) works.
-- Not yet run on a controller: `convert` from ingress back to multicast, and resuming an interrupted `convert`. Both are covered by unit tests only.
+- `convert` was then validated in both directions and across interrupted runs on 2026-11-18 and 2026-11-19 (see
+  "Validation of both directions and of resume" below). ND 4.2.1 was left in ingress mode.
 
 ## What the interface tests should expect
 
@@ -143,6 +144,43 @@ The first `golden.py convert` run against ND 4.2.1 (2026-11-13) stopped in "remo
 
   followed by the network deploy, left the switch `attach: true`, `status: deployed`, `interfaces: []`: ND removed the port and kept the
   switch attached. A second detach with `"interfaces": []` then detached the switch (`attach: false`).
+
+## Validation of both directions and of resume
+
+Run against ND 4.2.1 on 2026-11-18 and 2026-11-19 (UTC). Every run below ended with zero drift and no pending config.
+
+- Ingress to multicast: exit 0 in about 16 minutes, first attempt.
+- Multicast to ingress, client lost during the rebuild: the laptop running `convert` slept during the last fabric deploy, giving exit 4 on a read
+  timeout. A rerun found both fabrics in ingress, deployed what was pending and ended exit 0.
+- Ingress to multicast, Ctrl-C after the first `removeMembers`: exit 130. The rerun printed "resuming a partly converted testbed", planned no
+  overlay removal and one group member to remove, and ended exit 0 in about 15 minutes.
+- Multicast to ingress, Ctrl-C after `PUT /fabrics/SITE1`: exit 130. `golden.py drift` then refused with exit 2
+  (`fabrics disagree on the replication mode (SITE1=ingress, SITE2=multicast); run golden.py convert`). The rerun planned only the mode change
+  and the rebuild and ended exit 0 in about 14 minutes.
+
+After the conversion to multicast, on `S1_LE1`, `S2_LE1` and `S1_BG1`: VNI 30001 is Up with multicast group `239.1.1.0`, the PIM neighbours are
+up, the RP is `10.13.0.1` in `SITE1` and `10.23.0.1` in `SITE2`, and the NVE peers are up. After the final conversion to ingress, VNI 30001 is
+`UnicastBGP` and Up on the same three switches, with no PIM neighbours. The host ping was not repeated in either state.
+
+Answers to the questions the design left open:
+
+- ND accepted the multicast settings `PUT` with only `replicationMode` and `anycastRendezvousPointIpRange` in the multicast delta. No further key
+  is needed.
+- ND allocated the same values when multicast returned. `fabric_SITE1.json` and `fabric_SITE2.json` of a fresh dump are identical to the reference
+  taken before the first conversion, and loopback 254, the RP addresses and the `rp-address ... group-list 239.1.1.0/25` lines match.
+- The vPC pairs (domain ids 1 and 2) and the ToR pairing came back unchanged in both directions.
+- Whether leaving the fabric group is required was not tested; `convert` always does it.
+
+Other observations:
+
+- `golden/nd421/multicast/` was re-taken from the first run. The earlier dump predated the border-gateway `trunkHost` default and recorded the
+  `WAN1`-`S1_BG1` link as `multisiteUnderlay`, where the golden topology and the live controller have `ebgpVrfLite`. The unit tests were written
+  against the earlier dumps, which now live in `config/nd/provision/tests/fixtures/snapshots/`. `golden/nd431/multicast/` is still the earlier
+  dump, because ND 4.3.1 has not been back in multicast mode.
+- During these runs Ctrl-C ended `convert` with a Python traceback and exit 130. It now prints one line and exits 130. Nothing is rolled back
+  and a rerun continues.
+- A long deploy is one HTTP request held open for minutes. If the client machine sleeps, the request dies while ND carries on; rerun `convert`
+  (or `golden.py restore`) from a machine that stays awake.
 
 ## Tooling notes for this repo
 

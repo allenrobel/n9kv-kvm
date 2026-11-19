@@ -1,0 +1,90 @@
+{
+  "meta": {
+    "counts": {
+      "remaining": 0,
+      "total": 2
+    }
+  },
+  "switches": [
+    {
+      "additionalData": {
+        "configSyncStatus": "inSync",
+        "discoveredSystemMode": "normal",
+        "discoveryStatus": "ok",
+        "discoveryStatusDetail": "Ok",
+        "domainName": "",
+        "hypershieldConnectivityStatus": "notApplicable",
+        "hypershieldTenant": "",
+        "intendedSystemMode": "normal",
+        "meta": {
+          "switchDbId": 40230,
+          "switchUuid": "DCNM-UUID-40260"
+        },
+        "platformType": "ios-xe",
+        "remoteCredentialStore": "local",
+        "scalableUnit": "",
+        "smartSwitch": false,
+        "sourceInterfaceName": "Gi0/0",
+        "sourceVrfName": "Mgmt-vrf",
+        "systemMode": "normal",
+        "usage": "others",
+        "username": "admin",
+        "vendor": "Cisco Systems Inc."
+      },
+      "advisoryLevel": "notApplicable",
+      "alertSuspend": "disabled",
+      "anomalyLevel": "healthy",
+      "fabricManagementIp": "192.168.14.181",
+      "fabricName": "CAMPUS1",
+      "fabricType": "vxlanCampus",
+      "hostname": "C3_LE1",
+      "model": "C9KV-UADP-8P",
+      "serialNumber": "CAT9KV3701",
+      "softwareVersion": "17.15.3",
+      "switchId": "CAT9KV3701",
+      "switchRole": "leaf",
+      "systemUpTime": "02:27:09",
+      "vpcConfigured": false
+    },
+    {
+      "additionalData": {
+        "configSyncStatus": "inSync",
+        "discoveredSystemMode": "normal",
+        "discoveryStatus": "ok",
+        "discoveryStatusDetail": "Ok",
+        "domainName": "",
+        "hypershieldConnectivityStatus": "notApplicable",
+        "hypershieldTenant": "",
+        "intendedSystemMode": "normal",
+        "meta": {
+          "switchDbId": 40720,
+          "switchUuid": "DCNM-UUID-40680"
+        },
+        "platformType": "ios-xe",
+        "remoteCredentialStore": "local",
+        "scalableUnit": "",
+        "smartSwitch": false,
+        "sourceInterfaceName": "Gi0/0",
+        "sourceVrfName": "Mgmt-vrf",
+        "systemMode": "normal",
+        "usage": "others",
+        "username": "admin",
+        "vendor": "Cisco Systems Inc."
+      },
+      "advisoryLevel": "notApplicable",
+      "alertSuspend": "disabled",
+      "anomalyLevel": "healthy",
+      "fabricManagementIp": "192.168.14.182",
+      "fabricName": "CAMPUS1",
+      "fabricType": "vxlanCampus",
+      "hostname": "C3_SP1",
+      "model": "C9KV-UADP-8P",
+      "serialNumber": "CAT9KV3702",
+      "softwareVersion": "17.15.3",
+      "switchId": "CAT9KV3702",
+      "switchRole": "spine",
+      "systemUpTime": "02:27:09",
+      "vpcConfigured": false
+    }
+  ]
+}

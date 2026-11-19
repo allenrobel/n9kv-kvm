@@ -43,7 +43,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "91NL39Q6LYP",
       "switchRole": "borderGateway",
-      "systemUpTime": "02:24:09",
+      "systemUpTime": "20 days, 00:46:17",
       "vpcConfigured": false
     },
     {
@@ -83,7 +83,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "9TNWE163CJY",
       "switchRole": "leaf",
-      "systemUpTime": "02:24:09",
+      "systemUpTime": "20 days, 00:46:17",
       "vpcConfigured": false
     },
     {
@@ -123,7 +123,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "9PWZAIF2BFX",
       "switchRole": "spine",
-      "systemUpTime": "02:24:42",
+      "systemUpTime": "20 days, 00:46:50",
       "vpcConfigured": false
     }
   ]

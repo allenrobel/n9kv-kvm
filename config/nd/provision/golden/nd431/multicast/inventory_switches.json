@@ -43,7 +43,7 @@
       "softwareVersion": "17.15.3",
       "switchId": "CAT9KV3701",
       "switchRole": "leaf",
-      "systemUpTime": "02:27:08",
+      "systemUpTime": "20 days, 01:57:07",
       "vpcConfigured": false
     },
     {
@@ -83,7 +83,7 @@
       "softwareVersion": "17.15.3",
       "switchId": "CAT9KV3702",
       "switchRole": "spine",
-      "systemUpTime": "02:27:08",
+      "systemUpTime": "20 days, 01:57:07",
       "vpcConfigured": false
     },
     {
@@ -123,7 +123,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "99JQH3UGNC0",
       "switchRole": "borderGateway",
-      "systemUpTime": "02:23:58",
+      "systemUpTime": "20 days, 00:46:07",
       "vpcConfigured": false
     },
     {
@@ -163,7 +163,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "92L279NT6MM",
       "switchRole": "leaf",
-      "systemUpTime": "02:24:04",
+      "systemUpTime": "20 days, 00:46:14",
       "vpcConfigured": true,
       "vpcData": {
         "consistentStatus": true,
@@ -213,7 +213,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "9AGC12AFO2L",
       "switchRole": "leaf",
-      "systemUpTime": "02:24:26",
+      "systemUpTime": "20 days, 00:46:36",
       "vpcConfigured": true,
       "vpcData": {
         "consistentStatus": true,
@@ -263,7 +263,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "9E54N8V7ZA9",
       "switchRole": "leaf",
-      "systemUpTime": "02:24:05",
+      "systemUpTime": "20 days, 00:46:15",
       "vpcConfigured": true,
       "vpcData": {
         "consistentStatus": true,
@@ -313,7 +313,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "9DW2FBC2ZXD",
       "switchRole": "leaf",
-      "systemUpTime": "02:24:23",
+      "systemUpTime": "20 days, 00:46:33",
       "vpcConfigured": true,
       "vpcData": {
         "consistentStatus": true,
@@ -363,7 +363,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "9NURP0122GV",
       "switchRole": "spine",
-      "systemUpTime": "02:24:05",
+      "systemUpTime": "20 days, 00:46:16",
       "vpcConfigured": false
     },
     {
@@ -403,7 +403,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "9CI1GK5JJ65",
       "switchRole": "tor",
-      "systemUpTime": "02:24:26",
+      "systemUpTime": "20 days, 00:46:36",
       "vpcConfigured": false
     },
     {
@@ -443,7 +443,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "91NL39Q6LYP",
       "switchRole": "borderGateway",
-      "systemUpTime": "02:23:45",
+      "systemUpTime": "20 days, 00:45:55",
       "vpcConfigured": false
     },
     {
@@ -483,7 +483,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "9TNWE163CJY",
       "switchRole": "leaf",
-      "systemUpTime": "02:23:44",
+      "systemUpTime": "20 days, 00:45:54",
       "vpcConfigured": false
     },
     {
@@ -523,7 +523,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "9PWZAIF2BFX",
       "switchRole": "spine",
-      "systemUpTime": "02:24:17",
+      "systemUpTime": "20 days, 00:46:27",
       "vpcConfigured": false
     },
     {
@@ -563,7 +563,7 @@
       "softwareVersion": "17.15.5",
       "switchId": "9OX4DZTCYJM",
       "switchRole": "coreRouter",
-      "systemUpTime": "02:30:08",
+      "systemUpTime": "20 days, 02:00:07",
       "vpcConfigured": false
     }
   ]

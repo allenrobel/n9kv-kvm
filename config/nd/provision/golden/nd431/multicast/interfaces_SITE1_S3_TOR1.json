@@ -7,48 +7,16 @@
           "networkOSType": "nx-os",
           "policy": {
             "adminState": true,
-            "fec": "auto",
-            "policyType": "l3PoMember",
-            "portChannelId": "Port-channel10",
-            "portChannelMode": "active"
-          }
-        }
-      },
-      "interfaceName": "Ethernet1/62",
-      "interfaceType": "ethernet",
-      "operData": {
-        "adminStatus": "up",
-        "mode": "routed",
-        "mtu": 9216,
-        "operationalDescription": "Link not connected",
-        "operationalStatus": "down",
-        "portChannelId": 10,
-        "speed": "10Gb",
-        "switchName": "S3_TOR1",
-        "vlanRange": "-1"
-      },
-      "switchId": "9CI1GK5JJ65"
-    },
-    {
-      "configData": {
-        "mode": "routed",
-        "networkOS": {
-          "networkOSType": "nx-os",
-          "policy": {
-            "adminState": true,
             "copyDescription": false,
-            "description": "subinterface test parent",
+            "description": "Routed subinterface parent for integration tests",
             "ipRedirects": false,
             "mtu": 9216,
             "netflow": false,
             "pfc": false,
             "pimSparse": false,
             "policyType": "l3Po",
-            "portChannelId": "Port-channel10",
+            "portChannelId": "port-channel10",
             "portChannelMode": "active",
-            "ports": [
-              "Ethernet1/62"
-            ],
             "qos": false,
             "speed": "auto"
           }
@@ -76,7 +44,6 @@
           "networkOSType": "nx-os",
           "policy": {
             "adminState": true,
-            "description": "subinterface test parent",
             "fec": "auto",
             "ipRedirects": false,
             "mtu": 9216,
@@ -2031,6 +1998,54 @@
         }
       },
       "interfaceName": "Ethernet1/4",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S3_TOR1",
+        "vlanRange": "-1"
+      },
+      "switchId": "9CI1GK5JJ65"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduFilter": "default",
+            "bpduGuard": "default",
+            "cdp": true,
+            "debounceTimer": 100,
+            "duplexMode": "auto",
+            "errorDetectionAcl": true,
+            "fec": "auto",
+            "linkType": "auto",
+            "monitor": false,
+            "mtu": "jumbo",
+            "negotiateAuto": true,
+            "netflow": false,
+            "orphanPort": false,
+            "pfc": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": "false",
+            "qos": false,
+            "speed": "auto",
+            "stormControl": false,
+            "stormControlAction": "default",
+            "vlanMapping": false
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/62",
       "interfaceType": "ethernet",
       "operData": {
         "adminStatus": "up",

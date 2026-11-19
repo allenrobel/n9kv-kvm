@@ -315,38 +315,6 @@
           }
         }
       },
-      "interfaceName": "Ethernet1/21",
-      "interfaceType": "ethernet",
-      "operData": {
-        "adminStatus": "up",
-        "mode": "trunk",
-        "mtu": 9216,
-        "operationalDescription": "Link not connected",
-        "operationalStatus": "down",
-        "portChannelId": -1,
-        "speed": "10Gb",
-        "switchName": "S3_LE3",
-        "vlanRange": "-1"
-      },
-      "switchId": "9E54N8V7ZA9"
-    },
-    {
-      "configData": {
-        "mode": "trunk",
-        "networkOS": {
-          "networkOSType": "nx-os",
-          "policy": {
-            "adminState": true,
-            "allowedVlans": "none",
-            "bpduGuard": "default",
-            "mtu": "jumbo",
-            "netflow": false,
-            "policyType": "trunkHost",
-            "portTypeEdgeTrunk": true,
-            "speed": "auto"
-          }
-        }
-      },
       "interfaceName": "Ethernet1/22",
       "interfaceType": "ethernet",
       "operData": {
@@ -1723,38 +1691,6 @@
           }
         }
       },
-      "interfaceName": "Ethernet1/11",
-      "interfaceType": "ethernet",
-      "operData": {
-        "adminStatus": "up",
-        "mode": "trunk",
-        "mtu": 9216,
-        "operationalDescription": "Link not connected",
-        "operationalStatus": "down",
-        "portChannelId": -1,
-        "speed": "10Gb",
-        "switchName": "S3_LE3",
-        "vlanRange": "-1"
-      },
-      "switchId": "9E54N8V7ZA9"
-    },
-    {
-      "configData": {
-        "mode": "trunk",
-        "networkOS": {
-          "networkOSType": "nx-os",
-          "policy": {
-            "adminState": true,
-            "allowedVlans": "none",
-            "bpduGuard": "default",
-            "mtu": "jumbo",
-            "netflow": false,
-            "policyType": "trunkHost",
-            "portTypeEdgeTrunk": true,
-            "speed": "auto"
-          }
-        }
-      },
       "interfaceName": "Ethernet1/55",
       "interfaceType": "ethernet",
       "operData": {
@@ -1995,7 +1931,7 @@
           }
         }
       },
-      "interfaceName": "Ethernet1/20",
+      "interfaceName": "Ethernet1/10",
       "interfaceType": "ethernet",
       "operData": {
         "adminStatus": "up",
@@ -2091,7 +2027,103 @@
           }
         }
       },
-      "interfaceName": "Ethernet1/10",
+      "interfaceName": "Ethernet1/11",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S3_LE3",
+        "vlanRange": "-1"
+      },
+      "switchId": "9E54N8V7ZA9"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduFilter": "default",
+            "bpduGuard": "default",
+            "cdp": true,
+            "debounceTimer": 100,
+            "duplexMode": "auto",
+            "errorDetectionAcl": true,
+            "fec": "auto",
+            "linkType": "auto",
+            "monitor": false,
+            "mtu": "jumbo",
+            "negotiateAuto": true,
+            "netflow": false,
+            "orphanPort": false,
+            "pfc": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": "false",
+            "qos": false,
+            "speed": "auto",
+            "stormControl": false,
+            "stormControlAction": "default",
+            "vlanMapping": false
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/20",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "trunk",
+        "mtu": 9216,
+        "operationalDescription": "Link not connected",
+        "operationalStatus": "down",
+        "portChannelId": -1,
+        "speed": "10Gb",
+        "switchName": "S3_LE3",
+        "vlanRange": "-1"
+      },
+      "switchId": "9E54N8V7ZA9"
+    },
+    {
+      "configData": {
+        "mode": "trunk",
+        "networkOS": {
+          "networkOSType": "nx-os",
+          "policy": {
+            "adminState": true,
+            "allowedVlans": "none",
+            "bpduFilter": "default",
+            "bpduGuard": "default",
+            "cdp": true,
+            "debounceTimer": 100,
+            "duplexMode": "auto",
+            "errorDetectionAcl": true,
+            "fec": "auto",
+            "linkType": "auto",
+            "monitor": false,
+            "mtu": "jumbo",
+            "negotiateAuto": true,
+            "netflow": false,
+            "orphanPort": false,
+            "pfc": false,
+            "policyType": "trunkHost",
+            "portTypeEdgeTrunk": true,
+            "ptp": "false",
+            "qos": false,
+            "speed": "auto",
+            "stormControl": false,
+            "stormControlAction": "default",
+            "vlanMapping": false
+          }
+        }
+      },
+      "interfaceName": "Ethernet1/21",
       "interfaceType": "ethernet",
       "operData": {
         "adminStatus": "up",

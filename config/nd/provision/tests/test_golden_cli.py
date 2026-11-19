@@ -15,7 +15,7 @@ from topology import load
 
 HERE = Path(__file__).resolve().parents[1]
 TOPO_PATH = HERE / "topology_nd421.yaml"
-SNAP = HERE / "golden" / "nd421" / "multicast"
+SNAP = HERE / "tests" / "fixtures" / "snapshots" / "nd421"
 
 
 def op(action: str, fabric: str = "SITE1", method: str = "PUT", path: str = "/x") -> Op:
@@ -557,3 +557,22 @@ def test_snapshot_missing_the_fabric_dump_exits_3(tmp_path):
     lines: list[str] = []
     assert golden.main(["drift", "--topology", str(TOPO_PATH), "--snapshot", str(tmp_path)], out=lines.append) == 3
     assert "fabric_SITE1.json" in lines[0]
+
+
+@pytest.mark.parametrize(
+    "argv, expected",
+    [
+        (["drift", "--topology", str(TOPO_PATH), "--snapshot", str(SNAP)], "golden: interrupted; no changes were sent to ND"),
+        (["restore", "--topology", str(TOPO_PATH), "--nd-ip", "9.9.9.9"], "rerun golden.py restore to continue"),
+        (["convert", "--topology", str(TOPO_PATH), "--nd-ip", "9.9.9.9", "--replication-mode", "ingress"], "rerun golden.py convert to continue"),
+        (["convert", "--topology", str(TOPO_PATH), "--replication-mode", "ingress", "--dry-run"], "golden: interrupted; no changes were sent to ND"),
+    ],
+)
+def test_ctrl_c_ends_with_one_line_and_exit_130(monkeypatch, argv, expected):
+    def interrupt(*args, **kwargs):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(golden, "_run", interrupt)
+    lines: list[str] = []
+    assert golden.main(argv, out=lines.append) == 130
+    assert len(lines) == 1 and expected in lines[0]

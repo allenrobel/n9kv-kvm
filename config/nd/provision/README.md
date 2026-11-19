@@ -15,7 +15,8 @@ used to live only in the `provision-isn` skill and `docs/nd4_fabrics_bringup.md`
 - `replication.py` - replication-mode knowledge shared by `provision.py` and the golden tools (multicast-only keys, per-mode policy names, mode state)
 - `golden/nd421/<mode>/`, `golden/nd431/<mode>/` - reference snapshots (`snapshot.py dump`, credential hashes scrubbed), one directory per replication
   mode; the tool does not read them. Both `multicast/` and `ingress/` exist for each testbed.
-- `nd_client.py`, `topology.py` - library code; `tests/` - pytest for the pure parts; `tests/fixtures/` - the two base topology files the golden tests use
+- `nd_client.py`, `topology.py` - library code; `tests/` - pytest for the pure parts; `tests/fixtures/` - the two base topology files the golden tests
+  use, and `tests/fixtures/snapshots/` - the older dumps frozen with them (the tests do not read `golden/`)
 
 ## Usage (on the lab host, prod env sourced)
 
@@ -69,6 +70,8 @@ uv run config/nd/provision/golden.py convert --topology config/nd/provision/topo
 - Exit codes: 0 ok / no drift, 1 drift or pending config (`drift`) or conflicts (`adopt`), 2 refused or cancelled, 3 live read failed (HTTP error or
   unreachable controller), 4 apply failed (a failed op, a dropped connection, or a failed Recalculate & Deploy); `restore` exits 0 even with leftovers, so
   read its remaining-drift line.
+- Ctrl-C ends any subcommand with one line and exit 130. Nothing is rolled back; a request already sent may still complete on ND. Rerun `restore` or
+  `convert` to continue.
 - Extras are objects that exist live but not in golden. `--extras adopt` writes them into the yaml, `delete` removes them from ND, `skip` leaves them;
   without the flag `restore` asks per object. With `--yes` and extras present but no `--extras`, `restore` exits 2 and asks for `--extras adopt|delete|skip`.
   `restore` also Recalculate & Deploys any golden fabric (CAMPUS1 and ISN included) whose switches still carry pending config (left by a test run or
@@ -185,8 +188,8 @@ objects it will act on (each VRF and network, each group member, each link with 
 calls of the first step that has work (for the mode change, the PUT bodies built from today's fabric values), and sends nothing.
 
 Status: ND 4.2.1 was converted from multicast to ingress with `convert` on 2026-11-13 (zero drift afterwards, host ping verified). ND 4.3.1 was
-converted to ingress by hand following the procedure in `docs/nd_replication_mode_change.md`. `convert` from ingress to multicast and the resume of
-an interrupted run have not been run against a controller yet; they are covered by the unit tests only.
+converted to ingress by hand following the procedure in `docs/nd_replication_mode_change.md`. `convert` from ingress to multicast, and the resume of a run
+interrupted after `removeMembers` and after the first settings `PUT`, were validated on ND 4.2.1 on 2026-11-19; the results are in the same document.
 
 ## Gotchas carried over from ND 4.2.1
 

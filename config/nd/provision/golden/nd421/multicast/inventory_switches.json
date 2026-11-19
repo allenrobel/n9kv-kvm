@@ -42,7 +42,7 @@
       "softwareVersion": "17.15.3",
       "switchId": "CAT9KV1701",
       "switchRole": "leaf",
-      "systemUpTime": "02:26:59",
+      "systemUpTime": "19 days, 07:00:10",
       "vpcConfigured": false
     },
     {
@@ -81,7 +81,7 @@
       "softwareVersion": "17.15.3",
       "switchId": "CAT9KV1702",
       "switchRole": "spine",
-      "systemUpTime": "02:25:59",
+      "systemUpTime": "19 days, 07:00:10",
       "vpcConfigured": false
     },
     {
@@ -110,7 +110,7 @@
       },
       "advisoryLevel": "none",
       "alertSuspend": "disabled",
-      "anomalyLevel": "healthy",
+      "anomalyLevel": "minor",
       "fabricManagementIp": "192.168.12.131",
       "fabricName": "SITE1",
       "fabricType": "vxlanIbgp",
@@ -120,7 +120,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "92IAYR41NF3",
       "switchRole": "borderGateway",
-      "systemUpTime": "02:25:04",
+      "systemUpTime": "19 days, 05:53:05",
       "vpcConfigured": false
     },
     {
@@ -149,7 +149,7 @@
       },
       "advisoryLevel": "none",
       "alertSuspend": "disabled",
-      "anomalyLevel": "healthy",
+      "anomalyLevel": "minor",
       "fabricManagementIp": "192.168.12.151",
       "fabricName": "SITE1",
       "fabricType": "vxlanIbgp",
@@ -159,7 +159,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "9UDEG98YLEY",
       "switchRole": "leaf",
-      "systemUpTime": "02:25:49",
+      "systemUpTime": "19 days, 05:53:46",
       "vpcConfigured": true,
       "vpcData": {
         "consistentStatus": true,
@@ -198,7 +198,7 @@
       },
       "advisoryLevel": "none",
       "alertSuspend": "disabled",
-      "anomalyLevel": "healthy",
+      "anomalyLevel": "minor",
       "fabricManagementIp": "192.168.12.152",
       "fabricName": "SITE1",
       "fabricType": "vxlanIbgp",
@@ -208,7 +208,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "9C68L63CT9E",
       "switchRole": "leaf",
-      "systemUpTime": "02:25:11",
+      "systemUpTime": "19 days, 05:53:07",
       "vpcConfigured": true,
       "vpcData": {
         "consistentStatus": true,
@@ -247,7 +247,7 @@
       },
       "advisoryLevel": "none",
       "alertSuspend": "disabled",
-      "anomalyLevel": "healthy",
+      "anomalyLevel": "minor",
       "fabricManagementIp": "192.168.12.154",
       "fabricName": "SITE1",
       "fabricType": "vxlanIbgp",
@@ -257,7 +257,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "92615XPSM8T",
       "switchRole": "leaf",
-      "systemUpTime": "02:24:28",
+      "systemUpTime": "19 days, 05:52:29",
       "vpcConfigured": true,
       "vpcData": {
         "consistentStatus": true,
@@ -296,7 +296,7 @@
       },
       "advisoryLevel": "none",
       "alertSuspend": "disabled",
-      "anomalyLevel": "healthy",
+      "anomalyLevel": "minor",
       "fabricManagementIp": "192.168.12.155",
       "fabricName": "SITE1",
       "fabricType": "vxlanIbgp",
@@ -306,7 +306,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "967H2HM3169",
       "switchRole": "leaf",
-      "systemUpTime": "02:24:54",
+      "systemUpTime": "19 days, 05:52:55",
       "vpcConfigured": true,
       "vpcData": {
         "consistentStatus": true,
@@ -355,7 +355,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "9N3T3ATJWN8",
       "switchRole": "spine",
-      "systemUpTime": "02:23:38",
+      "systemUpTime": "19 days, 05:51:38",
       "vpcConfigured": false
     },
     {
@@ -394,7 +394,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "9WO9329PPCP",
       "switchRole": "tor",
-      "systemUpTime": "02:23:42",
+      "systemUpTime": "19 days, 05:51:41",
       "vpcConfigured": false
     },
     {
@@ -433,7 +433,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "9FHI8FTNWEW",
       "switchRole": "borderGateway",
-      "systemUpTime": "02:23:49",
+      "systemUpTime": "19 days, 05:51:46",
       "vpcConfigured": false
     },
     {
@@ -472,7 +472,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "9MFE5PGFUJC",
       "switchRole": "leaf",
-      "systemUpTime": "01:56:25",
+      "systemUpTime": "19 days, 05:24:23",
       "vpcConfigured": false
     },
     {
@@ -511,7 +511,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "9X7M368D5G2",
       "switchRole": "spine",
-      "systemUpTime": "02:23:18",
+      "systemUpTime": "19 days, 05:51:19",
       "vpcConfigured": false
     },
     {
@@ -550,7 +550,7 @@
       "softwareVersion": "17.15.5",
       "switchId": "9S3F1H79UZU",
       "switchRole": "coreRouter",
-      "systemUpTime": "02:30:00",
+      "systemUpTime": "19 days, 07:03:10",
       "vpcConfigured": false
     }
   ]

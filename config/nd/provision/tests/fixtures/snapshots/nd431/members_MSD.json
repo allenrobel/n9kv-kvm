@@ -1,0 +1,21 @@
+{
+  "fabrics": [
+    {
+      "aiMonitoring": false,
+      "name": "ISN",
+      "type": "externalConnectivity"
+    },
+    {
+      "name": "SITE1",
+      "type": "vxlanIbgp"
+    },
+    {
+      "name": "SITE2",
+      "type": "vxlanIbgp"
+    }
+  ],
+  "meta": {
+    "remaining": 0,
+    "total": 3
+  }
+}

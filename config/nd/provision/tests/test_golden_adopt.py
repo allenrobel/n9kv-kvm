@@ -14,7 +14,7 @@ from golden_live import free_ports, read_live_from_snapshot
 from topology import load
 
 HERE = Path(__file__).resolve().parents[1]
-GOLDEN = HERE / "golden"
+SNAPSHOTS = HERE / "tests" / "fixtures" / "snapshots"  # dumps frozen with the *_base.yaml topologies; golden/ holds the current reference dumps
 BASE = Path(__file__).resolve().parent / "fixtures"  # pre-bootstrap copies of the shipped files (empty golden sections)
 
 LINK = {"src": "S1_SP1", "src_if": "Ethernet1/9", "dst": "S1_LE1", "dst_if": "Ethernet1/9", "policy": "numbered", "src_ip": "10.14.1.1", "dst_ip": "10.14.1.2"}
@@ -94,7 +94,7 @@ def test_write_adoptions_rejects_unknown_section(tmp_path):
 
 def test_bootstrap_adoptions_capture_generated_links_and_defaults():
     topo = load(BASE / "topology_nd421_base.yaml")
-    live = read_live_from_snapshot(GOLDEN / "nd421" / "multicast", topo)
+    live = read_live_from_snapshot(SNAPSHOTS / "nd421", topo)
     adoptions = bootstrap_adoptions(topo, live, compute(topo, live))
     generated = [a.entry | {"fabric": a.section[1]} for a in adoptions if a.section[-1] == "generated_links"]
     # The snapshot holds three ND-generated links the shipped yaml does not list: the BG underlay and overlay pair, and the campus link.
@@ -131,7 +131,7 @@ def test_round_trip_of_shipped_files_is_byte_identical_without_adoptions(tmp_pat
 
 def test_defaults_use_the_majority_signature_not_the_first_port():
     topo = load(BASE / "topology_nd421_base.yaml")
-    live = read_live_from_snapshot(GOLDEN / "nd421" / "multicast", topo)
+    live = read_live_from_snapshot(SNAPSHOTS / "nd421", topo)
     defaults = {a.section[1]: a.entry for a in bootstrap_adoptions(topo, live, []) if a.section[-1] == "defaults"}
     assert defaults["SITE1"]["tor"]["policyType"] == "trunkHost"
     assert "description" not in defaults["SITE1"]["tor"]
@@ -154,7 +154,7 @@ def test_defaults_use_the_majority_signature_not_the_first_port():
 
 def test_defaults_policy_type_comes_from_the_table_not_the_vote():
     topo = load(BASE / "topology_nd431_base.yaml")
-    live = read_live_from_snapshot(GOLDEN / "nd431" / "multicast", topo)
+    live = read_live_from_snapshot(SNAPSHOTS / "nd431", topo)
     spine = next(s.hostname for s in topo.fabrics[0].switches if s.role == "spine")
     all_links = [link for fab in live.values() for link in fab.links]
     ports = free_ports(live["SITE1"], spine, all_links)
@@ -171,7 +171,7 @@ def test_defaults_policy_type_comes_from_the_table_not_the_vote():
 
 def test_bootstrap_adopts_interface_residue_in_the_same_run():
     topo = load(BASE / "topology_nd421_base.yaml")
-    live = read_live_from_snapshot(GOLDEN / "nd421" / "multicast", topo)
+    live = read_live_from_snapshot(SNAPSHOTS / "nd421", topo)
     interfaces = [a.entry for a in bootstrap_adoptions(topo, live, compute(topo, live)) if a.section[-1] == "interfaces"]
     access = {(e["switch"], e["interface"]) for e in interfaces if e["policy"] == "accessHost"}
     assert {("S1_TOR1", "Ethernet1/3"), ("S2_LE1", "Ethernet1/2")} <= access
@@ -207,7 +207,7 @@ def test_links_are_written_spine_first_and_sorted(tmp_path):
 
 def test_default_inputs_fall_back_to_a_sibling_fabric():
     topo = load(BASE / "topology_nd431_base.yaml")
-    live = read_live_from_snapshot(GOLDEN / "nd431" / "multicast", topo)
+    live = read_live_from_snapshot(SNAPSHOTS / "nd431", topo)
     defaults = {a.section[1]: a.entry for a in bootstrap_adoptions(topo, live, []) if a.section[-1] == "defaults"}
     expected = {"policyType": "routedHost", "adminState": "true", "mtu": "9216"}
     assert defaults["SITE1"]["spine"] == expected == defaults["SITE2"]["spine"]

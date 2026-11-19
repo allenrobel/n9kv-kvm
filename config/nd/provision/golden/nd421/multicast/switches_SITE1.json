@@ -32,7 +32,7 @@
       },
       "advisoryLevel": "none",
       "alertSuspend": "disabled",
-      "anomalyLevel": "healthy",
+      "anomalyLevel": "minor",
       "fabricManagementIp": "192.168.12.131",
       "fabricName": "SITE1",
       "fabricType": "vxlanIbgp",
@@ -42,7 +42,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "92IAYR41NF3",
       "switchRole": "borderGateway",
-      "systemUpTime": "02:25:11",
+      "systemUpTime": "19 days, 05:53:10",
       "vpcConfigured": false
     },
     {
@@ -71,7 +71,7 @@
       },
       "advisoryLevel": "none",
       "alertSuspend": "disabled",
-      "anomalyLevel": "healthy",
+      "anomalyLevel": "minor",
       "fabricManagementIp": "192.168.12.151",
       "fabricName": "SITE1",
       "fabricType": "vxlanIbgp",
@@ -81,7 +81,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "9UDEG98YLEY",
       "switchRole": "leaf",
-      "systemUpTime": "02:25:56",
+      "systemUpTime": "19 days, 05:53:50",
       "vpcConfigured": true,
       "vpcData": {
         "consistentStatus": true,
@@ -120,7 +120,7 @@
       },
       "advisoryLevel": "none",
       "alertSuspend": "disabled",
-      "anomalyLevel": "healthy",
+      "anomalyLevel": "minor",
       "fabricManagementIp": "192.168.12.152",
       "fabricName": "SITE1",
       "fabricType": "vxlanIbgp",
@@ -130,7 +130,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "9C68L63CT9E",
       "switchRole": "leaf",
-      "systemUpTime": "02:25:17",
+      "systemUpTime": "19 days, 05:53:11",
       "vpcConfigured": true,
       "vpcData": {
         "consistentStatus": true,
@@ -169,7 +169,7 @@
       },
       "advisoryLevel": "none",
       "alertSuspend": "disabled",
-      "anomalyLevel": "healthy",
+      "anomalyLevel": "minor",
       "fabricManagementIp": "192.168.12.154",
       "fabricName": "SITE1",
       "fabricType": "vxlanIbgp",
@@ -179,7 +179,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "92615XPSM8T",
       "switchRole": "leaf",
-      "systemUpTime": "02:24:35",
+      "systemUpTime": "19 days, 05:52:33",
       "vpcConfigured": true,
       "vpcData": {
         "consistentStatus": true,
@@ -218,7 +218,7 @@
       },
       "advisoryLevel": "none",
       "alertSuspend": "disabled",
-      "anomalyLevel": "healthy",
+      "anomalyLevel": "minor",
       "fabricManagementIp": "192.168.12.155",
       "fabricName": "SITE1",
       "fabricType": "vxlanIbgp",
@@ -228,7 +228,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "967H2HM3169",
       "switchRole": "leaf",
-      "systemUpTime": "02:25:01",
+      "systemUpTime": "19 days, 05:52:59",
       "vpcConfigured": true,
       "vpcData": {
         "consistentStatus": true,
@@ -277,7 +277,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "9N3T3ATJWN8",
       "switchRole": "spine",
-      "systemUpTime": "02:23:44",
+      "systemUpTime": "19 days, 05:51:42",
       "vpcConfigured": false
     },
     {
@@ -316,7 +316,7 @@
       "softwareVersion": "10.6(2)",
       "switchId": "9WO9329PPCP",
       "switchRole": "tor",
-      "systemUpTime": "02:23:48",
+      "systemUpTime": "19 days, 05:51:45",
       "vpcConfigured": false
     }
   ]

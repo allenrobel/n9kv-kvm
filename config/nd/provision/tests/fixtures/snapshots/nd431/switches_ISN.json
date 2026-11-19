@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "counts": {
+      "remaining": 0,
+      "total": 1
+    }
+  },
+  "switches": [
+    {
+      "additionalData": {
+        "configSyncStatus": "inSync",
+        "discoveredSystemMode": "normal",
+        "discoveryStatus": "ok",
+        "discoveryStatusDetail": "Ok",
+        "domainName": "",
+        "hypershieldConnectivityStatus": "notApplicable",
+        "hypershieldTenant": "",
+        "intendedSystemMode": "normal",
+        "meta": {
+          "switchDbId": 15620,
+          "switchUuid": "DCNM-UUID-7090"
+        },
+        "platformType": "ios-xe",
+        "remoteCredentialStore": "local",
+        "scalableUnit": "",
+        "smartSwitch": false,
+        "sourceInterfaceName": "Gi1",
+        "sourceVrfName": "MGMT",
+        "systemMode": "normal",
+        "usage": "others",
+        "username": "admin",
+        "vendor": "Cisco Systems Inc."
+      },
+      "advisoryLevel": "none",
+      "alertSuspend": "disabled",
+      "anomalyLevel": "healthy",
+      "fabricManagementIp": "192.168.14.112",
+      "fabricName": "ISN",
+      "fabricType": "externalConnectivity",
+      "hostname": "WAN2",
+      "model": "C8000V",
+      "serialNumber": "9OX4DZTCYJM",
+      "softwareVersion": "17.15.5",
+      "switchId": "9OX4DZTCYJM",
+      "switchRole": "coreRouter",
+      "systemUpTime": "02:30:14",
+      "vpcConfigured": false
+    }
+  ]
+}

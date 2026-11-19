@@ -1,0 +1,41 @@
+{
+  "meta": {
+    "counts": {
+      "remaining": 0,
+      "total": 1
+    },
+    "links": {}
+  },
+  "networks": [
+    {
+      "displayName": "LAB_NET1",
+      "fabricName": "SITE1",
+      "l2Data": {
+        "disableRtAuto": false,
+        "fabricData": {
+          "enableIr": false,
+          "multicastGroup": "239.1.1.0"
+        },
+        "xConnect": false
+      },
+      "l3Data": {
+        "arpSuppression": false,
+        "fabricData": {
+          "gatewayOnBorder": false,
+          "ipv4Trm": false,
+          "ipv6Trm": false,
+          "netflow": false
+        },
+        "gatewayIpv4Address": "192.0.1.1/24"
+      },
+      "networkId": 30001,
+      "networkMode": "layer3",
+      "networkName": "LAB_NET1",
+      "networkStatus": "deployed",
+      "networkType": "vxlanIbgp",
+      "vlanId": 2,
+      "vlanNetworkType": "normal",
+      "vrfName": "LAB"
+    }
+  ]
+}

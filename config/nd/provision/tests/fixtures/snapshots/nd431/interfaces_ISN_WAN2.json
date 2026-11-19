@@ -1,0 +1,146 @@
+{
+  "interfaces": [
+    {
+      "configData": {
+        "mode": "routed",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "description": "connected-to-S3_BG1-Ethernet1/3",
+            "inheritTtag": "true",
+            "mtu": 9000,
+            "policyType": "iosXeRoutedHost",
+            "speed": "auto"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet2",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "access",
+        "mtu": 9000,
+        "neighbors": [
+          {
+            "fabricName": "SITE1",
+            "interfaceName": "Ethernet1/3",
+            "switchName": "S3_BG1"
+          }
+        ],
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "WAN2",
+        "vlanRange": "-1"
+      },
+      "switchId": "9OX4DZTCYJM"
+    },
+    {
+      "configData": {
+        "mode": "managed",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "adminState": true,
+            "extraConfig": " vrf forwarding MGMT\n ip address 192.168.14.112 255.255.255.0\n negotiation auto",
+            "policyType": "iosXeGigEthernetMgmt"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet1",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "ipAddress": "192.168.14.112/24",
+        "mode": "access",
+        "mtu": 1500,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "WAN2",
+        "vlanRange": "-1",
+        "vrfName": "MGMT"
+      },
+      "switchId": "9OX4DZTCYJM"
+    },
+    {
+      "configData": {
+        "mode": "routed",
+        "networkOS": {
+          "networkOSType": "ios-xe",
+          "policy": {
+            "policyType": "userDefined",
+            "templateConfig": {
+              "ADMIN_STATE": "true",
+              "AUTO_VRF_LITE_FLAG": "true",
+              "DESC": "connected-to-S4_BG1-Ethernet1/3",
+              "INTF_NAME": "GigabitEthernet3",
+              "MTU": "9000",
+              "POLICY_ID": "POLICY-18550",
+              "PRIORITY": "500",
+              "SOURCE": "LINK-UUID-15510",
+              "SPEED": "Auto",
+              "inheritTtagFabricSetting": "true",
+              "ttag": "false"
+            },
+            "templateName": "ios_xe_ext_int_routed_host"
+          }
+        }
+      },
+      "interfaceName": "GigabitEthernet3",
+      "interfaceType": "ethernet",
+      "operData": {
+        "adminStatus": "up",
+        "mode": "access",
+        "mtu": 9000,
+        "neighbors": [
+          {
+            "fabricName": "SITE2",
+            "interfaceName": "Ethernet1/3",
+            "switchName": "S4_BG1"
+          }
+        ],
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "WAN2",
+        "vlanRange": "-1"
+      },
+      "switchId": "9OX4DZTCYJM"
+    },
+    {
+      "configData": {
+        "mode": "unknown",
+        "networkOS": {
+          "networkOSType": "ios-xe"
+        }
+      },
+      "interfaceName": "Loopback0",
+      "interfaceType": "loopback",
+      "operData": {
+        "adminStatus": "up",
+        "ipAddress": "192.168.14.112/24",
+        "mode": "access",
+        "mtu": 1500,
+        "operationalDescription": "ok",
+        "operationalStatus": "up",
+        "portChannelId": -1,
+        "speed": "1Gb",
+        "switchName": "WAN2",
+        "vlanRange": "-1",
+        "vrfName": "MGMT"
+      },
+      "switchId": "9OX4DZTCYJM"
+    }
+  ],
+  "meta": {
+    "counts": {
+      "remaining": 0,
+      "total": 4
+    }
+  }
+}

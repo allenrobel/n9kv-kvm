@@ -316,11 +316,11 @@ def test_enable_ir_fix_from_the_drift_applies_the_put_before_the_deploy():
 
     from golden_drift import drift_overlay
     from golden_live import read_live_from_snapshot
-    from tests.test_golden_drift import BASE, GOLDEN
+    from tests.test_golden_drift import BASE, SNAPSHOTS
     from topology import load
 
     topo = replace(load(BASE / "topology_nd421_base.yaml"), replication_mode="ingress", mode_fabrics=("SITE1",))
-    live = read_live_from_snapshot(GOLDEN / "nd421" / "multicast", topo)
+    live = read_live_from_snapshot(SNAPSHOTS / "nd421", topo)
     fix = next(d.fix for d in drift_overlay(topo, live) if d.cls == "networks")
     assert isinstance(fix, list)
     client = Stub()

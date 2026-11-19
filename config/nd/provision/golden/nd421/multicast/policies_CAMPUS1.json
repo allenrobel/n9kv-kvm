@@ -18,7 +18,7 @@
       "id": "loopback1"
     },
     "templateName": "nve_lb_id",
-    "updateTimestamp": "2026-10-02T18:59:10.665Z"
+    "updateTimestamp": "2026-11-18T21:53:51.459Z"
   },
   {
     "createTimestamp": "2026-09-11T22:43:06.389Z",
@@ -39,7 +39,7 @@
       "SWITCH_ROLE": "leaf"
     },
     "templateName": "switch_role_simulated",
-    "updateTimestamp": "2026-10-02T18:59:10.672Z"
+    "updateTimestamp": "2026-11-18T21:53:51.466Z"
   },
   {
     "createTimestamp": "2026-09-11T22:43:05.417Z",
@@ -60,7 +60,7 @@
       "id": "loopback0"
     },
     "templateName": "bgp_lb_id",
-    "updateTimestamp": "2026-10-02T18:59:08.083Z"
+    "updateTimestamp": "2026-11-18T21:53:49.259Z"
   },
   {
     "createTimestamp": "2026-09-15T04:44:19.994Z",
@@ -100,7 +100,7 @@
       "id": "loopback0"
     },
     "templateName": "bgp_lb_id",
-    "updateTimestamp": "2026-10-02T18:59:08.115Z"
+    "updateTimestamp": "2026-11-18T21:53:49.281Z"
   },
   {
     "createTimestamp": "2026-09-15T04:44:17.986Z",
@@ -120,7 +120,7 @@
       "PRIORITY": "10"
     },
     "templateName": "rp_state",
-    "updateTimestamp": "2026-10-02T18:59:09.045Z"
+    "updateTimestamp": "2026-11-18T21:53:50.218Z"
   },
   {
     "createTimestamp": "2026-09-15T04:44:18.116Z",
@@ -141,7 +141,7 @@
       "id": "loopback254"
     },
     "templateName": "rp_lb_id",
-    "updateTimestamp": "2026-10-02T18:59:09.057Z"
+    "updateTimestamp": "2026-11-18T21:53:50.226Z"
   },
   {
     "createTimestamp": "2026-09-15T04:44:18.133Z",
@@ -162,7 +162,7 @@
       "SWITCH_ROLE": "spine"
     },
     "templateName": "switch_role_simulated",
-    "updateTimestamp": "2026-10-02T18:59:09.073Z"
+    "updateTimestamp": "2026-11-18T21:53:50.242Z"
   },
   {
     "createTimestamp": "2026-09-11T22:43:05.293Z",
@@ -279,21 +279,6 @@
     "updateTimestamp": "2026-09-11T22:43:05.45Z"
   },
   {
-    "createTimestamp": "2026-09-11T22:43:07.443Z",
-    "description": null,
-    "entityName": "SWITCH",
-    "entityType": "switch",
-    "generatedConfig": "route-map FABRIC-RMAP-REDIST-SUBNET permit 10\n\n\n",
-    "markDeleted": false,
-    "policyId": "POLICY-220570",
-    "priority": 100,
-    "source": "UNDERLAY",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {},
-    "templateName": "ios_xe_route_map",
-    "updateTimestamp": "2026-09-11T22:43:07.443Z"
-  },
-  {
     "createTimestamp": "2026-09-11T22:43:06.303Z",
     "description": null,
     "entityName": "Loopback1",
@@ -346,39 +331,6 @@
     "updateTimestamp": "2026-09-11T22:43:06.362Z"
   },
   {
-    "createTimestamp": "2026-09-11T22:43:07.451Z",
-    "description": null,
-    "entityName": "SWITCH",
-    "entityType": "switch",
-    "generatedConfig": "router bgp 65003\n bgp router-id 10.41.0.1\n bgp log-neighbor-changes\n\n\n",
-    "markDeleted": false,
-    "policyId": "POLICY-220580",
-    "priority": 100,
-    "source": "UNDERLAY",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {
-      "BGP_AS": "65003",
-      "LOOPBACK_IP": "10.41.0.1"
-    },
-    "templateName": "ios_xe_bgp_router_id",
-    "updateTimestamp": "2026-09-11T22:43:07.451Z"
-  },
-  {
-    "createTimestamp": "2026-09-11T22:43:05.296Z",
-    "description": null,
-    "entityName": "SWITCH",
-    "entityType": "switch",
-    "generatedConfig": "ip dhcp relay information option\nip dhcp relay information option vpn\nip dhcp snooping\nip dhcp compatibility suboption link-selection standard\nip dhcp compatibility suboption server-override standard\n\n\n",
-    "markDeleted": false,
-    "policyId": "POLICY-220340",
-    "priority": 100,
-    "source": "UNDERLAY",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {},
-    "templateName": "ios_xe_base_dhcp",
-    "updateTimestamp": "2026-09-11T22:43:05.296Z"
-  },
-  {
     "createTimestamp": "2026-09-11T22:42:59.638Z",
     "description": null,
     "entityName": "SWITCH",
@@ -396,23 +348,6 @@
     "updateTimestamp": "2026-09-11T22:42:59.638Z"
   },
   {
-    "createTimestamp": "2026-09-11T22:43:05.302Z",
-    "description": null,
-    "entityName": "SWITCH",
-    "entityType": "switch",
-    "generatedConfig": "vtp mode off\n\n\n",
-    "markDeleted": false,
-    "policyId": "POLICY-220360",
-    "priority": 100,
-    "source": "UNDERLAY",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {
-      "VTP_MODE": "off"
-    },
-    "templateName": "ios_xe_vtp_mode",
-    "updateTimestamp": "2026-09-11T22:43:05.302Z"
-  },
-  {
     "createTimestamp": "2026-09-11T22:42:59.644Z",
     "description": null,
     "entityName": "SWITCH",
@@ -428,56 +363,6 @@
     },
     "templateName": "ios_xe_v4_mgmt_default_gateway",
     "updateTimestamp": "2026-09-11T22:42:59.644Z"
-  },
-  {
-    "createTimestamp": "2026-09-11T22:48:07.816Z",
-    "description": null,
-    "entityName": "SWITCH",
-    "entityType": "switch",
-    "generatedConfig": "system mtu 8978\n\n\n",
-    "markDeleted": false,
-    "policyId": "POLICY-220620",
-    "priority": 100,
-    "source": "UNDERLAY",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {
-      "MTU": "8978"
-    },
-    "templateName": "ios_xe_system_mtu",
-    "updateTimestamp": "2026-09-11T22:51:47.499Z"
-  },
-  {
-    "createTimestamp": "2026-09-11T22:43:05.312Z",
-    "description": null,
-    "entityName": "Loopback0",
-    "entityType": "interface",
-    "generatedConfig": "interface Loopback0\n ip address 10.41.0.1 255.255.255.255\n ip ospf 1 area 0.0.0.0\n ip pim sparse-mode",
-    "markDeleted": false,
-    "policyId": "POLICY-220370",
-    "priority": 100,
-    "source": "UNDERLAY",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {
-      "ADMIN_STATE": "true",
-      "CONF": "",
-      "DESC": "",
-      "FABRIC_NAME": "CAMPUS1",
-      "INTF_NAME": "Loopback0",
-      "IP": "10.41.0.1",
-      "LINK_STATE_ROUTING_TAG": "1",
-      "OSPF_AREA_ID": "0.0.0.0",
-      "OSPF_AUTH_KEY": "",
-      "OSPF_AUTH_KEY_ID": "",
-      "POLICY_DESC": "",
-      "POLICY_ID": "POLICY-220370",
-      "PRIORITY": "100",
-      "REPLICATION_MODE": "Multicast",
-      "ROUTE_MAP_TAG": "",
-      "SECONDARY_IP": "",
-      "V6IP": ""
-    },
-    "templateName": "ios_xe_int_underlay_loopback",
-    "updateTimestamp": "2026-09-11T22:43:05.312Z"
   },
   {
     "createTimestamp": "2026-09-11T22:42:59.983Z",
@@ -530,25 +415,6 @@
     },
     "templateName": "ios_xe_evpn_router_id",
     "updateTimestamp": "2026-09-11T22:43:06.398Z"
-  },
-  {
-    "createTimestamp": "2026-09-11T22:43:05.388Z",
-    "description": null,
-    "entityName": "Loopback0",
-    "entityType": "interface",
-    "generatedConfig": "interface Loopback0\n ip address 10.41.0.1 255.255.255.255\n\n\n",
-    "markDeleted": false,
-    "policyId": "POLICY-220380",
-    "priority": 100,
-    "source": "Loopback0",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {
-      "INTF_NAME": "Loopback0",
-      "IP": "10.41.0.1",
-      "IPv6": ""
-    },
-    "templateName": "ios_xe_interface_loopback",
-    "updateTimestamp": "2026-09-11T22:43:05.388Z"
   },
   {
     "createTimestamp": "2026-09-11T22:42:59.993Z",
@@ -615,6 +481,140 @@
     },
     "templateName": "bgp_asn",
     "updateTimestamp": "2026-09-11T22:43:06.407Z"
+  },
+  {
+    "createTimestamp": "2026-09-11T22:43:07.443Z",
+    "description": null,
+    "entityName": "SWITCH",
+    "entityType": "switch",
+    "generatedConfig": "route-map FABRIC-RMAP-REDIST-SUBNET permit 10\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-220570",
+    "priority": 100,
+    "source": "UNDERLAY",
+    "switchId": "CAT9KV1701",
+    "templateInputs": {},
+    "templateName": "ios_xe_route_map",
+    "updateTimestamp": "2026-09-11T22:43:07.443Z"
+  },
+  {
+    "createTimestamp": "2026-09-11T22:43:07.451Z",
+    "description": null,
+    "entityName": "SWITCH",
+    "entityType": "switch",
+    "generatedConfig": "router bgp 65003\n bgp router-id 10.41.0.1\n bgp log-neighbor-changes\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-220580",
+    "priority": 100,
+    "source": "UNDERLAY",
+    "switchId": "CAT9KV1701",
+    "templateInputs": {
+      "BGP_AS": "65003",
+      "LOOPBACK_IP": "10.41.0.1"
+    },
+    "templateName": "ios_xe_bgp_router_id",
+    "updateTimestamp": "2026-09-11T22:43:07.451Z"
+  },
+  {
+    "createTimestamp": "2026-09-11T22:43:05.296Z",
+    "description": null,
+    "entityName": "SWITCH",
+    "entityType": "switch",
+    "generatedConfig": "ip dhcp relay information option\nip dhcp relay information option vpn\nip dhcp snooping\nip dhcp compatibility suboption link-selection standard\nip dhcp compatibility suboption server-override standard\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-220340",
+    "priority": 100,
+    "source": "UNDERLAY",
+    "switchId": "CAT9KV1701",
+    "templateInputs": {},
+    "templateName": "ios_xe_base_dhcp",
+    "updateTimestamp": "2026-09-11T22:43:05.296Z"
+  },
+  {
+    "createTimestamp": "2026-09-11T22:43:05.302Z",
+    "description": null,
+    "entityName": "SWITCH",
+    "entityType": "switch",
+    "generatedConfig": "vtp mode off\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-220360",
+    "priority": 100,
+    "source": "UNDERLAY",
+    "switchId": "CAT9KV1701",
+    "templateInputs": {
+      "VTP_MODE": "off"
+    },
+    "templateName": "ios_xe_vtp_mode",
+    "updateTimestamp": "2026-09-11T22:43:05.302Z"
+  },
+  {
+    "createTimestamp": "2026-09-11T22:48:07.816Z",
+    "description": null,
+    "entityName": "SWITCH",
+    "entityType": "switch",
+    "generatedConfig": "system mtu 8978\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-220620",
+    "priority": 100,
+    "source": "UNDERLAY",
+    "switchId": "CAT9KV1701",
+    "templateInputs": {
+      "MTU": "8978"
+    },
+    "templateName": "ios_xe_system_mtu",
+    "updateTimestamp": "2026-09-11T22:51:47.499Z"
+  },
+  {
+    "createTimestamp": "2026-09-11T22:43:05.312Z",
+    "description": null,
+    "entityName": "Loopback0",
+    "entityType": "interface",
+    "generatedConfig": "interface Loopback0\n ip address 10.41.0.1 255.255.255.255\n ip ospf 1 area 0.0.0.0\n ip pim sparse-mode",
+    "markDeleted": false,
+    "policyId": "POLICY-220370",
+    "priority": 100,
+    "source": "UNDERLAY",
+    "switchId": "CAT9KV1701",
+    "templateInputs": {
+      "ADMIN_STATE": "true",
+      "CONF": "",
+      "DESC": "",
+      "FABRIC_NAME": "CAMPUS1",
+      "INTF_NAME": "Loopback0",
+      "IP": "10.41.0.1",
+      "LINK_STATE_ROUTING_TAG": "1",
+      "OSPF_AREA_ID": "0.0.0.0",
+      "OSPF_AUTH_KEY": "",
+      "OSPF_AUTH_KEY_ID": "",
+      "POLICY_DESC": "",
+      "POLICY_ID": "POLICY-220370",
+      "PRIORITY": "100",
+      "REPLICATION_MODE": "Multicast",
+      "ROUTE_MAP_TAG": "",
+      "SECONDARY_IP": "",
+      "V6IP": ""
+    },
+    "templateName": "ios_xe_int_underlay_loopback",
+    "updateTimestamp": "2026-09-11T22:43:05.312Z"
+  },
+  {
+    "createTimestamp": "2026-09-11T22:43:05.388Z",
+    "description": null,
+    "entityName": "Loopback0",
+    "entityType": "interface",
+    "generatedConfig": "interface Loopback0\n ip address 10.41.0.1 255.255.255.255\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-220380",
+    "priority": 100,
+    "source": "Loopback0",
+    "switchId": "CAT9KV1701",
+    "templateInputs": {
+      "INTF_NAME": "Loopback0",
+      "IP": "10.41.0.1",
+      "IPv6": ""
+    },
+    "templateName": "ios_xe_interface_loopback",
+    "updateTimestamp": "2026-09-11T22:43:05.388Z"
   },
   {
     "createTimestamp": "2026-09-15T04:44:10.931Z",
@@ -916,6 +916,26 @@
     "updateTimestamp": "2026-09-15T04:44:19.988Z"
   },
   {
+    "createTimestamp": "2026-11-18T21:53:52.621Z",
+    "description": null,
+    "entityName": "SWITCH",
+    "entityType": "switch",
+    "generatedConfig": "router bgp 65003\n neighbor 10.41.0.2 remote-as 65003\n neighbor 10.41.0.2 update-source Loopback0\n\n address-family ipv4\n\n exit-address-family\n\n address-family l2vpn evpn\n  neighbor 10.41.0.2 activate\n  neighbor 10.41.0.2 send-community both\n exit-address-family\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-403270",
+    "priority": 150,
+    "source": "UNDERLAY",
+    "switchId": "CAT9KV1701",
+    "templateInputs": {
+      "BGP_AS": "65003",
+      "BGP_NEIGHBOR_IP": "10.41.0.2",
+      "INTF_NAME": "Loopback0",
+      "bgpIpv4UnicastPeering": "false"
+    },
+    "templateName": "ios_xe_evpn_bgp_nbr",
+    "updateTimestamp": "2026-11-18T21:53:52.621Z"
+  },
+  {
     "createTimestamp": "2026-09-11T22:43:07.51Z",
     "description": null,
     "entityName": "SWITCH",
@@ -934,36 +954,16 @@
       "PRIORITY": "150"
     },
     "templateName": "ptp_sim",
-    "updateTimestamp": "2026-10-02T18:59:11.936Z"
+    "updateTimestamp": "2026-11-18T21:53:52.667Z"
   },
   {
-    "createTimestamp": "2026-10-02T18:59:11.89Z",
-    "description": null,
-    "entityName": "SWITCH",
-    "entityType": "switch",
-    "generatedConfig": "router bgp 65003\n neighbor 10.41.0.2 remote-as 65003\n neighbor 10.41.0.2 update-source Loopback0\n\n address-family ipv4\n\n exit-address-family\n\n address-family l2vpn evpn\n  neighbor 10.41.0.2 activate\n  neighbor 10.41.0.2 send-community both\n exit-address-family\n\n\n",
-    "markDeleted": false,
-    "policyId": "POLICY-294240",
-    "priority": 150,
-    "source": "UNDERLAY",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {
-      "BGP_AS": "65003",
-      "BGP_NEIGHBOR_IP": "10.41.0.2",
-      "INTF_NAME": "Loopback0",
-      "bgpIpv4UnicastPeering": "false"
-    },
-    "templateName": "ios_xe_evpn_bgp_nbr",
-    "updateTimestamp": "2026-10-02T18:59:11.89Z"
-  },
-  {
-    "createTimestamp": "2026-10-02T18:59:10.572Z",
+    "createTimestamp": "2026-11-18T21:53:51.375Z",
     "description": null,
     "entityName": "SWITCH",
     "entityType": "switch",
     "generatedConfig": "router bgp 65003\n neighbor 10.41.0.1 remote-as 65003\n neighbor 10.41.0.1 update-source Loopback0\n\n address-family ipv4\n\n exit-address-family\n\n address-family l2vpn evpn\n  neighbor 10.41.0.1 activate\n  neighbor 10.41.0.1 send-community both\n  neighbor 10.41.0.1 route-reflector-client\n exit-address-family\n\n\n",
     "markDeleted": false,
-    "policyId": "POLICY-294210",
+    "policyId": "POLICY-403240",
     "priority": 150,
     "source": "UNDERLAY",
     "switchId": "CAT9KV1702",
@@ -974,7 +974,7 @@
       "bgpIpv4UnicastPeering": "false"
     },
     "templateName": "ios_xe_evpn_bgp_rr",
-    "updateTimestamp": "2026-10-02T18:59:10.572Z"
+    "updateTimestamp": "2026-11-18T21:53:51.375Z"
   },
   {
     "createTimestamp": "2026-09-15T04:44:20.521Z",
@@ -995,16 +995,16 @@
       "PRIORITY": "150"
     },
     "templateName": "ptp_sim",
-    "updateTimestamp": "2026-10-02T18:59:10.639Z"
+    "updateTimestamp": "2026-11-18T21:53:51.429Z"
   },
   {
-    "createTimestamp": "2026-10-02T18:59:11.896Z",
+    "createTimestamp": "2026-11-18T21:53:52.627Z",
     "description": null,
     "entityName": "SWITCH",
     "entityType": "switch",
     "generatedConfig": "router bgp 65003\n neighbor 10.41.0.2 description to-C1_SP1\n\n\n",
     "markDeleted": false,
-    "policyId": "POLICY-294250",
+    "policyId": "POLICY-403280",
     "priority": 151,
     "source": "",
     "switchId": "CAT9KV1701",
@@ -1014,16 +1014,16 @@
       "DESC": "to-C1_SP1"
     },
     "templateName": "ios_xe_bgp_neighbor_desc",
-    "updateTimestamp": "2026-10-02T18:59:11.896Z"
+    "updateTimestamp": "2026-11-18T21:53:52.627Z"
   },
   {
-    "createTimestamp": "2026-10-02T18:59:10.581Z",
+    "createTimestamp": "2026-11-18T21:53:51.381Z",
     "description": null,
     "entityName": "SWITCH",
     "entityType": "switch",
     "generatedConfig": "router bgp 65003\n neighbor 10.41.0.1 description to-C1_LE1\n\n\n",
     "markDeleted": false,
-    "policyId": "POLICY-294220",
+    "policyId": "POLICY-403250",
     "priority": 151,
     "source": "",
     "switchId": "CAT9KV1702",
@@ -1033,7 +1033,42 @@
       "DESC": "to-C1_LE1"
     },
     "templateName": "ios_xe_bgp_neighbor_desc",
-    "updateTimestamp": "2026-10-02T18:59:10.581Z"
+    "updateTimestamp": "2026-11-18T21:53:51.381Z"
+  },
+  {
+    "createTimestamp": "2026-09-15T07:28:19.062Z",
+    "description": null,
+    "entityName": "GigabitEthernet1/0/8",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet1/0/8\n no switchport\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-230660",
+    "priority": 310,
+    "source": "GigabitEthernet1/0/8_FABRIC",
+    "switchId": "CAT9KV1701",
+    "templateInputs": {
+      "INTF_NAME": "GigabitEthernet1/0/8"
+    },
+    "templateName": "ios_xe_interface_no_switchport",
+    "updateTimestamp": "2026-09-15T07:28:19.062Z"
+  },
+  {
+    "createTimestamp": "2026-11-18T21:53:51.495Z",
+    "description": null,
+    "entityName": "nve1",
+    "entityType": "interface",
+    "generatedConfig": "interface nve1\n no ip address\n source-interface Loopback1\n host-reachability protocol bgp\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-403260",
+    "priority": 310,
+    "source": "nve1",
+    "switchId": "CAT9KV1701",
+    "templateInputs": {
+      "INTF_NAME": "nve1",
+      "SOURCE_INTF_NAME": "Loopback1"
+    },
+    "templateName": "ios_xe_interface_nve",
+    "updateTimestamp": "2026-11-18T21:53:51.495Z"
   },
   {
     "createTimestamp": "2026-09-11T22:43:06.411Z",
@@ -1060,42 +1095,7 @@
       "SOURCE_INTF_NAME": "Loopback1"
     },
     "templateName": "ios_xe_int_nve",
-    "updateTimestamp": "2026-10-02T18:59:10.716Z"
-  },
-  {
-    "createTimestamp": "2026-09-15T07:28:19.062Z",
-    "description": null,
-    "entityName": "GigabitEthernet1/0/8",
-    "entityType": "interface",
-    "generatedConfig": "interface GigabitEthernet1/0/8\n no switchport\n\n\n",
-    "markDeleted": false,
-    "policyId": "POLICY-230660",
-    "priority": 310,
-    "source": "GigabitEthernet1/0/8_FABRIC",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {
-      "INTF_NAME": "GigabitEthernet1/0/8"
-    },
-    "templateName": "ios_xe_interface_no_switchport",
-    "updateTimestamp": "2026-09-15T07:28:19.062Z"
-  },
-  {
-    "createTimestamp": "2026-10-02T18:59:10.707Z",
-    "description": null,
-    "entityName": "nve1",
-    "entityType": "interface",
-    "generatedConfig": "interface nve1\n no ip address\n source-interface Loopback1\n host-reachability protocol bgp\n\n\n",
-    "markDeleted": false,
-    "policyId": "POLICY-294230",
-    "priority": 310,
-    "source": "nve1",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {
-      "INTF_NAME": "nve1",
-      "SOURCE_INTF_NAME": "Loopback1"
-    },
-    "templateName": "ios_xe_interface_nve",
-    "updateTimestamp": "2026-10-02T18:59:10.707Z"
+    "updateTimestamp": "2026-11-18T21:53:51.501Z"
   },
   {
     "createTimestamp": "2026-09-15T07:18:43.946Z",
@@ -1582,36 +1582,6 @@
     "updateTimestamp": "2026-09-11T22:46:52.115Z"
   },
   {
-    "createTimestamp": "2026-09-11T22:43:00.404Z",
-    "description": null,
-    "entityName": "GigabitEthernet1/0/21",
-    "entityType": "interface",
-    "generatedConfig": "interface GigabitEthernet1/0/21\n switchport mode trunk\n switchport trunk allowed vlan none\n no shutdown",
-    "markDeleted": false,
-    "policyId": "POLICY-220050",
-    "priority": 450,
-    "source": "",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {
-      "ADMIN_STATE": "true",
-      "ALLOWED_VLANS": "none",
-      "BPDUGUARD_ENABLED": "no",
-      "CONF": "",
-      "DESC": "",
-      "GF": "",
-      "INTF_NAME": "GigabitEthernet1/0/21",
-      "MARK_DELETED": "false",
-      "MTU": "1500",
-      "POLICY_DESC": "",
-      "POLICY_ID": "POLICY-220050",
-      "PRIORITY": "450",
-      "SERIAL_NUMBER": "CAT9KV1701",
-      "SPEED": "Auto"
-    },
-    "templateName": "ios_xe_int_trunk_host",
-    "updateTimestamp": "2026-09-11T22:46:52.286Z"
-  },
-  {
     "createTimestamp": "2026-09-11T22:43:01.35Z",
     "description": null,
     "entityName": "GigabitEthernet1/0/18",
@@ -1670,36 +1640,6 @@
     },
     "templateName": "ios_xe_int_trunk_host",
     "updateTimestamp": "2026-09-11T22:46:52.865Z"
-  },
-  {
-    "createTimestamp": "2026-09-11T22:43:00.603Z",
-    "description": null,
-    "entityName": "GigabitEthernet1/0/23",
-    "entityType": "interface",
-    "generatedConfig": "interface GigabitEthernet1/0/23\n switchport mode trunk\n switchport trunk allowed vlan none\n no shutdown",
-    "markDeleted": false,
-    "policyId": "POLICY-220080",
-    "priority": 450,
-    "source": "",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {
-      "ADMIN_STATE": "true",
-      "ALLOWED_VLANS": "none",
-      "BPDUGUARD_ENABLED": "no",
-      "CONF": "",
-      "DESC": "",
-      "GF": "",
-      "INTF_NAME": "GigabitEthernet1/0/23",
-      "MARK_DELETED": "false",
-      "MTU": "1500",
-      "POLICY_DESC": "",
-      "POLICY_ID": "POLICY-220080",
-      "PRIORITY": "450",
-      "SERIAL_NUMBER": "CAT9KV1701",
-      "SPEED": "Auto"
-    },
-    "templateName": "ios_xe_int_trunk_host",
-    "updateTimestamp": "2026-09-11T22:46:52.948Z"
   },
   {
     "createTimestamp": "2026-09-11T22:43:01.767Z",
@@ -1762,23 +1702,6 @@
     "updateTimestamp": "2026-09-11T22:46:53.32Z"
   },
   {
-    "createTimestamp": "2026-10-28T04:04:09.623Z",
-    "description": null,
-    "entityName": "GigabitEthernet1/0/1",
-    "entityType": "interface",
-    "generatedConfig": "interface GigabitEthernet1/0/1\n no switchport\n\n\n",
-    "markDeleted": false,
-    "policyId": "POLICY-325470",
-    "priority": 450,
-    "source": "GigabitEthernet1/0/1",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {
-      "INTF_NAME": "GigabitEthernet1/0/1"
-    },
-    "templateName": "ios_xe_interface_no_switchport",
-    "updateTimestamp": "2026-10-28T04:04:09.623Z"
-  },
-  {
     "createTimestamp": "2026-09-11T22:43:01.944Z",
     "description": null,
     "entityName": "GigabitEthernet1/0/16",
@@ -1839,6 +1762,96 @@
     "updateTimestamp": "2026-09-11T22:46:53.541Z"
   },
   {
+    "createTimestamp": "2026-09-11T22:43:02.102Z",
+    "description": null,
+    "entityName": "GigabitEthernet1/0/9",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet1/0/9\n switchport mode trunk\n switchport trunk allowed vlan none\n no shutdown",
+    "markDeleted": false,
+    "policyId": "POLICY-220280",
+    "priority": 450,
+    "source": "",
+    "switchId": "CAT9KV1701",
+    "templateInputs": {
+      "ADMIN_STATE": "true",
+      "ALLOWED_VLANS": "none",
+      "BPDUGUARD_ENABLED": "no",
+      "CONF": "",
+      "DESC": "",
+      "GF": "",
+      "INTF_NAME": "GigabitEthernet1/0/9",
+      "MARK_DELETED": "false",
+      "MTU": "1500",
+      "POLICY_DESC": "",
+      "POLICY_ID": "POLICY-220280",
+      "PRIORITY": "450",
+      "SERIAL_NUMBER": "CAT9KV1701",
+      "SPEED": "Auto"
+    },
+    "templateName": "ios_xe_int_trunk_host",
+    "updateTimestamp": "2026-09-11T22:46:53.8Z"
+  },
+  {
+    "createTimestamp": "2026-09-11T22:43:00.404Z",
+    "description": null,
+    "entityName": "GigabitEthernet1/0/21",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet1/0/21\n switchport mode trunk\n switchport trunk allowed vlan none\n no shutdown",
+    "markDeleted": false,
+    "policyId": "POLICY-220050",
+    "priority": 450,
+    "source": "",
+    "switchId": "CAT9KV1701",
+    "templateInputs": {
+      "ADMIN_STATE": "true",
+      "ALLOWED_VLANS": "none",
+      "BPDUGUARD_ENABLED": "no",
+      "CONF": "",
+      "DESC": "",
+      "GF": "",
+      "INTF_NAME": "GigabitEthernet1/0/21",
+      "MARK_DELETED": "false",
+      "MTU": "1500",
+      "POLICY_DESC": "",
+      "POLICY_ID": "POLICY-220050",
+      "PRIORITY": "450",
+      "SERIAL_NUMBER": "CAT9KV1701",
+      "SPEED": "Auto"
+    },
+    "templateName": "ios_xe_int_trunk_host",
+    "updateTimestamp": "2026-09-11T22:46:52.286Z"
+  },
+  {
+    "createTimestamp": "2026-09-11T22:43:00.603Z",
+    "description": null,
+    "entityName": "GigabitEthernet1/0/23",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet1/0/23\n switchport mode trunk\n switchport trunk allowed vlan none\n no shutdown",
+    "markDeleted": false,
+    "policyId": "POLICY-220080",
+    "priority": 450,
+    "source": "",
+    "switchId": "CAT9KV1701",
+    "templateInputs": {
+      "ADMIN_STATE": "true",
+      "ALLOWED_VLANS": "none",
+      "BPDUGUARD_ENABLED": "no",
+      "CONF": "",
+      "DESC": "",
+      "GF": "",
+      "INTF_NAME": "GigabitEthernet1/0/23",
+      "MARK_DELETED": "false",
+      "MTU": "1500",
+      "POLICY_DESC": "",
+      "POLICY_ID": "POLICY-220080",
+      "PRIORITY": "450",
+      "SERIAL_NUMBER": "CAT9KV1701",
+      "SPEED": "Auto"
+    },
+    "templateName": "ios_xe_int_trunk_host",
+    "updateTimestamp": "2026-09-11T22:46:52.948Z"
+  },
+  {
     "createTimestamp": "2026-09-11T22:43:00.888Z",
     "description": null,
     "entityName": "GigabitEthernet1/0/10",
@@ -1897,36 +1910,6 @@
     },
     "templateName": "ios_xe_int_trunk_host",
     "updateTimestamp": "2026-09-11T22:46:53.714Z"
-  },
-  {
-    "createTimestamp": "2026-09-11T22:43:02.102Z",
-    "description": null,
-    "entityName": "GigabitEthernet1/0/9",
-    "entityType": "interface",
-    "generatedConfig": "interface GigabitEthernet1/0/9\n switchport mode trunk\n switchport trunk allowed vlan none\n no shutdown",
-    "markDeleted": false,
-    "policyId": "POLICY-220280",
-    "priority": 450,
-    "source": "",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {
-      "ADMIN_STATE": "true",
-      "ALLOWED_VLANS": "none",
-      "BPDUGUARD_ENABLED": "no",
-      "CONF": "",
-      "DESC": "",
-      "GF": "",
-      "INTF_NAME": "GigabitEthernet1/0/9",
-      "MARK_DELETED": "false",
-      "MTU": "1500",
-      "POLICY_DESC": "",
-      "POLICY_ID": "POLICY-220280",
-      "PRIORITY": "450",
-      "SERIAL_NUMBER": "CAT9KV1701",
-      "SPEED": "Auto"
-    },
-    "templateName": "ios_xe_int_trunk_host",
-    "updateTimestamp": "2026-09-11T22:46:53.8Z"
   },
   {
     "createTimestamp": "2026-09-15T04:44:21.343Z",
@@ -3033,23 +3016,6 @@
     "updateTimestamp": "2026-09-15T04:44:21.666Z"
   },
   {
-    "createTimestamp": "2026-10-28T04:04:09.631Z",
-    "description": null,
-    "entityName": "GigabitEthernet1/0/1",
-    "entityType": "interface",
-    "generatedConfig": "interface GigabitEthernet1/0/1\n no ip address\n\n\n",
-    "markDeleted": false,
-    "policyId": "POLICY-325480",
-    "priority": 454,
-    "source": "GigabitEthernet1/0/1",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {
-      "INTF_NAME": "GigabitEthernet1/0/1"
-    },
-    "templateName": "ios_xe_interface_no_ipv4_addr",
-    "updateTimestamp": "2026-10-28T04:04:09.631Z"
-  },
-  {
     "createTimestamp": "2026-09-15T04:44:21.67Z",
     "description": null,
     "entityName": "GigabitEthernet1/0/7",
@@ -3439,23 +3405,6 @@
     },
     "templateName": "ios_xe_interface_no_ipv4_addr",
     "updateTimestamp": "2026-09-15T04:44:21.038Z"
-  },
-  {
-    "createTimestamp": "2026-10-28T04:04:09.642Z",
-    "description": null,
-    "entityName": "GigabitEthernet1/0/1",
-    "entityType": "interface",
-    "generatedConfig": "interface GigabitEthernet1/0/1\n no shutdown\n\n\n",
-    "markDeleted": false,
-    "policyId": "POLICY-325490",
-    "priority": 458,
-    "source": "GigabitEthernet1/0/1",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {
-      "INTF_NAME": "GigabitEthernet1/0/1"
-    },
-    "templateName": "ios_xe_noshut_interface",
-    "updateTimestamp": "2026-10-28T04:04:09.642Z"
   },
   {
     "createTimestamp": "2026-09-15T04:44:21.045Z",
@@ -3907,40 +3856,11 @@
     "updateTimestamp": "2026-09-16T17:56:13.858Z"
   },
   {
-    "createTimestamp": "2026-09-15T19:10:32.998Z",
-    "description": null,
-    "entityName": "GigabitEthernet1/0/20",
-    "entityType": "interface",
-    "generatedConfig": "interface GigabitEthernet1/0/20\n switchport mode trunk\n switchport trunk allowed vlan none\n no shutdown",
-    "markDeleted": false,
-    "policyId": "POLICY-230820",
-    "priority": 500,
-    "source": "",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {
-      "ADMIN_STATE": "true",
-      "ALLOWED_VLANS": "none",
-      "BPDUGUARD_ENABLED": "no",
-      "CONF": "",
-      "DESC": "",
-      "FABRIC_NAME": "CAMPUS1",
-      "INTF_NAME": "GigabitEthernet1/0/20",
-      "MTU": "1500",
-      "POLICY_DESC": "",
-      "POLICY_ID": "POLICY-230820",
-      "PRIORITY": "500",
-      "SERIAL_NUMBER": "CAT9KV1701",
-      "SPEED": "Auto"
-    },
-    "templateName": "ios_xe_int_trunk_host",
-    "updateTimestamp": "2026-09-15T19:10:32.998Z"
-  },
-  {
     "createTimestamp": "2026-09-11T22:43:01.427Z",
     "description": null,
     "entityName": "GigabitEthernet1/0/1",
     "entityType": "interface",
-    "generatedConfig": "interface GigabitEthernet1/0/1\n no switchport\n no ip address\n no shutdown",
+    "generatedConfig": "interface GigabitEthernet1/0/1\n switchport mode trunk\n switchport trunk allowed vlan none\n no shutdown",
     "markDeleted": false,
     "policyId": "POLICY-220200",
     "priority": 500,
@@ -3948,52 +3868,22 @@
     "switchId": "CAT9KV1701",
     "templateInputs": {
       "ADMIN_STATE": "true",
-      "CONF": "",
-      "DESC": "",
-      "FABRIC_NAME": "CAMPUS1",
-      "INTF_NAME": "GigabitEthernet1/0/1",
-      "INTF_VRF": "",
-      "IP": "",
-      "MARK_DELETED": "false",
-      "MTU": "1500",
-      "POLICY_DESC": "",
-      "POLICY_ID": "POLICY-220200",
-      "PREFIX": "",
-      "PRIORITY": "500",
-      "SPEED": "Auto"
-    },
-    "templateName": "ios_xe_int_routed_host",
-    "updateTimestamp": "2026-10-28T04:04:09.647Z"
-  },
-  {
-    "createTimestamp": "2026-10-28T03:19:20.007Z",
-    "description": null,
-    "entityName": "GigabitEthernet1/0/4",
-    "entityType": "interface",
-    "generatedConfig": "interface GigabitEthernet1/0/4\n switchport mode trunk\n switchport trunk allowed vlan none\n no shutdown",
-    "markDeleted": false,
-    "policyId": "POLICY-321460",
-    "priority": 500,
-    "source": "",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {
-      "ADMIN_STATE": "true",
       "ALLOWED_VLANS": "none",
       "BPDUGUARD_ENABLED": "no",
       "CONF": "",
       "DESC": "",
       "FABRIC_NAME": "CAMPUS1",
-      "INTF_NAME": "GigabitEthernet1/0/4",
+      "INTF_NAME": "GigabitEthernet1/0/1",
       "MARK_DELETED": "false",
       "MTU": "1500",
       "POLICY_DESC": "",
-      "POLICY_ID": "POLICY-321460",
+      "POLICY_ID": "POLICY-220200",
       "PRIORITY": "500",
       "SERIAL_NUMBER": "CAT9KV1701",
       "SPEED": "Auto"
     },
     "templateName": "ios_xe_int_trunk_host",
-    "updateTimestamp": "2026-10-28T03:20:04.631Z"
+    "updateTimestamp": "2026-11-16T18:59:03.551Z"
   },
   {
     "createTimestamp": "2026-09-15T19:13:04.078Z",
@@ -4030,7 +3920,7 @@
     "description": null,
     "entityName": "GigabitEthernet0/0",
     "entityType": "interface",
-    "generatedConfig": "interface GigabitEthernet0/0\n vrf forwarding Mgmt-vrf\n ip address 192.168.12.181 255.255.255.0\n speed 1000\n no negotiation auto\n no cdp enable",
+    "generatedConfig": "interface GigabitEthernet0/0\n no cdp enable\n vrf forwarding Mgmt-vrf\n ip address 192.168.12.181 255.255.255.0\n speed 1000\n no negotiation auto",
     "markDeleted": false,
     "policyId": "POLICY-230200",
     "priority": 500,
@@ -4079,97 +3969,7 @@
       "SPEED": "Auto"
     },
     "templateName": "ios_xe_int_trunk_host",
-    "updateTimestamp": "2026-10-28T02:37:33.355Z"
-  },
-  {
-    "createTimestamp": "2026-09-16T17:52:51.35Z",
-    "description": null,
-    "entityName": "GigabitEthernet1/0/6",
-    "entityType": "interface",
-    "generatedConfig": "interface GigabitEthernet1/0/6\n switchport mode trunk\n switchport trunk allowed vlan none\n no shutdown",
-    "markDeleted": false,
-    "policyId": "POLICY-244950",
-    "priority": 500,
-    "source": "",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {
-      "ADMIN_STATE": "true",
-      "ALLOWED_VLANS": "none",
-      "BPDUGUARD_ENABLED": "no",
-      "CONF": "",
-      "DESC": "",
-      "FABRIC_NAME": "CAMPUS1",
-      "INTF_NAME": "GigabitEthernet1/0/6",
-      "MARK_DELETED": "false",
-      "MTU": "1500",
-      "POLICY_DESC": "",
-      "POLICY_ID": "POLICY-244950",
-      "PRIORITY": "500",
-      "SERIAL_NUMBER": "CAT9KV1701",
-      "SPEED": "Auto"
-    },
-    "templateName": "ios_xe_int_trunk_host",
-    "updateTimestamp": "2026-09-22T02:06:39.47Z"
-  },
-  {
-    "createTimestamp": "2026-10-28T03:19:42.09Z",
-    "description": null,
-    "entityName": "GigabitEthernet1/0/2",
-    "entityType": "interface",
-    "generatedConfig": "interface GigabitEthernet1/0/2\n switchport mode trunk\n switchport trunk allowed vlan none\n no shutdown",
-    "markDeleted": false,
-    "policyId": "POLICY-321510",
-    "priority": 500,
-    "source": "",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {
-      "ADMIN_STATE": "true",
-      "ALLOWED_VLANS": "none",
-      "BPDUGUARD_ENABLED": "no",
-      "CONF": "",
-      "DESC": "",
-      "FABRIC_NAME": "CAMPUS1",
-      "INTF_NAME": "GigabitEthernet1/0/2",
-      "MARK_DELETED": "false",
-      "MTU": "1500",
-      "POLICY_DESC": "",
-      "POLICY_ID": "POLICY-321510",
-      "PRIORITY": "500",
-      "SERIAL_NUMBER": "CAT9KV1701",
-      "SPEED": "Auto"
-    },
-    "templateName": "ios_xe_int_trunk_host",
-    "updateTimestamp": "2026-10-29T17:38:34.327Z"
-  },
-  {
-    "createTimestamp": "2026-10-28T03:19:42.094Z",
-    "description": null,
-    "entityName": "GigabitEthernet1/0/3",
-    "entityType": "interface",
-    "generatedConfig": "interface GigabitEthernet1/0/3\n switchport mode trunk\n switchport trunk allowed vlan none\n no shutdown",
-    "markDeleted": false,
-    "policyId": "POLICY-321520",
-    "priority": 500,
-    "source": "",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {
-      "ADMIN_STATE": "true",
-      "ALLOWED_VLANS": "none",
-      "BPDUGUARD_ENABLED": "no",
-      "CONF": "",
-      "DESC": "",
-      "FABRIC_NAME": "CAMPUS1",
-      "INTF_NAME": "GigabitEthernet1/0/3",
-      "MARK_DELETED": "false",
-      "MTU": "1500",
-      "POLICY_DESC": "",
-      "POLICY_ID": "POLICY-321520",
-      "PRIORITY": "500",
-      "SERIAL_NUMBER": "CAT9KV1701",
-      "SPEED": "Auto"
-    },
-    "templateName": "ios_xe_int_trunk_host",
-    "updateTimestamp": "2026-10-28T03:20:04.525Z"
+    "updateTimestamp": "2026-11-18T21:48:48.56Z"
   },
   {
     "createTimestamp": "2026-09-15T07:18:43.56Z",
@@ -4220,6 +4020,155 @@
     "updateTimestamp": "2026-09-15T07:28:19.34Z"
   },
   {
+    "createTimestamp": "2026-09-15T19:10:32.998Z",
+    "description": null,
+    "entityName": "GigabitEthernet1/0/20",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet1/0/20\n switchport mode trunk\n switchport trunk allowed vlan none\n no shutdown",
+    "markDeleted": false,
+    "policyId": "POLICY-230820",
+    "priority": 500,
+    "source": "",
+    "switchId": "CAT9KV1701",
+    "templateInputs": {
+      "ADMIN_STATE": "true",
+      "ALLOWED_VLANS": "none",
+      "BPDUGUARD_ENABLED": "no",
+      "CONF": "",
+      "DESC": "",
+      "FABRIC_NAME": "CAMPUS1",
+      "INTF_NAME": "GigabitEthernet1/0/20",
+      "MTU": "1500",
+      "POLICY_DESC": "",
+      "POLICY_ID": "POLICY-230820",
+      "PRIORITY": "500",
+      "SERIAL_NUMBER": "CAT9KV1701",
+      "SPEED": "Auto"
+    },
+    "templateName": "ios_xe_int_trunk_host",
+    "updateTimestamp": "2026-09-15T19:10:32.998Z"
+  },
+  {
+    "createTimestamp": "2026-11-18T21:48:10.659Z",
+    "description": null,
+    "entityName": "GigabitEthernet1/0/4",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet1/0/4\n switchport mode trunk\n switchport trunk allowed vlan none\n no shutdown",
+    "markDeleted": false,
+    "policyId": "POLICY-402880",
+    "priority": 500,
+    "source": "",
+    "switchId": "CAT9KV1701",
+    "templateInputs": {
+      "ADMIN_STATE": "true",
+      "ALLOWED_VLANS": "none",
+      "BPDUGUARD_ENABLED": "no",
+      "CONF": "",
+      "DESC": "",
+      "FABRIC_NAME": "CAMPUS1",
+      "INTF_NAME": "GigabitEthernet1/0/4",
+      "MARK_DELETED": "false",
+      "MTU": "1500",
+      "POLICY_DESC": "",
+      "POLICY_ID": "POLICY-402880",
+      "PRIORITY": "500",
+      "SERIAL_NUMBER": "CAT9KV1701",
+      "SPEED": "Auto"
+    },
+    "templateName": "ios_xe_int_trunk_host",
+    "updateTimestamp": "2026-11-18T21:48:48.403Z"
+  },
+  {
+    "createTimestamp": "2026-11-18T21:48:31.401Z",
+    "description": null,
+    "entityName": "GigabitEthernet1/0/3",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet1/0/3\n switchport mode trunk\n switchport trunk allowed vlan none\n no shutdown",
+    "markDeleted": false,
+    "policyId": "POLICY-402900",
+    "priority": 500,
+    "source": "",
+    "switchId": "CAT9KV1701",
+    "templateInputs": {
+      "ADMIN_STATE": "true",
+      "ALLOWED_VLANS": "none",
+      "BPDUGUARD_ENABLED": "no",
+      "CONF": "",
+      "DESC": "",
+      "FABRIC_NAME": "CAMPUS1",
+      "INTF_NAME": "GigabitEthernet1/0/3",
+      "MARK_DELETED": "false",
+      "MTU": "1500",
+      "POLICY_DESC": "",
+      "POLICY_ID": "POLICY-402900",
+      "PRIORITY": "500",
+      "SERIAL_NUMBER": "CAT9KV1701",
+      "SPEED": "Auto"
+    },
+    "templateName": "ios_xe_int_trunk_host",
+    "updateTimestamp": "2026-11-18T21:48:48.246Z"
+  },
+  {
+    "createTimestamp": "2026-09-16T17:52:51.35Z",
+    "description": null,
+    "entityName": "GigabitEthernet1/0/6",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet1/0/6\n switchport mode trunk\n switchport trunk allowed vlan none\n no shutdown",
+    "markDeleted": false,
+    "policyId": "POLICY-244950",
+    "priority": 500,
+    "source": "",
+    "switchId": "CAT9KV1701",
+    "templateInputs": {
+      "ADMIN_STATE": "true",
+      "ALLOWED_VLANS": "none",
+      "BPDUGUARD_ENABLED": "no",
+      "CONF": "",
+      "DESC": "",
+      "FABRIC_NAME": "CAMPUS1",
+      "INTF_NAME": "GigabitEthernet1/0/6",
+      "MARK_DELETED": "false",
+      "MTU": "1500",
+      "POLICY_DESC": "",
+      "POLICY_ID": "POLICY-244950",
+      "PRIORITY": "500",
+      "SERIAL_NUMBER": "CAT9KV1701",
+      "SPEED": "Auto"
+    },
+    "templateName": "ios_xe_int_trunk_host",
+    "updateTimestamp": "2026-11-17T19:51:16.085Z"
+  },
+  {
+    "createTimestamp": "2026-11-18T21:48:31.408Z",
+    "description": null,
+    "entityName": "GigabitEthernet1/0/2",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet1/0/2\n switchport mode trunk\n switchport trunk allowed vlan none\n no shutdown",
+    "markDeleted": false,
+    "policyId": "POLICY-402910",
+    "priority": 500,
+    "source": "",
+    "switchId": "CAT9KV1701",
+    "templateInputs": {
+      "ADMIN_STATE": "true",
+      "ALLOWED_VLANS": "none",
+      "BPDUGUARD_ENABLED": "no",
+      "CONF": "",
+      "DESC": "",
+      "FABRIC_NAME": "CAMPUS1",
+      "INTF_NAME": "GigabitEthernet1/0/2",
+      "MARK_DELETED": "false",
+      "MTU": "1500",
+      "POLICY_DESC": "",
+      "POLICY_ID": "POLICY-402910",
+      "PRIORITY": "500",
+      "SERIAL_NUMBER": "CAT9KV1701",
+      "SPEED": "Auto"
+    },
+    "templateName": "ios_xe_int_trunk_host",
+    "updateTimestamp": "2026-11-18T21:48:48.077Z"
+  },
+  {
     "createTimestamp": "2026-09-15T07:13:25.832Z",
     "description": null,
     "entityName": "GigabitEthernet0/0",
@@ -4246,6 +4195,23 @@
     "updateTimestamp": "2026-09-15T07:22:52.151Z"
   },
   {
+    "createTimestamp": "2026-09-15T07:22:51.836Z",
+    "description": null,
+    "entityName": "GigabitEthernet0/0",
+    "entityType": "interface",
+    "generatedConfig": "interface GigabitEthernet0/0\n no cdp enable\n\n\n",
+    "markDeleted": false,
+    "policyId": "POLICY-230520",
+    "priority": 910,
+    "source": "GigabitEthernet0/0",
+    "switchId": "CAT9KV1701",
+    "templateInputs": {
+      "INTF_NAME": "GigabitEthernet0/0"
+    },
+    "templateName": "ios_xe_cdp_disable_interface",
+    "updateTimestamp": "2026-09-15T07:22:51.836Z"
+  },
+  {
     "createTimestamp": "2026-09-15T07:22:51.844Z",
     "description": null,
     "entityName": "GigabitEthernet0/0",
@@ -4262,23 +4228,6 @@
     },
     "templateName": "int_eth",
     "updateTimestamp": "2026-09-15T07:22:51.844Z"
-  },
-  {
-    "createTimestamp": "2026-09-15T07:22:51.836Z",
-    "description": null,
-    "entityName": "GigabitEthernet0/0",
-    "entityType": "interface",
-    "generatedConfig": "interface GigabitEthernet0/0\n no cdp enable\n\n\n",
-    "markDeleted": false,
-    "policyId": "POLICY-230520",
-    "priority": 910,
-    "source": "GigabitEthernet0/0",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {
-      "INTF_NAME": "GigabitEthernet0/0"
-    },
-    "templateName": "ios_xe_cdp_disable_interface",
-    "updateTimestamp": "2026-09-15T07:22:51.836Z"
   },
   {
     "createTimestamp": "2026-09-15T07:22:52.138Z",
@@ -4316,26 +4265,6 @@
     "updateTimestamp": "2026-09-15T07:22:52.147Z"
   },
   {
-    "createTimestamp": "2026-09-11T22:43:00.728Z",
-    "description": "SSH configurations",
-    "entityName": "SWITCH",
-    "entityType": "switch",
-    "generatedConfig": "ip ssh bulk-mode 131072",
-    "markDeleted": false,
-    "policyId": "POLICY-220110",
-    "priority": 1001,
-    "source": "",
-    "switchId": "CAT9KV1701",
-    "templateInputs": {
-      "CONF": "ip ssh bulk-mode 131072\r\n\r",
-      "POLICY_DESC": "SSH configurations",
-      "POLICY_ID": "POLICY-220110",
-      "PRIORITY": "1001"
-    },
-    "templateName": "ios_xe_switch_freeform",
-    "updateTimestamp": "2026-09-11T22:43:00.728Z"
-  },
-  {
     "createTimestamp": "2026-09-11T22:43:00.185Z",
     "description": "SSH configurations",
     "entityName": "SWITCH",
@@ -4354,6 +4283,26 @@
     },
     "templateName": "ios_xe_switch_freeform",
     "updateTimestamp": "2026-09-11T22:43:00.185Z"
+  },
+  {
+    "createTimestamp": "2026-09-11T22:43:00.728Z",
+    "description": "SSH configurations",
+    "entityName": "SWITCH",
+    "entityType": "switch",
+    "generatedConfig": "ip ssh bulk-mode 131072",
+    "markDeleted": false,
+    "policyId": "POLICY-220110",
+    "priority": 1001,
+    "source": "",
+    "switchId": "CAT9KV1701",
+    "templateInputs": {
+      "CONF": "ip ssh bulk-mode 131072\r\n\r",
+      "POLICY_DESC": "SSH configurations",
+      "POLICY_ID": "POLICY-220110",
+      "PRIORITY": "1001"
+    },
+    "templateName": "ios_xe_switch_freeform",
+    "updateTimestamp": "2026-09-11T22:43:00.728Z"
   },
   {
     "createTimestamp": "2026-09-15T04:44:11.636Z",

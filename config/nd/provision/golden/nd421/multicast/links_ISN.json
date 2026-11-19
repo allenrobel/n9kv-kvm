@@ -1,33 +1,21 @@
 [
   {
     "configData": {
-      "policyType": "multisiteUnderlay",
+      "policyType": "ebgpVrfLite",
       "templateInputs": {
-        "dciTrackingEnableFlag": false,
+        "autoGenConfigPeer": true,
         "dstEbgpAsn": "65001",
-        "dstInterfaceConfig": "",
         "dstInterfaceDescription": "connected-to-WAN1-GigabitEthernet2",
-        "dstIpAddress": "10.10.1.6",
-        "dstIpv6Address": "",
-        "ebgpAuthKeyEncryptionType": "3des",
-        "ebgpBfd": false,
-        "ebgpLogNeighborChange": false,
-        "ebgpMaximumPaths": 1,
-        "ebgpPassword": "",
-        "ebgpSendComboth": true,
-        "enableEbgpPassword": true,
-        "inheritEbgpPasswordMsdSettings": true,
+        "dstIpAddress": "10.15.0.2",
         "inheritTtagFabricSetting": true,
-        "routingTag": "54321",
-        "speed": "auto",
+        "linkMtu": 9000,
         "srcEbgpAsn": "65535",
-        "srcInterfaceConfig": "",
         "srcInterfaceDescription": "connected-to-S1_BG1-Ethernet1/3",
-        "srcIpAddressMask": "10.10.1.5/30",
-        "srcIpv6AddressMask": ""
+        "srcIpAddressMask": "10.15.0.1/30",
+        "templateConfigGenPeer": "ios_xe_Ext_VRF_Lite_Jython"
       }
     },
-    "displayName": "Multi-Site underlay",
+    "displayName": "VRF lite (Subinterface)",
     "dstFabricName": "SITE1",
     "dstInterfaceName": "Ethernet1/3",
     "dstSwitchId": "92IAYR41NF3",

@@ -145,6 +145,16 @@ The first `golden.py convert` run against ND 4.2.1 (2026-11-13) stopped in "remo
   followed by the network deploy, left the switch `attach: true`, `status: deployed`, `interfaces: []`: ND removed the port and kept the
   switch attached. A second detach with `"interfaces": []` then detached the switch (`attach: false`).
 
+Probes on ND 4.2.1 on 2026-11-19, with `LAB` and `LAB_NET1` attached and deployed on the vPC pair `S1_LE1`/`S1_LE2`:
+
+- A `networkAttachments` request naming one peer is applied to both. Adding a port on `S1_LE1` alone answered `success` for `S1_LE1` and
+  `S1_LE2`. Detaching `S1_LE2` alone answered `success` for both, detached both, and also removed the attachment of the paired ToR `S1_TOR1`.
+  A network therefore cannot be attached to one vPC peer only.
+- A `vrfAttachments` detach naming `S1_LE2` alone answered `failed` (`VPC details not found for Peer Serial no: <LE1>`), and this time both
+  peers stayed attached and deployed.
+- `golden.py restore` repaired a port added to `LAB_NET1` on `S1_LE1` only with one request carrying both peers' golden attachments, and
+  ended with zero drift. Re-sending the unchanged peer is accepted.
+
 ## Validation of both directions and of resume
 
 Run against ND 4.2.1 on 2026-11-18 and 2026-11-19 (UTC). Every run below ended with zero drift and no pending config.

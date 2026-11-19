@@ -78,8 +78,9 @@ def _attachment_key(op: Op) -> tuple[str, str, str, str] | None:
 
 def coalesce_attachments(ops: list[Op]) -> list[Op]:
     """Merge the attach ops, and separately the detach ops, of one VRF or network in one fabric into one op whose `attachments` list is
-    theirs concatenated in order; the merged op takes the position of the first of its group. ND 4.2.1 fails a vPC peer attached or detached
-    without its peer in the same request ("VPC details not found for Peer Serial no"). Pure: the input ops are not modified."""
+    theirs concatenated in order, an item already in the list not repeated; the merged op takes the position of the first of its group.
+    ND 4.2.1 fails a vPC peer attached or detached without its peer in the same request ("VPC details not found for Peer Serial no").
+    Pure: the input ops are not modified."""
     out: list[Op] = []
     at: dict[tuple[str, str, str, str], int] = {}
     for op in ops:
@@ -91,7 +92,8 @@ def coalesce_attachments(ops: list[Op]) -> list[Op]:
             out.append(op)
         else:
             first = out[at[key]]
-            out[at[key]] = Op(first.action, first.fabric, first.method, first.path, {**first.body, "attachments": [*first.body["attachments"], *op.body["attachments"]]})
+            items = [*first.body["attachments"], *(i for i in op.body["attachments"] if i not in first.body["attachments"])]
+            out[at[key]] = Op(first.action, first.fabric, first.method, first.path, {**first.body, "attachments": items})
     return out
 
 

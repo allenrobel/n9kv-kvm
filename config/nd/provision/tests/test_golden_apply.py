@@ -432,3 +432,15 @@ def test_a_failed_item_in_a_merged_response_raises_naming_the_item():
     with pytest.raises(ApplyError, match="attach POST /fabrics/SITE1/vrfAttachments: item SN-LE2 status 'failed': VPC details not found"):
         _applier(client).apply([_att("attach", "SITE1", "LAB", "SN-LE1"), _att("attach", "SITE1", "LAB", "SN-LE2")])
     assert len(client.writes) == 1
+
+
+def test_an_item_repeated_across_merged_attach_ops_is_sent_once():
+    """Each drifted vPC peer's fix carries both peers, so when both drift the merge sees every item twice."""
+    from golden_apply import coalesce_attachments
+
+    def both(first: str, second: str) -> Op:
+        items = [{"vrfName": "LAB", "switchId": s, "attach": True} for s in (first, second)]
+        return Op("attach", "SITE1", "POST", "/fabrics/SITE1/vrfAttachments", {"attachments": items})
+
+    (merged,) = coalesce_attachments([both("SN-LE1", "SN-LE2"), both("SN-LE2", "SN-LE1"), _att("attach", "SITE1", "LAB", "SN-BG1")])
+    assert [i["switchId"] for i in merged.body["attachments"]] == ["SN-LE1", "SN-LE2", "SN-BG1"]

@@ -1066,3 +1066,56 @@ def test_put_settings_fix_for_ingress_carries_no_multicast_only_key(nd421):
     body = drifts[0].fix.body
     assert body["management"]["replicationMode"] == "ingress"
     assert not set(MULTICAST_ONLY_KEYS) & set(body["management"])
+
+
+@pytest.fixture
+def full421(nd421):
+    topo, live = nd421
+    _with_tor_associations(topo, live)
+    return topo, live
+
+
+def _vpc_att_fix(topo, live, kind, name, host):
+    """The fix of the one attachment drift after removing `host`'s live attachment of `name`."""
+    rows = live["SITE1"].vrf_attachments if kind == "vrf" else live["SITE1"].network_attachments
+    key = "vrfName" if kind == "vrf" else "networkName"
+    rows[:] = [r for r in rows if not (r[key] == name and r["switchName"] == host)]
+    (drift,) = [d for d in drift_overlay(topo, live) if d.cls == "attachments"]
+    assert (drift.kind, drift.subject) == ("missing", f"{name} {host}")
+    return drift.fix
+
+
+@pytest.mark.parametrize("host, peer", [("S1_LE1", "S1_LE2"), ("S1_LE2", "S1_LE1")])
+def test_vrf_attachment_missing_on_one_vpc_peer_fixes_with_both_peers_in_one_request(full421, host, peer):
+    """ND 4.2.1 fails a vPC peer sent without its peer, so the fix of a lone drifted peer also carries the peer's golden attachment."""
+    topo, live = full421
+    serial = {h: live["SITE1"].switches[h]["serialNumber"] for h in (host, peer)}
+    fix = _vpc_att_fix(topo, live, "vrf", "LAB", host)
+    assert fix == Op(
+        "attach",
+        "SITE1",
+        "POST",
+        "/fabrics/SITE1/vrfAttachments",
+        {"attachments": [{"vrfName": "LAB", "switchId": serial[host], "attach": True}, {"vrfName": "LAB", "switchId": serial[peer], "attach": True}]},
+    )
+
+
+def test_network_attachment_missing_on_one_vpc_peer_fixes_with_both_peers_in_one_request(full421):
+    topo, live = full421
+    fix = _vpc_att_fix(topo, live, "network", "LAB_NET1", "S1_LE2")
+    serials = [live["SITE1"].switches[h]["serialNumber"] for h in ("S1_LE2", "S1_LE1")]
+    assert [(i["switchId"], i["vlanId"], i["interfaces"], i["attach"]) for i in fix.body["attachments"]] == [(s, 2, [], True) for s in serials]
+
+
+def test_attachment_fix_of_an_unpaired_switch_carries_only_that_switch(full421):
+    topo, live = full421
+    fix = _vpc_att_fix(topo, live, "vrf", "LAB", "S1_BG1")
+    assert [i["switchId"] for i in fix.body["attachments"]] == [live["SITE1"].switches["S1_BG1"]["serialNumber"]]
+
+
+def test_attachment_fix_leaves_out_a_vpc_peer_golden_does_not_attach(full421):
+    topo, live = full421
+    overlay = replace(topo.overlay, vrf_attachments=[a for a in topo.overlay.vrf_attachments if a["switch"] != "S1_LE1"])
+    live["SITE1"].vrf_attachments[:] = [r for r in live["SITE1"].vrf_attachments if r["switchName"] not in ("S1_LE1", "S1_LE2")]
+    fixes = [d.fix for d in drift_overlay(replace(topo, overlay=overlay), live) if d.cls == "attachments" and d.kind == "missing"]
+    assert [[i["switchId"] for i in f.body["attachments"]] for f in fixes] == [[live["SITE1"].switches["S1_LE2"]["serialNumber"]]]

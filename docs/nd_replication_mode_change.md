@@ -175,8 +175,11 @@ Other observations:
 
 - `golden/nd421/multicast/` was re-taken from the first run. The earlier dump predated the border-gateway `trunkHost` default and recorded the
   `WAN1`-`S1_BG1` link as `multisiteUnderlay`, where the golden topology and the live controller have `ebgpVrfLite`. The unit tests were written
-  against the earlier dumps, which now live in `config/nd/provision/tests/fixtures/snapshots/`. `golden/nd431/multicast/` is still the earlier
-  dump, because ND 4.3.1 has not been back in multicast mode.
+  against the earlier dumps, which now live in `config/nd/provision/tests/fixtures/snapshots/`.
+- `golden/nd431/multicast/` was re-taken on 2026-11-19. ND 4.3.1 was converted to multicast with `convert` (exit 0, about 19 minutes), dumped,
+  and converted back to ingress (exit 0, about 19 minutes), both with zero drift and nothing pending. In multicast, `S3_LE1`, `S4_LE1` and
+  `S3_BG1` showed VNI 30001 Up with group `239.1.1.0`, PIM neighbours up, and RP `10.13.0.1` in `SITE1` and `10.23.0.1` in `SITE2`. This was
+  the first use of `convert` on ND 4.3.1. The host ping was not run.
 - During these runs Ctrl-C ended `convert` with a Python traceback and exit 130. It now prints one line and exits 130. Nothing is rolled back
   and a rerun continues.
 - A long deploy is one HTTP request held open for minutes. If the client machine sleeps, the request dies while ND carries on; rerun `convert`

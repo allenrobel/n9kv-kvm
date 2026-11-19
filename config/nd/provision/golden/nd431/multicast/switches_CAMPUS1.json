@@ -43,7 +43,7 @@
       "softwareVersion": "17.15.3",
       "switchId": "CAT9KV3701",
       "switchRole": "leaf",
-      "systemUpTime": "02:27:09",
+      "systemUpTime": "20 days, 01:57:09",
       "vpcConfigured": false
     },
     {
@@ -83,7 +83,7 @@
       "softwareVersion": "17.15.3",
       "switchId": "CAT9KV3702",
       "switchRole": "spine",
-      "systemUpTime": "02:27:09",
+      "systemUpTime": "20 days, 01:57:09",
       "vpcConfigured": false
     }
   ]

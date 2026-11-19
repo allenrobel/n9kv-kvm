@@ -2023,7 +2023,7 @@
             "bpduFilter": "default",
             "bpduGuard": "default",
             "cdp": true,
-            "description": "S4_H1 eth1",
+            "description": "S4_H1 host port",
             "duplexMode": "auto",
             "errorDetectionAcl": true,
             "fec": "auto",

@@ -14,7 +14,7 @@ from dataclasses import dataclass, replace
 from typing import Any, Literal
 
 from golden_live import LiveFabric, free_ports, interface_path, pending_delete
-from provision import attachment_payload, link_payload, tor_associate_payload, vpc_pair_payload
+from provision import attachment_item, attachment_payload, link_payload, tor_associate_payload, vpc_pair_payload
 from replication import settings_body
 from topology import TOOL_LINK_POLICIES, Fabric, FabricLink, FabricGroup, InterfaceIntent, Link, Topology, TorPair, endpoint_key
 
@@ -919,6 +919,22 @@ def _attachment_text(kind: str, vlan: Any, interfaces: Any) -> str:
     return f"vlan={_norm(vlan)} interfaces={ranges}"
 
 
+def _vpc_peer_items(topo: Topology, fab_live: LiveFabric, rows: list[dict], kind: str, att: dict) -> list[dict]:
+    """The golden attachment of the same VRF/network on the vPC peer of `att`'s switch, as a request item: ND 4.2.1 fails a vPC peer attached
+    without its peer in the same request, so the fix of one drifted peer carries both. Empty when the switch is in no golden vPC pair, golden
+    does not attach the object to the peer, or the peer is not in the live fabric."""
+    gkey = "vrf" if kind == "vrf" else "network"
+    fabric, switch = att["fabric"], att["switch"]
+    peers = [p.peer if p.switch == switch else p.switch for p in topo.vpc_pairs if p.fabric == fabric and switch in (p.switch, p.peer)]
+    items: list[dict] = []
+    for peer in peers:
+        serial = (fab_live.switches.get(peer) or {}).get("serialNumber", "")
+        peer_att = next((r for r in rows if r["fabric"] == fabric and r[gkey] == att[gkey] and r["switch"] == peer), None)
+        if serial and peer_att is not None:
+            items.append(attachment_item(kind, peer_att, serial))
+    return items
+
+
 def _attachment_drifts(topo: Topology, live: dict[str, LiveFabric], kind: str) -> list[Drift]:
     rows = topo.overlay.vrf_attachments if kind == "vrf" else topo.overlay.network_attachments
     key = "vrfName" if kind == "vrf" else "networkName"
@@ -940,7 +956,11 @@ def _attachment_drifts(topo: Topology, live: dict[str, LiveFabric], kind: str) -
         ):
             continue
         serial = (fab_live.switches.get(switch) or {}).get("serialNumber", "")
-        fix = Op("attach", fabric, "POST", f"/fabrics/{fabric}/{kind}Attachments", attachment_payload(kind, att, serial)) if serial else None
+        fix = None
+        if serial:
+            body = attachment_payload(kind, att, serial)
+            body["attachments"].extend(_vpc_peer_items(topo, fab_live, rows, kind, att))
+            fix = Op("attach", fabric, "POST", f"/fabrics/{fabric}/{kind}Attachments", body)
         live_text = "none" if found is None else _attachment_text(kind, found.get("vlanId"), found.get("interfaces"))
         drifts.append(Drift(ATTACHMENTS, fabric, "missing" if found is None else "different", f"{name} {switch}", golden_text, live_text, fix, None, None))
     for fabric in [f.name for f in topo.fabrics]:

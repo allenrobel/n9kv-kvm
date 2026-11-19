@@ -222,7 +222,9 @@ interrupted after `removeMembers` and after the first settings `PUT`, were valid
   `deploy` phase recalculates the fabric; `networkActions/deploy` pushes only the VLAN/attachment.
 - A vPC peer cannot be attached to or detached from a VRF alone: a `vrfAttachments` POST that carries one peer answers that item `failed`
   (`VPC details not found for Peer Serial no: <peer>`). The tools send every attach (and every detach) of one VRF or network in one fabric
-  as one request, so both peers are always in it.
+  as one request, and the `restore` fix of an attachment drifted on one peer only also carries the peer's golden attachment, so both peers
+  are always in it. For a network ND applies a request naming one peer to both peers (attach, detach and port changes alike, and a detach
+  also drops the paired ToR's attachment), so a network cannot be attached to one peer only.
 - A network detach (`attach: false`) that lists the row's `interfaces` removes only those ports and leaves the switch attached; the tools'
   detaches send `"interfaces": []`, which frees the ports and detaches the switch.
 - The `vpc` phase pairs the leaf pairs listed under `vpc_pairs:` with ND's default template (`PUT /fabrics/{f}/switches/{sn}/vpcPair`,
